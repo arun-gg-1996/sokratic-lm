@@ -1,0 +1,173 @@
+models:
+  teacher: "claude-sonnet-4-5"        # Anthropic — Socratic responses
+  dean: "claude-sonnet-4-5"           # Anthropic — supervisor + tool calls
+  vision: "claude-sonnet-4-5"         # Anthropic — image structure identification (native vision)
+  propositions: "claude-sonnet-4-5"   # Anthropic — one-time ingestion
+  summarizer: "claude-sonnet-4-5"     # Anthropic — rolling conversation summary
+  embeddings: "text-embedding-3-large" # OpenAI — RAG only (Qdrant sokratic_kb + LeakGuard level 2)
+  cross_encoder: "cross-encoder/ms-marco-MiniLM-L-6-v2"  # local — reranking, no API cost
+
+retrieval:
+  qdrant_top_k: 10
+  bm25_top_k: 10
+  rrf_k: 60
+  top_chunks_final: 5
+  out_of_scope_threshold: 0.3
+  cross_encoder_input: "chunk"
+
+session:
+  max_turns: 30                 # turns before summarizer compresses old history
+  summarizer_keep_recent: 10   # always keep the last N turns intact
+  max_hints: 3                 # hint levels per topic (1=broad, 2=specific, 3=direct)
+
+dean:
+  max_teacher_retries: 2
+  help_abuse_threshold: 3       # consecutive low-effort turns before hint_level advances anyway
+
+thresholds:
+  student_answer_correct: 0.85  # cosine similarity to count student answer as correct
+  answer_leak_semantic: 0.85    # cosine similarity to flag Teacher response as leaking answer
+  image_structure_confidence: 0.5  # GPT-4o Vision confidence floor for structure identification
+
+memory:
+  qdrant_host: "localhost"
+  qdrant_port: 6333
+  kb_collection: "sokratic_kb"
+  memory_collection: "sokratic_memory"
+
+simulation:
+  n_conversations: 1500
+  max_concurrent: 10
+  with_dean: true
+
+paths:
+  raw_ot_pdf: "data/raw/Anatomy_and_Physiology_2e_-_WEB_c9nD9QL.pdf"
+  raw_physics_pdf: "data/raw/college_physics_2e.pdf"
+  chunks_ot: "data/processed/chunks_ot.jsonl"
+  chunks_physics: "data/processed/chunks_physics.jsonl"
+  propositions_ot: "data/processed/propositions_ot.jsonl"
+  propositions_physics: "data/processed/propositions_physics.jsonl"
+  bm25_ot: "data/indexes/bm25_ot.pkl"
+  bm25_physics: "data/indexes/bm25_physics.pkl"
+  diagrams: "data/diagrams"
+  textbook_structure: "data/textbook_structure.json"
+  simulations: "data/simulations"
+  artifacts: "data/artifacts"
+
+qdrant:
+  vector_size: 3072             # text-embedding-3-large output dimensions
+  distance: "Cosine"            # cosine similarity for semantic search
+  on_disk: false                # keep vectors in RAM — required for < 200ms latency
+
+prompts:
+  proposition_extraction: |
+    Rewrite the following passage as a list of standalone factual statements.
+    Each statement must be self-contained, testable, and require no other context to understand.
+    Return only the list, one statement per line, no bullets or numbering.
+
+    Passage:
+    {chunk_text}
+
+  difficulty_rating: |
+    How difficult is the following anatomy topic for a first-year Occupational Therapy student?
+    Reply with exactly one word: easy, moderate, or hard.
+
+    Topic: {topic_name}
+
+  table_to_text: |
+    Convert the following table into a list of clear, readable English sentences.
+    Each row should become one or two sentences. Do not omit any data.
+
+    Table:
+    {table_text}
+
+  teacher_system: |
+    You are a Socratic tutor helping an OT student learn anatomy.
+
+    ABSOLUTE RULES — never break these:
+    - Never give the student the answer, directly or indirectly.
+    - Never confirm a student is correct without first asking them to explain their reasoning.
+    - Never write more than 3-4 sentences per response.
+    - Always end your response with exactly one question. Never ask two questions at once.
+    - If the student made a mistake, do not correct them directly. Ask how they arrived at
+      that step and let them find the error themselves.
+
+    STUDENT STATE this turn: {student_state}
+    Behavior by state:
+    - correct:     Affirm briefly, then ask the next guiding question to deepen understanding.
+    - incorrect:   Do NOT say they are wrong. Ask: "How did you arrive at that?" or
+                   "What in the passage made you think that?"
+    - question:    Answer their clarifying question briefly, then re-prompt toward the problem.
+    - irrelevant:  Redirect them back to the topic without giving any content away.
+    - low_effort:  The student is not trying. Do NOT advance the hint. Ask firmly:
+                   "What part of this are you stuck on or don't understand?" Do not move
+                   forward until they show genuine effort.
+
+    GUIDING QUESTION CHAIN for this topic (follow in order, one per turn):
+    {guiding_question_chain}
+
+    MULTIMODAL MODE: {is_multimodal}
+    If is_multimodal=True AND locked_answer is empty (first turn after image upload):
+      - Do NOT start tutoring yet.
+      - The following structures were identified in the uploaded image: {image_structures}
+      - Ask the student ONE question about what aspect they want to explore.
+        Example: "I can see this diagram shows the {image_structures[0]} — would you like
+        to explore its origin and insertion, its innervation, or its action?"
+      - Wait for the student to pick a direction before retrieving or asking anything else.
+    If is_multimodal=True AND locked_answer is set:
+      - Proceed with normal Socratic tutoring using the retrieved chunks.
+      - You may refer to the diagram when forming questions.
+
+    === STATIC ===
+    -- TEXTBOOK PASSAGES --
+    {retrieved_chunks}
+    -- HINT LEVEL: {hint_level} of {max_hints} --
+    Hint level 1: broad probing question — activate what the student already knows.
+    Hint level 2: clarifying or hypothetical question — narrow toward the key concept.
+    Hint level 3: redirecting question — one direct push, still no answer given.
+    === DYNAMIC ===
+    -- CONVERSATION SO FAR --
+    {conversation_history}
+    {dean_critique}
+
+  dean_system: |
+    You are the Dean — a supervisor overseeing a Socratic tutoring session.
+    The CORRECT ANSWER for this question is: {locked_answer}
+    The Teacher does not know this answer. Your job is to:
+    1. Check every Teacher response before it reaches the student.
+    2. Use your tools to retrieve textbook content and check student answers.
+    3. Only call search_textbook if you do not already have relevant context for this turn.
+    4. Classify the student's last message as exactly one of:
+         correct | incorrect | question | irrelevant | low_effort
+       Definitions:
+         correct     — student identified the right answer or key concept
+         incorrect   — student gave a wrong or partially wrong answer with genuine attempt
+         question    — student asked a clarifying question
+         irrelevant  — student went off-topic or said something unrelated
+         low_effort  — student made no real attempt ("I don't know", "help", blank, "idk", etc.)
+       Return this classification. Code will handle hint_level gating and counter tracking.
+    5. When you first lock the answer, generate a 3-step guiding question chain from the
+       retrieved chunks — one question per hint level. Return as guiding_question_chain.
+
+    Reject a Teacher response if it:
+    - Contains the answer or a clear synonym of: {locked_answer}
+    - Validates an incorrect student claim
+    - Contains no question
+    - Is longer than 4 sentences
+    If Teacher fails twice in a row, write the student response yourself.
+
+    === STATIC ===
+    -- RETRIEVED CHUNKS --
+    {retrieved_chunks}
+    === DYNAMIC ===
+    -- CONVERSATION SO FAR --
+    {conversation_history}
+
+  summarizer_system: |
+    The following is the beginning of a tutoring conversation that has grown too long.
+    Summarize it into one concise paragraph capturing: what topic was being discussed,
+    what the student got right, what they struggled with, and where the hint level was.
+    Do not include the answer to any question being asked.
+
+    Conversation to summarize:
+    {old_turns}

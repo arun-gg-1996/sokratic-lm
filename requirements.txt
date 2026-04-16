@@ -1,0 +1,35 @@
+# Core LLM / orchestration
+langchain
+langgraph
+anthropic                  # Claude Sonnet 4.5 — all LLM + vision calls
+openai                     # embeddings only (text-embedding-3-large)
+
+# Retrieval
+# faiss-cpu removed — Qdrant replaces FAISS
+rank_bm25
+sentence-transformers
+
+# Chunking / ingestion
+llama-index
+llama-index-core
+pymupdf
+pdfplumber
+
+# Memory
+mem0ai
+qdrant-client
+
+# UI
+streamlit
+
+# Evaluation
+ragas
+
+# ML (cross-encoder only — no local LLM)
+torch
+transformers
+
+# Async + utilities
+tqdm
+aiohttp
+pyyaml
