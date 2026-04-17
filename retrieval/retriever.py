@@ -3,29 +3,60 @@ retrieval/retriever.py
 ----------------------
 Clean hybrid retrieval pipeline:
 1) Query embedding (text-embedding-3-large)
-2) Qdrant dense search (domain filter only)
-3) BM25 sparse search (stemmed query tokens)
+2) Qdrant dense search (domain filter only) — original query
+3) BM25 sparse search — preprocessed query (normalized+stemmed+variants)
 4) RRF merge (k=60)
 5) Expand to unique parent chunks
-6) Cross-encoder reranking
+6) Cross-encoder reranking — original query (safety net)
 7) Out-of-scope check (max CE < -3.0 -> [])
 8) Return top-5 chunks
 """
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from dotenv import load_dotenv
+from nltk.stem import PorterStemmer
 from openai import OpenAI
 from qdrant_client import QdrantClient
 from qdrant_client.models import FieldCondition, Filter, MatchValue
 from sentence_transformers import CrossEncoder
 
 from config import cfg
-from ingestion.index import load_bm25, stem_tokenize
+from ingestion.index import load_bm25
 
 load_dotenv(".env")
+
+_STEMMER = PorterStemmer()
+
+_BM25_STOP_WORDS = {
+    "what", "is", "are", "the", "a", "an",
+    "how", "does", "do", "which", "where",
+    "when", "why", "tell", "me", "about",
+    "this", "that", "these", "those", "in",
+    "of", "for", "to", "and", "or", "but",
+}
+
+
+def preprocess_for_bm25(query: str) -> list[str]:
+    query = query.lower().strip()
+    query = re.sub(r"[^\w\s]", "", query)
+
+    tokens = [t for t in query.split() if t not in _BM25_STOP_WORDS and len(t) > 2]
+    stemmed = [_STEMMER.stem(t) for t in tokens]
+
+    expanded = []
+    for token in tokens:
+        expanded.append(token)
+        if token.endswith("s") and len(token) > 4:
+            expanded.append(token[:-1])
+        elif not token.endswith("s"):
+            expanded.append(token + "s")
+
+    all_terms = list(set(tokens + stemmed + expanded))
+    return all_terms
 
 
 class Retriever:
@@ -89,7 +120,7 @@ class Retriever:
         return hits
 
     def _bm25_search(self, query: str, top_k: int) -> list[dict]:
-        tokens = stem_tokenize(query)
+        tokens = preprocess_for_bm25(query)
         scores = self.bm25.get_scores(tokens)
         top_idx = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:top_k]
 

@@ -8,10 +8,10 @@ models:
   cross_encoder: "cross-encoder/ms-marco-MiniLM-L-6-v2"  # local — reranking, no API cost
 
 retrieval:
-  qdrant_top_k: 10
-  bm25_top_k: 10
+  qdrant_top_k: 20        # increased from 10 — wider candidate pool
+  bm25_top_k: 20          # increased from 10 — wider candidate pool
   rrf_k: 60
-  top_chunks_final: 5
+  top_chunks_final: 7
   out_of_scope_threshold: 0.1
   cross_encoder_input: "chunk"
 
