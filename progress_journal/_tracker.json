@@ -1,5 +1,10 @@
 {
-  "turn_count": 0,
-  "max_journal_turn": 6,
-  "last_prompt": "2026-04-12_22-09-33"
+  "turn_count": 13,
+  "max_journal_turn": 10,
+  "last_prompt": "2026-04-17_04-06-37_threshold_diagnosis_and_gate2_rerun",
+  "assistant_turn_count": 13,
+  "summary_prompt_every": 10,
+  "summary_prompt_enabled": true,
+  "summary_prompt_mode": "manual_in_chat",
+  "summary_prompt_text": "Please summarize what we did in the last 10 turns, and tell me whether to track it in progress_journal (yes/no)."
 }

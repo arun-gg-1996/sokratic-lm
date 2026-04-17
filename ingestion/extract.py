@@ -1,62 +1,181 @@
 """
 ingestion/extract.py
 --------------------
-Step 1 of the ingestion pipeline.
+Extraction foundation switched to ingestion.parse_pdf.parse_pdf
+(font-size heading parser for OpenStax PDFs).
 
-Reads the source PDF and produces a list of raw elements, each with:
-  - text        : str
-  - chapter_num : int
-  - chapter_title: str
-  - section_num : str  (e.g. "11.2")
-  - section_title: str
-  - subsection_title: str | None
-  - page        : int
-  - element_type: "paragraph" | "table" | "figure_caption"
+This module now:
+1) runs parse_pdf() to get structured sections (L1 + L2)
+2) maps sections into our ChunkSchema-compatible pre-chunk records
+3) saves mapped records to data/processed/raw_sections_ot.jsonl
 
-Tables are converted to plain English sentences via GPT-4o before being
-returned as elements with element_type="table".
-
-Output is saved to data/processed/raw_elements_ot.jsonl for inspection.
-
-Usage:
-    python -m ingestion.extract
+No core parsing logic is implemented here; parse_pdf.py is the source of truth.
 """
 
-# TODO: implement PDF text extraction using PyMuPDF (fitz)
-# TODO: implement table extraction using pdfplumber
-# TODO: implement GPT-4o table-to-text conversion (prompt in config.yaml: table_to_text)
-# TODO: parse chapter/section/subsection from headings or TOC
-# TODO: save output to cfg.paths.raw_elements_ot as JSONL
+from __future__ import annotations
+
+import json
+import uuid
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+from config import cfg
+from ingestion.parse_pdf import parse_pdf
+
+load_dotenv()
+
+RAW_SECTIONS_PATH = "data/processed/raw_sections_ot.jsonl"
+RAW_SECTIONS_DIR = "data/processed/chunks/raw_sections"
 
 
-def extract_pdf(pdf_path: str) -> list[dict]:
+def _sanitize_section_title(section_title: str, chapter_title: str, section_num: str) -> str:
     """
-    Extract all text elements from a PDF with full metadata.
+    Normalize section titles for indexing.
+    Never allow 1-2 character section titles (e.g., 'A', 'B').
+    """
+    title = (section_title or "").strip()
+    if len(title) <= 2:
+        sec = (section_num or "").strip()
+        if sec:
+            return f"{chapter_title} {sec}".strip()
+        return chapter_title
+    return title
+
+
+def _map_section_to_seed_chunk(section: dict) -> dict:
+    """Map parse_pdf section schema to our pre-chunk schema."""
+    level = int(section.get("level", 1))
+    chapter_title = section["chapter"]
+    section_num = section.get("section_num", "") or ""
+    section_title = _sanitize_section_title(
+        section.get("section_title", ""),
+        chapter_title=chapter_title,
+        section_num=section_num,
+    )
+
+    mapped = {
+        # ChunkSchema-compatible fields
+        "chunk_id": str(uuid.uuid4()),
+        "text": section["text"],
+        "chapter_num": int(section["chapter_num"]),
+        "chapter_title": chapter_title,
+        "section_num": section_num,
+        "section_title": section_title,
+        "subsection_title": section["parent_section"] if level == 2 else "",
+        "page": int(section["page_start"]),
+        "element_type": "paragraph",
+        "domain": "ot",
+
+        # Additional provenance fields (useful for downstream checks)
+        "source_section_id": section["id"],
+        "source_level": level,
+        "parent_section": section["parent_section"],
+        "page_end": int(section["page_end"]),
+        "source_pdf": section["source_pdf"],
+    }
+    return mapped
+
+
+def sections_to_seed_chunks(sections: list[dict]) -> list[dict]:
+    """Convert parse_pdf sections to pre-chunk seed records."""
+    seeds: list[dict] = []
+    for s in sections:
+        text = (s.get("text") or "").strip()
+        if not text:
+            continue
+        seeds.append(_map_section_to_seed_chunk(s))
+    return seeds
+
+
+def save_jsonl(rows: list[dict], out_path: str) -> None:
+    """Save list of dicts as JSONL."""
+    out = Path(out_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with out.open("w", encoding="utf-8") as f:
+        for r in rows:
+            f.write(json.dumps(r, ensure_ascii=False) + "\n")
+
+
+def extract_pdf(
+    pdf_path: str,
+    domain: str = "OT_anatomy",
+    out_dir: str = RAW_SECTIONS_DIR,
+    out_jsonl: str = RAW_SECTIONS_PATH,
+) -> list[dict]:
+    """
+    Run parse_pdf and return mapped section-seed chunks.
 
     Args:
-        pdf_path: Path to the source PDF file.
+        pdf_path: Source PDF path.
+        domain: parse_pdf domain label.
+        out_dir: parse_pdf output dir for per-chapter JSON.
+        out_jsonl: JSONL output path for mapped seeds.
 
     Returns:
-        List of element dicts (paragraph, table, figure_caption).
+        List of mapped seed chunk dicts.
     """
-    raise NotImplementedError
+    sections = parse_pdf(
+        pdf_path=pdf_path,
+        domain=domain,
+        out_dir=out_dir,
+        save=True,
+    )
+
+    seeds = sections_to_seed_chunks(sections)
+    save_jsonl(seeds, out_jsonl)
+    return seeds
 
 
-def convert_table_to_text(table_text: str) -> str:
-    """
-    Convert a raw table string to readable English sentences using GPT-4o.
-    Uses the 'table_to_text' prompt from config.yaml.
+def _report_section_stats(sections: list[dict]) -> None:
+    total_sections = len(sections)
+    chapters = sorted({int(s["chapter_num"]) for s in sections if int(s["chapter_num"]) > 0})
+    total_words = sum(len((s.get("text") or "").split()) for s in sections)
 
-    Args:
-        table_text: Raw table content as a string.
+    axillary_nerve_sections = [s for s in sections if "axillary nerve" in (s.get("text") or "").lower()]
+    deltoid_sections = [s for s in sections if "deltoid" in (s.get("text") or "").lower()]
 
-    Returns:
-        Plain English paragraph describing the table contents.
-    """
-    raise NotImplementedError
+    print("\n" + "=" * 70)
+    print("SECTION EXTRACTION REPORT")
+    print("=" * 70)
+    print(f"Total sections found   : {total_sections}")
+    print(f"Chapters covered       : {len(chapters)} ({chapters[:6]} ... {chapters[-3:]})")
+    print(f"Total words (sections) : {total_words:,}")
+    print(f"Sections with 'axillary nerve' : {len(axillary_nerve_sections)}")
+    print(f"Sections with 'deltoid'        : {len(deltoid_sections)}")
+
+    if axillary_nerve_sections:
+        print("\nSections containing 'axillary nerve' (up to 5):")
+        for s in axillary_nerve_sections[:5]:
+            print(
+                f"- Ch{s['chapter_num']} {s.get('section_num', '')} "
+                f"[{s.get('page_start')}-{s.get('page_end')}] {s.get('section_title','')[:90]}"
+            )
+
+
+def _load_sections_from_saved_dir(out_dir: str, domain: str) -> list[dict]:
+    """Load combined parse_pdf output if available."""
+    combined = Path(out_dir) / f"all_sections_{domain}.json"
+    if not combined.exists():
+        return []
+    with combined.open("r", encoding="utf-8") as f:
+        return json.load(f)
 
 
 if __name__ == "__main__":
-    from config import cfg
-    elements = extract_pdf(cfg.paths.raw_ot_pdf)
-    print(f"Extracted {len(elements)} elements")
+    pdf_path = cfg.paths.raw_ot_pdf
+    domain = "OT_anatomy"
+
+    print(f"Running parse_pdf extraction on: {pdf_path}")
+    seeds = extract_pdf(
+        pdf_path=pdf_path,
+        domain=domain,
+        out_dir=RAW_SECTIONS_DIR,
+        out_jsonl=RAW_SECTIONS_PATH,
+    )
+
+    sections = _load_sections_from_saved_dir(RAW_SECTIONS_DIR, domain)
+    if sections:
+        _report_section_stats(sections)
+
+    print(f"\nMapped seed chunks saved: {len(seeds)} -> {RAW_SECTIONS_PATH}")

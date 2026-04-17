@@ -12,7 +12,7 @@ retrieval:
   bm25_top_k: 10
   rrf_k: 60
   top_chunks_final: 5
-  out_of_scope_threshold: 0.3
+  out_of_scope_threshold: 0.1
   cross_encoder_input: "chunk"
 
 session:
@@ -47,6 +47,7 @@ paths:
   chunks_physics: "data/processed/chunks_physics.jsonl"
   propositions_ot: "data/processed/propositions_ot.jsonl"
   propositions_physics: "data/processed/propositions_physics.jsonl"
+  indexes_ot: "data/indexes"
   bm25_ot: "data/indexes/bm25_ot.pkl"
   bm25_physics: "data/indexes/bm25_physics.pkl"
   diagrams: "data/diagrams"

@@ -43,7 +43,7 @@ class ChunkSchema(TypedDict):
     page: int                   # Page number in the PDF. Useful for human verification.
 
     # --- Type ---
-    element_type: Literal["paragraph", "table", "figure_caption"]
+    element_type: Literal["paragraph", "paragraph_overlap", "table", "figure_caption"]
                                 # [RETRIEVAL CRITICAL] Table chunks are high-value for anatomy
                                 # (origin/insertion/innervation tables). UI uses this to flag
                                 # visually important content.
@@ -87,7 +87,7 @@ class PropositionSchema(TypedDict):
     subsection_title: str       # [RETRIEVAL CRITICAL] Enables subsection-level Qdrant filtering
                                 # when topic selector picks a specific subsection.
     page: int
-    element_type: Literal["paragraph", "table", "figure_caption", "diagram"]
+    element_type: Literal["paragraph", "paragraph_overlap", "table", "figure_caption", "diagram"]
     domain: Literal["ot", "physics"]
 
     # --- Diagram-only fields (empty string for textbook propositions) ---
@@ -194,7 +194,7 @@ def validate_chunk(chunk: dict) -> list[str]:
             errors.append(f"Missing field: {field}")
     if chunk.get("text") and len(chunk["text"]) < 50:
         errors.append(f"Text too short ({len(chunk['text'])} chars): {chunk['text'][:80]}")
-    if chunk.get("element_type") not in ("paragraph", "table", "figure_caption"):
+    if chunk.get("element_type") not in ("paragraph", "paragraph_overlap", "table", "figure_caption"):
         errors.append(f"Invalid element_type: {chunk.get('element_type')}")
     return errors
 
