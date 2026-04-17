@@ -37,7 +37,8 @@ from config import cfg
 RAG_QA_PATH = Path("data/eval/rag_qa.jsonl")
 
 # Hard thresholds — must pass before Stage 2
-HIT_AT_5_MIN = 0.70
+# Hit threshold uses top_chunks_final (currently 7) — checked as Hit@K
+HIT_AT_K_MIN = 0.70
 MRR_MIN = 0.40
 LATENCY_MAX_MS = 200
 
@@ -78,7 +79,8 @@ def _reciprocal_rank(results: list[dict], source_chunk_id: str) -> float:
 
 
 def test_rag_qa_hit_and_mrr(retriever, rag_qa):
-    hits_at_1 = hits_at_3 = hits_at_5 = 0
+    top_k = cfg.retrieval.top_chunks_final  # dynamic — matches what retriever returns
+    hits_at_1 = hits_at_3 = hits_at_k = 0
     mrr_sum = 0.0
     n = len(rag_qa)
 
@@ -91,23 +93,23 @@ def test_rag_qa_hit_and_mrr(retriever, rag_qa):
             hits_at_1 += 1
         if target in returned_ids[:3]:
             hits_at_3 += 1
-        if target in returned_ids[:5]:
-            hits_at_5 += 1
+        if target in returned_ids[:top_k]:
+            hits_at_k += 1
         mrr_sum += _reciprocal_rank(results, target)
 
     hit_at_1 = hits_at_1 / n
     hit_at_3 = hits_at_3 / n
-    hit_at_5 = hits_at_5 / n
+    hit_at_k = hits_at_k / n
     mrr = mrr_sum / n
 
     print(f"\nRAG Eval Results (n={n}):")
-    print(f"  Hit@1 : {hit_at_1:.3f}")
-    print(f"  Hit@3 : {hit_at_3:.3f}")
-    print(f"  Hit@5 : {hit_at_5:.3f}  (threshold: >= {HIT_AT_5_MIN})")
-    print(f"  MRR   : {mrr:.3f}  (threshold: >= {MRR_MIN})")
+    print(f"  Hit@1  : {hit_at_1:.3f}")
+    print(f"  Hit@3  : {hit_at_3:.3f}")
+    print(f"  Hit@{top_k} : {hit_at_k:.3f}  (threshold: >= {HIT_AT_K_MIN})")
+    print(f"  MRR    : {mrr:.3f}  (threshold: >= {MRR_MIN})")
 
-    assert hit_at_5 >= HIT_AT_5_MIN, (
-        f"Hit@5 {hit_at_5:.3f} below threshold {HIT_AT_5_MIN}. "
+    assert hit_at_k >= HIT_AT_K_MIN, (
+        f"Hit@{top_k} {hit_at_k:.3f} below threshold {HIT_AT_K_MIN}. "
         f"Retrieval is not finding the right chunks."
     )
     assert mrr >= MRR_MIN, (

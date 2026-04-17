@@ -1,0 +1,182 @@
+{
+  "run_date": "2026-04-17",
+  "author": "Nidhi Rajani",
+  "config": {
+    "qdrant_top_k": 20,
+    "bm25_top_k": 20,
+    "rrf_k": 60,
+    "top_chunks_final": 7,
+    "cross_encoder": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "out_of_scope_threshold_ce": -3.0
+  },
+  "metrics": {
+    "total_queries": 100,
+    "no_result_count": 22,
+    "hit_at_1": 0.57,
+    "hit_at_3": 0.64,
+    "hit_at_7": 0.71,
+    "mrr": 0.616,
+    "gate_2_passed": true
+  },
+  "baseline_before_session": {
+    "hit_at_5": 0.52,
+    "mrr": 0.493,
+    "no_result_count": 42
+  },
+  "no_result_queries": [
+    {
+      "question": "In a patient assessment, what does the textbook state about fixed point that the force?",
+      "chapter_num": 11,
+      "question_type": "clinical",
+      "source_chunk_id": "aa263d9b-300f-49c0-83a2-7001a1adb4ed",
+      "reason": "no_result"
+    },
+    {
+      "question": "In a patient assessment, what does the textbook state about This arrangement is referred to?",
+      "chapter_num": 11,
+      "question_type": "clinical",
+      "source_chunk_id": "25a1a402-1b60-4254-a55f-76acb26296c2",
+      "reason": "no_result"
+    },
+    {
+      "question": "In a patient assessment, what does the textbook state about doctor?",
+      "chapter_num": 11,
+      "question_type": "clinical",
+      "source_chunk_id": "dbde0afa-9943-4c61-8a31-f616474a6aa2",
+      "reason": "no_result"
+    },
+    {
+      "question": "In a patient assessment, what does the textbook state about spinal cord itself?",
+      "chapter_num": 13,
+      "question_type": "clinical",
+      "source_chunk_id": "27da9d81-afd6-4135-b490-95429d5414bb",
+      "reason": "no_result"
+    },
+    {
+      "question": "In a patient assessment, what does the textbook state about If you zoom in on?",
+      "chapter_num": 13,
+      "question_type": "clinical",
+      "source_chunk_id": "bc9ce03b-2897-44e5-ad7b-a3737c288731",
+      "reason": "no_result"
+    },
+    {
+      "question": "In a patient assessment, what does the textbook state about nerves?",
+      "chapter_num": 13,
+      "question_type": "clinical",
+      "source_chunk_id": "f110ccd4-442a-499f-8948-5e11b8192f9e",
+      "reason": "no_result"
+    },
+    {
+      "question": "In a patient assessment, what does the textbook state about first two?",
+      "chapter_num": 13,
+      "question_type": "clinical",
+      "source_chunk_id": "bf26267b-d9ad-4ac4-b507-0f1dec3a0499",
+      "reason": "no_result"
+    },
+    {
+      "question": "How does this passage connect multiple concepts around blockage?",
+      "chapter_num": 13,
+      "question_type": "cross_chapter",
+      "source_chunk_id": "8b1bac97-1498-4be8-aad9-537d9b9ecf6c",
+      "reason": "no_result"
+    },
+    {
+      "question": "How does this passage connect multiple concepts around More important are the neurological?",
+      "chapter_num": 13,
+      "question_type": "cross_chapter",
+      "source_chunk_id": "20fb480a-5489-456c-b6e6-614e0fd06228",
+      "reason": "no_result"
+    },
+    {
+      "question": "In a patient assessment, what does the textbook state about Note that this correspondence does?",
+      "chapter_num": 14,
+      "question_type": "clinical",
+      "source_chunk_id": "bafbf421-c6ca-4b32-8018-f69fa85390db",
+      "reason": "no_result"
+    },
+    {
+      "question": "In a patient assessment, what does the textbook state about Adjacent to these two regions?",
+      "chapter_num": 14,
+      "question_type": "clinical",
+      "source_chunk_id": "9a795cc8-e4ca-4c9b-ad42-a6659d861545",
+      "reason": "no_result"
+    },
+    {
+      "question": "In a patient assessment, what does the textbook state about The interneuron?",
+      "chapter_num": 14,
+      "question_type": "clinical",
+      "source_chunk_id": "ee6ca3cc-10ce-442f-9e42-6f5cf8036223",
+      "reason": "no_result"
+    },
+    {
+      "question": "In a patient assessment, what does the textbook state about way that information?",
+      "chapter_num": 14,
+      "question_type": "clinical",
+      "source_chunk_id": "dafa6165-a885-4290-875d-463738b3be37",
+      "reason": "no_result"
+    },
+    {
+      "question": "What does this passage state about not all of these?",
+      "chapter_num": 9,
+      "question_type": "factual",
+      "source_chunk_id": "e8d8b6f1-e65f-498d-9819-9a2898001ea0",
+      "reason": "no_result"
+    },
+    {
+      "question": "How does this passage connect multiple concepts around bones?",
+      "chapter_num": 9,
+      "question_type": "cross_chapter",
+      "source_chunk_id": "417bb790-0ec6-4c6e-89f7-7ed3ce348933",
+      "reason": "no_result"
+    },
+    {
+      "question": "How does this passage connect multiple concepts around All of these features allow?",
+      "chapter_num": 10,
+      "question_type": "cross_chapter",
+      "source_chunk_id": "cda5a75c-b128-4b5c-8156-ba88e57bf25c",
+      "reason": "no_result"
+    },
+    {
+      "question": "How does this passage connect multiple concepts around cecum?",
+      "chapter_num": 23,
+      "question_type": "cross_chapter",
+      "source_chunk_id": "b1d5de78-9042-4804-aaac-35e3664e60aa",
+      "reason": "no_result"
+    },
+    {
+      "question": "How does this passage connect multiple concepts around In this type of transport?",
+      "chapter_num": 23,
+      "question_type": "cross_chapter",
+      "source_chunk_id": "3f2069fc-b2f6-412c-a120-20b21bf6d5a3",
+      "reason": "no_result"
+    },
+    {
+      "question": "How does this passage connect multiple concepts around As GFR increases?",
+      "chapter_num": 25,
+      "question_type": "cross_chapter",
+      "source_chunk_id": "2490c306-b7b0-406f-8508-c60cc9a15996",
+      "reason": "no_result"
+    },
+    {
+      "question": "How does this passage connect multiple concepts around The energy from ATP drives?",
+      "chapter_num": 24,
+      "question_type": "cross_chapter",
+      "source_chunk_id": "8e86b6bb-76d3-4787-9703-5a3fdce32100",
+      "reason": "no_result"
+    },
+    {
+      "question": "How does this passage connect nerve-level and movement-level anatomy?",
+      "chapter_num": 4,
+      "question_type": "cross_chapter",
+      "source_chunk_id": "409da99f-9352-4181-bfdd-ef3a3aba120b",
+      "reason": "no_result"
+    },
+    {
+      "question": "How does this passage connect multiple concepts around First?",
+      "chapter_num": 21,
+      "question_type": "cross_chapter",
+      "source_chunk_id": "8b6f6c39-1966-40a1-88c0-ec1117db9a46",
+      "reason": "no_result"
+    }
+  ]
+}
