@@ -203,4 +203,93 @@ Most fragments are too short ("bones", "blockage", "First") or too generic to un
 
 ---
 
+## Known Remaining Vocabulary Gaps
+
+Two classes of real student queries that the current pipeline does not fully handle, even with BM25 preprocessing in place.
+
+---
+
+### Gap 1 — Misspelled Words
+
+**Current pipeline behavior:**
+
+| Component | Handles misspellings? |
+|---|---|
+| Qdrant | Partially — `text-embedding-3-large` uses subword tokenization, so "sternocleidmastoid" still lands near "sternocleidomastoid" in embedding space |
+| BM25 | Not at all — exact token match, one character off scores 0 |
+| Cross-encoder | Partially — can confirm if Qdrant retrieved the right chunk, but cannot retrieve |
+
+Misspellings currently depend entirely on Qdrant. BM25 completely fails on any typo.
+
+Worst case: a misspelled informal query like "deltoud musle on shulder" — BM25 scores 0, and if Qdrant also misses (multiple typos compound), the query is unretrievable.
+
+**Fix options (ranked by effort):**
+
+1. **Symspell preprocessing** — run spell correction before both Qdrant and BM25. Fast (<5ms). Risk: anatomy terms like "sternocleidomastoid" may not be in a general dictionary and get wrongly corrected. Mitigation: add anatomy vocabulary to the Symspell corpus.
+
+2. **BM25 character n-gram augmentation** — add 3-5 character grams to BM25 token list at index time. "deltoid" misspelled as "deltoud" shares n-grams (`del`, `elt`, `lto`) and still scores. No dictionary needed. Risk: n=3 grams are too short and cause false matches — needs BM25 k1 parameter tuning to compensate.
+
+3. **FastText as third RRF retriever** — character n-gram embeddings bridge 1-2 character edit distances automatically. Add as third signal in RRF merge alongside Qdrant and BM25. +10-20ms latency. Also fixes Latin plurals (see Gap 2 below).
+
+---
+
+### Gap 2 — Informal Language
+
+**Current pipeline behavior:**
+
+| Component | Handles informal language? |
+|---|---|
+| Qdrant | Partially — semantic embedding space clusters related concepts, so "triangle muscle on shoulder" → deltoid often works |
+| BM25 | Only if the informal word literally appears in the textbook. "triangle" does not map to "deltoid" via any lexical rule |
+| Cross-encoder | Only if Qdrant already retrieved the right chunk — CE ranks, does not retrieve |
+
+Informal language is 100% dependent on Qdrant. If the student's phrasing has no semantic overlap with the textbook passage ("that nerve that gives you the dead arm" → axillary nerve), Qdrant may or may not catch it depending on embedding space clustering.
+
+**Fix options (ranked by effort):**
+
+1. **HyDE (Hypothetical Document Embeddings)** — already discussed. Claude generates a hypothetical textbook-style answer, embed that for Qdrant instead of the raw query. Bridges informal → formal vocabulary entirely within the dense retrieval layer. BM25 still gets the original query (or preprocessed). +200-400ms for the LLM generation call.
+
+2. **LLM query rewriting** — different from HyDE. Reformulates the question itself into formal anatomy language before embedding AND before BM25 preprocessing:
+   - Student: `"that nerve that gives you dead arm after shoulder pop"`
+   - Rewritten: `"What is the axillary nerve and what are the consequences of damage during shoulder dislocation?"`
+   - Both Qdrant and BM25 get the rewritten query. Most powerful fix for informal language.
+   - Risk: if LLM guesses wrong anatomy term, retrieves wrong chapter with high confidence. Requires anatomy-specific prompt and validation.
+   - Latency: +200-400ms per query.
+
+3. **SPLADE (Sparse Lexical and Expansion)** — drop-in BM25 replacement. A transformer learns term weights from pretraining, automatically expanding query terms. "triangle" may expand to include "deltoid" if the pretraining data had co-occurrences. No handwritten rules. Pretrained model: `naver/splade-cocondenser-selfdistil`. Risk: trained on MS MARCO (web search), not anatomy — informal→formal bridging not guaranteed without fine-tuning.
+
+---
+
+### Gap 3 — Latin Plurals (Morphological Variants)
+
+**Current pipeline behavior:** BM25 handles English morphology (fascicle/fascicles) via stemming and plural expansion. Latin plurals (fasciculi, ganglia, nuclei, vertebrae) are not handled — they share no stem with their English singular form.
+
+**Fix options (ranked by effort):**
+
+1. **Small anatomy morphology dict** — explicit 30-40 mapping of Latin plurals to English singular at query time. `{"fasciculi": "fascicle", "ganglia": "ganglion", "nuclei": "nucleus", "vertebrae": "vertebra"}`. Zero latency. Zero polysemy risk. One afternoon of work.
+
+2. **FastText character n-grams** — "fasciculi" and "fascicle" share n-grams (`fas`, `asc`, `sci`, `cic`) and land near each other in FastText embedding space without any rules. Works for all Latin morphology, not just the ones in the dict.
+
+3. **MeSH (Medical Subject Headings) expansion** — lighter than UMLS, ~30k curated concepts with explicit entry term → preferred term mappings. "fasciculi" → "Nerve Fibers". Lower polysemy than UMLS because MeSH is curated for PubMed indexing. Requires downloading and parsing the NIH MeSH database (~2 hours setup).
+
+---
+
+### Summary of All Remaining Gaps
+
+| Gap | Problem | BM25 preprocessing fixes it? | Best fix | Effort |
+|-----|---------|-------------------------------|----------|--------|
+| Misspellings | "deltoud" scores 0 in BM25 | No | Symspell preprocessing | 2-3 hrs |
+| Informal language | "dead arm nerve" → axillary nerve | No | HyDE or LLM query rewriting | 2-4 hrs |
+| Latin plurals | "fasciculi" → not in BM25 index | No | Anatomy morphology dict | 1-2 hrs |
+
+The fix that handles **all three simultaneously** is **LLM query rewriting** — it corrects spelling, normalizes informal language, and maps Latin plurals to standard textbook terminology in one step. The cost is +200-400ms per query. For a Socratic tutor where response quality matters more than raw speed, this is likely worth it.
+
+**Recommended implementation order:**
+1. Anatomy morphology dict — 1-2 hours, zero risk, closes Latin plural gap
+2. Symspell with anatomy vocabulary — 2-3 hours, closes misspelling gap cleanly
+3. HyDE — closes informal language gap, manageable latency
+4. LLM query rewriting — if HyDE alone is not enough, replaces it with stronger fix
+
+---
+
 End of journal entry. 2026-04-17 by Nidhi Rajani.
