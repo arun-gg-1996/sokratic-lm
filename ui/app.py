@@ -20,7 +20,7 @@ import streamlit.components.v1 as components
 from config import cfg
 from conversation.state import initial_state
 from conversation.graph import build_graph
-from retrieval.retriever import MockRetriever
+from retrieval.retriever import Retriever, MockRetriever
 from memory.memory_manager import MemoryManager
 
 SOKRATIC_FONT_STACK = '"Iowan Old Style", "Palatino", "Times New Roman", serif'
@@ -43,9 +43,24 @@ def _load_avatar():
 AVATAR = _load_avatar()
 
 
+def _build_runtime_retriever():
+    """
+    Prefer the real hybrid Retriever. Fall back to MockRetriever only when
+    runtime dependencies (Qdrant/BM25/models) are unavailable.
+    """
+    try:
+        return Retriever()
+    except Exception as exc:
+        st.warning(
+            "Real retriever unavailable. Falling back to MockRetriever. "
+            f"Reason: {exc}"
+        )
+        return MockRetriever()
+
+
 def _init_session():
     if "graph" not in st.session_state:
-        retriever = MockRetriever()
+        retriever = _build_runtime_retriever()
         memory_manager = MemoryManager()
         st.session_state.graph = build_graph(retriever, memory_manager)
         st.session_state.thread_id = str(uuid.uuid4())

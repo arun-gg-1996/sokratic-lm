@@ -92,6 +92,27 @@ _COMMON_NERVE_GUESSES = (
     "accessory nerve",
     "supraclavicular nerve",
 )
+_RETRIEVAL_LOW_SIGNAL = {
+    "",
+    "idk",
+    "i don't know",
+    "i dont know",
+    "dont know",
+    "don't know",
+    "not sure",
+    "no idea",
+    "help",
+    "this",
+    "that",
+    "it",
+    "yes",
+    "no",
+}
+_RETRIEVAL_NOISE_PATTERNS = (
+    r"^\s*\d+\s*[\)\.\-:]\s*",
+    r"^\s*(i think|i guess|maybe|honestly)\s+",
+    r"\s+",  # collapsed at end
+)
 
 
 def _clamp01(value: float) -> float:
@@ -544,6 +565,58 @@ def _is_low_effort_topic_reply(student_text: str) -> bool:
     return txt in low_effort_set
 
 
+def _clean_retrieval_query(text: str) -> str:
+    """
+    Keep retrieval input concise and semantic.
+    - remove numbering artifacts ("2.", "3)")
+    - trim low-information hedges
+    - collapse whitespace
+    """
+    q = (text or "").strip()
+    if not q:
+        return ""
+    q = re.sub(_RETRIEVAL_NOISE_PATTERNS[0], "", q)
+    q = re.sub(_RETRIEVAL_NOISE_PATTERNS[1], "", q, flags=re.IGNORECASE)
+    q = re.sub(_RETRIEVAL_NOISE_PATTERNS[2], " ", q).strip()
+    if len(q) > 280:
+        q = q[:280].rsplit(" ", 1)[0].strip()
+    return q
+
+
+def _is_ambiguous_retrieval_query(text: str) -> bool:
+    txt = _normalize_text(text)
+    if txt in _RETRIEVAL_LOW_SIGNAL:
+        return True
+    tokens = [t for t in txt.split() if t]
+    return len(tokens) < 3
+
+
+def _build_retrieval_query(state: TutorState) -> str:
+    """
+    Build a retrieval query that is robust to noisy student phrasing.
+    Preference:
+      1) selected scoped topic
+      2) latest student message
+      3) blend both when student adds useful detail
+    """
+    topic = str(state.get("topic_selection", "") or "").strip()
+    latest = _latest_student_message(state.get("messages", []))
+
+    candidate = topic or latest
+    latest_norm = _normalize_text(latest)
+    if topic and latest and latest_norm not in _RETRIEVAL_LOW_SIGNAL and len(latest.split()) >= 3:
+        # Keep topic anchor but preserve fresh student intent/detail.
+        candidate = f"{topic}. {latest}"
+
+    cleaned = _clean_retrieval_query(candidate)
+    if _is_ambiguous_retrieval_query(cleaned):
+        fallback = _clean_retrieval_query(topic)
+        if fallback and not _is_ambiguous_retrieval_query(fallback):
+            return fallback
+        return ""
+    return cleaned
+
+
 def _replace_latest_student_message(messages: list[dict], new_content: str) -> list[dict]:
     """
     Replace latest student message content so downstream retrieval/classification
@@ -603,13 +676,13 @@ class DeanAgent:
 
             if not topic_options:
                 # Retrieve context once to generate strong scoping options.
-                query = _latest_student_message(messages)
+                query = _clean_retrieval_query(_latest_student_message(messages))
                 if query:
                     chunks = search_textbook(query, self.retriever)
                     state["retrieved_chunks"] = chunks
                     state["debug"]["turn_trace"].append({
                         "wrapper": "dean.python_retrieval",
-                        "result": f"{len(chunks)} chunks returned",
+                        "result": f"{len(chunks)} chunks returned | query={query}",
                     })
                 scoped = teacher.draft_topic_engagement(state)
                 scoped_q = str(scoped.get("question", "") or "").strip()
@@ -863,13 +936,18 @@ class DeanAgent:
         """
         chunks = state.get("retrieved_chunks", [])
         if not chunks:
-            query = _latest_student_message(state.get("messages", []))
+            query = _build_retrieval_query(state)
             if query:
                 chunks = search_textbook(query, self.retriever)
                 state["retrieved_chunks"] = chunks
                 state["debug"]["turn_trace"].append({
                     "wrapper": "dean.python_retrieval",
-                    "result": f"{len(chunks)} chunks returned",
+                    "result": f"{len(chunks)} chunks returned | query={query}",
+                })
+            else:
+                state["debug"]["turn_trace"].append({
+                    "wrapper": "dean.retrieval_query_guard",
+                    "result": "skipped_retrieval_due_to_ambiguous_query",
                 })
 
         if not state.get("locked_answer"):

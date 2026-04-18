@@ -17,7 +17,7 @@ pdfplumber==0.11.6
 
 # Memory
 mem0ai==0.1.103
-qdrant-client==1.14.2
+qdrant-client==1.17.1
 
 # UI
 streamlit==1.44.1

@@ -264,3 +264,101 @@ class Retriever:
                 }
             )
         return payload
+
+
+class MockRetriever:
+    """
+    Lightweight fallback retriever for local dev when Qdrant/BM25/embeddings
+    are unavailable. Keeps conversation flow functional but does not represent
+    real RAG behavior.
+    """
+
+    def __init__(self):
+        self._chunks = [
+            {
+                "chunk_id": "mock-ot-001",
+                "text": (
+                    "The deltoid muscle is innervated by the axillary nerve (C5-C6), "
+                    "arising from the posterior cord of the brachial plexus. It abducts "
+                    "the arm at the shoulder beyond the initial 15 degrees."
+                ),
+                "score": 0.92,
+                "chapter_num": 11,
+                "chapter_title": "Muscles of the Shoulder and Upper Limb",
+                "section_title": "Muscles That Move the Humerus",
+                "subsection_title": "Deltoid",
+                "page": 392,
+                "element_type": "paragraph",
+                "image_filename": "",
+            },
+            {
+                "chunk_id": "mock-ot-002",
+                "text": (
+                    "The supraspinatus initiates shoulder abduction from 0 to 15 degrees "
+                    "and is innervated by the suprascapular nerve (C5-C6)."
+                ),
+                "score": 0.88,
+                "chapter_num": 11,
+                "chapter_title": "Muscles of the Shoulder and Upper Limb",
+                "section_title": "Rotator Cuff Muscles",
+                "subsection_title": "Supraspinatus",
+                "page": 393,
+                "element_type": "paragraph",
+                "image_filename": "",
+            },
+            {
+                "chunk_id": "mock-ot-003",
+                "text": (
+                    "The brachial plexus is formed by ventral rami C5-T1 and gives rise "
+                    "to terminal branches including musculocutaneous, axillary, radial, "
+                    "median, and ulnar nerves."
+                ),
+                "score": 0.84,
+                "chapter_num": 13,
+                "chapter_title": "Nerve Plexuses",
+                "section_title": "Brachial Plexus",
+                "subsection_title": "Terminal Branches",
+                "page": 514,
+                "element_type": "paragraph",
+                "image_filename": "",
+            },
+            {
+                "chunk_id": "mock-ot-004",
+                "text": (
+                    "Axillary nerve injury classically causes weakness in shoulder "
+                    "abduction beyond 15 degrees with sensory loss over the lateral "
+                    "shoulder (regimental badge area)."
+                ),
+                "score": 0.8,
+                "chapter_num": 13,
+                "chapter_title": "Nerve Plexuses",
+                "section_title": "Clinical Correlates",
+                "subsection_title": "Axillary Nerve Injury",
+                "page": 519,
+                "element_type": "paragraph",
+                "image_filename": "",
+            },
+            {
+                "chunk_id": "mock-ot-005",
+                "text": (
+                    "During manual muscle testing, preserved initiation of abduction with "
+                    "loss of continuation suggests deltoid/axillary involvement rather than "
+                    "isolated supraspinatus dysfunction."
+                ),
+                "score": 0.77,
+                "chapter_num": 11,
+                "chapter_title": "Muscles of the Shoulder and Upper Limb",
+                "section_title": "Functional Assessment",
+                "subsection_title": "Shoulder Abduction Patterns",
+                "page": 398,
+                "element_type": "paragraph",
+                "image_filename": "",
+            },
+        ]
+
+    def clear_cache(self) -> None:
+        return None
+
+    def retrieve(self, query: str, domain: str = "ot") -> list[dict]:
+        _ = (query, domain)
+        return [dict(c) for c in self._chunks]
