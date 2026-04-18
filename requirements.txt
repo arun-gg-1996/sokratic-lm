@@ -1,35 +1,39 @@
 # Core LLM / orchestration
-langchain
-langgraph
-anthropic                  # Claude Sonnet 4.5 — all LLM + vision calls
-openai                     # embeddings only (text-embedding-3-large)
+langchain==0.3.25
+langgraph==0.2.60
+anthropic==0.52.2
+openai==1.76.0
 
 # Retrieval
 # faiss-cpu removed — Qdrant replaces FAISS
-rank_bm25
-sentence-transformers
+rank-bm25==0.2.2
+sentence-transformers==3.4.1
 
 # Chunking / ingestion
-llama-index
-llama-index-core
-pymupdf
-pdfplumber
+llama-index==0.12.34
+llama-index-core==0.12.34
+pymupdf==1.25.5
+pdfplumber==0.11.6
 
 # Memory
-mem0ai
-qdrant-client
+mem0ai==0.1.103
+qdrant-client==1.14.2
 
 # UI
-streamlit
+streamlit==1.44.1
 
 # Evaluation
-ragas
+ragas==0.2.14
 
 # ML (cross-encoder only — no local LLM)
-torch
-transformers
+torch==2.7.0
+transformers==4.51.3
 
 # Async + utilities
-tqdm
-aiohttp
-pyyaml
+tqdm==4.67.1
+aiohttp==3.11.18
+pyyaml==6.0.2
+
+# Testing
+pytest==8.3.5
+python-dotenv==1.1.0

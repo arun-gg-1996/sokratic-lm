@@ -10,11 +10,11 @@ What mem0 does:
   past memories for that student.
 
 This module wraps the mem0 client and exposes two simple methods:
-  - get(student_id, query)   → list of relevant memory strings
+  - get(student_id, query)   → list of relevant memory dicts
   - add(student_id, text)    → store a new memory
 
-The mem0 client is configured to point at local Qdrant
-(host/port from cfg.memory).
+All methods are wrapped in try/except — if Qdrant is not running, the session
+continues normally with empty memory rather than crashing.
 """
 
 from config import cfg
@@ -25,20 +25,31 @@ class PersistentMemory:
         """
         Initialize mem0 client connected to local Qdrant.
         Collection: cfg.memory.memory_collection
+
+        If Qdrant is unavailable, self.client is set to None and all
+        operations silently return empty results.
         """
-        # TODO: import mem0 and initialize:
-        #   from mem0 import Memory
-        #   self.client = Memory.from_config({
-        #       "vector_store": {
-        #           "provider": "qdrant",
-        #           "config": {
-        #               "host": cfg.memory.qdrant_host,
-        #               "port": cfg.memory.qdrant_port,
-        #               "collection_name": cfg.memory.memory_collection,
-        #           }
-        #       }
-        #   })
-        raise NotImplementedError
+        try:
+            from mem0 import Memory
+            vector_size = int(getattr(getattr(cfg, "qdrant", object()), "vector_size", 3072))
+            config = {
+                "vector_store": {
+                    "provider": "qdrant",
+                    "config": {
+                        "host": cfg.memory.qdrant_host,
+                        "port": cfg.memory.qdrant_port,
+                        "collection_name": cfg.memory.memory_collection,
+                        "embedding_model_dims": vector_size,
+                    }
+                }
+            }
+            self.client = Memory.from_config(config)
+            self.available = True
+            self.unavailable_reason = ""
+        except Exception:
+            self.client = None
+            self.available = False
+            self.unavailable_reason = "qdrant_or_mem0_unavailable"
 
     def get(self, student_id: str, query: str = "") -> list[dict]:
         """
@@ -50,19 +61,33 @@ class PersistentMemory:
                         If empty, returns all memories for this student.
 
         Returns:
-            List of memory dicts: [{text: str, metadata: dict}]
+            List of memory dicts from mem0 (may be empty).
+            On any error (Qdrant down, no history) returns [].
         """
-        # TODO: call self.client.search(query, user_id=student_id)
-        # TODO: if query is empty, call self.client.get_all(user_id=student_id)
-        raise NotImplementedError
+        if self.client is None:
+            return []
+        try:
+            if query:
+                return self.client.search(query, user_id=student_id)
+            return self.client.get_all(user_id=student_id)
+        except Exception:
+            return []
 
-    def add(self, student_id: str, memory_text: str) -> None:
+    def add(self, student_id: str, memory_text: str) -> bool:
         """
         Store a new memory for a student.
 
         Args:
             student_id:   Unique student identifier.
             memory_text:  Natural language description of what happened.
+
+        Non-fatal: if Qdrant is down, this is silently skipped.
+        Session has already ended by this point — no user impact.
         """
-        # TODO: call self.client.add(memory_text, user_id=student_id)
-        raise NotImplementedError
+        if self.client is None:
+            return False
+        try:
+            self.client.add(memory_text, user_id=student_id)
+            return True
+        except Exception:
+            return False

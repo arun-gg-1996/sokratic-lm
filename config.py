@@ -34,9 +34,11 @@ class Config:
     retrieval  = _Section(_raw["retrieval"])
     session    = _Section(_raw["session"])
     dean       = _Section(_raw["dean"])
+    thresholds = _Section(_raw["thresholds"])
     memory     = _Section(_raw["memory"])
     simulation = _Section(_raw["simulation"])
     paths      = _Section(_raw["paths"])
+    qdrant     = _Section(_raw["qdrant"])
     prompts    = _Section(_raw["prompts"])
 
     @staticmethod
@@ -44,6 +46,16 @@ class Config:
         """Re-read config.yaml at runtime (useful during development)."""
         global _raw
         _raw = _load()
+        Config.models = _Section(_raw["models"])
+        Config.retrieval = _Section(_raw["retrieval"])
+        Config.session = _Section(_raw["session"])
+        Config.dean = _Section(_raw["dean"])
+        Config.thresholds = _Section(_raw["thresholds"])
+        Config.memory = _Section(_raw["memory"])
+        Config.simulation = _Section(_raw["simulation"])
+        Config.paths = _Section(_raw["paths"])
+        Config.qdrant = _Section(_raw["qdrant"])
+        Config.prompts = _Section(_raw["prompts"])
 
 
 cfg = Config()

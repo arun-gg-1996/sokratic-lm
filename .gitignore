@@ -29,8 +29,22 @@ data/simulations/
 !data/artifacts/tool_definitions.json
 !data/textbook_structure.json
 
+# Local/generated artifacts (do not push)
+data/artifacts/conversations/
+data/artifacts/dean_interventions/
+data/artifacts/euler_scores/
+data/artifacts/local_structural_quality_flags.json
+data/artifacts/simulation_analysis_latest2.json
+data/artifacts/turn_quality_bad_root_causes.json
+data/artifacts/turn_quality_report.json
+
+# Local handoff bundles / snapshots (too large for repo)
+sokratic_handoff_nidhi/
+socrates-vector-icon-isolated-transparent-background-socrate-transparency-concept-can-be-used-web-mobile-127338010.webp
+
 # Qdrant local storage
 qdrant_storage/
+.qdrant_data/
 
 # IDE
 .vscode/
@@ -48,3 +62,4 @@ Thumbs.db
 
 # Logs
 *.log
+claude-ui.html
