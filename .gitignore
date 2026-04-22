@@ -33,10 +33,21 @@ data/simulations/
 data/artifacts/conversations/
 data/artifacts/dean_interventions/
 data/artifacts/euler_scores/
+data/artifacts/final_convo/
+data/artifacts/human_convos/
+data/artifacts/human_scripts/
+data/artifacts/prompts/
+data/artifacts/session_prompts/
 data/artifacts/local_structural_quality_flags.json
 data/artifacts/simulation_analysis_latest2.json
 data/artifacts/turn_quality_bad_root_causes.json
 data/artifacts/turn_quality_report.json
+
+# Claude Code local state (worktrees, plan files, session traces)
+.claude/
+
+# Programmatic conversation debug dumps (ephemeral)
+programmatic conversations/
 
 # Local handoff bundles / snapshots (too large for repo)
 sokratic_handoff_nidhi/
