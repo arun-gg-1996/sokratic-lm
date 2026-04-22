@@ -1,0 +1,74 @@
+{
+  "v1_5": {
+    "label": "v1.5",
+    "n_queries": 231,
+    "retrieval_n": 181,
+    "hit_at_1": 0.44751381215469616,
+    "hit_at_3": 0.6022099447513812,
+    "hit_at_5": 0.6906077348066298,
+    "hit_at_7": 0.7292817679558011,
+    "mrr": 0.5410944488292555,
+    "ood_correct_empty": 0.7,
+    "per_category_hit_at_5": {
+      "original": 0.69,
+      "conversational": 0.64,
+      "misspelling": 1.0,
+      "synonym": 1.0,
+      "clinical_shorthand": 0.75,
+      "abbreviation": 1.0,
+      "ot_test_name": 0.75,
+      "conversational_clinical": 0.3333333333333333,
+      "ood_negative": 0.7
+    },
+    "per_category_n": {
+      "original": 100,
+      "conversational": 50,
+      "misspelling": 1,
+      "synonym": 7,
+      "clinical_shorthand": 8,
+      "abbreviation": 5,
+      "ot_test_name": 4,
+      "conversational_clinical": 6,
+      "ood_negative": 50
+    },
+    "latency_p50": 4379,
+    "latency_p95": 6757,
+    "total_secs": 947
+  },
+  "v2": {
+    "label": "v2",
+    "n_queries": 231,
+    "retrieval_n": 181,
+    "hit_at_1": 0.4143646408839779,
+    "hit_at_3": 0.574585635359116,
+    "hit_at_5": 0.6519337016574586,
+    "hit_at_7": 0.6850828729281768,
+    "mrr": 0.5092738752959748,
+    "ood_correct_empty": 0.7,
+    "per_category_hit_at_5": {
+      "original": 0.67,
+      "conversational": 0.66,
+      "misspelling": 1.0,
+      "synonym": 1.0,
+      "clinical_shorthand": 0.375,
+      "abbreviation": 1.0,
+      "ot_test_name": 0.0,
+      "conversational_clinical": 0.3333333333333333,
+      "ood_negative": 0.7
+    },
+    "per_category_n": {
+      "original": 100,
+      "conversational": 50,
+      "misspelling": 1,
+      "synonym": 7,
+      "clinical_shorthand": 8,
+      "abbreviation": 5,
+      "ot_test_name": 4,
+      "conversational_clinical": 6,
+      "ood_negative": 50
+    },
+    "latency_p50": 4577,
+    "latency_p95": 7331,
+    "total_secs": 1066
+  }
+}

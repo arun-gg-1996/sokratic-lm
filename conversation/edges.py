@@ -26,6 +26,7 @@ Routing rules:
 
 from langgraph.graph import END
 from conversation.state import TutorState
+from config import cfg
 
 
 def after_rapport(state: TutorState) -> str:
@@ -42,9 +43,14 @@ def after_dean(state: TutorState) -> str:
     """
     After Dean delivers a response:
     - Move to assessment if student answered, hints exhausted, or turn limit hit.
+    - When assessment_style == "none", skip assessment entirely and go straight to memory update.
     - Otherwise END — Streamlit will call invoke() again on next student message.
     """
+    assessment_style = getattr(cfg.session, "assessment_style", "clinical")
+
     if state["student_reached_answer"]:
+        if assessment_style == "none":
+            return "memory_update_node"
         return "assessment_node"
     if state["hint_level"] > state["max_hints"]:
         return "assessment_node"

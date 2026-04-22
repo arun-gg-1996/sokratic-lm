@@ -33,61 +33,82 @@ import time
 from datetime import datetime
 import json
 import re
+import hashlib
 import anthropic
 from conversation.state import TutorState
+from conversation.rendering import render_history
 from config import cfg
 
 
-def _cached_system(static: str, chunks: str = "", dynamic: str = "") -> list:
-    # Merge static + chunks into ONE cached block so the combined size exceeds
-    # Anthropic's per-block minimum (1024 tok Sonnet / 2048 tok Haiku).
-    # Two separate small blocks never write cache entries.
-    combined = static + ("\n\n" + chunks if chunks else "")
-    blocks = [{"type": "text", "text": combined, "cache_control": {"type": "ephemeral"}}]
-    if dynamic:
-        blocks.append({"type": "text", "text": dynamic})
+def _domain_prompt_vars() -> dict:
+    domain = getattr(cfg, "domain", object())
+    return {
+        "domain_name": getattr(domain, "name", "the subject"),
+        "domain_short": getattr(domain, "short", "the subject"),
+        "student_descriptor": getattr(domain, "student_descriptor", "student"),
+        "domain_example_topic_specific": getattr(domain, "example_topic_specific", "a specific concept"),
+        "domain_example_topic_broad": getattr(domain, "example_topic_broad", "a broad topic area"),
+        "domain_example_question": getattr(domain, "example_question", "What is the key concept here?"),
+        "assessment_dimension": getattr(domain, "assessment_dimension", "real-world application"),
+        "assessment_dimension_examples": getattr(domain, "assessment_dimension_examples", "examples, problems, or context"),
+    }
+
+
+def _apply_domain_vars(text: str) -> str:
+    rendered = text or ""
+    for key, val in _domain_prompt_vars().items():
+        rendered = rendered.replace(f"{{{key}}}", str(val))
+    return rendered
+
+
+def _cached_system(
+    role_base: str,
+    wrapper_delta: str,
+    chunks: str,
+    history: str,
+    turn_deltas: str,
+) -> list:
+    """
+    Build system blocks with stable cacheable prefix.
+
+    Block layout:
+      1) role_base + wrapper_delta (cached, stable)
+      2) retrieved propositions/chunks (cached after topic-lock)
+      3) rendered history (cached append-only prefix)
+      4) turn deltas (uncached, volatile)
+    """
+    blocks: list[dict] = []
+    # Haiku 4.5 minimum is ~2048 actual tokens. Our estimate is len/4 and often
+    # overshoots vs the tokenizer on structured/repetitive text, so require a comfortable margin.
+    cache_min_tokens = 4000
+    cached_primary = "\n\n".join(part for part in [role_base, wrapper_delta, chunks, history] if part)
+
+    # Anthropic prompt caching requires a sufficiently large cacheable prefix.
+    # If the stable block is still too small, temporarily promote turn_deltas
+    # into the cached block so cache writes/reads can happen instead of zeroing out.
+    # Prefix matching still reuses the unchanged leading bytes across turns.
+    if turn_deltas and _estimate_tokens(cached_primary) < cache_min_tokens:
+        cached_primary = "\n\n".join(part for part in [cached_primary, turn_deltas] if part)
+        turn_deltas = ""
+
+    if cached_primary:
+        blocks.append({"type": "text", "text": cached_primary, "cache_control": {"type": "ephemeral"}})
+
+    if turn_deltas:
+        blocks.append({"type": "text", "text": turn_deltas})
     return blocks
 
 
-def _cache_suffix_message(messages: list) -> list:
-    """
-    Add cache_control to the final message payload block so Anthropic can cache
-    the prefix and only bill the changing suffix on subsequent calls.
-    """
-    if not messages:
-        return messages
+def _estimate_tokens(text: str) -> int:
+    """Cheap token estimate for debug visibility (~4 chars/token)."""
+    if not text:
+        return 0
+    return max(1, int(len(text) / 4))
 
-    result = [dict(m) if isinstance(m, dict) else m for m in messages]
-    idx = len(result) - 1
-    if not isinstance(result[idx], dict):
-        return result
 
-    msg = dict(result[idx])
-    content = msg.get("content", "")
-    if isinstance(content, str):
-        msg["content"] = [{
-            "type": "text",
-            "text": content,
-            "cache_control": {"type": "ephemeral"},
-        }]
-    elif isinstance(content, list) and content:
-        new_content = []
-        for i, block in enumerate(content):
-            if isinstance(block, dict):
-                b = dict(block)
-                if (
-                    i == len(content) - 1
-                    and b.get("type") == "text"
-                    and "cache_control" not in b
-                ):
-                    b["cache_control"] = {"type": "ephemeral"}
-                new_content.append(b)
-            else:
-                new_content.append(block)
-        msg["content"] = new_content
-
-    result[idx] = msg
-    return result
+def _trace_input_hash(system_text: str, messages: list[dict]) -> str:
+    payload = system_text + "\n\n" + json.dumps(messages, sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
 
 class TeacherAgent:
@@ -125,11 +146,14 @@ class TeacherAgent:
         else:
             tod = "evening"
 
-        system = cfg.prompts.teacher_rapport.format(weak_topics=topics_str, time_of_day=tod)
+        system = cfg.prompts.teacher_rapport.format(
+            weak_topics=topics_str, time_of_day=tod, **_domain_prompt_vars()
+        )
         return self._call(
             user_msg="Start the session.",
             state=state,
-            system=system,
+            role_base=getattr(cfg.prompts, "teacher_base", ""),
+            wrapper_delta=getattr(cfg.prompts, "teacher_rapport_delta", system),
             wrapper_name="teacher.draft_rapport",
         )
 
@@ -141,16 +165,19 @@ class TeacherAgent:
         """
         chunks = state.get("retrieved_chunks", [])
         chunks_str = _format_chunks(chunks)
-        system = cfg.prompts.teacher_topic_engagement.format(retrieved_chunks=chunks_str)
+        system = cfg.prompts.teacher_topic_engagement.format(
+            retrieved_chunks=chunks_str, **_domain_prompt_vars()
+        )
         topic = ""
         for msg in reversed(state.get("messages", [])):
             if msg.get("role") == "student":
                 topic = msg.get("content", "")
                 break
         raw = self._call(
-            user_msg=topic or "The student has named an anatomy topic.",
+            user_msg=topic or f"The student has named a {getattr(cfg.domain, 'name', 'domain')} topic.",
             state=state,
-            system=system,
+            role_base=getattr(cfg.prompts, "teacher_base", ""),
+            wrapper_delta=getattr(cfg.prompts, "teacher_topic_engagement_delta", system),
             wrapper_name="teacher.draft_topic_engagement",
         )
         parsed = _extract_json_object(raw)
@@ -165,9 +192,9 @@ class TeacherAgent:
                     if s:
                         options.append(s)
 
-        # Normalize and enforce 3-4 distinct options.
+        # Normalize and deduplicate options.
         deduped: list[str] = []
-        seen = set()
+        seen: set[str] = set()
         for opt in options:
             key = _normalize_text(opt)
             if key and key not in seen:
@@ -175,28 +202,49 @@ class TeacherAgent:
                 deduped.append(opt)
         options = deduped[:4]
 
-        if not question:
-            topic_label = topic.strip() if topic else "this anatomy area"
-            question = (
-                f"{topic_label} is a great focus. Choose one specific angle to start with."
-            )
-
+        # If LLM returned fewer than 3 valid options, retry once with an explicit count reminder.
         if len(options) < 3:
+            retry_system = cfg.prompts.teacher_topic_engagement.format(
+                retrieved_chunks=chunks_str, **_domain_prompt_vars()
+            ) + "\n\nIMPORTANT: You must return EXACTLY 3 to 4 distinct options in the 'options' array."
+            retry_raw = self._call(
+                user_msg=topic or "The student has named a topic.",
+                state=state,
+                role_base=getattr(cfg.prompts, "teacher_base", ""),
+                wrapper_delta=getattr(cfg.prompts, "teacher_topic_engagement_delta", retry_system),
+                wrapper_name="teacher.draft_topic_engagement_retry",
+            )
+            retry_parsed = _extract_json_object(retry_raw)
+            if retry_parsed is not None:
+                retry_options_raw = retry_parsed.get("options", [])
+                retry_options: list[str] = []
+                if isinstance(retry_options_raw, list):
+                    for opt in retry_options_raw:
+                        s = str(opt or "").strip()
+                        if s:
+                            retry_options.append(s)
+                retry_deduped: list[str] = []
+                retry_seen: set[str] = set()
+                for opt in retry_options:
+                    key = _normalize_text(opt)
+                    if key and key not in retry_seen:
+                        retry_seen.add(key)
+                        retry_deduped.append(opt)
+                if len(retry_deduped) >= 3:
+                    options = retry_deduped[:4]
+                    if not question:
+                        question = str(retry_parsed.get("question", "") or "").strip()
+                    raw = retry_raw
+
+        if not question:
             topic_label = topic.strip() if topic else "this topic"
-            options = [
-                f"{topic_label}: primary function and movement role",
-                f"{topic_label}: innervation and key pathways",
-                f"{topic_label}: clinical exam findings and OT relevance",
-                f"{topic_label}: common injury patterns and functional impact",
-            ][:4]
+            question = f"{topic_label} covers several areas. Which angle would you like to start with?"
 
         # Keep tutor text clean: UI renders option cards separately.
-        message = question
-
         return {
             "question": question,
             "options": options,
-            "message": message.strip(),
+            "message": question,
             "raw": raw,
         }
 
@@ -222,10 +270,7 @@ class TeacherAgent:
         chunks_str = _format_chunks(chunks)
 
         history = state.get("messages", [])
-        max_history = int(getattr(cfg.session, "prompt_history_messages", 12))
-        if max_history > 0:
-            history = history[-max_history:]
-        conversation_history = _format_messages(history)
+        conversation_history = render_history(history)
 
         last_student_msg = ""
         for msg in reversed(history):
@@ -241,13 +286,17 @@ class TeacherAgent:
             dean_critique=dean_critique,
             hint_level=state.get("hint_level", 1),
             max_hints=state.get("max_hints", 3),
+            locked_question=state.get("locked_question", ""),
             conversation_history=conversation_history,
+            **_domain_prompt_vars(),
         )
 
         return self._call(
-            static=cfg.prompts.teacher_socratic_static,
+            role_base=getattr(cfg.prompts, "teacher_base", ""),
+            wrapper_delta=getattr(cfg.prompts, "teacher_socratic_delta", cfg.prompts.teacher_socratic_static),
             chunks=chunks_block,
-            dynamic=dynamic,
+            history=conversation_history,
+            turn_deltas=dynamic,
             user_msg=last_student_msg or "Continue.",
             state=state,
             wrapper_name="teacher.draft_socratic",
@@ -258,9 +307,13 @@ class TeacherAgent:
         Ask whether the student wants to do an optional clinical application question.
         """
         return self._call(
-            static=cfg.prompts.teacher_clinical_opt_in_static,
-            dynamic=cfg.prompts.teacher_clinical_opt_in_dynamic.format(
-                locked_answer=state.get("locked_answer", "")
+            role_base=getattr(cfg.prompts, "teacher_base", ""),
+            wrapper_delta=getattr(
+                cfg.prompts, "teacher_clinical_opt_in_delta", cfg.prompts.teacher_clinical_opt_in_static
+            ),
+            turn_deltas=cfg.prompts.teacher_clinical_opt_in_dynamic.format(
+                locked_answer=state.get("locked_answer", ""),
+                **_domain_prompt_vars(),
             ),
             user_msg="Ask if the student wants the optional clinical question.",
             state=state,
@@ -274,20 +327,30 @@ class TeacherAgent:
         """
         chunks_str = _format_chunks(state.get("retrieved_chunks", []))
         return self._call(
-            static=cfg.prompts.teacher_clinical_static,
+            role_base=getattr(cfg.prompts, "teacher_base", ""),
+            wrapper_delta=getattr(cfg.prompts, "teacher_clinical_delta", cfg.prompts.teacher_clinical_static),
             chunks=cfg.prompts.teacher_clinical_chunks.format(retrieved_chunks=chunks_str),
-            dynamic=cfg.prompts.teacher_clinical_dynamic.format(
+            turn_deltas=cfg.prompts.teacher_clinical_dynamic.format(
                 locked_answer=state.get("locked_answer", ""),
                 dean_critique=dean_critique or state.get("dean_critique", ""),
+                **_domain_prompt_vars(),
             ),
             user_msg="Ask a clinical application question.",
             state=state,
             wrapper_name="teacher.draft_clinical",
         )
 
-    def _call(self, user_msg: str, state: TutorState | None,
-              wrapper_name: str = "", system: str = "", static: str = "",
-              chunks: str = "", dynamic: str = "") -> str:
+    def _call(
+        self,
+        user_msg: str,
+        state: TutorState | None,
+        wrapper_name: str = "",
+        role_base: str = "",
+        wrapper_delta: str = "",
+        chunks: str = "",
+        history: str = "",
+        turn_deltas: str = "",
+    ) -> str:
         """
         Shared Anthropic API call for all Teacher wrappers.
         Updates state["debug"] if state is provided.
@@ -297,14 +360,29 @@ class TeacherAgent:
             state:        TutorState (for debug tracking). None during rapport (state not yet set).
             wrapper_name: Name of calling wrapper (for turn_trace logging)
         """
-        if static:
-            system_blocks = _cached_system(static, chunks, dynamic)
-            system_text = static + ("\n\n" + chunks if chunks else "") + ("\n\n---\n\n" + dynamic if dynamic else "")
-        else:
-            system_blocks = _cached_system(system)
-            system_text = system
-
-        messages = _cache_suffix_message([{"role": "user", "content": user_msg}])
+        system_blocks = _cached_system(
+            _apply_domain_vars(role_base),
+            _apply_domain_vars(wrapper_delta),
+            _apply_domain_vars(chunks),
+            history,
+            _apply_domain_vars(turn_deltas),
+        )
+        system_text = "\n\n---\n\n".join(b.get("text", "") for b in system_blocks)
+        system_block_debug = []
+        cached_est_tokens = 0
+        for idx, block in enumerate(system_blocks, start=1):
+            text = str(block.get("text", "") or "")
+            est = _estimate_tokens(text)
+            cached = bool(block.get("cache_control"))
+            if cached:
+                cached_est_tokens += est
+            system_block_debug.append({
+                "index": idx,
+                "cached": cached,
+                "est_tokens": est,
+            })
+        messages = [{"role": "user", "content": user_msg}]
+        input_hash = _trace_input_hash(system_text, messages)
 
         t0 = time.time()
         resp = self.client.messages.create(
@@ -335,6 +413,8 @@ class TeacherAgent:
             state["debug"]["cost_usd"] = float(state["debug"].get("cost_usd", 0.0)) + cost
             state["debug"]["turn_trace"].append({
                 "wrapper": wrapper_name,
+                "decision_effect": None,
+                "input_hash": input_hash,
                 "elapsed_s": round(elapsed, 2),
                 "in_tok": in_tok,
                 "out_tok": out_tok,
@@ -342,6 +422,8 @@ class TeacherAgent:
                 "cache_write": cache_write,
                 "cost_usd": round(cost, 5),
                 "s_per_tok": round(tpt, 4),
+                "cached_est_tokens": cached_est_tokens,
+                "system_blocks": system_block_debug,
                 "system_prompt": system_text,
                 "messages_sent": messages,
                 "response_text": response_text,
@@ -362,17 +444,6 @@ def _format_chunks(chunks: list[dict]) -> str:
         location = " > ".join(filter(None, [section, subsection]))
         parts.append(f"[{i}] {location}\n{chunk.get('text', '')}")
     return "\n\n".join(parts)
-
-
-def _format_messages(messages: list[dict]) -> str:
-    if not messages:
-        return "(no conversation yet)"
-    parts = []
-    for msg in messages:
-        role = msg.get("role", "unknown").capitalize()
-        content = msg.get("content", "")
-        parts.append(f"{role}: {content}")
-    return "\n".join(parts)
 
 
 def _extract_json_object(text: str) -> dict | None:

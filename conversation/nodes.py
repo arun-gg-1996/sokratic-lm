@@ -16,19 +16,23 @@ The graph in graph.py wires these together with edges from edges.py.
 """
 
 import json
-import re
 from pathlib import Path
 from conversation.state import TutorState
 from conversation.summarizer import maybe_summarize
+from retrieval.topic_suggester import TopicSuggester
 from config import cfg
+
+_topic_suggester = TopicSuggester()
 
 
 def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
     """
     Phase 1 — Rapport.
 
-    - Load student memory to seed weak_topics.
-    - Teacher generates personalized greeting (teacher_rapport prompt).
+    - Memory is stubbed out (no mem0 for now); weak_topics always starts empty.
+    - TopicSuggester provides initial topic suggestions from textbook_structure.json
+      for new students (weak_topics empty).
+    - Teacher generates personalized greeting.
     - Transition phase to "tutoring".
 
     Note: teacher not dean — rapport never uses Dean.
@@ -37,8 +41,13 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
     if state.get("phase") != "rapport":
         return {}
 
-    student_id = state["student_id"]
-    weak_topics = memory_manager.load(student_id)
+    # Memory is stubbed — always empty for now
+    weak_topics: list[dict] = []
+
+    # For new students, seed initial_suggestions from textbook structure
+    initial_suggestions: list[str] = []
+    if not weak_topics:
+        initial_suggestions = _topic_suggester.suggest(n=6)
 
     greeting = teacher.draft_rapport(weak_topics, state=state)
 
@@ -47,6 +56,7 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
 
     return {
         "weak_topics": weak_topics,
+        "initial_suggestions": initial_suggestions,
         "messages": messages,
         "phase": "tutoring",
     }
@@ -67,15 +77,58 @@ def dean_node(state: TutorState, dean, teacher) -> dict:
     if not has_student_msg:
         return {}
 
+    # Archive the previous turn's trace (if any) into all_turn_traces before
+    # wiping turn_trace. state.py declares all_turn_traces but nothing was
+    # writing it — debug history was being lost. Cap to last 50 turns so
+    # long sessions don't blow up memory.
+    prior_trace = list(state["debug"].get("turn_trace", []) or [])
+    if prior_trace:
+        att = list(state["debug"].get("all_turn_traces", []) or [])
+        att.append({
+            "turn": int(state.get("turn_count", 0)),
+            "phase": state.get("phase", ""),
+            "trace": prior_trace,
+        })
+        if len(att) > 50:
+            att = att[-50:]
+        state["debug"]["all_turn_traces"] = att
+
     # Reset turn_trace at start of each new student turn
     state["debug"]["turn_trace"] = []
     state["debug"]["current_node"] = "dean_node"
 
+    # Invariant: tutoring should not continue without both anchors once topic is confirmed.
+    if (
+        state.get("phase") == "tutoring"
+        and state.get("topic_confirmed", False)
+        and (not state.get("locked_question") or not state.get("locked_answer"))
+    ):
+        state["debug"]["turn_trace"].append({
+            "wrapper": "dean_node.invariant_violation",
+            "result": (
+                f"tutoring_without_anchors "
+                f"locked_question={bool(state.get('locked_question'))} "
+                f"locked_answer={bool(state.get('locked_answer'))}"
+            ),
+        })
+
     # Run the Dean-Teacher loop for this turn
     partial_update = dean.run_turn(state, teacher)
 
-    # Increment turn count
-    turn_count = state.get("turn_count", 0) + 1
+    # Increment turn_count ONLY on turns where real tutoring happened.
+    # Early returns (topic scoping reprompt, anchor-fail reprompt, unselected
+    # options) should NOT burn a tutoring turn budget from the student.
+    topic_confirmed_now = bool(
+        partial_update.get("topic_confirmed", state.get("topic_confirmed", False))
+    )
+    had_anchors = bool(state.get("locked_question")) and bool(state.get("locked_answer"))
+    anchors_after = bool(partial_update.get("locked_question", state.get("locked_question"))) \
+        and bool(partial_update.get("locked_answer", state.get("locked_answer")))
+    is_tutoring_turn = topic_confirmed_now and (had_anchors or anchors_after)
+
+    turn_count = state.get("turn_count", 0)
+    if is_tutoring_turn:
+        turn_count += 1
     partial_update["turn_count"] = turn_count
 
     # Fire summarizer when approaching the turn limit
@@ -133,14 +186,19 @@ def assessment_node(state: TutorState, dean, teacher) -> dict:
             "messages": messages,
             "assessment_turn": 1,
             "clinical_opt_in": None,
+            "pending_user_choice": {
+                "kind": "opt_in",
+                "options": ["yes", "no"],
+            },
             "phase": "assessment",
             "debug": state["debug"],
         }
 
     elif reached and assessment_turn == 1:
         # Step 2: parse yes/no on optional clinical question.
-        student_msg = _latest_student_message(messages)
-        if _is_affirmative(student_msg):
+        student_msg = _latest_student_message(messages).strip().lower()
+        intent = _classify_opt_in(student_msg)
+        if intent == "yes":
             state["dean_critique"] = ""
             draft = teacher.draft_clinical(state, dean_critique="")
             quality = dean._quality_check_call(state, draft, phase="assessment")
@@ -161,6 +219,9 @@ def assessment_node(state: TutorState, dean, teacher) -> dict:
                         "wrapper": "dean.assessment_fallback",
                         "result": "Clinical question fallback used (no valid revised_teacher_draft)",
                     })
+            # Clinical drafts skip the tutoring-phase deterministic check, so
+            # enforce banned-prefix rule explicitly here before emitting.
+            clinical_q = _strip_banned_prefixes(clinical_q, state)
             max_clinical_turns = int(getattr(cfg.session, "clinical_max_turns", 3))
             messages.append({"role": "tutor", "content": clinical_q, "phase": "assessment"})
             return {
@@ -173,48 +234,62 @@ def assessment_node(state: TutorState, dean, teacher) -> dict:
                 "clinical_state": None,
                 "clinical_confidence": 0.0,
                 "clinical_history": [],
+                "pending_user_choice": {},
                 "phase": "assessment",
                 "dean_critique": "",
                 "dean_retry_count": 0,
                 "debug": state["debug"],
             }
 
-        if _is_negative(student_msg):
+        if intent == "no":
             # Student opted out: skip clinical and go straight to mastery summary.
             state["clinical_opt_in"] = False
-            tiers = _compute_mastery_tiers(state)
-            state.update(tiers)
-            weak_topics = list(state.get("weak_topics", []))
-            if state.get("mastery_tier") in {"developing", "needs_review"}:
-                weak_topics = _upsert_weak_topic(
-                    weak_topics,
-                    _session_topic_name(state),
-                    difficulty="moderate" if state.get("mastery_tier") == "developing" else "hard",
-                    bump=1,
-                )
-                state["weak_topics"] = weak_topics
-            mastery_msg = dean._assessment_call(state)
-            messages.append({"role": "tutor", "content": mastery_msg, "phase": "memory_update"})
-            _log_conversation(state, messages)
+            return _close_session_with_dean(state, dean, messages)
+
+        # Ambiguous — treat a long substantive reply as an implicit "yes" and
+        # proceed into clinical so we don't loop on the opt-in prompt.
+        if len(student_msg.split()) >= 6:
+            state["debug"].setdefault("turn_trace", []).append({
+                "wrapper": "assessment.opt_in_implicit_yes",
+                "result": "long reply treated as yes",
+            })
+            draft = teacher.draft_clinical(state, dean_critique="")
+            quality = dean._quality_check_call(state, draft, phase="assessment")
+            if quality.get("pass", False):
+                clinical_q = draft
+            else:
+                revised = (quality.get("revised_teacher_draft") or "").strip()
+                clinical_q = revised or dean._assessment_clinical_fallback(state)
+            max_clinical_turns = int(getattr(cfg.session, "clinical_max_turns", 3))
+            messages.append({"role": "tutor", "content": clinical_q, "phase": "assessment"})
             return {
                 "messages": messages,
-                "assessment_turn": 3,
-                "clinical_opt_in": False,
-                "core_mastery_tier": state.get("core_mastery_tier", "not_assessed"),
-                "clinical_mastery_tier": state.get("clinical_mastery_tier", "not_assessed"),
-                "mastery_tier": state.get("mastery_tier", "not_assessed"),
-                "weak_topics": state.get("weak_topics", []),
+                "assessment_turn": 2,
+                "clinical_opt_in": True,
+                "clinical_turn_count": 0,
+                "clinical_max_turns": max_clinical_turns,
+                "clinical_completed": False,
+                "clinical_state": None,
+                "clinical_confidence": 0.0,
+                "clinical_history": [],
+                "pending_user_choice": {},
                 "phase": "assessment",
+                "dean_critique": "",
+                "dean_retry_count": 0,
                 "debug": state["debug"],
             }
 
-        # Ambiguous response — ask again.
+        # Genuinely ambiguous short reply — ask again once.
         clarify_q = teacher.draft_clinical_opt_in(state)
         messages.append({"role": "tutor", "content": clarify_q, "phase": "assessment"})
         return {
             "messages": messages,
             "assessment_turn": 1,
             "clinical_opt_in": None,
+            "pending_user_choice": {
+                "kind": "opt_in",
+                "options": ["yes", "no"],
+            },
             "phase": "assessment",
             "debug": state["debug"],
         }
@@ -244,42 +319,13 @@ def assessment_node(state: TutorState, dean, teacher) -> dict:
 
         if clinical_pass:
             state["clinical_completed"] = True
-            tiers = _compute_mastery_tiers(state)
-            state.update(tiers)
-            weak_topics = list(state.get("weak_topics", []))
-            if state.get("mastery_tier") in {"developing", "needs_review"}:
-                weak_topics = _upsert_weak_topic(
-                    weak_topics,
-                    _session_topic_name(state),
-                    difficulty="moderate" if state.get("mastery_tier") == "developing" else "hard",
-                    bump=1,
-                )
-                state["weak_topics"] = weak_topics
-            mastery_msg = dean._assessment_call(state)
-            messages.append({"role": "tutor", "content": mastery_msg, "phase": "memory_update"})
-            _log_conversation(state, messages)
-            return {
-                "messages": messages,
-                "assessment_turn": 3,
-                "phase": "assessment",
-                "clinical_opt_in": True,
-                "clinical_completed": True,
-                "clinical_turn_count": clinical_turn_count,
-                "clinical_max_turns": clinical_max_turns,
-                "clinical_state": state.get("clinical_state"),
-                "clinical_confidence": state.get("clinical_confidence", 0.0),
-                "clinical_history": clinical_history,
-                "core_mastery_tier": state.get("core_mastery_tier", "not_assessed"),
-                "clinical_mastery_tier": state.get("clinical_mastery_tier", "not_assessed"),
-                "mastery_tier": state.get("mastery_tier", "not_assessed"),
-                "weak_topics": state.get("weak_topics", []),
-                "debug": state["debug"],
-            }
+            return _close_session_with_dean(state, dean, messages)
 
         if clinical_turn_count < clinical_max_turns:
             follow_up = str(eval_result.get("feedback_message", "") or "").strip()
             if not follow_up:
                 follow_up = dean._assessment_clinical_followup_fallback(state)
+            follow_up = _strip_banned_prefixes(follow_up, state)
             messages.append({"role": "tutor", "content": follow_up, "phase": "assessment"})
             return {
                 "messages": messages,
@@ -292,91 +338,31 @@ def assessment_node(state: TutorState, dean, teacher) -> dict:
                 "clinical_state": state.get("clinical_state"),
                 "clinical_confidence": state.get("clinical_confidence", 0.0),
                 "clinical_history": clinical_history,
+                "pending_user_choice": {},
                 "debug": state["debug"],
             }
 
         # Max clinical turns reached: close with coaching summary.
         state["clinical_completed"] = False
-        tiers = _compute_mastery_tiers(state)
-        state.update(tiers)
-        weak_topics = list(state.get("weak_topics", []))
-        if state.get("mastery_tier") in {"developing", "needs_review"}:
-            weak_topics = _upsert_weak_topic(
-                weak_topics,
-                _session_topic_name(state),
-                difficulty="moderate" if state.get("mastery_tier") == "developing" else "hard",
-                bump=1,
-            )
-            state["weak_topics"] = weak_topics
-        mastery_msg = dean._assessment_call(state)
-        messages.append({"role": "tutor", "content": mastery_msg, "phase": "memory_update"})
-        _log_conversation(state, messages)
-        return {
-            "messages": messages,
-            "assessment_turn": 3,
-            "phase": "assessment",
-            "clinical_opt_in": True,
-            "clinical_completed": False,
-            "clinical_turn_count": clinical_turn_count,
-            "clinical_max_turns": clinical_max_turns,
-            "clinical_state": state.get("clinical_state"),
-            "clinical_confidence": state.get("clinical_confidence", 0.0),
-            "clinical_history": clinical_history,
-            "core_mastery_tier": state.get("core_mastery_tier", "not_assessed"),
-            "clinical_mastery_tier": state.get("clinical_mastery_tier", "not_assessed"),
-            "mastery_tier": state.get("mastery_tier", "not_assessed"),
-            "weak_topics": state.get("weak_topics", []),
-            "debug": state["debug"],
-        }
+        return _close_session_with_dean(state, dean, messages)
 
     else:
         # Reveal path (did not reach answer)
         state["clinical_opt_in"] = False
-        tiers = _compute_mastery_tiers(state)
-        state.update(tiers)
-        reveal_msg = dean._assessment_call(state)
-        messages.append({"role": "tutor", "content": reveal_msg, "phase": "memory_update"})
-
-        # Increment failure_count for this topic in weak_topics (did_not_reach path).
-        weak_topics = list(state.get("weak_topics", []))
-        topic_name = _session_topic_name(state)
-        weak_topics = _upsert_weak_topic(weak_topics, topic_name, difficulty="hard", bump=1)
-
-        _log_conversation(state, messages)
-
-        return {
-            "messages": messages,
-            "assessment_turn": 3,
-            "phase": "assessment",
-            "clinical_opt_in": False,
-            "core_mastery_tier": state.get("core_mastery_tier", "not_assessed"),
-            "clinical_mastery_tier": state.get("clinical_mastery_tier", "not_assessed"),
-            "mastery_tier": state.get("mastery_tier", "not_assessed"),
-            "weak_topics": weak_topics,
-            "debug": state["debug"],
-        }
+        return _close_session_with_dean(state, dean, messages)
 
 
 def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
     """
     Phase 4 — Memory Update.
 
-    - Dean generates session summary via _memory_summary_call.
-    - memory_manager.flush() writes summary to mem0.
-    - Returns phase = "memory_update" to signal session end.
+    Memory persistence is stubbed out for now (no mem0).
+    Returns phase = "memory_update" to signal session end.
     """
     state["debug"]["current_node"] = "memory_update_node"
-
-    summary = dean._memory_summary_call(state)
-    persisted = memory_manager.flush(state["student_id"], state, summary_text=summary)
-    flush_status = getattr(
-        memory_manager,
-        "last_flush_status",
-        "persisted_to_mem0_qdrant" if persisted else "memory_persist_skipped_or_failed",
-    )
     state["debug"]["turn_trace"].append({
         "wrapper": "memory_manager.flush",
-        "result": flush_status,
+        "result": "stubbed_no_op",
     })
 
     return {
@@ -392,6 +378,7 @@ def _log_conversation(state: TutorState, messages: list[dict]) -> None:
         out_dir.mkdir(parents=True, exist_ok=True)
         conv_data = {
             "student_id": state["student_id"],
+            "locked_question": state.get("locked_question", ""),
             "locked_answer": state.get("locked_answer", ""),
             "student_reached_answer": state.get("student_reached_answer", False),
             "hint_level": state.get("hint_level", 1),
@@ -412,6 +399,53 @@ def _log_conversation(state: TutorState, messages: list[dict]) -> None:
         pass  # non-fatal
 
 
+def _close_session_with_dean(state: TutorState, dean, messages: list[dict]) -> dict:
+    """
+    Single closeout path for both reached and unreached outcomes.
+    Uses Dean's batched close-session evaluator and updates weak_topics from final tier.
+    """
+    closeout = dean._close_session_call(state)
+    state["core_mastery_tier"] = closeout.get("core_mastery_tier", "not_assessed")
+    state["clinical_mastery_tier"] = closeout.get("clinical_mastery_tier", "not_assessed")
+    state["mastery_tier"] = closeout.get("mastery_tier", "not_assessed")
+    state["grading_rationale"] = closeout.get("grading_rationale", "")
+    state["session_memory_summary"] = closeout.get("memory_summary", "")
+
+    # Update weak topics for developing/needs_review outcomes.
+    weak_topics = list(state.get("weak_topics", []))
+    if state.get("mastery_tier") in {"developing", "needs_review"}:
+        topic_name = _session_topic_name(state)
+        difficulty = "moderate" if state.get("mastery_tier") == "developing" else "hard"
+        weak_topics = _upsert_weak_topic(weak_topics, topic_name, difficulty=difficulty, bump=1)
+        state["weak_topics"] = weak_topics
+
+    final_msg = str(closeout.get("student_facing_message", "") or "").strip()
+    if final_msg:
+        messages.append({"role": "tutor", "content": final_msg, "phase": "memory_update"})
+    _log_conversation(state, messages)
+
+    return {
+        "messages": messages,
+        "assessment_turn": 3,
+        "phase": "assessment",
+        "pending_user_choice": {},
+        "clinical_opt_in": state.get("clinical_opt_in"),
+        "clinical_completed": state.get("clinical_completed", False),
+        "clinical_turn_count": state.get("clinical_turn_count", 0),
+        "clinical_max_turns": state.get("clinical_max_turns", 3),
+        "clinical_state": state.get("clinical_state"),
+        "clinical_confidence": state.get("clinical_confidence", 0.0),
+        "clinical_history": state.get("clinical_history", []),
+        "core_mastery_tier": state.get("core_mastery_tier", "not_assessed"),
+        "clinical_mastery_tier": state.get("clinical_mastery_tier", "not_assessed"),
+        "mastery_tier": state.get("mastery_tier", "not_assessed"),
+        "grading_rationale": state.get("grading_rationale", ""),
+        "session_memory_summary": state.get("session_memory_summary", ""),
+        "weak_topics": state.get("weak_topics", []),
+        "debug": state["debug"],
+    }
+
+
 def _latest_student_message(messages: list[dict]) -> str:
     for msg in reversed(messages):
         if msg.get("role") == "student":
@@ -419,22 +453,66 @@ def _latest_student_message(messages: list[dict]) -> str:
     return ""
 
 
-def _is_affirmative(text: str) -> bool:
-    txt = text.lower().strip()
-    patterns = (
-        r"\byes\b", r"\byeah\b", r"\byep\b", r"\bsure\b", r"\bok\b", r"\bokay\b",
-        r"\bplease do\b", r"\bgo ahead\b", r"\blet'?s do\b", r"\bwhy not\b",
-    )
-    return any(re.search(p, txt) for p in patterns)
+_OPT_IN_YES_PREFIXES = (
+    "yes", "yeah", "yep", "yup", "sure", "ok ", "okay", "alright",
+    "go ahead", "let's", "lets go", "i'll try", "ill try", "i would",
+    "absolutely", "definitely", "please", "ready", "sounds good",
+)
+_OPT_IN_NO_PREFIXES = (
+    "no", "nope", "nah", "skip", "pass", "not now", "maybe later",
+    "i'm good", "im good", "not really", "not today",
+)
 
 
-def _is_negative(text: str) -> bool:
-    txt = text.lower().strip()
-    patterns = (
-        r"\bno\b", r"\bnope\b", r"\bnot now\b", r"\bskip\b", r"\bpass\b", r"\blater\b",
-        r"\bdon'?t\b", r"\bno thanks\b", r"\bnot really\b",
-    )
-    return any(re.search(p, txt) for p in patterns)
+_BANNED_LEAD_PREFIXES = (
+    "i can see", "i notice", "i hear you", "that's okay", "that is okay",
+    "i understand", "i see that", "it sounds like", "i hear that",
+)
+
+
+def _strip_banned_prefixes(text: str, state: dict) -> str:
+    """
+    Remove banned empathy/filler lead-ins from clinical drafts.
+
+    The tutoring-phase `_deterministic_tutoring_check` enforces this list,
+    but clinical drafts bypass that check — this function re-applies the rule
+    post-hoc on the assessment path. If the first sentence starts with a
+    banned prefix, drop just that sentence and keep the rest. If stripping
+    empties the text, return the original (fail-open — never emit nothing).
+    """
+    import re as _re
+    if not text:
+        return text
+    lowered = text.strip().lower()
+    if not any(lowered.startswith(p) for p in _BANNED_LEAD_PREFIXES):
+        return text
+    # Split on sentence boundary, drop the first sentence, keep the rest.
+    parts = _re.split(r"(?<=[.!?])\s+", text.strip(), maxsplit=1)
+    remaining = parts[1].strip() if len(parts) >= 2 else ""
+    if not remaining:
+        return text  # fail-open: don't emit empty
+    try:
+        state.setdefault("debug", {}).setdefault("turn_trace", []).append({
+            "wrapper": "assessment._strip_banned_prefix",
+            "result": f"stripped_leading_sentence: {parts[0][:80]!r}",
+        })
+    except Exception:
+        pass
+    return remaining
+
+
+def _classify_opt_in(msg: str) -> str:
+    """Return 'yes', 'no', or 'ambiguous' for an opt-in reply."""
+    m = (msg or "").strip().lower()
+    if not m:
+        return "ambiguous"
+    if m in {"y"}: return "yes"
+    if m in {"n"}: return "no"
+    if any(m.startswith(p) for p in _OPT_IN_YES_PREFIXES):
+        return "yes"
+    if any(m.startswith(p) for p in _OPT_IN_NO_PREFIXES):
+        return "no"
+    return "ambiguous"
 
 
 def _session_topic_name(state: TutorState) -> str:
@@ -451,9 +529,9 @@ def _upsert_weak_topic(weak_topics: list[dict], topic_name: str, difficulty: str
     if not topic_name:
         return weak_topics
     out = list(weak_topics or [])
-    key = topic_name.strip().lower()
+    key = " ".join(topic_name.strip().lower().split())
     for wt in out:
-        wt_topic = str(wt.get("topic", "")).strip().lower()
+        wt_topic = " ".join(str(wt.get("topic", "")).strip().lower().split())
         if wt_topic == key:
             wt["failure_count"] = int(wt.get("failure_count", 0)) + int(max(bump, 1))
             if difficulty and wt.get("difficulty") != "hard":
@@ -465,95 +543,3 @@ def _upsert_weak_topic(weak_topics: list[dict], topic_name: str, difficulty: str
         "failure_count": int(max(bump, 1)),
     })
     return out
-
-
-def _tier_from_score(score: float) -> str:
-    if score >= 0.85:
-        return "strong"
-    if score >= 0.70:
-        return "proficient"
-    if score >= 0.55:
-        return "developing"
-    return "needs_review"
-
-
-def _compute_mastery_tiers(state: TutorState) -> dict:
-    """
-    Tiered grading based on BOTH:
-    - core tutoring performance
-    - clinical application performance (when attempted)
-    """
-    reached = bool(state.get("student_reached_answer", False))
-    hint_level = int(state.get("hint_level", 1))
-    max_hints = int(state.get("max_hints", 3))
-    mastery_conf = float(state.get("student_mastery_confidence", 0.0))
-
-    if not reached:
-        return {
-            "core_mastery_tier": "needs_review",
-            "clinical_mastery_tier": "not_assessed",
-            "mastery_tier": "needs_review",
-        }
-
-    hint_score_map = {
-        1: 1.00,
-        2: 0.80,
-        3: 0.62,
-    }
-    if hint_level > max_hints:
-        core_hint_score = 0.30
-    else:
-        core_hint_score = hint_score_map.get(hint_level, 0.55)
-
-    core_score = (0.65 * core_hint_score) + (0.35 * mastery_conf)
-    core_tier = _tier_from_score(core_score)
-
-    clinical_opt_in = state.get("clinical_opt_in")
-    clinical_history = list(state.get("clinical_history", []))
-    clinical_completed = bool(state.get("clinical_completed", False))
-
-    if clinical_opt_in is not True:
-        return {
-            "core_mastery_tier": core_tier,
-            "clinical_mastery_tier": "not_assessed",
-            "mastery_tier": core_tier,
-        }
-
-    if not clinical_history:
-        clinical_tier = "developing"
-        clinical_score = 0.52
-    else:
-        avg_conf = sum(float(x.get("confidence", 0.0)) for x in clinical_history) / max(len(clinical_history), 1)
-        final_state = str(clinical_history[-1].get("state", "incorrect"))
-        final_pass = bool(clinical_history[-1].get("pass", False))
-        turns = int(state.get("clinical_turn_count", len(clinical_history)))
-
-        if final_state == "correct" and final_pass and clinical_completed:
-            clinical_score = min(1.0, avg_conf + (0.08 if turns <= 2 else 0.0))
-        elif final_state == "partial_correct":
-            clinical_score = min(0.69, avg_conf)
-        else:
-            clinical_score = min(0.49, avg_conf)
-        clinical_tier = _tier_from_score(clinical_score)
-
-    tier_to_num = {
-        "needs_review": 1.0,
-        "developing": 2.0,
-        "proficient": 3.0,
-        "strong": 4.0,
-    }
-    combined = (0.60 * tier_to_num[core_tier]) + (0.40 * tier_to_num[clinical_tier])
-    if combined >= 3.5:
-        mastery_tier = "strong"
-    elif combined >= 2.7:
-        mastery_tier = "proficient"
-    elif combined >= 1.9:
-        mastery_tier = "developing"
-    else:
-        mastery_tier = "needs_review"
-
-    return {
-        "core_mastery_tier": core_tier,
-        "clinical_mastery_tier": clinical_tier,
-        "mastery_tier": mastery_tier,
-    }

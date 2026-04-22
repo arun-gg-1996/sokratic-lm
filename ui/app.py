@@ -294,6 +294,20 @@ def _build_eval_turn_records(messages_display: list[dict], all_turn_traces: list
         turn_no = msg.get("_turn")
         snapshot = msg.get("_state_snapshot", {}) or {}
         turn_trace = _trace_for_turn(all_turn_traces, turn_no, phase=phase)
+        retrieval_events = [
+            e for e in (turn_trace or [])
+            if isinstance(e, dict) and (
+                "retrieval" in e
+                or e.get("wrapper") in {"dean.python_retrieval", "dean.retrieval_query_guard"}
+            )
+        ]
+        lock_events = [
+            e for e in (turn_trace or [])
+            if isinstance(e, dict) and (
+                e.get("wrapper") in {"dean._setup_call", "dean.confidence_score", "dean._setup_local_fallback"}
+                or "locked_answer" in e
+            )
+        ]
         contexts = snapshot.get("retrieved_chunks_for_eval", []) or []
         student_input = _latest_student_before(messages_display, idx)
         tutor_output = msg.get("content", "")
@@ -315,6 +329,8 @@ def _build_eval_turn_records(messages_display: list[dict], all_turn_traces: list
             "mastery_tier": snapshot.get("mastery_tier", "not_assessed"),
             "metrics": msg.get("_metrics", {}) or {},
             "retrieved_contexts": contexts,
+            "retrieval_events": retrieval_events,
+            "lock_events": lock_events,
             "dean_teacher_trace": turn_trace,
             # RAGAS-friendly aliases (no mapping required).
             "ragas": {
@@ -347,6 +363,11 @@ def _build_export_coverage(payload: dict) -> dict:
 
     has_trace_per_turn = all(len(r.get("dean_teacher_trace", [])) > 0 for r in records) if records else False
     has_contexts_per_turn = all(len(r.get("retrieved_contexts", [])) > 0 for r in records if r.get("phase") in {"tutoring", "assessment"}) if records else False
+    has_retrieval_events = all(
+        len(r.get("retrieval_events", [])) > 0
+        for r in records
+        if r.get("phase") in {"tutoring", "assessment"}
+    ) if records else False
     has_perf = bool(perf.get("summary", {}).get("overall", {}).get("calls", 0) >= 0)
 
     return {
@@ -356,6 +377,7 @@ def _build_export_coverage(payload: dict) -> dict:
         "dean_traces_present": len(all_trace) > 0,
         "trace_linked_per_turn": has_trace_per_turn,
         "retrieval_contexts_present_per_turn": has_contexts_per_turn,
+        "retrieval_events_present_per_turn": has_retrieval_events,
         "locked_answer_present": bool(state.get("locked_answer", "")),
         "phase_labels_present": all(bool(r.get("phase")) for r in records) if records else False,
         "metrics_present_per_turn": all(bool(r.get("metrics")) for r in records) if records else False,
@@ -407,9 +429,12 @@ def _build_state_snapshot(state: dict) -> dict:
     eval_chunks = []
     for c in chunks[:5]:
         eval_chunks.append({
+            "chunk_id": c.get("chunk_id", ""),
             "score": c.get("score"),
+            "chapter_title": c.get("chapter_title"),
             "section_title": c.get("section_title"),
             "subsection_title": c.get("subsection_title"),
+            "page": c.get("page"),
             "text": c.get("text", ""),
         })
     return {
@@ -730,6 +755,20 @@ def _inject_ui_styles(debug_mode: bool = False):
             box-shadow: 0 4px 16px rgba(0,0,0,0.05);
             font-size: 0.9rem;
             color: #334155;
+          }}
+          /* Optional clinical choice block: match chat bubble width/alignment */
+          .st-key-clinical_choice_block {{
+            max-width: var(--sok-chat-max-width);
+            margin-left: 0;
+            margin-right: auto;
+          }}
+          .st-key-clinical_choice_block p {{
+            color: var(--sok-muted);
+            font-size: 0.9rem;
+            margin-bottom: 0.35rem;
+          }}
+          .st-key-clinical_choice_block [data-testid="stButton"] > button {{
+            min-height: 2.45rem;
           }}
           [data-testid="stButton"] > button,
           [data-testid="stDownloadButton"] > button {{
@@ -1244,7 +1283,12 @@ def _render_topic_option_cards(state: dict) -> str | None:
         return None
     if state.get("topic_confirmed", False):
         return None
-    options = state.get("topic_options", []) or []
+    pending = state.get("pending_user_choice", {}) or {}
+    options = []
+    if isinstance(pending, dict) and pending.get("kind") == "topic":
+        options = list(pending.get("options", []) or [])
+    if not options:
+        options = state.get("topic_options", []) or []
     if not options:
         return None
 
@@ -1254,7 +1298,7 @@ def _render_topic_option_cards(state: dict) -> str | None:
     with cards_col:
         for idx, opt in enumerate(options):
             if st.button(
-                f"{idx + 1}. {opt}",
+                str(opt),
                 key=f"topic_option_{idx}",
                 use_container_width=True,
             ):
@@ -1384,20 +1428,25 @@ def main():
             st.caption("Memory updated. Start a new session when ready.")
         else:
             assessment_turn = state.get("assessment_turn", 0)
+            pending_choice = state.get("pending_user_choice", {}) or {}
             scenario = None
 
-            if phase == "assessment" and state.get("student_reached_answer") and assessment_turn == 1:
-                st.markdown(
-                    "<div class='sok-clinical-card'>"
-                    "Apply this concept clinically? Choose one to continue."
-                    "</div>",
-                    unsafe_allow_html=True,
-                )
-                c_yes, c_skip = st.columns([1, 1])
-                if c_yes.button("Yes, clinical question", use_container_width=True):
-                    scenario = "Yes, ask me a clinical application question."
-                if c_skip.button("Skip clinical question", use_container_width=True):
-                    scenario = "No, skip the clinical question."
+            if (
+                phase == "assessment"
+                and state.get("student_reached_answer")
+                and assessment_turn == 1
+                and isinstance(pending_choice, dict)
+                and pending_choice.get("kind") == "opt_in"
+            ):
+                with st.container(key="clinical_choice_block"):
+                    cards_col, _spacer = st.columns([3, 2], gap="small")
+                    with cards_col:
+                        st.caption("Choose one option to continue.")
+                        c_yes, c_skip = st.columns([1, 1], gap="small")
+                        if c_yes.button("Yes, clinical question", use_container_width=True, key="clinical_yes_btn"):
+                            scenario = "yes"
+                        if c_skip.button("Skip clinical question", use_container_width=True, key="clinical_skip_btn"):
+                            scenario = "no"
             elif phase == "tutoring" and debug_mode:
                 b_cols = st.columns(4)
                 if b_cols[0].button("Correct", use_container_width=True):
@@ -1419,18 +1468,32 @@ def main():
                 _send_student_message(topic_choice)
                 st.rerun()
 
-            input_prompt = (
-                "Reply yes/no for optional clinical question..."
-                if phase == "assessment" and state.get("student_reached_answer") and assessment_turn == 1
-                else "Pick a focus card, or write something else you want to explore..."
-                if (phase == "tutoring" and not state.get("topic_confirmed", False) and (state.get("topic_options") or []))
-                else "Type your response..."
+            # During deterministic choice moments, keep UI clean: buttons only.
+            is_opt_in_choice = (
+                phase == "assessment"
+                and state.get("student_reached_answer")
+                and assessment_turn == 1
+                and isinstance(pending_choice, dict)
+                and pending_choice.get("kind") == "opt_in"
             )
-            # st.chat_input for all modes — clears itself automatically after submit
-            user_input = st.chat_input(input_prompt)
-            if user_input:
-                _send_student_message(user_input)
-                st.rerun()
+            is_topic_choice = (
+                phase == "tutoring"
+                and not state.get("topic_confirmed", False)
+                and isinstance(pending_choice, dict)
+                and pending_choice.get("kind") == "topic"
+                and bool((pending_choice.get("options", []) or []))
+            )
+            if not (is_opt_in_choice or is_topic_choice):
+                input_prompt = (
+                    "Pick a focus card, or write something else you want to explore..."
+                    if (phase == "tutoring" and not state.get("topic_confirmed", False) and (state.get("topic_options") or []))
+                    else "Type your response..."
+                )
+                # st.chat_input for normal modes — clears itself automatically after submit
+                user_input = st.chat_input(input_prompt)
+                if user_input:
+                    _send_student_message(user_input)
+                    st.rerun()
 
     if debug_mode and right_col is not None:
         with right_col:

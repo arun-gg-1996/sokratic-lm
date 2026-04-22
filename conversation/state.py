@@ -33,14 +33,19 @@ class TutorState(TypedDict):
     # Each dict: {text, chapter_title, section_title, subsection_title, page, score}
     retrieved_chunks: list[dict]
 
-    # --- Answer management ---
-    # Extracted by Dean from the top retrieved chunk on the first specific student question.
+    # --- Question/answer anchors ---
+    # Both are set once by Dean immediately after topic lock.
+    # Immutable for the remainder of the session.
+    # locked_question is shown to Teacher to keep Socratic guidance on target.
+    # locked_answer is not shown to Teacher during tutoring.
+    locked_question: str
+    # Extracted by Dean from retrieved propositions/chunks after topic lock.
     # Never shown to Teacher (except in draft_clinical during assessment phase).
-    # Immutable once set for this topic. Empty string means not yet locked.
+    # Empty string means not yet locked.
     locked_answer: str
 
     # --- Hint tracking ---
-    hint_level: int                 # current level, starts at 1
+    hint_level: int                 # current level, starts at 0 (pre-lock)
     max_hints: int                  # from cfg.session.max_hints
 
     # --- Turn tracking ---
@@ -79,6 +84,8 @@ class TutorState(TypedDict):
     core_mastery_tier: str
     clinical_mastery_tier: str
     mastery_tier: str
+    grading_rationale: str
+    session_memory_summary: str
 
     # --- Memory ---
     # Seeded from mem0 at session start. Used during rapport to suggest topic.
@@ -110,6 +117,8 @@ class TutorState(TypedDict):
     topic_question: str
     # Final selected scoped topic used for retrieval/tutoring.
     topic_selection: str
+    # UI deterministic-choice helper for card/button flows.
+    pending_user_choice: dict
 
     # --- Help abuse tracking ---
     # Counts consecutive low-effort student turns.
@@ -133,9 +142,11 @@ class TutorState(TypedDict):
     #   "output_tokens": int,       # cumulative output tokens
     #   "cost_usd": float,          # cumulative estimated API cost (incl. cache pricing)
     #   "interventions": int,       # times Dean fallback was used instead of Teacher
+    #   "retrieval_calls": int,     # retrieval fire count (must be 1 per session after topic lock)
     #   "current_node": str,        # last LangGraph node that ran
     #   "last_routing": str,        # what after_dean returned + reason
-    #   "turn_trace": list[dict]    # per-turn list of wrappers called + outcomes
+    #   "turn_trace": list[dict],   # current student turn list of wrappers called + outcomes
+    #   "all_turn_traces": list[dict]  # full session history of per-turn traces
     # }
     # turn_trace entry format:
     # {"wrapper": "dean._setup_call", "tool_called": "search_textbook", "result": "5 chunks returned"}
@@ -157,8 +168,9 @@ def initial_state(student_id: str, cfg) -> TutorState:
         phase="rapport",
         messages=[],
         retrieved_chunks=[],
+        locked_question="",
         locked_answer="",
-        hint_level=1,
+        hint_level=0,
         max_hints=cfg.session.max_hints,
         turn_count=0,
         max_turns=cfg.session.max_turns,
@@ -177,6 +189,8 @@ def initial_state(student_id: str, cfg) -> TutorState:
         core_mastery_tier="not_assessed",
         clinical_mastery_tier="not_assessed",
         mastery_tier="not_assessed",
+        grading_rationale="",
+        session_memory_summary="",
         weak_topics=[],
         dean_retry_count=0,
         dean_critique="",
@@ -185,6 +199,7 @@ def initial_state(student_id: str, cfg) -> TutorState:
         topic_options=[],
         topic_question="",
         topic_selection="",
+        pending_user_choice={},
         help_abuse_count=0,
         is_multimodal=False,
         image_structures=[],
@@ -194,8 +209,12 @@ def initial_state(student_id: str, cfg) -> TutorState:
             "output_tokens": 0,
             "cost_usd": 0.0,
             "interventions": 0,
+            "retrieval_calls": 0,
             "current_node": "",
             "last_routing": "",
             "turn_trace": [],
+            "all_turn_traces": [],
+            "hint_progress": [],
+            "hint_plan": [],
         },
     )

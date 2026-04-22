@@ -14,11 +14,31 @@ The tutor uses Socratic questioning, confidence-aware gating, and an optional cl
 See full architecture and roadmap in:
 - [ARCHITECTURE.md](/Users/arun-ghontale/UB/NLP/sokratic/ARCHITECTURE.md)
 
-## Quick Start
+## Architecture
+- `conversation/` — LangGraph tutor logic (Dean/Teacher/state graph)
+- `retrieval/` — RAG pipeline (dense+sparse+rerank)
+- `backend/` — FastAPI wrapper over the graph (new)
+- `frontend/` — React web app (new)
+- `ui/` — legacy Streamlit UI (kept during parity period)
+
+## Quick Start (Legacy Streamlit)
 ```bash
 pip install -r requirements.txt
 streamlit run ui/app.py
 ```
+
+## Running Full Stack (React + FastAPI)
+```bash
+# terminal 1 (repo root)
+pip install -r backend/requirements.txt
+uvicorn backend.main:app --reload --port 8000
+
+# terminal 2
+cd frontend
+npm install
+npm run dev
+```
+Open `http://localhost:5173`.
 
 ## Core Flow
 `rapport -> topic scoping -> tutoring -> assessment (clinical opt-in) -> memory_update`

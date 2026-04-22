@@ -3,6 +3,19 @@ conversation/summarizer.py
 ---------------------------
 Summarizes old conversation turns when the session gets too long.
 
+NOTE ON CACHE BEHAVIOR:
+This summarizer replaces the first N messages in state["messages"] with a single
+system-role summary. Because render_history reads state["messages"] directly,
+this mutation changes rendered history bytes and invalidates the cached history
+block from that turn forward.
+
+This is acceptable because summarization is intended near the session cap.
+The post-summary history becomes a new stable prefix and can cache again on
+subsequent turns.
+
+Do NOT move summarizer execution earlier/mid-session without reconsidering
+cache impact and conversation continuity tradeoffs.
+
 Triggered inside dean_node when:
     turn_count >= max_turns - summarizer_keep_recent
 

@@ -32,13 +32,15 @@ class PersistentMemory:
         try:
             from mem0 import Memory
             vector_size = int(getattr(getattr(cfg, "qdrant", object()), "vector_size", 3072))
+            self.namespace = getattr(getattr(cfg, "domain", object()), "mem0_namespace", "default")
+            mem_collection = getattr(getattr(cfg, "domain", object()), "memory_collection", cfg.memory.memory_collection)
             config = {
                 "vector_store": {
                     "provider": "qdrant",
                     "config": {
                         "host": cfg.memory.qdrant_host,
                         "port": cfg.memory.qdrant_port,
-                        "collection_name": cfg.memory.memory_collection,
+                        "collection_name": mem_collection,
                         "embedding_model_dims": vector_size,
                     }
                 }
@@ -50,6 +52,10 @@ class PersistentMemory:
             self.client = None
             self.available = False
             self.unavailable_reason = "qdrant_or_mem0_unavailable"
+            self.namespace = "default"
+
+    def _namespaced_user_id(self, student_id: str) -> str:
+        return f"{self.namespace}:{student_id}"
 
     def get(self, student_id: str, query: str = "") -> list[dict]:
         """
@@ -67,9 +73,10 @@ class PersistentMemory:
         if self.client is None:
             return []
         try:
+            user_id = self._namespaced_user_id(student_id)
             if query:
-                return self.client.search(query, user_id=student_id)
-            return self.client.get_all(user_id=student_id)
+                return self.client.search(query, user_id=user_id)
+            return self.client.get_all(user_id=user_id)
         except Exception:
             return []
 
@@ -87,7 +94,7 @@ class PersistentMemory:
         if self.client is None:
             return False
         try:
-            self.client.add(memory_text, user_id=student_id)
+            self.client.add(memory_text, user_id=self._namespaced_user_id(student_id))
             return True
         except Exception:
             return False

@@ -1,19 +1,46 @@
 """
 config.py
 ---------
-Loads config.yaml and exposes all settings as a single Config object.
-Every module imports from here — nothing reads config.yaml directly.
+Loads config/base.yaml deep-merged with config/domains/{domain}.yaml.
+Active domain is selected via the SOKRATIC_DOMAIN environment variable (default: "ot").
+
+Every module imports `cfg` from here — nothing reads yaml files directly.
 """
 
+import os
 import yaml
 from pathlib import Path
 
 ROOT = Path(__file__).parent
+CONFIG_DIR = ROOT / "config"
+
+
+def _deep_merge(base: dict, override: dict) -> dict:
+    """Recursively merge override into base. Override wins on conflict."""
+    result = dict(base)
+    for key, val in override.items():
+        if key in result and isinstance(result[key], dict) and isinstance(val, dict):
+            result[key] = _deep_merge(result[key], val)
+        else:
+            result[key] = val
+    return result
 
 
 def _load() -> dict:
-    with open(ROOT / "config.yaml", "r") as f:
-        return yaml.safe_load(f)
+    with open(CONFIG_DIR / "base.yaml", "r") as f:
+        base = yaml.safe_load(f) or {}
+
+    domain_id = os.environ.get("SOKRATIC_DOMAIN", "ot").lower().strip()
+    domain_file = CONFIG_DIR / "domains" / f"{domain_id}.yaml"
+    if not domain_file.exists():
+        raise FileNotFoundError(
+            f"Domain config not found: {domain_file}. "
+            f"Set SOKRATIC_DOMAIN to a valid domain (e.g. 'ot', 'physics')."
+        )
+    with open(domain_file, "r") as f:
+        domain_cfg = yaml.safe_load(f) or {}
+
+    return _deep_merge(base, domain_cfg)
 
 
 _raw = _load()
@@ -23,7 +50,10 @@ class _Section:
     """Wraps a config dict section so values are accessible as attributes."""
     def __init__(self, data: dict):
         for k, v in data.items():
-            setattr(self, k, v)
+            setattr(self, k, _Section(v) if isinstance(v, dict) else v)
+
+    def get(self, key: str, default=None):
+        return getattr(self, key, default)
 
     def __repr__(self):
         return str(self.__dict__)
@@ -36,26 +66,30 @@ class Config:
     dean       = _Section(_raw["dean"])
     thresholds = _Section(_raw["thresholds"])
     memory     = _Section(_raw["memory"])
+    domain     = _Section(_raw["domain"])
     simulation = _Section(_raw["simulation"])
     paths      = _Section(_raw["paths"])
     qdrant     = _Section(_raw["qdrant"])
     prompts    = _Section(_raw["prompts"])
+    query_aliases = _raw.get("query_aliases", {}) or {}
 
     @staticmethod
     def reload():
-        """Re-read config.yaml at runtime (useful during development)."""
+        """Re-read config files at runtime (useful during development)."""
         global _raw
         _raw = _load()
-        Config.models = _Section(_raw["models"])
-        Config.retrieval = _Section(_raw["retrieval"])
-        Config.session = _Section(_raw["session"])
-        Config.dean = _Section(_raw["dean"])
+        Config.models     = _Section(_raw["models"])
+        Config.retrieval  = _Section(_raw["retrieval"])
+        Config.session    = _Section(_raw["session"])
+        Config.dean       = _Section(_raw["dean"])
         Config.thresholds = _Section(_raw["thresholds"])
-        Config.memory = _Section(_raw["memory"])
+        Config.memory     = _Section(_raw["memory"])
+        Config.domain     = _Section(_raw["domain"])
         Config.simulation = _Section(_raw["simulation"])
-        Config.paths = _Section(_raw["paths"])
-        Config.qdrant = _Section(_raw["qdrant"])
-        Config.prompts = _Section(_raw["prompts"])
+        Config.paths      = _Section(_raw["paths"])
+        Config.qdrant     = _Section(_raw["qdrant"])
+        Config.prompts    = _Section(_raw["prompts"])
+        Config.query_aliases = _raw.get("query_aliases", {}) or {}
 
 
 cfg = Config()

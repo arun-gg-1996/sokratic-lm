@@ -44,7 +44,11 @@ def build_graph(retriever, memory_manager):
     Returns:
         Compiled LangGraph runnable (with MemorySaver checkpointer).
     """
-    dean = DeanAgent(retriever, memory_manager.persistent)
+    # Compatibility: real MemoryManager exposes `.persistent`, while the current
+    # stubbed manager may not. Dean accepts either and currently does not depend
+    # on persistence-specific methods.
+    memory_client = getattr(memory_manager, "persistent", memory_manager)
+    dean = DeanAgent(retriever, memory_client)
     teacher = TeacherAgent()
 
     graph = StateGraph(TutorState)

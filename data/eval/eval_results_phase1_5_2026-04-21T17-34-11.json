@@ -1,0 +1,57 @@
+{
+  "label": "phase1_5",
+  "timestamp": "2026-04-21T17-34-11",
+  "n_queries": 231,
+  "overall_retrieval_n": 181,
+  "overall": {
+    "hit_at_1": 0.4419889502762431,
+    "hit_at_3": 0.6077348066298343,
+    "hit_at_5": 0.6795580110497238,
+    "hit_at_7": 0.7348066298342542
+  },
+  "overall_mrr": 0.5414627729544857,
+  "ood_precision": 0.7,
+  "per_category": {
+    "original": {
+      "n": 100,
+      "hit_at_5": 0.69
+    },
+    "conversational": {
+      "n": 50,
+      "hit_at_5": 0.64
+    },
+    "misspelling": {
+      "n": 1,
+      "hit_at_5": 1.0
+    },
+    "synonym": {
+      "n": 7,
+      "hit_at_5": 1.0
+    },
+    "clinical_shorthand": {
+      "n": 8,
+      "hit_at_5": 0.5
+    },
+    "abbreviation": {
+      "n": 5,
+      "hit_at_5": 1.0
+    },
+    "ot_test_name": {
+      "n": 4,
+      "hit_at_5": 0.75
+    },
+    "conversational_clinical": {
+      "n": 6,
+      "hit_at_5": 0.3333333333333333
+    },
+    "ood_negative": {
+      "n": 50,
+      "hit_at_5": 0.7
+    }
+  },
+  "latency_ms": {
+    "p50": 4977,
+    "p95": 10630,
+    "max": 25232
+  }
+}

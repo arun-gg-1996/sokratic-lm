@@ -63,3 +63,12 @@ Thumbs.db
 # Logs
 *.log
 claude-ui.html
+
+# React/FastAPI scaffold local artifacts
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/pnpm-debug.log*
+frontend/tsconfig.tsbuildinfo
+backend/__pycache__/
+backend/**/__pycache__/

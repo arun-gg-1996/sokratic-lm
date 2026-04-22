@@ -1,0 +1,42 @@
+domain:
+  name: "physics"
+  short: "physics"
+  student_descriptor: "student"
+  kb_collection: "sokratic_physics_kb"
+  memory_collection: "sokratic_physics_memory"
+  mem0_namespace: "physics"
+  retrieval_domain: "physics"
+
+  # Used as concrete examples in prompts so the LLM understands the expected format
+  example_topic_specific: "Newton's third law"
+  example_topic_broad: "classical mechanics"
+  example_question: "What is the relationship between force and acceleration?"
+  example_answer: "Newton's third law"
+  example_answer_format: "law name, quantity, or principle (e.g. 'Newton's third law', 'conservation of momentum')"
+
+  # Terms so generic they should not be accepted as locked topics without a sub-focus
+  generic_topic_terms:
+    - physics
+    - study
+    - topic
+    - force
+    - forces
+    - energy
+    - motion
+    - wave
+    - waves
+    - field
+    - fields
+    - law
+    - laws
+    - principle
+    - principles
+    - mechanics
+    - electricity
+    - magnetism
+    - optics
+    - thermodynamics
+
+  # Drives post-answer assessment framing
+  assessment_dimension: "real-world application"
+  assessment_dimension_examples: "problem-solving, physical phenomena, or engineering context"

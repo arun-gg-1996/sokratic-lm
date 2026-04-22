@@ -170,17 +170,26 @@ def save_tool_definitions():
 
 # --- Tool implementations (called by dean.py when Claude makes a tool call) ---
 
-def search_textbook(query: str, retriever) -> list[dict]:
+def search_textbook(query: str, retriever, top_k: int | None = None) -> list[dict]:
     """
     Run hybrid retrieval and return top chunks.
 
     Args:
         query:     Student's question or topic string.
         retriever: Retriever or MockRetriever instance.
+        top_k:     Optional override of the default top_chunks_final.
+                   Lock-anchors and hint-plan benefit from wider recall
+                   (~12); per-turn Teacher drafts can stick with default.
 
     Returns:
         List of chunk dicts with text, metadata, and score.
     """
+    if top_k is not None:
+        try:
+            return retriever.retrieve(query, top_k=int(top_k))
+        except TypeError:
+            # MockRetriever or older signature without top_k — fallback.
+            pass
     return retriever.retrieve(query)
 
 

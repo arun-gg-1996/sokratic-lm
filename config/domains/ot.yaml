@@ -1,0 +1,98 @@
+domain:
+  name: "human anatomy"
+  short: "anatomy"
+  student_descriptor: "student"
+  kb_collection: "sokratic_kb"
+  memory_collection: "sokratic_memory"
+  mem0_namespace: "anatomy"
+  retrieval_domain: "ot"
+
+  # Used as concrete examples in prompts so the LLM understands the expected format
+  example_topic_specific: "axillary nerve"
+  example_topic_broad: "brachial plexus"
+  example_question: "What does the suprascapular nerve supply?"
+  example_answer: "axillary nerve"
+  example_answer_format: "structure name only (e.g. 'axillary nerve', 'deltoid muscle')"
+
+  # Terms so generic they should not be accepted as locked topics without a sub-focus
+  generic_topic_terms:
+    - anatomy
+    - ot
+    - study
+    - topic
+    - bone
+    - bones
+    - joint
+    - joints
+    - muscle
+    - muscles
+    - nerve
+    - nerves
+    - upper limb
+    - lower limb
+    - shoulder
+    - arm
+    - hand
+    - leg
+    - region
+    - system
+    - body
+
+  # Drives post-answer assessment framing
+  assessment_dimension: "clinical application"
+  assessment_dimension_examples: "exam findings, function, or intervention planning"
+
+# Domain-specific query alias expansions for retrieval.
+# Mechanism lives in retrieval/retriever.py (`_apply_query_aliases`) and is
+# domain-agnostic — only the mappings below are domain-specific. Expansion is
+# additive: the student's original tokens are preserved, alias text appended,
+# so BM25 and dense retrieval see both forms.
+query_aliases:
+  # --- Cranial-nerve Roman-numeral shorthand students type ---
+  "cn i":    "olfactory nerve"
+  "cn ii":   "optic nerve"
+  "cn iii":  "oculomotor nerve"
+  "cn iv":   "trochlear nerve"
+  "cn v":    "trigeminal nerve"
+  "cn vi":   "abducens nerve"
+  "cn vii":  "facial nerve"
+  "cn viii": "vestibulocochlear nerve"
+  "cn ix":   "glossopharyngeal nerve"
+  "cn x":    "vagus nerve"
+  "cn xi":   "accessory nerve"
+  "cn xii":  "hypoglossal nerve"
+
+  # --- Clinical nerve-injury syndromes → anatomical cause ---
+  "wrist drop":        "radial nerve palsy spiral groove"
+  "dead arm":          "axillary nerve neurapraxia shoulder dislocation"
+  "claw hand":         "ulnar nerve palsy"
+  "ape hand":          "median nerve palsy thenar atrophy"
+  "foot drop":         "common peroneal nerve palsy"
+  "saturday night palsy": "radial nerve compression humerus"
+
+  # --- OT-specific physical exam tests ---
+  "empty can test":    "supraspinatus jobe test shoulder abduction"
+  "full can test":     "supraspinatus shoulder abduction external rotation"
+  "hawkins kennedy test": "subacromial impingement supraspinatus"
+  "neer test":         "subacromial impingement supraspinatus rotator cuff"
+  "phalen test":       "median nerve carpal tunnel wrist flexion"
+  "tinel sign":        "nerve percussion regeneration"
+  "finkelstein test":  "de quervain tenosynovitis abductor pollicis longus"
+  "froment sign":      "ulnar nerve adductor pollicis thumb"
+
+  # --- Arterial / cardiac abbreviations ---
+  "lad":   "left anterior descending artery"
+  "rca":   "right coronary artery"
+  "lcx":   "left circumflex artery"
+
+  # --- Ligament abbreviations ---
+  "acl":   "anterior cruciate ligament"
+  "pcl":   "posterior cruciate ligament"
+  "mcl":   "medial collateral ligament"
+  "lcl":   "lateral collateral ligament"
+
+  # --- Informal clinical shorthand ---
+  "tennis elbow":      "lateral epicondylitis extensor carpi radialis brevis"
+  "golfers elbow":     "medial epicondylitis flexor pronator"
+  "frozen shoulder":   "adhesive capsulitis glenohumeral"
+  "trigger finger":    "stenosing tenosynovitis flexor tendon"

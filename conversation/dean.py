@@ -26,10 +26,12 @@ import ast
 import json
 import re
 import time
+import hashlib
 from difflib import SequenceMatcher
 from pathlib import Path
 import anthropic
 from conversation.state import TutorState
+from conversation.rendering import render_history
 from tools.mcp_tools import search_textbook, save_tool_definitions
 from config import cfg
 
@@ -42,34 +44,6 @@ _BANNED_FILLER_PREFIXES = (
     "i hear you",
     "that's okay",
 )
-_UNCERTAINTY_STRONG_MARKERS = (
-    "not sure",
-    "unsure",
-    "not fully sure",
-    "not fully confident",
-    "not confident",
-    "uncertain",
-    "maybe",
-    "might",
-    "could be",
-    "i guess",
-    "i'm guessing",
-    "mixing up",
-    "fuzzy",
-)
-_UNCERTAINTY_WEAK_MARKERS = (
-    "i think",
-)
-_CONFIDENCE_MARKERS = (
-    "the answer is",
-    "it is",
-    "it's",
-    "definitely",
-    "i am sure",
-    "i'm sure",
-    "confident",
-    "certain",
-)
 _STRONG_AFFIRM_PATTERNS = (
     r"\bexactly\b",
     r"\bthat'?s right\b",
@@ -78,19 +52,6 @@ _STRONG_AFFIRM_PATTERNS = (
     r"\bperfect\b",
     r"\byes[, ]+that'?s\b",
     r"\byou'?re right\b",
-)
-_COMMON_NERVE_GUESSES = (
-    "axillary nerve",
-    "musculocutaneous nerve",
-    "median nerve",
-    "ulnar nerve",
-    "radial nerve",
-    "suprascapular nerve",
-    "long thoracic nerve",
-    "thoracodorsal nerve",
-    "subscapular nerve",
-    "accessory nerve",
-    "supraclavicular nerve",
 )
 _RETRIEVAL_LOW_SIGNAL = {
     "",
@@ -115,98 +76,74 @@ _RETRIEVAL_NOISE_PATTERNS = (
 )
 
 
+def _domain_prompt_vars() -> dict:
+    domain = getattr(cfg, "domain", object())
+    return {
+        "domain_name": getattr(domain, "name", "the subject"),
+        "domain_short": getattr(domain, "short", "the subject"),
+        "student_descriptor": getattr(domain, "student_descriptor", "student"),
+        "domain_example_topic_specific": getattr(domain, "example_topic_specific", "a specific concept"),
+        "domain_example_topic_broad": getattr(domain, "example_topic_broad", "a broad topic area"),
+        "domain_example_question": getattr(domain, "example_question", "What is the key concept here?"),
+        "assessment_dimension": getattr(domain, "assessment_dimension", "real-world application"),
+        "assessment_dimension_examples": getattr(domain, "assessment_dimension_examples", "examples, problems, or context"),
+    }
+
+
 def _clamp01(value: float) -> float:
     return max(0.0, min(1.0, float(value)))
 
 
-def _heuristic_confidence(message: str, student_state: str, locked_answer: str) -> float:
+def _apply_domain_vars(text: str) -> str:
+    rendered = text or ""
+    for key, val in _domain_prompt_vars().items():
+        rendered = rendered.replace(f"{{{key}}}", str(val))
+    return rendered
+
+
+def _cached_system(
+    role_base: str,
+    wrapper_delta: str,
+    chunks: str,
+    history: str,
+    turn_deltas: str,
+) -> list:
     """
-    Deterministic confidence estimate used as fallback and light calibration.
+    Stable cacheable system structure:
+      1) role_base + wrapper_delta
+      2) frozen retrieved chunks/propositions
+      3) rendered conversation history
+      4) turn-local deltas (uncached)
     """
-    base_by_state = {
-        "correct": 0.82,
-        "partial_correct": 0.56,
-        "question": 0.42,
-        "incorrect": 0.24,
-        "irrelevant": 0.10,
-        "low_effort": 0.05,
-    }
-    score = base_by_state.get(student_state, 0.35)
-    txt = _normalize_text(message)
-    locked = _normalize_text(locked_answer)
-    strong_uncertain = any(m in txt for m in _UNCERTAINTY_STRONG_MARKERS)
-    weak_uncertain = any(m in txt for m in _UNCERTAINTY_WEAK_MARKERS)
-    confident = any(m in txt for m in _CONFIDENCE_MARKERS)
+    blocks: list[dict] = []
+    # Haiku 4.5 minimum is ~2048 actual tokens. Our estimate is len/4 and often
+    # overshoots vs the tokenizer on structured/repetitive text, so require a comfortable margin.
+    cache_min_tokens = 4000
+    role_base = _apply_domain_vars(role_base)
+    wrapper_delta = _apply_domain_vars(wrapper_delta)
+    chunks = _apply_domain_vars(chunks)
+    turn_deltas = _apply_domain_vars(turn_deltas)
+    cached_primary = "\n\n".join(part for part in [role_base, wrapper_delta, chunks, history] if part)
 
-    if strong_uncertain:
-        score -= 0.20
-    elif weak_uncertain:
-        score -= 0.08
+    # Anthropic caching needs large enough cacheable content.
+    # If stable content is short, include turn-local deltas in the cacheable block
+    # so prefix caching can still activate from turn 2 onward.
+    if turn_deltas and _estimate_tokens(cached_primary) < cache_min_tokens:
+        cached_primary = "\n\n".join(part for part in [cached_primary, turn_deltas] if part)
+        turn_deltas = ""
 
-    if confident:
-        score += 0.06
-    if locked and locked in txt and student_state == "correct":
-        score += 0.04
-
-    return round(_clamp01(score), 3)
-
-
-def _cached_system(static: str, chunks: str = "", dynamic: str = "") -> list:
-    """
-    Two-block system prompt for optimal caching:
-    - Block 1 (static instructions + chunks, merged): cache_control
-      Merging is critical — each block must INDIVIDUALLY meet Anthropic's minimum
-      token threshold (1024 for Sonnet, 2048 for Haiku). A ~300-token static block
-      alone never writes a cache entry. Merging static + ~750-token chunks block
-      pushes the combined block well past the threshold.
-    - Block 2 (dynamic state + conversation): no cache_control — changes every turn
-    """
-    combined = static + ("\n\n" + chunks if chunks else "")
-    blocks = [{"type": "text", "text": combined, "cache_control": {"type": "ephemeral"}}]
-    if dynamic:
-        blocks.append({"type": "text", "text": dynamic})
+    if cached_primary:
+        blocks.append({"type": "text", "text": cached_primary, "cache_control": {"type": "ephemeral"}})
+    if turn_deltas:
+        blocks.append({"type": "text", "text": turn_deltas})
     return blocks
 
 
-def _cache_suffix_message(messages: list) -> list:
-    """
-    Add cache_control to the final message payload block so Anthropic can cache
-    the prompt prefix and bill only the new suffix on subsequent turns.
-    """
-    if not messages:
-        return messages
-
-    result = [dict(m) if isinstance(m, dict) else m for m in messages]
-    idx = len(result) - 1
-    if not isinstance(result[idx], dict):
-        return result
-
-    msg = dict(result[idx])
-    content = msg.get("content", "")
-    if isinstance(content, str):
-        msg["content"] = [{
-            "type": "text",
-            "text": content,
-            "cache_control": {"type": "ephemeral"},
-        }]
-    elif isinstance(content, list) and content:
-        new_content = []
-        for i, block in enumerate(content):
-            if isinstance(block, dict):
-                b = dict(block)
-                if (
-                    i == len(content) - 1
-                    and b.get("type") == "text"
-                    and "cache_control" not in b
-                ):
-                    b["cache_control"] = {"type": "ephemeral"}
-                new_content.append(b)
-            else:
-                new_content.append(block)
-        msg["content"] = new_content
-
-    result[idx] = msg
-    return result
+def _estimate_tokens(text: str) -> int:
+    """Cheap token estimate for debug visibility (~4 chars/token)."""
+    if not text:
+        return 0
+    return max(1, int(len(text) / 4))
 
 
 def _timed_create(client, state: dict, wrapper_name: str, **kwargs):
@@ -224,6 +161,25 @@ def _timed_create(client, state: dict, wrapper_name: str, **kwargs):
         system_text = system_blocks
 
     messages_sent = kwargs.get("messages", [])
+    input_hash = hashlib.sha256(
+        (system_text + "\n\n" + json.dumps(messages_sent, sort_keys=True, ensure_ascii=False)).encode("utf-8")
+    ).hexdigest()[:16]
+    system_block_debug = []
+    cached_est_tokens = 0
+    if isinstance(system_blocks, list):
+        for idx, block in enumerate(system_blocks, start=1):
+            if not isinstance(block, dict):
+                continue
+            text = str(block.get("text", "") or "")
+            est = _estimate_tokens(text)
+            cached = bool(block.get("cache_control"))
+            if cached:
+                cached_est_tokens += est
+            system_block_debug.append({
+                "index": idx,
+                "cached": cached,
+                "est_tokens": est,
+            })
 
     t0 = time.time()
     extra_headers = kwargs.pop("extra_headers", {})
@@ -258,6 +214,8 @@ def _timed_create(client, state: dict, wrapper_name: str, **kwargs):
     state["debug"]["cost_usd"] = float(state["debug"].get("cost_usd", 0.0)) + cost
     state["debug"]["turn_trace"].append({
         "wrapper": wrapper_name,
+        "decision_effect": None,
+        "input_hash": input_hash,
         "elapsed_s": round(elapsed, 2),
         "in_tok": in_tok,
         "out_tok": out_tok,
@@ -265,6 +223,8 @@ def _timed_create(client, state: dict, wrapper_name: str, **kwargs):
         "cache_write": cache_write,
         "cost_usd": round(cost, 5),
         "s_per_tok": round(tpt, 4),
+        "cached_est_tokens": cached_est_tokens,
+        "system_blocks": system_block_debug,
         # Full content for debug UI
         "system_prompt": system_text,
         "messages_sent": messages_sent,
@@ -274,8 +234,22 @@ def _timed_create(client, state: dict, wrapper_name: str, **kwargs):
     return resp
 
 
+def _request_fingerprint(system_blocks, messages) -> str:
+    """Stable fingerprint for duplicate-call guard on expensive wrappers."""
+    if isinstance(system_blocks, list):
+        system_text = "\n\n---\n\n".join(
+            b.get("text", "") if isinstance(b, dict) else str(b)
+            for b in system_blocks
+        )
+    else:
+        system_text = str(system_blocks or "")
+    payload = system_text + "\n\n" + json.dumps(messages or [], sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
+
+
 def _normalize_text(text: str) -> str:
     text = (text or "").strip().lower()
+    text = re.sub(r"[^a-z0-9\s]+", " ", text)
     text = re.sub(r"\s+", " ", text)
     return text
 
@@ -329,7 +303,7 @@ def _recent_tutor_questions(messages: list[dict], limit: int = 3) -> list[str]:
     return questions
 
 
-def _is_repetitive_question(new_question: str, prior_questions: list[str], threshold: float = 0.9) -> bool:
+def _is_repetitive_question(new_question: str, prior_questions: list[str], threshold: float) -> bool:
     a = _normalize_text(new_question)
     if not a:
         return False
@@ -439,54 +413,6 @@ def _extract_json_object(text: str) -> dict | None:
     return _try_parse_dict(candidate[start:end + 1])
 
 
-def _is_uncertain_correct_answer(message: str, locked_answer: str) -> bool:
-    txt = _normalize_text(message)
-    locked = _normalize_text(locked_answer)
-    if not txt or not locked or locked not in txt:
-        return False
-
-    strong = any(m in txt for m in _UNCERTAINTY_STRONG_MARKERS)
-    weak = any(m in txt for m in _UNCERTAINTY_WEAK_MARKERS)
-    confident = any(m in txt for m in _CONFIDENCE_MARKERS)
-    return strong or (weak and not confident)
-
-
-def _contains_explicit_wrong_nerve_guess(message: str, locked_answer: str) -> bool:
-    """
-    Detect answer attempts that name a non-locked nerve.
-    Used to prevent wrong guesses from being mislabeled as question/partial_correct.
-    """
-    txt = _normalize_text(message)
-    locked = _normalize_text(locked_answer)
-    if not txt or not locked:
-        return False
-    if locked in txt:
-        return False
-    if "nerve" not in txt:
-        return False
-
-    # Pure clarification questions should remain "question".
-    clarification_markers = (
-        "which nerve",
-        "what nerve",
-        "can you explain",
-        "what do you mean",
-        "could you clarify",
-    )
-    if any(m in txt for m in clarification_markers):
-        return False
-
-    guesses = set()
-    for name in _COMMON_NERVE_GUESSES:
-        if name in txt:
-            guesses.add(name)
-    for match in re.findall(r"\b([a-z]+(?:\s+[a-z]+){0,2}\s+nerve)\b", txt):
-        guesses.add(match.strip())
-
-    guesses = {g for g in guesses if locked not in g}
-    return bool(guesses)
-
-
 def _latest_student_message(messages: list[dict]) -> str:
     for msg in reversed(messages or []):
         if msg.get("role") == "student":
@@ -494,24 +420,68 @@ def _latest_student_message(messages: list[dict]) -> str:
     return ""
 
 
-def _extract_locked_answer_from_chunks(chunks: list[dict]) -> str:
+def _deterministic_anchor_fallback(chunks: list[dict], topic: str) -> tuple[str, str]:
     """
-    Lightweight deterministic lock extraction from retrieved chunks.
+    Last-resort anchors when the LLM lock call fails twice.
+
+    Heuristic: scan retrieved propositions for the first short noun phrase that
+    looks like a terminal anatomical/concept term. If nothing useful, return ("", "").
+    Caller will gracefully degrade.
     """
-    patterns = [
-        r"\binnervated by the ([a-zA-Z0-9\-\s]+?)(?:\s*\(|[.,;])",
-        r"\bthe answer is ([a-zA-Z0-9\-\s]+?)(?:[.,;]|$)",
-    ]
-    for chunk in chunks[:3]:
-        text = str(chunk.get("text", "") or "")
-        for pat in patterns:
-            m = re.search(pat, text, flags=re.IGNORECASE)
-            if m:
-                answer = m.group(1).strip().lower()
-                answer = re.sub(r"\s+", " ", answer)
-                if answer:
-                    return answer
-    return ""
+    if not chunks:
+        return "", ""
+    # Look for a concept/term pattern in top chunk text.
+    for ch in chunks[:3]:
+        text = str(ch.get("text", "") or "").strip()
+        if not text:
+            continue
+        # Prefer a short phrase ending in a nerve/muscle/space/structure noun.
+        for m in re.finditer(
+            r"\b([A-Za-z]+(?:\s[A-Za-z]+){0,2}\s(?:nerve|muscle|artery|vein|joint|space|ligament|tendon|plexus))\b",
+            text,
+        ):
+            phrase = m.group(1).strip().lower()
+            # Reject super-generic matches.
+            if phrase.split()[0] in {"the", "a", "this", "that", "which", "any"}:
+                continue
+            if 2 <= len(phrase.split()) <= 4:
+                q = f"Which {phrase.split()[-1]} is central to: {topic}?"
+                return q, phrase
+    return "", ""
+
+
+def _sanitize_locked_answer(
+    candidate: str,
+    chunks: list[dict],
+    prior: str = "",
+) -> tuple[str, str]:
+    """
+    Keep locked_answer concise.
+    Grounding is enforced by the lock-anchors LLM prompt itself; here we avoid
+    brittle exact-string filters that can reject valid semantically-correct anchors.
+    """
+    cand = (candidate or "").strip()
+    if not cand:
+        return (prior or "").strip(), "empty_input"
+
+    cand_norm = _normalize_text(cand)
+    prior_norm = _normalize_text(prior or "")
+
+    # locked_answer must be a canonical short noun phrase (1-5 words).
+    # If it's longer, the Dean produced a sentence/description, not an anchor.
+    word_count = len(cand_norm.split())
+    if word_count > 6:
+        return prior_norm, "wiped_too_long"
+    # Also reject anchors that are clearly sentences (contain verbs like "innervates",
+    # "arises", "branches", "passes", "courses", etc.), even if short enough.
+    sentence_markers = (
+        "innervates", "innervate", "arises", "branches", "passes", "courses",
+        "supplies", "controls", "causes", "results", "from the", "through the",
+    )
+    if any(marker in cand_norm for marker in sentence_markers):
+        return prior_norm, "wiped_sentence_like"
+
+    return cand_norm, "kept"
 
 
 def _match_topic_selection(student_text: str, options: list[str]) -> str:
@@ -525,6 +495,26 @@ def _match_topic_selection(student_text: str, options: list[str]) -> str:
     txt = _normalize_text(student_text)
     if not txt or not options:
         return ""
+
+    # Numeric / ordinal selection (e.g., "1", "option 2", "first one", "let's do #3").
+    ordinals = {
+        "first": 1, "1st": 1, "one": 1,
+        "second": 2, "2nd": 2, "two": 2,
+        "third": 3, "3rd": 3, "three": 3,
+        "fourth": 4, "4th": 4, "four": 4,
+    }
+    import re as _re
+    num_match = _re.search(r"\b([1-4])\b", txt)
+    picked_idx = None
+    if num_match:
+        picked_idx = int(num_match.group(1))
+    else:
+        for word, idx in ordinals.items():
+            if _re.search(rf"\b{word}\b", txt):
+                picked_idx = idx
+                break
+    if picked_idx is not None and 1 <= picked_idx <= len(options):
+        return options[picked_idx - 1]
 
     normalized_options = [(_normalize_text(o), o) for o in options]
 
@@ -561,8 +551,38 @@ def _is_low_effort_topic_reply(student_text: str) -> bool:
     low_effort_set = {
         "idk", "i don't know", "i dont know", "don't know", "dont know",
         "not sure", "no idea", "help",
+        "hi", "hello", "hey", "yo", "sup", "start", "continue",
     }
-    return txt in low_effort_set
+    if txt in low_effort_set:
+        return True
+    tokens = [t for t in txt.split() if t]
+    if len(tokens) == 1 and len(tokens[0]) <= 3:
+        return True
+    greeting_tokens = {"hi", "hello", "hey", "yo", "sup", "there", "pls", "please"}
+    if tokens and len(tokens) <= 2 and all(t in greeting_tokens for t in tokens):
+        return True
+    return False
+
+
+def _is_generic_topic_reply(student_text: str) -> bool:
+    """
+    Detect broad/generic topic names that are not specific enough to lock.
+    Uses domain config for the generic terms list.
+    """
+    txt = _normalize_text(student_text)
+    if not txt:
+        return True
+    generic_terms = set(getattr(cfg.domain, "generic_topic_terms", []))
+    if txt in generic_terms:
+        return True
+    # Also check multi-word generic terms
+    for term in generic_terms:
+        if " " in term and txt == _normalize_text(term):
+            return True
+    tokens = [t for t in txt.split() if t]
+    if len(tokens) == 1 and len(tokens[0]) <= 5:
+        return True
+    return False
 
 
 def _clean_retrieval_query(text: str) -> str:
@@ -588,7 +608,13 @@ def _is_ambiguous_retrieval_query(text: str) -> bool:
     if txt in _RETRIEVAL_LOW_SIGNAL:
         return True
     tokens = [t for t in txt.split() if t]
-    return len(tokens) < 3
+    if len(tokens) >= 3:
+        return False
+    # Allow specific one/two-word domain entities (e.g., "axillary nerve", "Newton's third law").
+    if len(tokens) in (1, 2):
+        if all(len(t) >= 4 for t in tokens):
+            return False
+    return True
 
 
 def _build_retrieval_query(state: TutorState) -> str:
@@ -603,8 +629,21 @@ def _build_retrieval_query(state: TutorState) -> str:
     latest = _latest_student_message(state.get("messages", []))
 
     candidate = topic or latest
+    topic_norm = _normalize_text(topic)
     latest_norm = _normalize_text(latest)
-    if topic and latest and latest_norm not in _RETRIEVAL_LOW_SIGNAL and len(latest.split()) >= 3:
+    # Skip the topic+latest blend when the latest message is the same as topic
+    # (e.g. right after a card pick `_replace_latest_student_message` mirrors the
+    # card text into the last student message) — otherwise the blended query
+    # becomes "{x}. {x}" which inflates length and trips the OOD gate.
+    if (
+        topic
+        and latest
+        and latest_norm not in _RETRIEVAL_LOW_SIGNAL
+        and len(latest.split()) >= 3
+        and latest_norm != topic_norm
+        and topic_norm not in latest_norm
+        and latest_norm not in topic_norm
+    ):
         # Keep topic anchor but preserve fresh student intent/detail.
         candidate = f"{topic}. {latest}"
 
@@ -615,6 +654,24 @@ def _build_retrieval_query(state: TutorState) -> str:
             return fallback
         return ""
     return cleaned
+
+
+def _retrieval_trace_payload(query: str, chunks: list[dict], top_n: int = 7) -> dict:
+    top = []
+    for i, c in enumerate(chunks[:top_n], start=1):
+        top.append({
+            "rank": i,
+            "score": float(c.get("score", 0.0) or 0.0),
+            "section_title": c.get("section_title", ""),
+            "subsection_title": c.get("subsection_title", ""),
+            "chunk_id": c.get("chunk_id", ""),
+            "text_preview": str(c.get("text", "") or "")[:240],
+        })
+    return {
+        "query": query,
+        "top_chunks": top,
+        "total_chunks_returned": len(chunks),
+    }
 
 
 def _replace_latest_student_message(messages: list[dict], new_content: str) -> list[dict]:
@@ -670,26 +727,57 @@ class DeanAgent:
         # Until topic_confirmed=True, tutoring does not start.
         # 1) First pass: generate 3-4 scoped options.
         # 2) Subsequent passes: require explicit selection by number/text.
+        topic_just_locked = False
+        if state.get("topic_confirmed", False) and state.get("topic_options"):
+            # topic_confirmed is monotonic in a session; clear any stale options.
+            state["topic_options"] = []
+            state["topic_question"] = ""
+            state["pending_user_choice"] = {}
+
         if not state.get("topic_confirmed", False):
             messages = list(state.get("messages", []))
             topic_options = list(state.get("topic_options", []))
 
             if not topic_options:
-                # Retrieve context once to generate strong scoping options.
-                query = _clean_retrieval_query(_latest_student_message(messages))
-                if query:
-                    chunks = search_textbook(query, self.retriever)
-                    state["retrieved_chunks"] = chunks
-                    state["debug"]["turn_trace"].append({
-                        "wrapper": "dean.python_retrieval",
-                        "result": f"{len(chunks)} chunks returned | query={query}",
-                    })
+                latest_student = _latest_student_message(messages)
+                if _is_low_effort_topic_reply(latest_student):
+                    state["hint_level"] = 0
+                    example = getattr(cfg.domain, "example_topic_specific", "a specific concept")
+                    reprompt = (
+                        f"Please name a specific study topic to begin "
+                        f"(for example: {example})."
+                    )
+                    messages.append({"role": "tutor", "content": reprompt})
+                    return {
+                        "messages": messages,
+                        "topic_confirmed": False,
+                        "topic_options": [],
+                        "topic_question": "",
+                        "topic_selection": "",
+                        "pending_user_choice": {},
+                        "retrieved_chunks": [],
+                        "locked_question": "",
+                        "locked_answer": "",
+                        "hint_level": 0,
+                        "student_state": "question",
+                        "debug": state["debug"],
+                    }
                 scoped = teacher.draft_topic_engagement(state)
                 scoped_q = str(scoped.get("question", "") or "").strip()
                 topic_options = list(scoped.get("options", []) or [])
                 scoped_msg = str(scoped.get("message", "") or "").strip()
                 if not scoped_msg:
                     scoped_msg = scoped_q
+                # Inline numbered options in the tutor text so any client (including
+                # plain-text/CLI) can see and pick them. UIs can still render cards.
+                if topic_options:
+                    numbered = "\n".join(
+                        f"  {i+1}. {opt}" for i, opt in enumerate(topic_options)
+                    )
+                    scoped_msg = (
+                        f"{scoped_msg}\n\n{numbered}\n\n"
+                        f"Reply with a number (1-{len(topic_options)}) or paste the option text."
+                    )
                 messages.append({"role": "tutor", "content": scoped_msg})
                 return {
                     "messages": messages,
@@ -697,8 +785,11 @@ class DeanAgent:
                     "topic_options": topic_options,
                     "topic_question": scoped_q,
                     "topic_selection": "",
+                    "pending_user_choice": {"kind": "topic", "options": topic_options},
                     "retrieved_chunks": [],  # force fresh retrieval once topic is selected
+                    "locked_question": "",
                     "locked_answer": "",
+                    "hint_level": 0,
                     "student_state": None,
                     "debug": state["debug"],
                 }
@@ -707,15 +798,29 @@ class DeanAgent:
             latest_student = _latest_student_message(messages)
             selected = _match_topic_selection(latest_student, topic_options)
             if not selected:
-                # Allow free-text custom topic selection (non-low-effort) in place of card choice.
+                # Allow free-text custom topic only if it's a specific, concise topic
+                # phrase (≤10 words, non-greeting, non-generic). Long rambling
+                # replies like "I'll go with the first one about X" should NOT
+                # become the topic string — force a reprompt instead.
                 if latest_student and not _is_low_effort_topic_reply(latest_student):
-                    selected = latest_student.strip()
+                    if not _is_generic_topic_reply(latest_student):
+                        tokens = latest_student.strip().split()
+                        if 1 <= len(tokens) <= 10:
+                            selected = latest_student.strip()
 
             if not selected:
-                reprompt = (
-                    "Please pick one of the focus cards below, or write a different topic "
-                    "you want to explore."
-                )
+                state["hint_level"] = 0
+                if _is_generic_topic_reply(latest_student):
+                    example = getattr(cfg.domain, "example_topic_specific", "a specific concept")
+                    reprompt = (
+                        f"Please choose one focus card, or type a more specific topic "
+                        f"(for example: {example})."
+                    )
+                else:
+                    reprompt = (
+                        "Please pick one of the focus cards below, or write a different topic "
+                        "you want to explore."
+                    )
                 messages.append({"role": "tutor", "content": reprompt})
                 return {
                     "messages": messages,
@@ -723,6 +828,8 @@ class DeanAgent:
                     "topic_options": topic_options,
                     "topic_question": state.get("topic_question", ""),
                     "topic_selection": "",
+                    "pending_user_choice": {"kind": "topic", "options": topic_options},
+                    "hint_level": 0,
                     "student_state": "question",
                     "debug": state["debug"],
                 }
@@ -734,44 +841,164 @@ class DeanAgent:
             state["topic_selection"] = selected
             state["topic_options"] = []
             state["topic_question"] = ""
-            state["retrieved_chunks"] = []
+            state["pending_user_choice"] = {}
+            # Retrieval is single-fire per session. If it already fired earlier,
+            # keep existing chunks instead of clearing and re-querying.
+            if int(state.get("debug", {}).get("retrieval_calls", 0)) <= 0:
+                state["retrieved_chunks"] = []
+            state["locked_question"] = ""
             state["locked_answer"] = ""
+            state["hint_level"] = 0
+            topic_just_locked = True
 
-        self._ensure_retrieval_and_lock(state)
+        if topic_just_locked:
+            self._retrieve_on_topic_lock(state)
+            anchors = self._lock_anchors_call(state)
+            state["locked_question"] = str(anchors.get("locked_question", "") or "").strip()
+            state["locked_answer"] = str(anchors.get("locked_answer", "") or "").strip()
+            if not state["locked_question"] or not state["locked_answer"]:
+                anchor_fail_count = int(state.get("debug", {}).get("anchor_fail_count", 0)) + 1
+                state["debug"]["anchor_fail_count"] = anchor_fail_count
+                state["debug"]["turn_trace"].append({
+                    "wrapper": "dean.anchor_extraction_failed",
+                    "result": f"anchors empty (attempt {anchor_fail_count}) — topic too broad or retrieval weak",
+                    "rationale": str(anchors.get("rationale", "") or ""),
+                })
+                # After 2 failed attempts, fall back to a deterministic anchor from
+                # the top retrieved proposition rather than looping on 'narrower focus'.
+                if anchor_fail_count >= 2:
+                    forced_q, forced_a = _deterministic_anchor_fallback(
+                        state.get("retrieved_chunks", []),
+                        state.get("topic_selection", "") or "this topic",
+                    )
+                    if forced_q and forced_a:
+                        state["locked_question"] = forced_q
+                        state["locked_answer"] = forced_a
+                        state["debug"]["turn_trace"].append({
+                            "wrapper": "dean.anchor_forced_fallback",
+                            "result": "Deterministic fallback anchors accepted after 2 failures",
+                            "locked_question": forced_q,
+                            "locked_answer": forced_a,
+                        })
+                        # Continue into tutoring with the forced anchors.
+                    else:
+                        # Truly nothing useful retrieved — give up gracefully.
+                        messages = list(state.get("messages", []))
+                        messages.append({
+                            "role": "tutor",
+                            "content": (
+                                "I'm having trouble finding a focused angle for this topic "
+                                "in my materials. Let's try a different, more specific question "
+                                "— what aspect would you like to start with?"
+                            ),
+                        })
+                        return {
+                            "messages": messages,
+                            "topic_confirmed": False,
+                            "topic_options": [],
+                            "topic_question": "",
+                            "topic_selection": "",
+                            "pending_user_choice": {},
+                            "retrieved_chunks": [],
+                            "locked_question": "",
+                            "locked_answer": "",
+                            "hint_level": 0,
+                            "student_state": "question",
+                            "debug": state["debug"],
+                        }
+                else:
+                    messages = list(state.get("messages", []))
+                    example = getattr(cfg.domain, "example_topic_specific", "a specific concept")
+                    reprompt = (
+                        "I need a narrower focus before we begin tutoring. "
+                        f"Please pick one focus card or type a specific topic (for example: {example})."
+                    )
+                    messages.append({"role": "tutor", "content": reprompt})
+                    return {
+                        "messages": messages,
+                        "topic_confirmed": False,
+                        "topic_options": [],
+                        "topic_question": "",
+                        "topic_selection": "",
+                        "pending_user_choice": {},
+                        # Keep retrieved chunks so a narrowed follow-up can proceed
+                        # without re-firing retrieval in the same session.
+                        "retrieved_chunks": state.get("retrieved_chunks", []),
+                        "locked_question": "",
+                        "locked_answer": "",
+                        "hint_level": 0,
+                        "student_state": "question",
+                        "debug": state["debug"],
+                    }
+            if int(state.get("hint_level", 0)) <= 0:
+                state["hint_level"] = 1
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean.anchors_locked",
+                "locked_question": state["locked_question"],
+                "locked_answer": state["locked_answer"],
+                "rationale": str(anchors.get("rationale", "") or ""),
+            })
+            hint_plan = self._hint_plan_call(state)
+            state["debug"]["hint_plan"] = hint_plan
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean.hint_plan_initialized",
+                "result": f"{len(hint_plan)} hints initialized",
+                "hints": hint_plan,
+            })
+        elif state.get("topic_confirmed", False):
+            # Recovery path: if topic is confirmed but retrieval is missing and answer isn't locked yet,
+            # re-run retrieval on refined topic text.
+            if not state.get("retrieved_chunks", []) and not state.get("locked_answer", ""):
+                self._retrieve_on_topic_lock(state)
 
-        eval_result = self._setup_call(state)
+        if topic_just_locked:
+            eval_result = {
+                "student_state": "question",
+                "student_reached_answer": False,
+                "confidence_score": 0.0,
+                "hint_level": int(state.get("hint_level", 0)),
+                "search_needed": False,
+                "critique": "topic_selected_start_tutoring",
+            }
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean.topic_lock_guard",
+                "result": "bypassed_setup_classification_on_topic_selection",
+            })
+        else:
+            eval_result = self._setup_call(state)
         try:
-            parsed_hint_level = int(eval_result.get("hint_level", state.get("hint_level", 1)))
+            parsed_hint_level = int(eval_result.get("hint_level", state.get("hint_level", 0)))
         except (TypeError, ValueError):
-            parsed_hint_level = int(state.get("hint_level", 1))
+            parsed_hint_level = int(state.get("hint_level", 0))
+        sanitized_locked, sanitize_action = _sanitize_locked_answer(
+            str(state.get("locked_answer", "")),
+            state.get("retrieved_chunks", []),
+            str(state.get("locked_answer", "")),
+        )
+        state["debug"]["turn_trace"].append({
+            "wrapper": "dean.sanitize_locked_answer",
+            "candidate": str(state.get("locked_answer", ""))[:100],
+            "action": sanitize_action,
+            "final": sanitized_locked,
+        })
         eval_result = {
             "student_state": eval_result.get("student_state", "irrelevant"),
             "student_reached_answer": bool(eval_result.get("student_reached_answer", False)),
             "confidence_score": eval_result.get("confidence_score", 0.0),
             "hint_level": parsed_hint_level,
-            "locked_answer": eval_result.get("locked_answer", state.get("locked_answer", "")),
+            "locked_answer": sanitized_locked,
             "search_needed": bool(eval_result.get("search_needed", False)),
             "critique": eval_result.get("critique", ""),
         }
 
-        latest_student_msg = _latest_student_message(state.get("messages", []))
-        locked_for_turn = str(eval_result.get("locked_answer") or state.get("locked_answer", ""))
-        if (
-            eval_result.get("student_state") in {"question", "partial_correct"}
-            and _contains_explicit_wrong_nerve_guess(latest_student_msg, locked_for_turn)
-        ):
-            eval_result["student_state"] = "incorrect"
-            eval_result["student_reached_answer"] = False
-            state["debug"]["turn_trace"].append({
-                "wrapper": "dean.classification_override",
-                "result": "forced_incorrect_for_explicit_wrong_guess",
-            })
-
         confidence_score = self._compute_student_confidence(state, eval_result)
         eval_result["confidence_score"] = confidence_score
         reached_threshold = float(getattr(getattr(cfg, "thresholds", object()), "reached_answer_confidence", 0.72))
+        model_reached = bool(eval_result.get("student_reached_answer", False))
         eval_result["student_reached_answer"] = (
-            eval_result["student_state"] == "correct" and confidence_score >= reached_threshold
+            model_reached
+            and confidence_score >= reached_threshold
+            and bool(state.get("locked_answer", ""))
         )
 
         # Apply eval results to state
@@ -792,18 +1019,46 @@ class DeanAgent:
                 f"mastery_conf={state['student_mastery_confidence']:.3f}, "
                 f"reached={state['student_reached_answer']}"
             ),
+            "locked_answer": state.get("locked_answer", ""),
         })
 
+        hint_before = int(state.get("hint_level", 0))
+        hint_reason = "unchanged"
         # Hint progression:
-        # - increment only for "incorrect"
+        # - increment only for "incorrect" once tutoring is unlocked (hint>=1)
         # - allow max_hints + 1 to signal "hints exhausted" routing in after_dean
         if eval_result["student_state"] == "incorrect":
-            current_hint = int(state.get("hint_level", 1))
+            current_hint = int(state.get("hint_level", 0))
+            if current_hint <= 0:
+                current_hint = 1
             if current_hint >= state["max_hints"]:
                 next_hint = state["max_hints"] + 1
             else:
                 next_hint = current_hint + 1
             state["hint_level"] = min(next_hint, state["max_hints"] + 1)
+            hint_reason = "incorrect_increment"
+        hint_after = int(state.get("hint_level", 0))
+        active_hint = ""
+        hint_plan = state["debug"].get("hint_plan", []) if isinstance(state.get("debug"), dict) else []
+        if isinstance(hint_plan, list) and hint_after >= 1:
+            idx = min(max(hint_after - 1, 0), len(hint_plan) - 1) if hint_plan else -1
+            if idx >= 0:
+                active_hint = str(hint_plan[idx])
+        state["debug"]["turn_trace"].append({
+            "wrapper": "dean.hint_progress",
+            "hint_before": hint_before,
+            "hint_after": hint_after,
+            "hint_reason": hint_reason,
+            "active_hint": active_hint,
+        })
+        state["debug"].setdefault("hint_progress", []).append({
+            "turn": int(state.get("turn_count", 0)),
+            "student_state": state.get("student_state"),
+            "hint_before": hint_before,
+            "hint_after": hint_after,
+            "reason": hint_reason,
+            "active_hint": active_hint,
+        })
 
         if state["student_reached_answer"]:
             return {
@@ -812,12 +1067,38 @@ class DeanAgent:
                 "student_answer_confidence": state["student_answer_confidence"],
                 "student_mastery_confidence": state["student_mastery_confidence"],
                 "confidence_samples": state["confidence_samples"],
+                "locked_question": state.get("locked_question", ""),
                 "locked_answer": state["locked_answer"],
                 "retrieved_chunks": state["retrieved_chunks"],
                 "topic_confirmed": state.get("topic_confirmed", False),
                 "topic_options": state.get("topic_options", []),
                 "topic_question": state.get("topic_question", ""),
                 "topic_selection": state.get("topic_selection", ""),
+                "pending_user_choice": state.get("pending_user_choice", {}),
+                "debug": state["debug"],
+            }
+
+        # Early exit if hints exhausted — skip Teacher, route directly to assessment
+        if state.get("hint_level", 0) > state.get("max_hints", 3):
+            return {
+                "messages": state["messages"],
+                "hint_level": state["hint_level"],
+                "student_state": state["student_state"],
+                "student_reached_answer": state["student_reached_answer"],
+                "student_answer_confidence": state.get("student_answer_confidence", 0.0),
+                "student_mastery_confidence": state.get("student_mastery_confidence", 0.0),
+                "confidence_samples": state.get("confidence_samples", 0),
+                "locked_question": state.get("locked_question", ""),
+                "locked_answer": state["locked_answer"],
+                "retrieved_chunks": state["retrieved_chunks"],
+                "topic_confirmed": state.get("topic_confirmed", False),
+                "topic_options": state.get("topic_options", []),
+                "topic_question": state.get("topic_question", ""),
+                "topic_selection": state.get("topic_selection", ""),
+                "pending_user_choice": state.get("pending_user_choice", {}),
+                "help_abuse_count": state.get("help_abuse_count", 0),
+                "dean_retry_count": 0,
+                "dean_critique": "",
                 "debug": state["debug"],
             }
 
@@ -830,6 +1111,13 @@ class DeanAgent:
         if state["help_abuse_count"] >= cfg.dean.help_abuse_threshold:
             state["hint_level"] = min(state["hint_level"] + 1, state["max_hints"] + 1)
             state["help_abuse_count"] = 0
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean.hint_progress",
+                "hint_before": hint_after,
+                "hint_after": int(state.get("hint_level", 0)),
+                "hint_reason": "help_abuse_threshold",
+                "active_hint": active_hint,
+            })
 
         # Teacher drafts one response.
         # Provide Dean QC guidance preflight on first attempt so Teacher is
@@ -891,12 +1179,14 @@ class DeanAgent:
             "student_answer_confidence": state["student_answer_confidence"],
             "student_mastery_confidence": state["student_mastery_confidence"],
             "confidence_samples": state["confidence_samples"],
+            "locked_question": state.get("locked_question", ""),
             "locked_answer": state["locked_answer"],
             "retrieved_chunks": state["retrieved_chunks"],
             "topic_confirmed": state.get("topic_confirmed", False),
             "topic_options": state.get("topic_options", []),
             "topic_question": state.get("topic_question", ""),
             "topic_selection": state.get("topic_selection", ""),
+            "pending_user_choice": state.get("pending_user_choice", {}),
             "help_abuse_count": state["help_abuse_count"],
             "dean_retry_count": 0,
             "dean_critique": "",
@@ -905,59 +1195,278 @@ class DeanAgent:
 
     def _compute_student_confidence(self, state: TutorState, eval_result: dict) -> float:
         """
-        Compute per-turn answer confidence without changing the categorical label.
-        Uses model score when provided, with deterministic calibration fallback.
+        Compute per-turn answer confidence without changing categorical labels.
+        Uses model score directly; falls back to state-based default when missing.
         """
         student_state = str(eval_result.get("student_state", "")).strip().lower()
-        latest_student = _latest_student_message(state.get("messages", []))
-        locked_answer = str(eval_result.get("locked_answer") or state.get("locked_answer", "")).strip()
-        heuristic = _heuristic_confidence(latest_student, student_state, locked_answer)
-
         raw = eval_result.get("confidence_score", None)
         try:
             model_score = None if raw is None else _clamp01(float(raw))
         except (TypeError, ValueError):
             model_score = None
 
-        if model_score is None:
-            return heuristic
+        if model_score is not None:
+            return round(_clamp01(model_score), 3)
 
-        blended = (0.7 * model_score) + (0.3 * heuristic)
-        if _is_uncertain_correct_answer(latest_student, locked_answer) and student_state == "correct":
-            blended = min(blended, 0.69)
-        return round(_clamp01(blended), 3)
+        fallback_by_state = {
+            "correct": 0.74,
+            "partial_correct": 0.56,
+            "question": 0.42,
+            "incorrect": 0.24,
+            "irrelevant": 0.10,
+            "low_effort": 0.05,
+        }
+        return round(float(fallback_by_state.get(student_state, 0.35)), 3)
 
-    def _ensure_retrieval_and_lock(self, state: TutorState) -> None:
+    def _retrieve_on_topic_lock(self, state: TutorState) -> None:
         """
-        Python-side fast path:
-        - Retrieve chunks once when missing
-        - Lock answer deterministically when possible
-        This removes Dean tool-loop round trips on first turn.
+        Retrieval for topic scoping/locking.
+        Product invariant for this milestone: retrieval fires at most once per session.
         """
-        chunks = state.get("retrieved_chunks", [])
-        if not chunks:
-            query = _build_retrieval_query(state)
-            if query:
-                chunks = search_textbook(query, self.retriever)
-                state["retrieved_chunks"] = chunks
-                state["debug"]["turn_trace"].append({
-                    "wrapper": "dean.python_retrieval",
-                    "result": f"{len(chunks)} chunks returned | query={query}",
-                })
-            else:
-                state["debug"]["turn_trace"].append({
-                    "wrapper": "dean.retrieval_query_guard",
-                    "result": "skipped_retrieval_due_to_ambiguous_query",
-                })
+        retrieval_calls = int(state.get("debug", {}).get("retrieval_calls", 0))
+        if retrieval_calls >= 1:
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean.retrieval_guard",
+                "result": "skipped_retrieval_already_fired_once",
+                "retrieval_calls": retrieval_calls,
+            })
+            return
 
-        if not state.get("locked_answer"):
-            locked = _extract_locked_answer_from_chunks(state.get("retrieved_chunks", []))
-            if locked:
-                state["locked_answer"] = locked
+        query = _build_retrieval_query(state)
+        if not query:
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean.retrieval_query_guard",
+                "result": "skipped_retrieval_due_to_ambiguous_query",
+            })
+            return
+
+        # Anchor lock + hint plan benefit from wider recall — ask for more
+        # candidate chunks here than a typical per-turn Teacher draft uses.
+        chunks = search_textbook(query, self.retriever, top_k=12)
+        state["retrieved_chunks"] = chunks
+        state["debug"]["retrieval_calls"] = int(state["debug"].get("retrieval_calls", 0)) + 1
+        retrieval_schema_keys = sorted(list(chunks[0].keys())) if chunks else []
+        state["debug"]["turn_trace"].append({
+            "wrapper": "dean.python_retrieval",
+            "result": f"{len(chunks)} chunks returned | query={query}",
+            "retrieval": _retrieval_trace_payload(query, chunks),
+            "retrieval_calls": state["debug"]["retrieval_calls"],
+            "retrieval_schema_keys": retrieval_schema_keys,
+        })
+
+    def _lock_anchors_call(self, state: TutorState) -> dict:
+        """
+        Lock both question and answer anchors immediately after topic-lock retrieval.
+        Returns a dict with: locked_question, locked_answer, rationale.
+        """
+        topic_selection = str(state.get("topic_selection", "") or "").strip()
+        chunks_str = _format_chunks(state.get("retrieved_chunks", []))
+        conversation_history = render_history(state.get("messages", []))
+        wrapper_delta = (
+            getattr(cfg.prompts, "dean_lock_anchors_delta", "")
+            or getattr(cfg.prompts, "dean_lock_anchors_static", "")
+        )
+        dynamic_prompt = getattr(cfg.prompts, "dean_lock_anchors_dynamic", "").format(
+            topic_selection=topic_selection,
+            retrieved_propositions=chunks_str,
+            conversation_history=conversation_history,
+            **_domain_prompt_vars(),
+        )
+
+        resp = _timed_create(
+            self.client, state, "dean._lock_anchors_call",
+            model=self.model,
+            temperature=0,
+            max_tokens=360,
+            system=_cached_system(
+                getattr(cfg.prompts, "dean_base", ""),
+                wrapper_delta,
+                chunks_str,
+                conversation_history,
+                dynamic_prompt,
+            ),
+            messages=[{"role": "user", "content": "Lock anchors and return strict JSON."}],
+        )
+        text = (resp.content[0].text or "").strip()
+        parsed = _extract_json_object(text)
+        if parsed is None:
+            fallback_answer_raw = self._extract_answer_parametric(state)
+            fallback_answer, fallback_action = _sanitize_locked_answer(
+                fallback_answer_raw,
+                state.get("retrieved_chunks", []),
+                "",
+            )
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean._lock_anchors_call_parse_fallback",
+                "result": "parse_failed",
+                "fallback_answer": fallback_answer,
+                "fallback_action": fallback_action,
+            })
+            return {
+                "locked_question": topic_selection if fallback_answer else "",
+                "locked_answer": fallback_answer,
+                "rationale": "parse_failed",
+            }
+
+        locked_question = str(parsed.get("locked_question", "") or "").strip()
+        locked_answer_raw = str(parsed.get("locked_answer", "") or "").strip()
+        locked_answer, sanitize_action = _sanitize_locked_answer(
+            locked_answer_raw,
+            state.get("retrieved_chunks", []),
+            "",
+        )
+        state["debug"]["turn_trace"].append({
+            "wrapper": "dean.sanitize_locked_answer",
+            "candidate": locked_answer_raw[:100],
+            "action": sanitize_action,
+            "final": locked_answer,
+        })
+        # Repair once with a focused LLM pass if answer still failed sanitization.
+        if not locked_answer:
+            repair_resp = _timed_create(
+                self.client,
+                state,
+                "dean._lock_anchors_repair_call",
+                model=self.model,
+                temperature=0,
+                max_tokens=140,
+                system=_cached_system(
+                    getattr(cfg.prompts, "dean_base", ""),
+                    wrapper_delta,
+                    chunks_str,
+                    conversation_history,
+                    dynamic_prompt,
+                ),
+                messages=[{
+                    "role": "user",
+                    "content": (
+                        "Return strict JSON only. locked_question must be specific. "
+                        "locked_answer must be 1-5 words, a SINGLE noun phrase (like "
+                        "'axillary nerve' or 'quadrangular space'). NO lists, NO verbs, "
+                        "NO cord origins, NO supporting facts — only the target term."
+                    ),
+                }],
+            )
+            repair_text = (repair_resp.content[0].text or "").strip()
+            repair = _extract_json_object(repair_text)
+            if repair is not None:
+                repaired_question = str(repair.get("locked_question", "") or "").strip()
+                repaired_raw = str(repair.get("locked_answer", "") or "").strip()
+                repaired_answer, repaired_action = _sanitize_locked_answer(
+                    repaired_raw,
+                    state.get("retrieved_chunks", []),
+                    "",
+                )
                 state["debug"]["turn_trace"].append({
-                    "wrapper": "dean.python_lock_answer",
-                    "result": f"locked_answer={locked}",
+                    "wrapper": "dean.sanitize_locked_answer",
+                    "candidate": repaired_raw[:100],
+                    "action": repaired_action,
+                    "final": repaired_answer,
+                    "decision_effect": "anchor_repair_attempt",
                 })
+                if repaired_question:
+                    locked_question = repaired_question
+                if repaired_answer:
+                    locked_answer = repaired_answer
+                    parsed["rationale"] = (
+                        str(parsed.get("rationale", "") or "").strip()
+                        + " | repaired_once"
+                    ).strip(" |")
+        return {
+            "locked_question": locked_question,
+            "locked_answer": locked_answer,
+            "rationale": str(parsed.get("rationale", "") or ""),
+        }
+
+    def _hint_plan_call(self, state: TutorState) -> list[str]:
+        """
+        Build a 3-step progressive hint plan after anchors lock.
+        Returned hints are guidance intents for Teacher, not direct answer reveals.
+        """
+        conversation_history = render_history(state.get("messages", []))
+        chunks_str = _format_chunks(state.get("retrieved_chunks", []))
+        dynamic_prompt = getattr(cfg.prompts, "dean_hint_plan_dynamic", "").format(
+            locked_question=state.get("locked_question", ""),
+            locked_answer=state.get("locked_answer", ""),
+            conversation_history=conversation_history,
+            **_domain_prompt_vars(),
+        )
+        wrapper_delta = (
+            getattr(cfg.prompts, "dean_hint_plan_delta", "")
+            or getattr(cfg.prompts, "dean_hint_plan_static", "")
+        )
+        resp = _timed_create(
+            self.client,
+            state,
+            "dean._hint_plan_call",
+            model=self.model,
+            temperature=0,
+            max_tokens=220,
+            system=_cached_system(
+                getattr(cfg.prompts, "dean_base", ""),
+                wrapper_delta,
+                chunks_str,
+                conversation_history,
+                dynamic_prompt,
+            ),
+            messages=[{"role": "user", "content": "Return strict JSON only."}],
+        )
+        text = (resp.content[0].text or "").strip()
+        parsed = _extract_json_object(text)
+        if parsed is None:
+            return []
+        hints = parsed.get("hints", [])
+        if not isinstance(hints, list):
+            return []
+        cleaned = []
+        for h in hints:
+            s = str(h or "").strip()
+            if s:
+                cleaned.append(s)
+        return cleaned[:3]
+
+    def _extract_answer_parametric(self, state: TutorState) -> str:
+        """
+        Fallback: ask Claude directly for the answer when RAG chunks don't yield a locked_answer.
+        Uses domain config to frame the expected answer format. Short, cheap call (max_tokens=15).
+        Returns a short answer string or "" if unclear.
+        """
+        question = _latest_student_message(state.get("messages", []))
+        if not question:
+            return ""
+        answer_format = getattr(cfg.domain, "example_answer_format", "1-3 word answer term only")
+        domain_name = getattr(cfg.domain, "name", "the subject")
+        prompt = (
+            f"Student question: \"{question}\"\n\n"
+            f"Reply with ONLY the primary {domain_name} concept that is the correct answer.\n"
+            f"Format: {answer_format}\n"
+            "Maximum 4 words. No parentheses, no qualifiers.\n"
+            "If you cannot determine the answer with confidence, reply: unknown"
+        )
+        try:
+            resp = self.client.messages.create(
+                model=self.model,
+                max_tokens=15,
+                system=f"You are a precise {domain_name} expert. Reply with the answer term only — 1-4 words maximum.",
+                messages=[{"role": "user", "content": prompt}],
+            )
+            raw = (resp.content[0].text or "").strip().lower()
+            # Strip anything after a parenthesis or comma
+            raw = re.split(r"[,(]", raw)[0].strip()
+            in_tok = resp.usage.input_tokens
+            out_tok = resp.usage.output_tokens
+            cost = (in_tok * _PRICE_IN + out_tok * _PRICE_OUT) / 1_000_000
+            state["debug"]["api_calls"] += 1
+            state["debug"]["input_tokens"] += in_tok
+            state["debug"]["output_tokens"] += out_tok
+            state["debug"]["cost_usd"] = float(state["debug"].get("cost_usd", 0.0)) + cost
+            if raw in ("unknown", "unclear", "uncertain", ""):
+                return ""
+            if len(raw.split()) > 4:
+                return ""
+            return raw
+        except Exception:
+            return ""
 
     def _setup_call(self, state: TutorState) -> dict:
         """
@@ -966,33 +1475,20 @@ class DeanAgent:
 
         Returns:
             dict with student_state, student_reached_answer, hint_level,
-                  locked_answer, search_needed, critique
+                  search_needed, critique
         """
-        history = state.get("messages", [])
-        max_history = int(getattr(cfg.dean, "setup_history_messages", 8))
-        if max_history > 0:
-            history = history[-max_history:]
-        conversation_history = _format_messages(history)
-        static_prompt = (
-            cfg.prompts.dean_setup_classify_static
-            if hasattr(cfg.prompts, "dean_setup_classify_static")
-            else cfg.prompts.dean_setup_static
+        conversation_history = render_history(state.get("messages", []))
+        wrapper_delta = (
+            getattr(cfg.prompts, "dean_setup_delta", "")
+            or cfg.prompts.dean_setup_classify_static
         )
-        dynamic_prompt = (
-            cfg.prompts.dean_setup_classify_dynamic.format(
-                locked_answer=state.get("locked_answer", ""),
-                hint_level=state.get("hint_level", 1),
-                turn_count=state.get("turn_count", 0),
-                conversation_history=conversation_history,
-            )
-            if hasattr(cfg.prompts, "dean_setup_classify_dynamic")
-            else cfg.prompts.dean_setup_dynamic.format(
-                locked_answer=state.get("locked_answer", ""),
-                hint_level=state.get("hint_level", 1),
-                turn_count=state.get("turn_count", 0),
-                chunks_available=bool(state.get("retrieved_chunks", [])),
-                conversation_history=conversation_history,
-            )
+        dynamic_prompt = cfg.prompts.dean_setup_classify_dynamic.format(
+            locked_answer=state.get("locked_answer", ""),
+            locked_question=state.get("locked_question", ""),
+            hint_level=state.get("hint_level", 0),
+            turn_count=state.get("turn_count", 0),
+            conversation_history=conversation_history,
+            **_domain_prompt_vars(),
         )
 
         chunks_str = _format_chunks(state.get("retrieved_chunks", []))
@@ -1001,8 +1497,14 @@ class DeanAgent:
             model=self.model,
             temperature=0,
             max_tokens=220,
-            system=_cached_system(static_prompt, chunks=chunks_str, dynamic=dynamic_prompt),
-            messages=_cache_suffix_message([{"role": "user", "content": "Classify this turn and return JSON."}]),
+            system=_cached_system(
+                getattr(cfg.prompts, "dean_base", ""),
+                wrapper_delta,
+                chunks_str,
+                conversation_history,
+                dynamic_prompt,
+            ),
+            messages=[{"role": "user", "content": "Classify this turn and return JSON."}],
         )
 
         text = (resp.content[0].text or "").strip()
@@ -1015,60 +1517,63 @@ class DeanAgent:
         if student_state not in valid_states:
             student_state = "irrelevant"
         try:
-            hint_level = int(parsed.get("hint_level", state.get("hint_level", 1)))
+            hint_level = int(parsed.get("hint_level", state.get("hint_level", 0)))
         except (TypeError, ValueError):
-            hint_level = int(state.get("hint_level", 1))
-
-        locked = str(parsed.get("locked_answer", state.get("locked_answer", "")) or "").strip().lower()
-        if not locked:
-            locked = state.get("locked_answer", "")
+            hint_level = int(state.get("hint_level", 0))
 
         result = {
             "student_state": student_state,
             "student_reached_answer": bool(parsed.get("student_reached_answer", False)),
             "confidence_score": parsed.get("confidence_score", None),
             "hint_level": hint_level,
-            "locked_answer": locked,
             "search_needed": False,
             "critique": str(parsed.get("critique", "") or ""),
         }
-        state["debug"]["turn_trace"].append({
-            "wrapper": "dean._setup_call",
-            "result": f"student_state={result['student_state']}, hint={result['hint_level']}",
-        })
+        for entry in reversed(state["debug"]["turn_trace"]):
+            if entry.get("wrapper") == "dean._setup_call":
+                entry["result"] = f"student_state={result['student_state']}, hint={result['hint_level']}"
+                entry["locked_answer_final"] = state.get("locked_answer", "")
+                entry["decision_effect"] = "classification_only"
+                break
         return result
 
     def _setup_local_fallback(self, state: TutorState) -> dict:
         """
         Local classification fallback when Dean JSON parsing fails.
+        Uses safe defaults — no domain-specific heuristics.
         """
         msg = _latest_student_message(state.get("messages", []))
         txt = (msg or "").strip().lower()
-        locked = (state.get("locked_answer", "") or "").lower()
+        locked = _normalize_text(state.get("locked_answer", "") or "")
 
         low_effort_set = {"", "idk", "i don't know", "i dont know", "don't know", "dont know", "help"}
         if txt in low_effort_set:
             student_state = "low_effort"
-        elif locked and locked in txt:
+        elif locked and locked in _normalize_text(txt):
             student_state = "correct"
         elif "?" in txt:
             student_state = "question"
-        elif any(k in txt for k in ("brachial plexus", "c5", "c6", "deltoid", "shoulder")):
-            student_state = "partial_correct"
         else:
             student_state = "incorrect"
 
         result = {
             "student_state": student_state,
-            "student_reached_answer": student_state == "correct",
-            "confidence_score": _heuristic_confidence(msg, student_state, locked),
-            "hint_level": int(state.get("hint_level", 1)),
-            "locked_answer": state.get("locked_answer", ""),
+            "student_reached_answer": student_state == "correct" and bool(locked),
+            "confidence_score": {
+                "correct": 0.74,
+                "partial_correct": 0.56,
+                "question": 0.42,
+                "incorrect": 0.24,
+                "irrelevant": 0.10,
+                "low_effort": 0.05,
+            }.get(student_state, 0.35),
+            "hint_level": int(state.get("hint_level", 0)),
             "search_needed": False,
             "critique": "Dean setup parse fallback used.",
         }
         state["debug"]["turn_trace"].append({
             "wrapper": "dean._setup_local_fallback",
+            "decision_effect": "classification_fallback",
             "result": f"student_state={result['student_state']}, hint={result['hint_level']}",
         })
         return result
@@ -1105,8 +1610,17 @@ class DeanAgent:
         elif q_count > 1:
             reason_codes.append("multi_question")
 
-        if locked and locked in lowered:
-            reason_codes.append("reveal_risk")
+        # Word-boundary reveal check. Raw substring match (previously used)
+        # had two failure modes:
+        #   - Single-word anchors ("latissimus") fire on any incidental mention
+        #     in a legitimate Socratic probe.
+        #   - Multi-word anchors mis-flag descriptive uses ("axillary nerve
+        #     territory" flagged when locked = "axillary nerve").
+        # Require the locked term to be at least 2 words AND appear as a
+        # whole-phrase match (word-bounded).
+        if locked and len(locked.split()) >= 2:
+            if re.search(rf"\b{re.escape(locked)}\b", lowered):
+                reason_codes.append("reveal_risk")
 
         if _sentence_count(text) > 4:
             reason_codes.append("verbosity")
@@ -1119,7 +1633,10 @@ class DeanAgent:
             reason_codes.append("sycophancy_risk")
 
         prior_questions = _recent_tutor_questions(state.get("messages", []), limit=3)
-        if _is_repetitive_question(_extract_question_text(text), prior_questions):
+        repetition_threshold = float(
+            getattr(getattr(cfg, "thresholds", object()), "repetition_similarity", 0.9)
+        )
+        if _is_repetitive_question(_extract_question_text(text), prior_questions, repetition_threshold):
             reason_codes.append("question_repetition")
 
         if not reason_codes:
@@ -1173,14 +1690,19 @@ class DeanAgent:
         This makes Teacher generation explicitly aware of Dean QC constraints.
         """
         student_state = state.get("student_state") or "unknown"
-        hint_level = int(state.get("hint_level", 1))
+        hint_level = int(state.get("hint_level", 0))
+        hint_plan = state.get("debug", {}).get("hint_plan", [])
+        active_hint = ""
+        if isinstance(hint_plan, list) and hint_plan and hint_level >= 1:
+            idx = min(max(hint_level - 1, 0), len(hint_plan) - 1)
+            active_hint = str(hint_plan[idx] or "")
         return (
             "reason_codes=['preflight']\n"
             "rewrite_instruction=Generate one concise Socratic reply that will pass Dean QC.\n"
             "critique=Preflight constraints: exactly one question mark, 2-4 sentences, "
             "no generic filler lead-ins, no answer reveal by naming/elimination, and "
             "one concrete next reasoning step.\n"
-            f"context=student_state:{student_state},hint_level:{hint_level}"
+            f"context=student_state:{student_state},hint_level:{hint_level},active_hint:{active_hint}"
         )
 
     def _quality_check_call(self, state: TutorState, teacher_draft: str, phase: str = "tutoring") -> dict:
@@ -1196,27 +1718,31 @@ class DeanAgent:
             if msg.get("role") == "student":
                 last_student_msg = msg.get("content", "")
                 break
-        history = state.get("messages", [])
-        max_history = int(getattr(cfg.dean, "qc_history_messages", 6))
-        if max_history > 0:
-            history = history[-max_history:]
-        conversation_history = _format_messages(history)
+        conversation_history = render_history(state.get("messages", []))
 
         if phase == "assessment" and hasattr(cfg.prompts, "dean_quality_check_assessment_static"):
-            static_prompt = cfg.prompts.dean_quality_check_assessment_static
+            wrapper_delta = (
+                getattr(cfg.prompts, "dean_quality_check_assessment_delta", "")
+                or cfg.prompts.dean_quality_check_assessment_static
+            )
             dynamic_prompt = cfg.prompts.dean_quality_check_assessment_dynamic.format(
                 locked_answer=state.get("locked_answer", ""),
                 last_student_message=last_student_msg,
                 teacher_draft=teacher_draft,
                 conversation_history=conversation_history,
+                **_domain_prompt_vars(),
             )
         else:
-            static_prompt = cfg.prompts.dean_quality_check_static
+            wrapper_delta = (
+                getattr(cfg.prompts, "dean_quality_check_tutoring_delta", "")
+                or cfg.prompts.dean_quality_check_static
+            )
             dynamic_prompt = cfg.prompts.dean_quality_check_dynamic.format(
                 locked_answer=state.get("locked_answer", ""),
                 last_student_message=last_student_msg,
                 teacher_draft=teacher_draft,
                 conversation_history=conversation_history,
+                **_domain_prompt_vars(),
             )
 
         chunks_str = _format_chunks(state.get("retrieved_chunks", []))
@@ -1225,8 +1751,14 @@ class DeanAgent:
             model=self.model,
             temperature=0,
             max_tokens=420,
-            system=_cached_system(static_prompt, chunks=chunks_str, dynamic=dynamic_prompt),
-            messages=_cache_suffix_message([{"role": "user", "content": "Evaluate this Teacher draft."}]),
+            system=_cached_system(
+                getattr(cfg.prompts, "dean_base", ""),
+                wrapper_delta,
+                chunks_str,
+                conversation_history,
+                dynamic_prompt,
+            ),
+            messages=[{"role": "user", "content": "Evaluate this Teacher draft."}],
         )
 
         text = (resp.content[0].text or "").strip()
@@ -1272,6 +1804,7 @@ class DeanAgent:
                 entry["reason_codes"] = reason_codes
                 entry["rewrite_instruction"] = result.get("rewrite_instruction", "")
                 entry["parse_ok"] = parse_ok
+                entry["decision_effect"] = "qc_pass" if passed else "qc_fail"
                 if revised_teacher_draft:
                     entry["revised_teacher_draft"] = revised_teacher_draft
                 break
@@ -1298,11 +1831,7 @@ class DeanAgent:
               "feedback_message": str
             }
         """
-        history = state.get("messages", [])
-        max_history = int(getattr(cfg.session, "prompt_history_messages", 12))
-        if max_history > 0:
-            history = history[-max_history:]
-        conversation_history = _format_messages(history)
+        conversation_history = render_history(state.get("messages", []))
         student_msg = _latest_student_message(state.get("messages", []))
         last_tutor_msg = ""
         for msg in reversed(state.get("messages", [])):
@@ -1311,11 +1840,15 @@ class DeanAgent:
                 break
 
         chunks_str = _format_chunks(state.get("retrieved_chunks", []))
-        static_prompt = getattr(
+        wrapper_delta = getattr(
+            cfg.prompts,
+            "dean_clinical_turn_delta",
+            "",
+        ) or getattr(
             cfg.prompts,
             "dean_clinical_turn_static",
             (
-                "You are the Dean evaluating a student's OT clinical reasoning response. "
+                "You are the Dean evaluating a {student_descriptor}'s clinical reasoning response. "
                 "Return strict JSON only."
             ),
         )
@@ -1336,7 +1869,29 @@ class DeanAgent:
             last_tutor_message=last_tutor_msg,
             student_message=student_msg,
             conversation_history=conversation_history,
+            **_domain_prompt_vars(),
         )
+
+        system_blocks = _cached_system(
+            getattr(cfg.prompts, "dean_base", ""),
+            wrapper_delta,
+            chunks_str,
+            conversation_history,
+            dynamic_prompt,
+        )
+        messages_payload = [{"role": "user", "content": "Evaluate this clinical response and return JSON."}]
+        fingerprint = _request_fingerprint(system_blocks, messages_payload)
+        dedupe_store = state["debug"].setdefault("_dedupe_results", {})
+        last = dedupe_store.get("dean._clinical_turn_call")
+        if isinstance(last, dict) and last.get("fingerprint") == fingerprint:
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean._clinical_turn_call.dedupe_guard",
+                "result": "reused_previous_result_for_identical_input",
+                "decision_effect": "dedupe_reuse",
+            })
+            cached_result = last.get("result")
+            if isinstance(cached_result, dict):
+                return dict(cached_result)
 
         resp = _timed_create(
             self.client,
@@ -1345,14 +1900,19 @@ class DeanAgent:
             model=self.model,
             temperature=0,
             max_tokens=360,
-            system=_cached_system(static_prompt, chunks=chunks_str, dynamic=dynamic_prompt),
-            messages=_cache_suffix_message([{"role": "user", "content": "Evaluate this clinical response and return JSON."}]),
+            system=system_blocks,
+            messages=messages_payload,
         )
 
         text = (resp.content[0].text or "").strip()
         parsed = _extract_json_object(text)
         if parsed is None:
-            return self._clinical_turn_local_fallback(state, student_msg)
+            fallback_result = self._clinical_turn_local_fallback(state, student_msg)
+            dedupe_store["dean._clinical_turn_call"] = {
+                "fingerprint": fingerprint,
+                "result": fallback_result,
+            }
+            return fallback_result
 
         student_state = str(parsed.get("student_state", "incorrect")).strip().lower()
         if student_state not in {"correct", "partial_correct", "incorrect"}:
@@ -1371,12 +1931,14 @@ class DeanAgent:
         if not passed and not feedback:
             feedback = self._assessment_clinical_followup_fallback(state)
 
-        return {
+        result = {
             "student_state": student_state,
             "confidence_score": round(confidence, 3),
             "pass": passed,
             "feedback_message": feedback,
         }
+        dedupe_store["dean._clinical_turn_call"] = {"fingerprint": fingerprint, "result": result}
+        return result
 
     def _clinical_turn_local_fallback(self, state: TutorState, student_msg: str) -> dict:
         """
@@ -1413,101 +1975,181 @@ class DeanAgent:
             "feedback_message": feedback,
         }
 
-    def _assessment_call(self, state: TutorState) -> str:
+    def _close_session_call(self, state: TutorState) -> dict:
         """
-        Dean's assessment call.
-
-        If student_reached_answer and assessment_turn == 2 (has clinical response):
-          → mastery summary
-        If not student_reached_answer:
-          → reveal message with textbook quote
-
-        Returns:
-            str: message to append to state["messages"]
+        Single batched close-session call:
+        returns tiers + rationale + student-facing closeout + memory summary.
         """
-        reached = state.get("student_reached_answer", False)
+        reached = bool(state.get("student_reached_answer", False))
         outcome = "reached_answer" if reached else "did_not_reach_answer"
-
-        # Get clinical response (latest student answer during clinical path)
-        clinical_response = ""
-        if reached and state.get("clinical_opt_in") is True:
-            for msg in reversed(state.get("messages", [])):
-                if msg.get("role") == "student":
-                    clinical_response = msg.get("content", "")
-                    break
-
+        conversation_history = render_history(state.get("messages", []))
         chunks_str = _format_chunks(state.get("retrieved_chunks", []))
-        history = state.get("messages", [])
-        max_history = int(getattr(cfg.session, "prompt_history_messages", 12))
-        if max_history > 0:
-            history = history[-max_history:]
-        conversation_history = _format_messages(history)
-
-        clinical_opt_in = state.get("clinical_opt_in")
-        opt_in_label = (
-            "completed_clinical_question" if clinical_opt_in is True
-            else "skipped_clinical_question" if clinical_opt_in is False
-            else "unknown"
+        topic_selection = str(state.get("topic_selection", "") or "").strip() or _latest_student_message(
+            state.get("messages", [])
+        )
+        dynamic_prompt = cfg.prompts.dean_close_session_dynamic.format(
+            outcome=outcome,
+            locked_answer=state.get("locked_answer", ""),
+            topic_selection=topic_selection,
+            student_reached_answer=state.get("student_reached_answer", False),
+            hint_level=state.get("hint_level", 0),
+            max_hints=state.get("max_hints", 3),
+            student_answer_confidence=state.get("student_answer_confidence", 0.0),
+            student_mastery_confidence=state.get("student_mastery_confidence", 0.0),
+            clinical_opt_in=state.get("clinical_opt_in"),
+            clinical_completed=state.get("clinical_completed", False),
+            clinical_turn_count=state.get("clinical_turn_count", 0),
+            clinical_max_turns=state.get("clinical_max_turns", 3),
+            clinical_history=json.dumps(state.get("clinical_history", [])),
+            weak_topics=json.dumps(state.get("weak_topics", [])),
+            conversation_history=conversation_history,
+            **_domain_prompt_vars(),
         )
 
-        static_prompt = (
-            cfg.prompts.dean_assessment_static
-            if hasattr(cfg.prompts, "dean_assessment_static")
-            else cfg.prompts.dean_assessment
+        system_blocks = _cached_system(
+            getattr(cfg.prompts, "dean_base", ""),
+            cfg.prompts.dean_close_session_static,
+            chunks_str,
+            conversation_history,
+            dynamic_prompt,
         )
-        dynamic_prompt = (
-            cfg.prompts.dean_assessment_dynamic.format(
-                outcome=outcome,
-                locked_answer=state.get("locked_answer", ""),
-                clinical_opt_in=opt_in_label,
-                clinical_response=clinical_response or "(none)",
-                core_mastery_tier=state.get("core_mastery_tier", "not_assessed"),
-                clinical_mastery_tier=state.get("clinical_mastery_tier", "not_assessed"),
-                mastery_tier=state.get("mastery_tier", "not_assessed"),
-                clinical_turn_count=state.get("clinical_turn_count", 0),
-                clinical_max_turns=state.get("clinical_max_turns", 3),
-                clinical_completed=state.get("clinical_completed", False),
-                clinical_history=json.dumps(state.get("clinical_history", [])),
-                conversation_history=conversation_history,
+        messages_payload = [{"role": "user", "content": "Return strict JSON only."}]
+        fingerprint = _request_fingerprint(system_blocks, messages_payload)
+        dedupe_store = state["debug"].setdefault("_dedupe_results", {})
+        last = dedupe_store.get("dean._close_session_call")
+        if isinstance(last, dict) and last.get("fingerprint") == fingerprint:
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean._close_session_call.dedupe_guard",
+                "result": "reused_previous_result_for_identical_input",
+                "decision_effect": "dedupe_reuse",
+            })
+            cached_result = last.get("result")
+            if isinstance(cached_result, dict):
+                return dict(cached_result)
+
+        try:
+            resp = _timed_create(
+                self.client,
+                state,
+                "dean._close_session_call",
+                model=self.model,
+                temperature=0,
+                max_tokens=900,
+                system=system_blocks,
+                messages=messages_payload,
             )
-            if hasattr(cfg.prompts, "dean_assessment_dynamic")
-            else cfg.prompts.dean_assessment.format(
-                outcome=outcome,
-                locked_answer=state.get("locked_answer", ""),
-                retrieved_chunks=chunks_str,
-                clinical_response=clinical_response,
-                conversation_history=conversation_history,
+            text = (resp.content[0].text or "").strip()
+        except Exception:
+            fallback = self._close_session_fallback_payload(state, parse_error=True)
+            dedupe_store["dean._close_session_call"] = {"fingerprint": fingerprint, "result": fallback}
+            return fallback
+
+        parsed = _extract_json_object(text)
+        if parsed is None:
+            fallback = self._close_session_fallback_payload(state, parse_error=True)
+            dedupe_store["dean._close_session_call"] = {"fingerprint": fingerprint, "result": fallback}
+            return fallback
+
+        tiers = {"strong", "proficient", "developing", "needs_review", "not_assessed"}
+        core_tier = str(parsed.get("core_mastery_tier", "") or "").strip().lower()
+        clinical_tier = str(parsed.get("clinical_mastery_tier", "") or "").strip().lower()
+        mastery_tier = str(parsed.get("mastery_tier", "") or "").strip().lower()
+        if core_tier not in tiers or clinical_tier not in tiers or mastery_tier not in tiers:
+            fallback = self._close_session_fallback_payload(state, parse_error=True)
+            dedupe_store["dean._close_session_call"] = {"fingerprint": fingerprint, "result": fallback}
+            return fallback
+
+        grading_rationale = str(parsed.get("grading_rationale", "") or "").strip()
+        student_msg = str(parsed.get("student_facing_message", "") or "").strip()
+        memory_summary = str(parsed.get("memory_summary", "") or "").strip()
+        if not student_msg or not memory_summary:
+            fallback = self._close_session_fallback_payload(state, parse_error=True)
+            dedupe_store["dean._close_session_call"] = {"fingerprint": fingerprint, "result": fallback}
+            return fallback
+        for entry in reversed(state["debug"]["turn_trace"]):
+            if entry.get("wrapper") == "dean._close_session_call":
+                entry["result"] = "close_session_json_ok"
+                entry["decision_effect"] = "session_close_evaluated"
+                break
+
+        result = {
+            "core_mastery_tier": core_tier,
+            "clinical_mastery_tier": clinical_tier,
+            "mastery_tier": mastery_tier,
+            "grading_rationale": grading_rationale,
+            "student_facing_message": student_msg,
+            "memory_summary": memory_summary,
+            "fallback_used": False,
+        }
+        dedupe_store["dean._close_session_call"] = {"fingerprint": fingerprint, "result": result}
+        return result
+
+    def _close_session_fallback_payload(self, state: TutorState, parse_error: bool = False) -> dict:
+        """
+        Deterministic fallback if close-session JSON is malformed or the call fails.
+        """
+        reached = bool(state.get("student_reached_answer", False))
+        clinical_done = bool(state.get("clinical_completed", False))
+        if reached and clinical_done:
+            core = "proficient"
+            clinical = "proficient"
+            overall = "proficient"
+        elif reached:
+            core = "developing"
+            clinical = "not_assessed"
+            overall = "developing"
+        else:
+            core = "needs_review"
+            clinical = "not_assessed"
+            overall = "needs_review"
+
+        topic = str(state.get("topic_selection", "") or "").strip() or "this topic"
+        answer = str(state.get("locked_answer", "") or "").strip()
+        if reached and answer:
+            student_facing = (
+                f"You reached the core answer ({answer}) for {topic}. "
+                "Strong progress today—let’s keep building clinical transfer on the next pass."
             )
-        )
+        elif answer:
+            student_facing = (
+                f"The correct answer for {topic} is {answer}. "
+                "Good effort—this topic is marked for focused review next session."
+            )
+        else:
+            student_facing = (
+                "Good effort this session. We’ll revisit this topic with a tighter step-by-step approach next time."
+            )
 
-        chunks_block = (
-            cfg.prompts.dean_assessment_chunks.format(retrieved_chunks=chunks_str)
-            if hasattr(cfg.prompts, "dean_assessment_chunks")
-            else (cfg.prompts.dean_setup_chunks.format(retrieved_chunks=chunks_str) if chunks_str else "")
+        memory_summary = (
+            f"Session on {topic}. "
+            f"Reached answer: {reached}. "
+            f"Overall tier: {overall}. "
+            f"Hint level ended at {state.get('hint_level', 0)}."
         )
-
-        resp = _timed_create(
-            self.client, state, "dean._assessment_call",
-            model=self.model,
-            max_tokens=512,
-            system=_cached_system(
-                static_prompt,
-                chunks_block,
-                dynamic_prompt,
-            ),
-            messages=_cache_suffix_message([{"role": "user", "content": "Write the assessment message."}]),
-        )
-        return resp.content[0].text
+        state["debug"]["turn_trace"].append({
+            "wrapper": "dean._close_session_fallback",
+            "decision_effect": "fallback_used",
+            "result": "used_parse_fallback" if parse_error else "used_fallback",
+        })
+        return {
+            "core_mastery_tier": core,
+            "clinical_mastery_tier": clinical,
+            "mastery_tier": overall,
+            "grading_rationale": "Fallback grading used due to malformed or unavailable close-session output.",
+            "student_facing_message": student_facing,
+            "memory_summary": memory_summary,
+            "fallback_used": True,
+        }
 
     def _assessment_clinical_fallback(self, state: TutorState) -> str:
         """
         Dean-written fallback clinical question if Teacher fails quality twice.
         """
         chunks_str = _format_chunks(state.get("retrieved_chunks", []))
-        system = (
-            "You are an OT anatomy tutor writing a single clinical application question. "
-            "Do not restate the answer. Ask exactly one clinically grounded question about "
-            "functional impact, exam finding, or intervention planning. 2-3 sentences max."
+        system = _apply_domain_vars(
+            "You are a {domain_short} tutor writing a single {assessment_dimension} question. "
+            "Do not restate the answer. Ask exactly one question grounded in {assessment_dimension_examples}. "
+            "2-3 sentences max."
         )
         user_msg = (
             f"Correct answer (for context): {state.get('locked_answer', '')}\n\n"
@@ -1518,8 +2160,8 @@ class DeanAgent:
             self.client, state, "dean.assessment_fallback",
             model=self.model,
             max_tokens=220,
-            system=_cached_system(system),
-            messages=_cache_suffix_message([{"role": "user", "content": user_msg}]),
+            system=_cached_system(system, "", "", "", ""),
+            messages=[{"role": "user", "content": user_msg}],
         )
         return resp.content[0].text
 
@@ -1530,8 +2172,8 @@ class DeanAgent:
         """
         chunks_str = _format_chunks(state.get("retrieved_chunks", []))
         student_msg = _latest_student_message(state.get("messages", []))
-        system = (
-            "You are an OT anatomy tutor giving corrective clinical coaching. "
+        system = _apply_domain_vars(
+            "You are a {domain_short} tutor giving corrective coaching on {assessment_dimension}. "
             "Write 3-4 sentences max. Include exactly: "
             "1) 'What you got right:' with one specific point, "
             "2) 'What to correct next:' with one specific correction, "
@@ -1548,68 +2190,18 @@ class DeanAgent:
             self.client, state, "dean.assessment_clinical_followup_fallback",
             model=self.model,
             max_tokens=260,
-            system=_cached_system(system),
-            messages=_cache_suffix_message([{"role": "user", "content": user_msg}]),
-        )
-        return resp.content[0].text
-
-    def _memory_summary_call(self, state: TutorState) -> str:
-        """
-        Dean's memory summary call.
-        Generates a natural language session summary for mem0.
-
-        Returns:
-            str: summary text passed to memory_manager.flush()
-        """
-        weak_topics = state.get("weak_topics", [])
-        weak_str = "; ".join(
-            f"{wt['topic']} (failed {wt.get('failure_count', 1)} times)"
-            for wt in weak_topics
-        ) or "none"
-
-        if state.get("student_reached_answer"):
-            tier = str(state.get("mastery_tier", "not_assessed"))
-            ans = state.get("locked_answer", "")
-            if tier in {"developing", "needs_review"}:
-                mastered = f"partial mastery: {ans} ({tier})"
-            else:
-                mastered = ans
-        else:
-            mastered = "none"
-
-        # Topics covered = topic from first student message
-        topics_covered = ""
-        for msg in state.get("messages", []):
-            if msg.get("role") == "student":
-                topics_covered = msg.get("content", "")[:80]
-                break
-
-        system = cfg.prompts.dean_memory_summary.format(
-            topics_covered=topics_covered or "unknown",
-            mastered_topics=mastered,
-            weak_topics=weak_str,
-            hint_levels=f"final hint level: {state.get('hint_level', 1)}",
-            mastery_tier=state.get("mastery_tier", "not_assessed"),
-            core_mastery_tier=state.get("core_mastery_tier", "not_assessed"),
-            clinical_mastery_tier=state.get("clinical_mastery_tier", "not_assessed"),
-            turn_count=state.get("turn_count", 0),
-        )
-
-        resp = _timed_create(
-            self.client, state, "dean._memory_summary_call",
-            model=self.model,
-            max_tokens=256,
-            system=_cached_system(system),
-            messages=_cache_suffix_message([{"role": "user", "content": "Write the session memory summary."}]),
+            system=_cached_system(system, "", "", "", ""),
+            messages=[{"role": "user", "content": user_msg}],
         )
         return resp.content[0].text
 
     def _dean_fallback(self, state: TutorState) -> str:
         """Dean writes directly when Teacher fails twice. Generic safe Socratic nudge."""
-        history = _format_messages(state.get("messages", []))
-        system = (
-            "You are a Socratic anatomy tutor. The student is working through a problem. "
-            "Do NOT give the answer or any specific anatomical facts. "
+        history = render_history(state.get("messages", []))
+        domain_short = getattr(cfg.domain, "short", "the subject")
+        system = _apply_domain_vars(
+            "You are a Socratic {domain_short} tutor. The student is working through a problem. "
+            "Do NOT give the answer or any specific facts. "
             "Ask one open-ended question that gets them thinking about what they already know. "
             "2 sentences max. Must end with a question."
         )
@@ -1617,10 +2209,10 @@ class DeanAgent:
             self.client, state, "dean.fallback",
             model=self.model,
             max_tokens=128,
-            system=_cached_system(system),
-            messages=_cache_suffix_message(
-                [{"role": "user", "content": f"Conversation so far:\n{history}\n\nWrite a safe fallback question."}]
-            ),
+            system=_cached_system(system, "", "", "", ""),
+            messages=[
+                {"role": "user", "content": f"Conversation so far:\n{history}\n\nWrite a safe fallback question."}
+            ],
         )
         return resp.content[0].text
 
@@ -1661,19 +2253,17 @@ def _format_chunks(chunks: list[dict]) -> str:
         return "(no textbook passages retrieved yet)"
     parts = []
     for i, chunk in enumerate(chunks, 1):
+        chapter = chunk.get("chapter_title", "")
         section = chunk.get("section_title", "")
         subsection = chunk.get("subsection_title", "")
-        location = " > ".join(filter(None, [section, subsection]))
-        parts.append(f"[{i}] {location}\n{chunk.get('text', '')}")
-    return "\n\n".join(parts)
-
-
-def _format_messages(messages: list[dict]) -> str:
-    if not messages:
-        return "(no conversation yet)"
-    parts = []
-    for msg in messages:
-        role = msg.get("role", "unknown").capitalize()
-        content = msg.get("content", "")
-        parts.append(f"{role}: {content}")
-    return "\n".join(parts)
+        page = chunk.get("page", "")
+        score = chunk.get("score")
+        location = " > ".join(filter(None, [chapter, section, subsection]))
+        meta_bits = []
+        if page:
+            meta_bits.append(f"p.{page}")
+        if isinstance(score, (int, float)):
+            meta_bits.append(f"score={float(score):.2f}")
+        meta = f" ({', '.join(meta_bits)})" if meta_bits else ""
+        parts.append(f"[{i}]{meta} {location}\n---\n{chunk.get('text', '')}")
+    return "\n\n===\n\n".join(parts)
