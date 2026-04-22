@@ -1,0 +1,1 @@
+"""Sokratic FastAPI backend package."""
