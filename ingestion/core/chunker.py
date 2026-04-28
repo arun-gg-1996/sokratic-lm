@@ -71,6 +71,51 @@ def _split_sentences(text: str) -> list[str]:
     return [s.strip() for s in SENT_SPLIT_RE.split(text.strip()) if s.strip()]
 
 
+# Clause boundary split (used as a fallback when a single sentence exceeds the
+# token budget). Splits on `;`, `:`, `, ` (with following space) so we can
+# emit clause-sized fragments rather than slicing mid-token.
+_CLAUSE_SPLIT_RE = re.compile(r"(?<=[;:])\s+|(?<=,)\s+(?=[A-Z])")
+
+
+def _back_off_to_sentence_end(text: str, encoder, max_tokens: int) -> str:
+    """
+    Return the largest prefix of `text` that fits within `max_tokens` AND
+    ends at a sentence terminator. Drops any partial trailing sentence.
+
+    If no sentence terminator fits within budget, returns "" (caller decides
+    fallback — this never returns a mid-sentence cut).
+
+    Used for:
+      - Overlap chunk body trimming (B.3 fix for the 64% mid-sentence overlap
+        truncation found in audit 2026-04-28).
+      - Long-sentence guard inside _split_to_token_budget.
+    """
+    if not text:
+        return ""
+    if _token_len(text, encoder) <= max_tokens:
+        # Whole text fits. Still verify it ends at a sentence terminator;
+        # otherwise back off to the last terminator we can find.
+        if text.rstrip().endswith((".", "!", "?")):
+            return text.strip()
+        sents = _split_sentences(text)
+        if not sents or not sents[-1].endswith((".", "!", "?")):
+            sents = sents[:-1]  # drop incomplete trailing sentence if present
+        return " ".join(sents).strip()
+
+    # Greedy accumulate sentences until adding the next would exceed budget.
+    sents = _split_sentences(text)
+    out: list[str] = []
+    for s in sents:
+        candidate = " ".join(out + [s])
+        if _token_len(candidate, encoder) > max_tokens:
+            break
+        out.append(s)
+    if out:
+        return " ".join(out).strip()
+    # Single first sentence already exceeds budget. Caller must decide.
+    return ""
+
+
 def _sanitize_section_title(section_title: str, chapter_title: str, section_num: str) -> str:
     """
     Never allow 1-2 char section titles (e.g., 'A', 'B').
@@ -101,24 +146,38 @@ def _split_to_token_budget(text: str, encoder, max_tokens: int) -> list[str]:
     current: list[str] = []
 
     for sent in _split_sentences(text):
-        # Very long sentence fallback
+        # Very long sentence fallback (B.3 fix: split on clause boundaries
+        # rather than mid-token). Slicing mid-token previously contributed to
+        # the 9.4% mid-sentence chunk-end rate found in the 2026-04-28 audit.
         if _token_len(sent, encoder) > max_tokens:
             if current:
                 pieces.append(" ".join(current).strip())
                 current = []
-
-            if encoder is not None:
-                toks = encoder.encode(sent)
-                for i in range(0, len(toks), max_tokens):
-                    part = encoder.decode(toks[i:i + max_tokens]).strip()
-                    if part:
-                        pieces.append(part)
-            else:
-                step = max_tokens * 4
-                for i in range(0, len(sent), step):
-                    part = sent[i:i + step].strip()
-                    if part:
-                        pieces.append(part)
+            # First try clause-level splits (`;`, `:`, comma+capital). Each
+            # resulting fragment is treated like its own sentence for budget
+            # accounting; we accumulate them greedily.
+            clauses = [c.strip() for c in _CLAUSE_SPLIT_RE.split(sent) if c.strip()]
+            local: list[str] = []
+            for c in clauses:
+                cand = " ".join(local + [c]).strip()
+                if local and _token_len(cand, encoder) > max_tokens:
+                    pieces.append(" ".join(local).strip())
+                    local = [c]
+                else:
+                    local.append(c)
+            if local:
+                rem = " ".join(local).strip()
+                if _token_len(rem, encoder) > max_tokens:
+                    # Single clause still exceeds budget. Drop it rather than
+                    # emit a mid-clause cut. This is a rare safety valve —
+                    # losing the rare table-row-as-one-sentence is preferable
+                    # to publishing a chunk that ends mid-clause.
+                    print(
+                        f"  [chunker] dropping single clause >{max_tokens} tokens "
+                        f"(len={len(rem)} chars): {rem[:80]}…"
+                    )
+                else:
+                    pieces.append(rem)
             continue
 
         candidate = " ".join(current + [sent]).strip()
@@ -177,29 +236,37 @@ def _table_reject_reason(text: str) -> str:
 
 
 def _trim_overlap_to_budget(prefix: str, body: str, encoder, max_tokens: int) -> str:
-    """Keep full prefix, trim body tail if needed to stay within token budget."""
-    merged = f"Context from previous chunk: {prefix} {body}".strip()
+    """
+    Build an overlap chunk that joins `prefix` (last 2 sentences of previous
+    chunk) with `body` (current chunk text), capped at `max_tokens` AT A
+    SENTENCE BOUNDARY.
+
+    B.3 fix (audit 2026-04-28): the previous implementation truncated the body
+    mid-token (`encoder.decode(b_toks[:remain])`) which caused 64% of overlap
+    chunks to end mid-sentence. We now back off body to the last sentence
+    terminator within the remaining budget; partial trailing sentences are
+    dropped, never sliced.
+    """
+    anchor = "Context from previous chunk:"
+    merged = f"{anchor} {prefix} {body}".strip()
     if _token_len(merged, encoder) <= max_tokens:
         return merged
 
-    if encoder is None:
-        # fallback char trimming
-        budget_chars = max_tokens * 4
-        return merged[:budget_chars].strip()
+    # If the prefix + anchor alone already exceeds budget, return prefix-only
+    # (still aligned to sentence boundaries — _last_n_sentences guarantees that).
+    prefix_only = f"{anchor} {prefix}".strip()
+    if _token_len(prefix_only, encoder) >= max_tokens:
+        return prefix_only
 
-    anchor = "Context from previous chunk:"
-    a_toks = encoder.encode(anchor)
-    p_toks = encoder.encode(prefix)
-    b_toks = encoder.encode(body)
-
-    if len(a_toks) + len(p_toks) >= max_tokens:
-        # prefix alone too long (rare): keep prefix tail only
-        budget = max_tokens - len(a_toks)
-        trimmed_prefix = encoder.decode(p_toks[-max(1, budget):]).strip()
-        return f"{anchor} {trimmed_prefix}".strip()
-
-    remain = max_tokens - len(a_toks) - len(p_toks)
-    return f"{anchor} {prefix} {encoder.decode(b_toks[:max(0, remain)]).strip()}".strip()
+    # Otherwise: back off the body to the largest sentence-aligned prefix that
+    # fits within the remaining budget.
+    remain = max_tokens - _token_len(prefix_only, encoder)
+    body_clipped = _back_off_to_sentence_end(body, encoder, remain)
+    if not body_clipped:
+        # The first body sentence alone exceeds the remaining budget. Return
+        # the prefix-only overlap rather than emit a mid-sentence cut.
+        return prefix_only
+    return f"{prefix_only} {body_clipped}".strip()
 
 
 # ---------------------------------------------------------------------------

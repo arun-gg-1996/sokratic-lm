@@ -7,11 +7,19 @@ openai==1.76.0
 # Retrieval
 # faiss-cpu removed — Qdrant replaces FAISS
 rank-bm25==0.2.2
+rapidfuzz==3.10.1
 sentence-transformers==3.4.1
+# scispacy: biomedical NER + UMLS entity linker. First use downloads
+# ~1GB UMLS KB to ~/.scispacy/. Required only for anatomy/OT domain;
+# other domains (physics, etc.) get a NoopAdapter and never touch this.
+# Model: install en_core_sci_sm==0.5.4 from the scispacy S3 wheel:
+#   pip install https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.4/en_core_sci_sm-0.5.4.tar.gz
+scispacy==0.5.5
+spacy==3.7.5
 
 # Chunking / ingestion
-llama-index==0.12.34
-llama-index-core==0.12.34
+llama-index>=0.12.34
+llama-index-core>=0.14.21
 pymupdf==1.25.5
 pdfplumber==0.11.6
 
