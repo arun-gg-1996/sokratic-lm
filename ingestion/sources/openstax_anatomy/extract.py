@@ -44,7 +44,15 @@ def _sanitize_section_title(section_title: str, chapter_title: str, section_num:
 
 
 def _map_section_to_seed_chunk(section: dict) -> dict:
-    """Map parse_pdf section schema to our pre-chunk schema."""
+    """Map parse_pdf section schema to our pre-chunk schema.
+
+    parse.py emits clean fields after the 2026-04-28 fix:
+      - section_title is the canonical L1 name (no section_num prefix,
+        no em-dash mash). L2 sections inherit the parent L1 title here.
+      - subsection_title is the L2 heading text (or "" for L1).
+      - section_num is the dotted number ("6.7") in its own field.
+    No de-mashing is needed at the extract layer anymore.
+    """
     level = int(section.get("level", 1))
     chapter_title = section["chapter"]
     section_num = section.get("section_num", "") or ""
@@ -53,6 +61,7 @@ def _map_section_to_seed_chunk(section: dict) -> dict:
         chapter_title=chapter_title,
         section_num=section_num,
     )
+    subsection_title = (section.get("subsection_title") or "").strip()
 
     mapped = {
         # ChunkSchema-compatible fields
@@ -62,7 +71,7 @@ def _map_section_to_seed_chunk(section: dict) -> dict:
         "chapter_title": chapter_title,
         "section_num": section_num,
         "section_title": section_title,
-        "subsection_title": section["parent_section"] if level == 2 else "",
+        "subsection_title": subsection_title,
         "page": int(section["page_start"]),
         "element_type": "paragraph",
         "domain": "ot",
@@ -70,7 +79,7 @@ def _map_section_to_seed_chunk(section: dict) -> dict:
         # Additional provenance fields (useful for downstream checks)
         "source_section_id": section["id"],
         "source_level": level,
-        "parent_section": section["parent_section"],
+        "parent_section": section.get("parent_section", ""),
         "page_end": int(section["page_end"]),
         "source_pdf": section["source_pdf"],
     }

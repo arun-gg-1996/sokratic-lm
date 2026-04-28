@@ -200,16 +200,22 @@ def _build_sections(lines: list[dict], source_pdf: str, domain: str) -> list[dic
     sections: list[dict] = []
 
     # Current context
-    current_chapter_title  = ""
-    current_chapter_num    = 0
-    current_section_title  = ""   # full title to store
-    current_parent_section = ""   # always the L1 title (for Level 2 inheritance)
-    current_section_num    = ""
-    current_level          = 1
-    current_page_start     = 1
-    body_parts: list[str]  = []
-    section_index          = 0    # global — never resets; guarantees unique IDs
-    in_boilerplate         = False
+    current_chapter_title    = ""
+    current_chapter_num      = 0
+    # Clean section title (no section_num prefix, no em-dash mash). Set when an
+    # L1 heading is detected. L2 sections INHERIT this from the enclosing L1.
+    current_section_title    = ""
+    # L2 heading text (e.g. "Narrow Range of Temperature"). Empty for L1 sections.
+    current_subsection_title = ""
+    # The L1 title text (kept for boilerplate-detection book-keeping; NOT used
+    # as subsection_title anymore — that was the original mashing bug).
+    current_parent_section   = ""
+    current_section_num      = ""
+    current_level            = 1
+    current_page_start       = 1
+    body_parts: list[str]    = []
+    section_index            = 0    # global — never resets; guarantees unique IDs
+    in_boilerplate           = False
 
     def _flush(min_words: int) -> None:
         nonlocal section_index
@@ -237,17 +243,18 @@ def _build_sections(lines: list[dict], source_pdf: str, domain: str) -> list[dic
         # the global section_index which never resets across chapter boundaries.
         sec_id = f"{domain}_ch{current_chapter_num:02d}_sec{section_index:04d}"
         sections.append({
-            "id":             sec_id,
-            "section_title":  current_section_title or current_chapter_title,
-            "parent_section": current_parent_section or current_section_title,
-            "level":          current_level,
-            "chapter":        current_chapter_title,
-            "chapter_num":    current_chapter_num,
-            "section_num":    current_section_num,
-            "page_start":     current_page_start,
-            "page_end":       lines[-1]["page"] if lines else current_page_start,
-            "text":           text,
-            "source_pdf":     source_pdf,
+            "id":               sec_id,
+            "section_title":    current_section_title or current_chapter_title,
+            "subsection_title": current_subsection_title,
+            "parent_section":   current_parent_section or current_section_title,
+            "level":            current_level,
+            "chapter":          current_chapter_title,
+            "chapter_num":      current_chapter_num,
+            "section_num":      current_section_num,
+            "page_start":       current_page_start,
+            "page_end":         lines[-1]["page"] if lines else current_page_start,
+            "text":             text,
+            "source_pdf":       source_pdf,
         })
 
     for line in lines:
@@ -265,15 +272,16 @@ def _build_sections(lines: list[dict], source_pdf: str, domain: str) -> list[dic
         # ── Chapter title ──────────────────────────────────────────────────────
         if role == "chapter_title":
             _flush(L2_MIN_WORDS if current_level == 2 else L1_MIN_WORDS)
-            body_parts         = []
-            current_chapter_title  = text
-            current_section_title  = text
-            current_parent_section = text
-            current_section_num    = ""
-            current_level          = 1
-            current_page_start     = page
+            body_parts               = []
+            current_chapter_title    = text
+            current_section_title    = text   # placeholder; replaced when first L1 hits
+            current_subsection_title = ""
+            current_parent_section   = text
+            current_section_num      = ""
+            current_level            = 1
+            current_page_start       = page
             # section_index is GLOBAL — do NOT reset here
-            in_boilerplate         = False
+            in_boilerplate           = False
             continue
 
         # ── Level 1 heading ────────────────────────────────────────────────────
@@ -281,23 +289,30 @@ def _build_sections(lines: list[dict], source_pdf: str, domain: str) -> list[dic
             title_lower = text.strip().lower()
             if title_lower in BOILERPLATE_TITLES:
                 _flush(L2_MIN_WORDS if current_level == 2 else L1_MIN_WORDS)
-                body_parts     = []
-                in_boilerplate = True
-                current_section_title  = "__BOILERPLATE__"
-                current_parent_section = "__BOILERPLATE__"
-                current_level          = 1
-                current_page_start     = page
+                body_parts               = []
+                in_boilerplate           = True
+                current_section_title    = "__BOILERPLATE__"
+                current_subsection_title = ""
+                current_parent_section   = "__BOILERPLATE__"
+                current_level            = 1
+                current_page_start       = page
                 continue
 
             in_boilerplate = False
             _flush(L2_MIN_WORDS if current_level == 2 else L1_MIN_WORDS)
             body_parts = []
             m = SECTION_NUM_RE.match(text)
-            current_section_num    = m.group(1) if m else ""
-            current_section_title  = text
-            current_parent_section = text          # L2 children inherit this
-            current_level          = 1
-            current_page_start     = page
+            current_section_num = m.group(1) if m else ""
+            # Strip the leading "<section_num> " prefix so section_title is the
+            # canonical name (e.g. "Requirements for Human Life") that retrieval-
+            # time hard filters can match against the TOC. The number stays in
+            # current_section_num as its own field.
+            clean_title = text[m.end():].strip() if m else text.strip()
+            current_section_title    = clean_title
+            current_subsection_title = ""
+            current_parent_section   = clean_title   # L2 sections inherit clean L1 title
+            current_level            = 1
+            current_page_start       = page
             continue
 
         if in_boilerplate:
@@ -307,18 +322,16 @@ def _build_sections(lines: list[dict], source_pdf: str, domain: str) -> list[dic
         if role == "l2_heading":
             _flush(L2_MIN_WORDS)
             body_parts = []
-            # Combined title: "11.3 The Ulnar Nerve — Motor Innervation"
-            if current_parent_section and current_parent_section not in (
-                "__BOILERPLATE__", current_chapter_title
-            ):
-                combined = f"{current_parent_section} — {text}"
-            else:
-                combined = text
-            current_section_title = combined
-            current_level         = 2
-            current_page_start    = page
-            # Keep current_parent_section and current_section_num unchanged
-            # (inherited from the enclosing L1 section)
+            # section_title stays as the inherited L1 clean title; subsection_title
+            # becomes the L2 heading text. This matches the v1 Qdrant payload schema:
+            #   section_title    = "The Ulnar Nerve"
+            #   subsection_title = "Motor Innervation"
+            # so the retrieval-time hard filter can match TOC sections directly.
+            current_subsection_title = text.strip()
+            current_level            = 2
+            current_page_start       = page
+            # Keep current_section_title (= parent L1 clean title) and
+            # current_section_num unchanged — L2 inherits both from the L1.
             continue
 
         # ── Body text ──────────────────────────────────────────────────────────
