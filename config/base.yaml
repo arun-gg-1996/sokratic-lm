@@ -461,7 +461,10 @@ prompts:
     voice (no templates, no canned strings).
 
     Classify the student's latest message as exactly one intent:
-      topic_query       — names or describes a {domain_name} topic they want to learn
+      topic_query       — names or describes a {domain_name} topic they want to learn.
+                          INCLUDES: questions, statements/assertions, leading claims,
+                          hedged or anxious phrasings, and one-word noun phrases — as
+                          long as a {domain_name} topic is present in the message.
       card_pick         — references one of the card options (number, label, close paraphrase)
       greeting          — "hi", "hello", starting the session
       distress          — emotional venting or frustration ("ugh", "i'm stressed", "this is hard", expletive)
@@ -471,6 +474,40 @@ prompts:
     For topic_query and card_pick, extract `normalized_topic` — the cleanest topic name
     suitable for retrieval (strip hedges, numbering, affirmations). For card_pick, set it
     to the referenced option's text (not a number). For other intents, leave it empty.
+
+    CRITICAL: students phrase topic queries in many shapes. Treat ALL of these as
+    topic_query and extract the topic noun phrase even when the student is hedging,
+    asserting, or just naming a single noun:
+
+      Student: "What is the deltoid muscle?"
+      → intent=topic_query, normalized_topic="deltoid muscle"
+
+      Student: "Reflexes are basically just instant nerve reactions, right?"
+      → intent=topic_query, normalized_topic="reflexes"  (statement IS a topic_query;
+        the leading assertion doesn't disqualify it. Still topic = reflexes.)
+
+      Student: "I'm not sure I really understand chemical digestion — could we go through it?"
+      → intent=topic_query, normalized_topic="chemical digestion"  (hedging doesn't
+        disqualify; topic is clearly named.)
+
+      Student: "elbow joint"
+      → intent=topic_query, normalized_topic="elbow joint"  (one-word/short-phrase
+        topics are valid; do NOT classify as ambiguous if a domain noun is present.)
+
+      Student: "umm so... like, what's that thing in the kidney that filters blood?"
+      → intent=topic_query, normalized_topic="kidney filtration"  (vague but
+        clearly anatomy; extract the best topic phrase.)
+
+      Student: "ugh i'm so confused"
+      → intent=distress, normalized_topic=""
+
+      Student: "what should I make for dinner"
+      → intent=off_topic, normalized_topic=""
+
+    Rule of thumb: if you can identify ANY {domain_name} noun phrase in the message
+    that the student seems interested in learning about, classify as topic_query and
+    extract that phrase as normalized_topic. Reserve ambiguous ONLY for truly empty
+    or pronoun-only messages.
 
     For non-topic intents (greeting, distress, off_topic, ambiguous) write `tutor_reply` —
     a short, warm, contextual reply that acknowledges what the student actually said and
