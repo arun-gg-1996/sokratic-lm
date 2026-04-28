@@ -411,9 +411,18 @@ def _sanitize_locked_answer(
     prior: str = "",
 ) -> tuple[str, str]:
     """
-    Keep locked_answer concise.
-    Grounding is enforced by the lock-anchors LLM prompt itself; here we avoid
-    brittle exact-string filters that can reject valid semantically-correct anchors.
+    Validate the locked_answer:
+      1) shape: short noun phrase, not a sentence
+      2) GROUNDING: the answer's content tokens must appear in at least one
+         retrieved chunk's text. The lock-anchors prompt asks the LLM to
+         ground the answer in propositions, but Haiku/Sonnet have parametric
+         knowledge of anatomy and will produce textbook-correct answers
+         (e.g. "axillary nerve" for a deltoid-innervation question) even when
+         retrieval did not surface the supporting content. That's a real bug
+         observed end-to-end (S4b conversation 2026-04-29: tutor declared
+         "axillary nerve" locked despite retrieval returning chunks about
+         the axillary artery, not nerve). The grounding check is a sentinel
+         against that failure mode.
     """
     cand = (candidate or "").strip()
     if not cand:
@@ -435,6 +444,24 @@ def _sanitize_locked_answer(
     )
     if any(marker in cand_norm for marker in sentence_markers):
         return prior_norm, "wiped_sentence_like"
+
+    # Grounding check: does the answer's distinctive content (non-stopword
+    # words >= 4 chars) appear in at least one retrieved chunk's text? We
+    # require that >= 60% of the answer's content tokens be present in some
+    # chunk to count as grounded. This blocks parametric-knowledge leaks
+    # without rejecting every valid short noun phrase.
+    if chunks:
+        STOPS = {"the", "a", "an", "of", "and", "or", "to", "in", "on", "at",
+                 "for", "with", "by", "from"}
+        ans_tokens = [t for t in cand_norm.split()
+                      if t not in STOPS and len(t) >= 4]
+        if ans_tokens:
+            joined_corpus = " ".join(
+                _normalize_text(c.get("text", "") or "") for c in chunks
+            )
+            hits = sum(1 for t in ans_tokens if t in joined_corpus)
+            if (hits / len(ans_tokens)) < 0.60:
+                return prior_norm, "wiped_ungrounded"
 
     return cand_norm, "kept"
 
@@ -624,12 +651,21 @@ def _coverage_gate(state: TutorState) -> dict | None:
         # chunks in the current corpus. Refuse with alternatives.
         return _refuse("empty_retrieval")
 
-    # Relevance floor via CE score. With hard section filter above, off-section
-    # drift is impossible by construction — only in-section chunks can appear.
-    # A low top score here means the section exists but our query didn't line
-    # up well with any proposition in it; treat as a soft fail and offer
-    # alternatives. Missing score passes (legacy chunks).
-    threshold = float(getattr(cfg.retrieval, "ood_cosine_threshold", 0.30))
+    # Relevance floor via CE score. The CE returns near-1 for confident
+    # in-scope hits and near-0 for OOD; intermediate values indicate a query
+    # that is in-corpus but not perfectly answered by any single chunk
+    # (typical for relational questions like "what nerve innervates X?" where
+    # the chunks mention X in many contexts but only one actually states the
+    # nerve). We want to PASS those queries through to the LLM, not refuse
+    # them — so the gate uses a dedicated threshold (`dean_topic_gate_ce_threshold`)
+    # that is much lower than the OOD cosine floor used by the retriever's
+    # in-scope check. Default 0.05 — virtually any non-zero CE score passes.
+    #
+    # 2026-04-29: previously this gate read `ood_cosine_threshold` (0.45) and
+    # refused valid topics like "what nerve innervates the deltoid?" on the
+    # basis of CE score 0.20-0.40 — see e2e S6a where the deltoid topic was
+    # refused and the conversation pivoted to "muscle tone".
+    threshold = float(getattr(cfg.retrieval, "dean_topic_gate_ce_threshold", 0.05))
     top_score = chunks[0].get("score")
     if isinstance(top_score, (int, float)) and float(top_score) < threshold:
         return _refuse("low_relevance_score")

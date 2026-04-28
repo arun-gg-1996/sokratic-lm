@@ -64,6 +64,13 @@ retrieval:
   # text for any English query. 0.45 stays well below in-scope queries
   # (which usually score 0.55-0.80) but excludes generic English noise.
   ood_cosine_threshold: 0.45       # dense cosine floor (OpenAI text-embedding-3-large)
+  # Cross-encoder confidence floor used by the Dean's topic-engagement gate
+  # (conversation/dean.py:_topic_gate_check). Distinct from out_of_scope_threshold
+  # because the dean gate has different goals: it accepts moderately-relevant
+  # retrievals to keep the conversation flowing, only rejecting truly empty
+  # signals. CE bimodality (in-scope ≈ 1.0, OOD ≈ 0.0) means a 0.05 threshold
+  # passes virtually any non-trivial match.
+  dean_topic_gate_ce_threshold: 0.05
   out_of_scope_threshold: 0.90     # cross-encoder confidence floor (ncbi/MedCPT-Cross-Encoder) — very high because the secondary only needs to rescue confident matches the embedder missed
   # Soft section-affinity boost applied at CE-rerank time when the session is
   # locked to a TOC section/subsection. Additive bonus on the CE score for
@@ -679,7 +686,7 @@ prompts:
   dean_lock_anchors_static: |
     You are the Dean establishing pedagogical anchors for a new Socratic tutoring session.
     The student has just selected a specific topic.
-    Retrieval has fired and returned atomic textbook propositions.
+    Retrieval has fired and returned textbook excerpts.
 
     Your job: extract TWO anchors that guide the session.
 
@@ -689,7 +696,9 @@ prompts:
     Strict rules:
     - locked_answer should be concise (typically 2-10 words; hard max 15 words).
     - locked_answer must be a term/concept, not a sentence.
-    - locked_answer must be grounded in retrieved propositions.
+    - locked_answer must be grounded in the retrieved chunks.
+    - DO NOT use parametric / training-data knowledge: if the chunks do not
+      contain a clear answer to the topic question, return empty anchors.
     - If signal is insufficient, return empty anchors with rationale.
     - rationale must be brief (max 25 words).
 
@@ -703,7 +712,7 @@ prompts:
   dean_lock_anchors_delta: |
     the Dean establishing pedagogical anchors for a new Socratic tutoring session.
     The student has just selected a specific topic.
-    Retrieval has fired and returned atomic textbook propositions.
+    Retrieval has fired and returned textbook excerpts.
 
     Your job: extract TWO anchors that guide the session.
 
@@ -713,7 +722,9 @@ prompts:
     Strict rules:
     - locked_answer should be concise (typically 2-10 words; hard max 15 words).
     - locked_answer must be a term/concept, not a sentence.
-    - locked_answer must be grounded in retrieved propositions.
+    - locked_answer must be grounded in the retrieved chunks.
+    - DO NOT use parametric / training-data knowledge: if the chunks do not
+      contain a clear answer to the topic question, return empty anchors.
     - If signal is insufficient, return empty anchors with rationale.
     - rationale must be brief (max 25 words).
 
