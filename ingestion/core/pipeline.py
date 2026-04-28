@@ -61,12 +61,20 @@ class SourceModule:
     """A bundle of the textbook-specific callables and config.
 
     Loaded dynamically by `load_source(name)`. Each source module exposes:
-      - parse_pdf(pdf_path, ...) -> list of raw section dicts (in parse.py)
-      - filters / prompt_overrides (optional, may be empty stubs)
+      - parse_pdf(pdf_path, ...) -> raw section dicts (parse.py)
+      - to_chunk_schema(sections) -> chunker-ready seed records (extract.py)
+        Maps the source-specific section schema (e.g. OpenStax: chapter,
+        parent_section, level, ...) to the schema the core chunker expects
+        (chapter_title, section_title, subsection_title, chunk_id, page,
+        element_type, domain, source_section_id, source_level, page_end).
+        Without this bridge step, the chunker would crash on KeyError for
+        fields the source-specific parser doesn't emit by name.
+      - prompt_overrides (optional, may be empty stubs)
       - config.yaml with source-level config
     """
     name: str
     parse_pdf: Callable[..., list[dict]]
+    to_chunk_schema: Callable[[list[dict]], list[dict]]
     proposition_prompt_suffix: str = ""
     summary_prompt_suffix: str = ""
     config: dict[str, Any] = field(default_factory=dict)
@@ -78,6 +86,16 @@ def load_source(name: str) -> SourceModule:
     parse_mod = importlib.import_module(f"{base}.parse")
     if not hasattr(parse_mod, "parse_pdf"):
         raise ImportError(f"{base}.parse does not export parse_pdf()")
+
+    # extract.py provides the source-specific schema bridge between parse_pdf
+    # output and core/chunker.py input. Required for v1 (every source must
+    # emit chunker-ready records).
+    extract_mod = importlib.import_module(f"{base}.extract")
+    if not hasattr(extract_mod, "sections_to_seed_chunks"):
+        raise ImportError(
+            f"{base}.extract does not export sections_to_seed_chunks(); "
+            "this is required to bridge parse output to chunker input"
+        )
 
     suffix_props = ""
     suffix_summary = ""
@@ -101,6 +119,7 @@ def load_source(name: str) -> SourceModule:
     return SourceModule(
         name=name,
         parse_pdf=parse_mod.parse_pdf,
+        to_chunk_schema=extract_mod.sections_to_seed_chunks,
         proposition_prompt_suffix=suffix_props,
         summary_prompt_suffix=suffix_summary,
         config=config,
@@ -238,13 +257,20 @@ def stage_parse(source: SourceModule, opts: PipelineOptions) -> StageResult:
 
     if opts.dry_run:
         return StageResult(name=name, artifact_path=None, count=0, elapsed_s=0.0,
-                           skipped=False, notes=["dry-run: would call parse_pdf"])
+                           skipped=False,
+                           notes=["dry-run: would call parse_pdf + to_chunk_schema"])
 
     t0 = time.time()
     sections = source.parse_pdf(opts.pdf_path, save=False)
-    _write_jsonl(out, sections)
-    return StageResult(name=name, artifact_path=out, count=len(sections),
-                       elapsed_s=time.time() - t0)
+    # Bridge source-specific schema -> core chunker input schema. The core
+    # chunker reads chapter_title, subsection_title, chunk_id, etc.; the
+    # source's parse_pdf emits chapter, parent_section, level, etc. The
+    # source.to_chunk_schema callable handles the rename + UUID assignment.
+    seeds = source.to_chunk_schema(sections)
+    _write_jsonl(out, seeds)
+    return StageResult(name=name, artifact_path=out, count=len(seeds),
+                       elapsed_s=time.time() - t0,
+                       notes=[f"{len(sections)} raw sections → {len(seeds)} chunker seeds"])
 
 
 def stage_chunk(
