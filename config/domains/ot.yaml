@@ -5,7 +5,13 @@ domain:
   kb_collection: "sokratic_kb"
   memory_collection: "sokratic_memory"
   mem0_namespace: "anatomy"
-  retrieval_domain: "ot"
+  # 2026-04-28: switched from "ot" to "openstax_anatomy" after the v1
+  # pipeline rebuild. This name now matches the textbook_id used at index
+  # time (sources/openstax_anatomy/) and the artifact filenames
+  # (chunks_openstax_anatomy.jsonl, bm25_openstax_anatomy.pkl). The Qdrant
+  # filter and BM25 path lookup both key off this string. The ontology
+  # adapter recognizes both "ot" and "openstax_anatomy" → UMLSAdapter.
+  retrieval_domain: "openstax_anatomy"
 
   # Used as concrete examples in prompts so the LLM understands the expected format
   example_topic_specific: "axillary nerve"
@@ -41,6 +47,27 @@ domain:
   # Drives post-answer assessment framing
   assessment_dimension: "clinical application"
   assessment_dimension_examples: "exam findings, function, or intervention planning"
+
+# Topic-index (TOC-grounded topic menu) configuration.
+# Mechanism: scripts/build_topic_index.py walks textbook_structure.json,
+# drops junk nodes matching any pattern below, and enriches remaining nodes
+# with chunk_count from the indexed corpus. Output: data/topic_index.json.
+topic_index:
+  min_chunk_count: 1          # keep nodes with >= N chunks
+  limited_chunk_threshold: 2  # tag "limited coverage" when chunk_count <= N
+  # Substring matches (case-insensitive) that disqualify a node's name.
+  # Anatomy-specific: OpenStax A&P callout boxes are not teachable topics.
+  junk_patterns:
+    - "INTERACTIVE LINK"
+    - "CAREER CONNECTION"
+    - "Everyday Connection"
+    - "HOMEOSTATIC IMBALANCES"
+    - "DISORDERS OF THE"
+    - "AGING AND THE"
+    - "INDEX"
+  # Trailing ellipsis indicates a truncated/unparseable heading.
+  junk_suffixes:
+    - "..."
 
 # Domain-specific query alias expansions for retrieval.
 # Mechanism lives in retrieval/retriever.py (`_apply_query_aliases`) and is
