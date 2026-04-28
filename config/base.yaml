@@ -24,6 +24,15 @@ retrieval:
   # matches without firing on strong queries (0.70+). BM25 is intentionally
   # NOT part of this gate (see _is_weak_retrieval for rationale).
   hyde_weak_cosine_threshold: 0.65
+  # Distributional cosine signal (P1.4): also fire HyDE when the mean of the
+  # top-K dense cosines is below this floor, even if `max_cosine` alone would
+  # have passed. Catches "one lucky chunk + noise" cases that the single-max
+  # gate misses. Threshold of 0.0 disables this signal (old behaviour).
+  # Calibration: in-scope queries on this corpus typically have top-5 mean
+  # ≥ 0.50; 0.45 fires on weak register-mismatched queries without over-
+  # triggering on strong ones.
+  hyde_weak_topk: 5
+  hyde_weak_topk_mean_threshold: 0.45
   # Multi-signal OOD gate (standard IR practice, domain-agnostic).
   # Primary signal: dense cosine (robust across query phrasings, empirically
   # cleanest OOD/in-scope separator for our corpus). Secondary: cross-encoder
@@ -34,6 +43,14 @@ retrieval:
   # Thresholds are model-specific; recalibrate when swapping encoders.
   ood_cosine_threshold: 0.30       # dense cosine floor (OpenAI text-embedding-3-large)
   out_of_scope_threshold: 0.90     # cross-encoder confidence floor (ncbi/MedCPT-Cross-Encoder) — very high because the secondary only needs to rescue confident matches the embedder missed
+  # Soft section-affinity boost applied at CE-rerank time when the session is
+  # locked to a TOC section/subsection. Additive bonus on the CE score for
+  # chunks whose section_title matches the locked section or subsection.
+  # Intentionally soft (not a hard filter) to preserve cross-chapter recall
+  # for legitimate cross-references (e.g. "the liver" overlaps the digestive
+  # and circulatory chapters).
+  section_affinity_boost: 0.25     # bonus when chunk.section_title contains locked section
+  subsection_affinity_boost: 0.50  # stronger bonus for subsection-level match
 
 session:
   max_turns: 25
@@ -331,6 +348,7 @@ prompts:
   teacher_socratic_dynamic: |
     Current student_state: {student_state}
     Current hint level: {hint_level} of {max_hints}
+    Dean's pre-planned hint for this level (use as the pedagogical roadmap; phrase it naturally, do NOT recite verbatim, do NOT reveal the locked answer): {hint_plan_active}
     Dean guidance for this draft (preflight + prior critique if any): {dean_critique}
     Anchor question this student is pursuing: {locked_question}
 
@@ -399,6 +417,142 @@ prompts:
     - Ground judgments in the student's latest message plus provided context.
     - When strict JSON is required, return strict JSON only.
     - Keep critiques precise, non-generic, and actionable.
+
+  dean_prelock_intent_static: |
+    You are the Dean handling the topic-selection phase of a tutoring session in {domain_name}.
+    The student has not yet locked to a specific topic. Your job is to read their latest
+    message, classify what they want, and write the tutor's next utterance in your own
+    voice (no templates, no canned strings).
+
+    Classify the student's latest message as exactly one intent:
+      topic_query       — names or describes a {domain_name} topic they want to learn
+      card_pick         — references one of the card options (number, label, close paraphrase)
+      greeting          — "hi", "hello", starting the session
+      distress          — emotional venting or frustration ("ugh", "i'm stressed", "this is hard", expletive)
+      off_topic         — unrelated to {domain_name} (small talk, jokes, non-sequiturs)
+      ambiguous         — too short or too generic to route (single pronoun, empty, filler)
+
+    For topic_query and card_pick, extract `normalized_topic` — the cleanest topic name
+    suitable for retrieval (strip hedges, numbering, affirmations). For card_pick, set it
+    to the referenced option's text (not a number). For other intents, leave it empty.
+
+    For non-topic intents (greeting, distress, off_topic, ambiguous) write `tutor_reply` —
+    a short, warm, contextual reply that acknowledges what the student actually said and
+    invites them to name a specific topic. Match the student's emotional register. Do NOT
+    repeat their words back inside quotes. Do NOT use a template phrase. 1-3 sentences.
+    If cards are currently on screen, gently remind the student they can pick one. When
+    the intent is topic_query or card_pick, leave `tutor_reply` as an empty string — the
+    routing layer will handle it.
+
+    Never ask multiple questions. Never reveal answers. Never produce headers or lists.
+
+    Return strict JSON only:
+    {{
+      "intent": "topic_query|card_pick|greeting|distress|off_topic|ambiguous",
+      "normalized_topic": "",
+      "tutor_reply": "",
+      "rationale": ""
+    }}
+
+  dean_prelock_intent_dynamic: |
+    Card options currently on screen (empty list means no cards shown this turn):
+    {topic_options}
+
+    Recent conversation history:
+    {conversation_history}
+
+    Classify ONLY the student's most recent message. Prior history is context.
+
+  dean_prelock_refuse_static: |
+    You are the Dean. The student picked a topic but retrieval for that topic came up
+    weak — no strong coverage in the indexed textbook material. You have a fresh list
+    of topics that ARE well-covered and will be shown as cards immediately below your
+    reply. Your job is to write the short tutor message (1-3 sentences) that introduces
+    the card list.
+
+    Rules:
+    - Do NOT echo the rejected topic name back verbatim in quotes.
+    - Do NOT restate "strong coverage" jargon.
+    - Be honest that this specific topic didn't pan out, and invite them to try one of
+      the fresh options OR name a more specific term.
+    - If `failure_count` is 2 or more, acknowledge the pattern briefly ("a few didn't
+      line up — let's try something with solid coverage") without being preachy.
+    - Never produce the card list itself — the system renders cards after your reply.
+
+    Return strict JSON only:
+    {{
+      "tutor_reply": "",
+      "rationale": ""
+    }}
+
+  dean_prelock_refuse_dynamic: |
+    Rejected topic (the one retrieval failed on): {rejected_topic}
+    Failure count this session: {failure_count}
+    Reason from the coverage gate: {refuse_reason}
+
+    Recent conversation history:
+    {conversation_history}
+
+  dean_prelock_anchor_fail_static: |
+    You are the Dean. A topic locked and retrieval ran, but you couldn't extract a
+    clean pedagogical anchor (locked_question + locked_answer) from the chunks —
+    the topic may be too broad, or the retrieved material was too diffuse for a
+    sharp Socratic question. You'll show fresh cards of topics that are well-covered.
+    Write the 1-2 sentence tutor reply that introduces the card list.
+
+    Rules:
+    - Do NOT quote the rejected topic verbatim.
+    - Don't sound apologetic or template-y. Be direct and inviting.
+    - Never produce the card list itself — the system renders cards after your reply.
+
+    Return strict JSON only:
+    {{
+      "tutor_reply": "",
+      "rationale": ""
+    }}
+
+  dean_prelock_anchor_fail_dynamic: |
+    Topic the student picked: {topic_selection}
+
+    Recent conversation history:
+    {conversation_history}
+
+  dean_exploration_judge_static: |
+    You are the Dean in the middle of a Socratic tutoring session. A topic is
+    locked and Teacher is about to respond. Your job is to decide whether the
+    student's latest message is asking about something OUTSIDE the locked
+    topic — a tangential concept, a clarifying prerequisite, a connection to
+    another body system, etc. — that would genuinely benefit from fetching
+    extra textbook context beyond the locked section.
+
+    Return `exploration_needed: true` ONLY when ALL of these hold:
+      - The student is asking about a {domain_name} concept that is NOT the
+        locked topic or a direct sub-question of it.
+      - The tangential concept has a clear short query string (3-8 words) that
+        a textbook search could retrieve.
+      - Answering it would help the student make progress on the locked topic,
+        not just scratch curiosity unrelated to the session.
+
+    If the student is answering the locked question (correct/partial/incorrect),
+    asking a question strictly about the locked topic, or venting/off-topic, set
+    `exploration_needed: false`. When in doubt, say false — Teacher already has
+    the locked section's context.
+
+    Return strict JSON only:
+    {{
+      "exploration_needed": false,
+      "exploration_query": "",
+      "rationale": ""
+    }}
+
+  dean_exploration_judge_dynamic: |
+    Locked topic: {topic_selection}
+    Locked question (Teacher is guiding toward this): {locked_question}
+
+    Recent conversation history:
+    {conversation_history}
+
+    Decide based ONLY on the student's most recent message.
 
   dean_setup_classify_static: |
     You are the Dean supervising one Socratic tutoring turn.
@@ -655,18 +809,24 @@ prompts:
     Correct answer (never reveal): {locked_answer}
     Student's last message: {last_student_message}
     Teacher's draft: {teacher_draft}
+    Prior preflight critique (the deterministic-check or earlier dean_critique that
+    the Teacher was already given for this turn — empty if this is the first eval):
+    {prior_preflight_critique}
     Recent conversation history:
     {conversation_history}
-    Evaluate ONLY the Teacher's most recent draft against the student's most recent message. Use prior conversation history to detect repetition, contradiction, or improper hint regression — not as material to grade.
+    Evaluate ONLY the Teacher's most recent draft against the student's most recent message. Use prior conversation history to detect repetition, contradiction, or improper hint regression — not as material to grade. If prior_preflight_critique is non-empty, your rewrite_instruction MUST address that specific failure mode (do not regress to it).
 
   dean_quality_check_tutoring_dynamic: |
     Phase: tutoring
     Correct answer (never reveal): {locked_answer}
     Student's last message: {last_student_message}
     Teacher's draft: {teacher_draft}
+    Prior preflight critique (the deterministic-check or earlier dean_critique that
+    the Teacher was already given for this turn — empty if this is the first eval):
+    {prior_preflight_critique}
     Recent conversation history:
     {conversation_history}
-    Evaluate ONLY the Teacher's most recent draft against the student's most recent message. Use prior conversation history to detect repetition, contradiction, or improper hint regression — not as material to grade.
+    Evaluate ONLY the Teacher's most recent draft against the student's most recent message. Use prior conversation history to detect repetition, contradiction, or improper hint regression — not as material to grade. If prior_preflight_critique is non-empty, your rewrite_instruction MUST address that specific failure mode (do not regress to it).
 
   dean_quality_check_assessment_static: |
     You are the Dean reviewing an assessment-phase message.
@@ -793,9 +953,9 @@ prompts:
 
     Return strict JSON only:
     {{
-      "core_mastery_tier": "strong|proficient|developing|needs_review|not_assessed",
-      "clinical_mastery_tier": "strong|proficient|developing|needs_review|not_assessed",
-      "mastery_tier": "strong|proficient|developing|needs_review|not_assessed",
+      "core_mastery_tier": "strong|proficient|developing|needs_review|not_assessed|ungraded",
+      "clinical_mastery_tier": "strong|proficient|developing|needs_review|not_assessed|ungraded",
+      "mastery_tier": "strong|proficient|developing|needs_review|not_assessed|ungraded",
       "grading_rationale": "1-2 sentence diagnosis of performance",
       "student_facing_message": "final message shown to student",
       "memory_summary": "3-5 sentence memory summary for long-term storage"

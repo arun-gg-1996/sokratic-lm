@@ -157,97 +157,6 @@ class TeacherAgent:
             wrapper_name="teacher.draft_rapport",
         )
 
-    def draft_topic_engagement(self, state: TutorState) -> dict:
-        """
-        Generate a scoping question when the student names a broad topic (turn 0).
-        Offers 3-4 concrete sub-topic options and asks which to focus on.
-        Called by dean.run_turn before normal Socratic tutoring begins.
-        """
-        chunks = state.get("retrieved_chunks", [])
-        chunks_str = _format_chunks(chunks)
-        system = cfg.prompts.teacher_topic_engagement.format(
-            retrieved_chunks=chunks_str, **_domain_prompt_vars()
-        )
-        topic = ""
-        for msg in reversed(state.get("messages", [])):
-            if msg.get("role") == "student":
-                topic = msg.get("content", "")
-                break
-        raw = self._call(
-            user_msg=topic or f"The student has named a {getattr(cfg.domain, 'name', 'domain')} topic.",
-            state=state,
-            role_base=getattr(cfg.prompts, "teacher_base", ""),
-            wrapper_delta=getattr(cfg.prompts, "teacher_topic_engagement_delta", system),
-            wrapper_name="teacher.draft_topic_engagement",
-        )
-        parsed = _extract_json_object(raw)
-        question = ""
-        options: list[str] = []
-        if parsed is not None:
-            question = str(parsed.get("question", "") or "").strip()
-            raw_options = parsed.get("options", [])
-            if isinstance(raw_options, list):
-                for opt in raw_options:
-                    s = str(opt or "").strip()
-                    if s:
-                        options.append(s)
-
-        # Normalize and deduplicate options.
-        deduped: list[str] = []
-        seen: set[str] = set()
-        for opt in options:
-            key = _normalize_text(opt)
-            if key and key not in seen:
-                seen.add(key)
-                deduped.append(opt)
-        options = deduped[:4]
-
-        # If LLM returned fewer than 3 valid options, retry once with an explicit count reminder.
-        if len(options) < 3:
-            retry_system = cfg.prompts.teacher_topic_engagement.format(
-                retrieved_chunks=chunks_str, **_domain_prompt_vars()
-            ) + "\n\nIMPORTANT: You must return EXACTLY 3 to 4 distinct options in the 'options' array."
-            retry_raw = self._call(
-                user_msg=topic or "The student has named a topic.",
-                state=state,
-                role_base=getattr(cfg.prompts, "teacher_base", ""),
-                wrapper_delta=getattr(cfg.prompts, "teacher_topic_engagement_delta", retry_system),
-                wrapper_name="teacher.draft_topic_engagement_retry",
-            )
-            retry_parsed = _extract_json_object(retry_raw)
-            if retry_parsed is not None:
-                retry_options_raw = retry_parsed.get("options", [])
-                retry_options: list[str] = []
-                if isinstance(retry_options_raw, list):
-                    for opt in retry_options_raw:
-                        s = str(opt or "").strip()
-                        if s:
-                            retry_options.append(s)
-                retry_deduped: list[str] = []
-                retry_seen: set[str] = set()
-                for opt in retry_options:
-                    key = _normalize_text(opt)
-                    if key and key not in retry_seen:
-                        retry_seen.add(key)
-                        retry_deduped.append(opt)
-                if len(retry_deduped) >= 3:
-                    options = retry_deduped[:4]
-                    if not question:
-                        question = str(retry_parsed.get("question", "") or "").strip()
-                    raw = retry_raw
-
-        if not question:
-            topic_label = topic.strip() if topic else "this topic"
-            question = f"{topic_label} covers several areas. Which angle would you like to start with?"
-
-        # Keep tutor text clean: UI renders option cards separately.
-        return {
-            "question": question,
-            "options": options,
-            "message": question,
-            "raw": raw,
-        }
-
     def draft_socratic(self, state: TutorState) -> str:
         """
         Generate one Socratic question for the current tutoring turn.
@@ -280,6 +189,21 @@ class TeacherAgent:
 
         dean_critique = state.get("dean_critique", "")
 
+        # B'.1 — pull Dean's pre-planned hint for the current hint_level so the
+        # teacher follows the global hint progression instead of re-deriving
+        # one from scratch each turn. hint_plan is a list[str] populated once
+        # by Dean's _hint_plan_call at topic-lock time and stored in
+        # state["debug"]["hint_plan"]. Empty fallback is fine — the teacher
+        # has the chunks and can still produce a question without the plan.
+        hint_plan_active = ""
+        debug = state.get("debug")
+        if isinstance(debug, dict):
+            hint_plan = debug.get("hint_plan") or []
+            if isinstance(hint_plan, list) and hint_plan:
+                hint_level_int = max(int(state.get("hint_level", 1) or 1), 1)
+                idx = min(hint_level_int - 1, len(hint_plan) - 1)
+                hint_plan_active = str(hint_plan[idx])
+
         chunks_block = cfg.prompts.teacher_socratic_chunks.format(retrieved_chunks=chunks_str) if chunks else ""
         dynamic = cfg.prompts.teacher_socratic_dynamic.format(
             student_state=state.get("student_state") or "unknown",
@@ -287,6 +211,7 @@ class TeacherAgent:
             hint_level=state.get("hint_level", 1),
             max_hints=state.get("max_hints", 3),
             locked_question=state.get("locked_question", ""),
+            hint_plan_active=hint_plan_active,
             conversation_history=conversation_history,
             **_domain_prompt_vars(),
         )

@@ -34,6 +34,7 @@ from conversation.state import TutorState
 from conversation.rendering import render_history
 from tools.mcp_tools import search_textbook, save_tool_definitions
 from config import cfg
+from retrieval.topic_matcher import get_topic_matcher, TopicMatch, MatchResult
 
 # Sonnet pricing (per million tokens)
 _PRICE_IN = 3.0
@@ -53,22 +54,6 @@ _STRONG_AFFIRM_PATTERNS = (
     r"\byes[, ]+that'?s\b",
     r"\byou'?re right\b",
 )
-_RETRIEVAL_LOW_SIGNAL = {
-    "",
-    "idk",
-    "i don't know",
-    "i dont know",
-    "dont know",
-    "don't know",
-    "not sure",
-    "no idea",
-    "help",
-    "this",
-    "that",
-    "it",
-    "yes",
-    "no",
-}
 _RETRIEVAL_NOISE_PATTERNS = (
     r"^\s*\d+\s*[\)\.\-:]\s*",
     r"^\s*(i think|i guess|maybe|honestly)\s+",
@@ -420,36 +405,6 @@ def _latest_student_message(messages: list[dict]) -> str:
     return ""
 
 
-def _deterministic_anchor_fallback(chunks: list[dict], topic: str) -> tuple[str, str]:
-    """
-    Last-resort anchors when the LLM lock call fails twice.
-
-    Heuristic: scan retrieved propositions for the first short noun phrase that
-    looks like a terminal anatomical/concept term. If nothing useful, return ("", "").
-    Caller will gracefully degrade.
-    """
-    if not chunks:
-        return "", ""
-    # Look for a concept/term pattern in top chunk text.
-    for ch in chunks[:3]:
-        text = str(ch.get("text", "") or "").strip()
-        if not text:
-            continue
-        # Prefer a short phrase ending in a nerve/muscle/space/structure noun.
-        for m in re.finditer(
-            r"\b([A-Za-z]+(?:\s[A-Za-z]+){0,2}\s(?:nerve|muscle|artery|vein|joint|space|ligament|tendon|plexus))\b",
-            text,
-        ):
-            phrase = m.group(1).strip().lower()
-            # Reject super-generic matches.
-            if phrase.split()[0] in {"the", "a", "this", "that", "which", "any"}:
-                continue
-            if 2 <= len(phrase.split()) <= 4:
-                q = f"Which {phrase.split()[-1]} is central to: {topic}?"
-                return q, phrase
-    return "", ""
-
-
 def _sanitize_locked_answer(
     candidate: str,
     chunks: list[dict],
@@ -544,47 +499,6 @@ def _match_topic_selection(student_text: str, options: list[str]) -> str:
     return ""
 
 
-def _is_low_effort_topic_reply(student_text: str) -> bool:
-    txt = _normalize_text(student_text)
-    if not txt:
-        return True
-    low_effort_set = {
-        "idk", "i don't know", "i dont know", "don't know", "dont know",
-        "not sure", "no idea", "help",
-        "hi", "hello", "hey", "yo", "sup", "start", "continue",
-    }
-    if txt in low_effort_set:
-        return True
-    tokens = [t for t in txt.split() if t]
-    if len(tokens) == 1 and len(tokens[0]) <= 3:
-        return True
-    greeting_tokens = {"hi", "hello", "hey", "yo", "sup", "there", "pls", "please"}
-    if tokens and len(tokens) <= 2 and all(t in greeting_tokens for t in tokens):
-        return True
-    return False
-
-
-def _is_generic_topic_reply(student_text: str) -> bool:
-    """
-    Detect broad/generic topic names that are not specific enough to lock.
-    Uses domain config for the generic terms list.
-    """
-    txt = _normalize_text(student_text)
-    if not txt:
-        return True
-    generic_terms = set(getattr(cfg.domain, "generic_topic_terms", []))
-    if txt in generic_terms:
-        return True
-    # Also check multi-word generic terms
-    for term in generic_terms:
-        if " " in term and txt == _normalize_text(term):
-            return True
-    tokens = [t for t in txt.split() if t]
-    if len(tokens) == 1 and len(tokens[0]) <= 5:
-        return True
-    return False
-
-
 def _clean_retrieval_query(text: str) -> str:
     """
     Keep retrieval input concise and semantic.
@@ -603,27 +517,12 @@ def _clean_retrieval_query(text: str) -> str:
     return q
 
 
-def _is_ambiguous_retrieval_query(text: str) -> bool:
-    txt = _normalize_text(text)
-    if txt in _RETRIEVAL_LOW_SIGNAL:
-        return True
-    tokens = [t for t in txt.split() if t]
-    if len(tokens) >= 3:
-        return False
-    # Allow specific one/two-word domain entities (e.g., "axillary nerve", "Newton's third law").
-    if len(tokens) in (1, 2):
-        if all(len(t) >= 4 for t in tokens):
-            return False
-    return True
-
-
 def _build_retrieval_query(state: TutorState) -> str:
     """
-    Build a retrieval query that is robust to noisy student phrasing.
-    Preference:
-      1) selected scoped topic
-      2) latest student message
-      3) blend both when student adds useful detail
+    Build a retrieval query from the locked topic + latest student message.
+    By the time we reach retrieval, a TOC-grounded topic lock is guaranteed,
+    so the topic string alone is always a valid query. The latest message is
+    blended in only when it adds fresh substantive detail.
     """
     topic = str(state.get("topic_selection", "") or "").strip()
     latest = _latest_student_message(state.get("messages", []))
@@ -638,7 +537,6 @@ def _build_retrieval_query(state: TutorState) -> str:
     if (
         topic
         and latest
-        and latest_norm not in _RETRIEVAL_LOW_SIGNAL
         and len(latest.split()) >= 3
         and latest_norm != topic_norm
         and topic_norm not in latest_norm
@@ -647,13 +545,7 @@ def _build_retrieval_query(state: TutorState) -> str:
         # Keep topic anchor but preserve fresh student intent/detail.
         candidate = f"{topic}. {latest}"
 
-    cleaned = _clean_retrieval_query(candidate)
-    if _is_ambiguous_retrieval_query(cleaned):
-        fallback = _clean_retrieval_query(topic)
-        if fallback and not _is_ambiguous_retrieval_query(fallback):
-            return fallback
-        return ""
-    return cleaned
+    return _clean_retrieval_query(candidate)
 
 
 def _retrieval_trace_payload(query: str, chunks: list[dict], top_n: int = 7) -> dict:
@@ -672,6 +564,85 @@ def _retrieval_trace_payload(query: str, chunks: list[dict], top_n: int = 7) -> 
         "top_chunks": top,
         "total_chunks_returned": len(chunks),
     }
+
+
+def _coverage_gate(state: TutorState) -> dict | None:
+    """
+    Check whether retrieved_chunks actually cover the locked TOC node.
+
+    Returns None on pass. On fail, returns metadata for the caller (run_turn)
+    to build a refuse turn with an LLM-authored intro + card list. Shape:
+      {reason, topic_label, options, pending_user_choice, rejected_path,
+       failure_count}
+
+    Rules:
+      1. Empty retrieval → fail hard.
+      2. Locked topic has a known section/subsection AND none of the top-5
+         chunks reference it → fail (retrieval drifted to another chapter).
+      3. Top chunk cosine below ood_cosine_threshold → fail.
+    """
+    chunks = state.get("retrieved_chunks", []) or []
+    locked = state.get("locked_topic") or {}
+    topic_label = locked.get("subsection") or locked.get("section") or state.get("topic_selection", "this topic")
+    rejected_paths = list(state.get("rejected_topic_paths", []) or [])
+    rejected_set = set(rejected_paths)
+    if locked.get("path"):
+        rejected_set.add(locked["path"])
+
+    def _refuse(reason: str) -> dict:
+        matcher = get_topic_matcher()
+        # Exclude topics already rejected this session so we stop offering the
+        # same dead-end cards in a loop. Threshold scales with prior failures —
+        # more failures → ask for higher-coverage topics only.
+        failure_count = len(rejected_set)
+        min_chunks = 5 if failure_count < 2 else 8
+        alternatives = matcher.sample_diverse(
+            3, min_chunk_count=min_chunks, exclude_paths=rejected_set
+        )
+        option_labels = [_format_topic_label(m) for m in alternatives]
+        option_meta = {
+            label: {
+                "path": m.path, "chapter": m.chapter, "section": m.section,
+                "subsection": m.subsection, "difficulty": m.difficulty,
+                "chunk_count": m.chunk_count, "limited": m.limited, "score": m.score,
+            }
+            for label, m in zip(option_labels, alternatives)
+        }
+        return {
+            "reason": reason,
+            "topic_label": topic_label,
+            "failure_count": failure_count,
+            "options": option_labels,
+            "rejected_path": locked.get("path") or "",
+            "pending_user_choice": {
+                "kind": "topic", "options": option_labels, "topic_meta": option_meta,
+            },
+        }
+
+    if not chunks:
+        # Empty after hard section filter → this TOC node has no indexable
+        # chunks in the current corpus. Refuse with alternatives.
+        return _refuse("empty_retrieval")
+
+    # Relevance floor via CE score. With hard section filter above, off-section
+    # drift is impossible by construction — only in-section chunks can appear.
+    # A low top score here means the section exists but our query didn't line
+    # up well with any proposition in it; treat as a soft fail and offer
+    # alternatives. Missing score passes (legacy chunks).
+    threshold = float(getattr(cfg.retrieval, "ood_cosine_threshold", 0.30))
+    top_score = chunks[0].get("score")
+    if isinstance(top_score, (int, float)) and float(top_score) < threshold:
+        return _refuse("low_relevance_score")
+
+    return None
+
+
+def _format_topic_label(m: TopicMatch) -> str:
+    """Card label for a TOC match — human-readable, with a limited-coverage tag."""
+    base = m.label
+    if m.limited:
+        return f"{base} · limited coverage"
+    return base
 
 
 def _replace_latest_student_message(messages: list[dict], new_content: str) -> list[dict]:
@@ -737,108 +708,160 @@ class DeanAgent:
         if not state.get("topic_confirmed", False):
             messages = list(state.get("messages", []))
             topic_options = list(state.get("topic_options", []))
-
-            if not topic_options:
-                latest_student = _latest_student_message(messages)
-                if _is_low_effort_topic_reply(latest_student):
-                    state["hint_level"] = 0
-                    example = getattr(cfg.domain, "example_topic_specific", "a specific concept")
-                    reprompt = (
-                        f"Please name a specific study topic to begin "
-                        f"(for example: {example})."
-                    )
-                    messages.append({"role": "tutor", "content": reprompt})
-                    return {
-                        "messages": messages,
-                        "topic_confirmed": False,
-                        "topic_options": [],
-                        "topic_question": "",
-                        "topic_selection": "",
-                        "pending_user_choice": {},
-                        "retrieved_chunks": [],
-                        "locked_question": "",
-                        "locked_answer": "",
-                        "hint_level": 0,
-                        "student_state": "question",
-                        "debug": state["debug"],
-                    }
-                scoped = teacher.draft_topic_engagement(state)
-                scoped_q = str(scoped.get("question", "") or "").strip()
-                topic_options = list(scoped.get("options", []) or [])
-                scoped_msg = str(scoped.get("message", "") or "").strip()
-                if not scoped_msg:
-                    scoped_msg = scoped_q
-                # Inline numbered options in the tutor text so any client (including
-                # plain-text/CLI) can see and pick them. UIs can still render cards.
-                if topic_options:
-                    numbered = "\n".join(
-                        f"  {i+1}. {opt}" for i, opt in enumerate(topic_options)
-                    )
-                    scoped_msg = (
-                        f"{scoped_msg}\n\n{numbered}\n\n"
-                        f"Reply with a number (1-{len(topic_options)}) or paste the option text."
-                    )
-                messages.append({"role": "tutor", "content": scoped_msg})
-                return {
-                    "messages": messages,
-                    "topic_confirmed": False,
-                    "topic_options": topic_options,
-                    "topic_question": scoped_q,
-                    "topic_selection": "",
-                    "pending_user_choice": {"kind": "topic", "options": topic_options},
-                    "retrieved_chunks": [],  # force fresh retrieval once topic is selected
-                    "locked_question": "",
-                    "locked_answer": "",
-                    "hint_level": 0,
-                    "student_state": None,
-                    "debug": state["debug"],
-                }
-
-            # Options already shown: require explicit selection.
             latest_student = _latest_student_message(messages)
-            selected = _match_topic_selection(latest_student, topic_options)
-            if not selected:
-                # Allow free-text custom topic only if it's a specific, concise topic
-                # phrase (≤10 words, non-greeting, non-generic). Long rambling
-                # replies like "I'll go with the first one about X" should NOT
-                # become the topic string — force a reprompt instead.
-                if latest_student and not _is_low_effort_topic_reply(latest_student):
-                    if not _is_generic_topic_reply(latest_student):
-                        tokens = latest_student.strip().split()
-                        if 1 <= len(tokens) <= 10:
-                            selected = latest_student.strip()
 
-            if not selected:
+            # LLM intent classifier — replaces the old regex-based low-effort /
+            # non-topic / ambiguity detectors. Returns {intent, normalized_topic,
+            # tutor_reply, rationale}.
+            intent_result = self._prelock_intent_call(state)
+            intent = intent_result["intent"]
+            normalized_topic = intent_result["normalized_topic"] or latest_student
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean.prelock_intent",
+                "intent": intent,
+                "normalized_topic": normalized_topic,
+                "rationale": intent_result["rationale"],
+            })
+
+            # Non-topic intents: LLM-authored reply, no routing through matcher.
+            # Preserve any cards currently on screen so the student can still pick.
+            if intent in {"greeting", "distress", "off_topic", "ambiguous"}:
+                reply = intent_result["tutor_reply"] or (
+                    "Please name a specific study topic to begin."
+                )
+                messages.append({"role": "tutor", "content": reply})
                 state["hint_level"] = 0
-                if _is_generic_topic_reply(latest_student):
-                    example = getattr(cfg.domain, "example_topic_specific", "a specific concept")
-                    reprompt = (
-                        f"Please choose one focus card, or type a more specific topic "
-                        f"(for example: {example})."
-                    )
-                else:
-                    reprompt = (
-                        "Please pick one of the focus cards below, or write a different topic "
-                        "you want to explore."
-                    )
-                messages.append({"role": "tutor", "content": reprompt})
                 return {
                     "messages": messages,
                     "topic_confirmed": False,
                     "topic_options": topic_options,
                     "topic_question": state.get("topic_question", ""),
                     "topic_selection": "",
-                    "pending_user_choice": {"kind": "topic", "options": topic_options},
+                    "pending_user_choice": state.get("pending_user_choice", {}),
+                    "retrieved_chunks": [],
+                    "locked_question": "",
+                    "locked_answer": "",
                     "hint_level": 0,
                     "student_state": "question",
                     "debug": state["debug"],
                 }
 
-            # Convert the latest student selection into concrete topic text so
-            # retrieval/classification runs on semantic content, not "2".
-            state["messages"] = _replace_latest_student_message(messages, selected)
+            # Card pick: try deterministic match on both raw and normalized forms.
+            picked_topic: TopicMatch | None = None
+            if intent == "card_pick" and topic_options:
+                option_to_topic = (state.get("pending_user_choice") or {}).get("topic_meta", {}) or {}
+                selected_label = (
+                    _match_topic_selection(latest_student, topic_options)
+                    or _match_topic_selection(normalized_topic, topic_options)
+                )
+                if selected_label:
+                    entry_dict = option_to_topic.get(selected_label)
+                    if entry_dict:
+                        picked_topic = TopicMatch(
+                            path=entry_dict["path"],
+                            chapter=entry_dict["chapter"],
+                            section=entry_dict["section"],
+                            subsection=entry_dict["subsection"],
+                            difficulty=entry_dict.get("difficulty", "moderate"),
+                            chunk_count=int(entry_dict.get("chunk_count", 0)),
+                            limited=bool(entry_dict.get("limited", False)),
+                            score=float(entry_dict.get("score", 100.0)),
+                        )
+
+            # Free-text topic query (or a card_pick that couldn't resolve) →
+            # TOC matcher. Use the LLM-normalized topic when available, falling
+            # back to the raw latest message.
+            if picked_topic is None:
+                matcher = get_topic_matcher()
+                query_for_match = normalized_topic or latest_student
+                result: MatchResult = matcher.match(query_for_match)
+                state["debug"]["turn_trace"].append({
+                    "wrapper": "dean.topic_match",
+                    "query": query_for_match,
+                    "tier": result.tier,
+                    "top_score": result.top.score if result.top else 0.0,
+                    "top_path": result.top.path if result.top else "",
+                })
+
+                if result.tier == "strong" and result.top is not None:
+                    picked_topic = result.top
+                else:
+                    rejected_set = set(state.get("rejected_topic_paths", []) or [])
+                    if result.tier == "borderline":
+                        candidates = [m for m in result.matches if m.path not in rejected_set][:3]
+                        if not candidates:
+                            candidates = matcher.sample_diverse(3, exclude_paths=rejected_set)
+                        refuse_reason = "borderline_unresolved"
+                    else:
+                        candidates = matcher.sample_diverse(3, exclude_paths=rejected_set)
+                        refuse_reason = "no_match"
+
+                    new_options = [_format_topic_label(c) for c in candidates]
+                    option_to_topic = {
+                        label: {
+                            "path": c.path,
+                            "chapter": c.chapter,
+                            "section": c.section,
+                            "subsection": c.subsection,
+                            "difficulty": c.difficulty,
+                            "chunk_count": c.chunk_count,
+                            "limited": c.limited,
+                            "score": c.score,
+                        }
+                        for label, c in zip(new_options, candidates)
+                    }
+                    # LLM-authored refuse intro. Only the card list itself is
+                    # rendered deterministically.
+                    refuse = self._prelock_refuse_call(
+                        state,
+                        rejected_topic=query_for_match,
+                        failure_count=len(rejected_set),
+                        refuse_reason=refuse_reason,
+                    )
+                    intro = refuse["tutor_reply"] or (
+                        "Here are a few topics we cover — pick one or type a more specific term:"
+                    )
+                    numbered = "\n".join(
+                        f"  {i+1}. {opt}" for i, opt in enumerate(new_options)
+                    )
+                    scoped_msg = f"{intro}\n\n{numbered}" if new_options else intro
+                    messages.append({"role": "tutor", "content": scoped_msg})
+                    return {
+                        "messages": messages,
+                        "topic_confirmed": False,
+                        "topic_options": new_options,
+                        "topic_question": intro,
+                        "topic_selection": "",
+                        "pending_user_choice": {
+                            "kind": "topic",
+                            "options": new_options,
+                            "topic_meta": option_to_topic,
+                        },
+                        "retrieved_chunks": [],
+                        "locked_question": "",
+                        "locked_answer": "",
+                        "hint_level": 0,
+                        "student_state": None,
+                        "debug": state["debug"],
+                    }
+
+            # Topic locked to a TOC node. Rewrite the latest message to the
+            # canonical label so downstream retrieval/classification runs on
+            # semantic content rather than a number or shorthand.
+            selected_label = picked_topic.label
+            state["messages"] = _replace_latest_student_message(messages, selected_label)
             state["topic_confirmed"] = True
-            state["topic_selection"] = selected
+            state["topic_selection"] = selected_label
+            state["locked_topic"] = {
+                "path": picked_topic.path,
+                "chapter": picked_topic.chapter,
+                "section": picked_topic.section,
+                "subsection": picked_topic.subsection,
+                "difficulty": picked_topic.difficulty,
+                "chunk_count": picked_topic.chunk_count,
+                "limited": picked_topic.limited,
+                "score": picked_topic.score,
+            }
             state["topic_options"] = []
             state["topic_question"] = ""
             state["pending_user_choice"] = {}
@@ -849,10 +872,72 @@ class DeanAgent:
             state["locked_question"] = ""
             state["locked_answer"] = ""
             state["hint_level"] = 0
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean.topic_locked",
+                "topic_path": picked_topic.path,
+                "label": selected_label,
+                "chunk_count": picked_topic.chunk_count,
+                "limited": picked_topic.limited,
+            })
             topic_just_locked = True
 
         if topic_just_locked:
             self._retrieve_on_topic_lock(state)
+
+            # Strict-groundedness coverage gate: retrieval must return real,
+            # in-section content for the locked TOC node. If it doesn't, we
+            # refuse instead of teaching from parametric knowledge or from
+            # chunks that drifted off-topic (this is what caused the
+            # liver→spinal-cord bug in the 2026-04-21 live session).
+            gate = _coverage_gate(state)
+            if gate is not None:
+                messages = list(state.get("messages", []))
+                # LLM-authored intro; deterministic-render the card list.
+                refuse = self._prelock_refuse_call(
+                    state,
+                    rejected_topic=gate.get("topic_label", "") or "",
+                    failure_count=int(gate.get("failure_count", 0)),
+                    refuse_reason=gate.get("reason", "") or "",
+                )
+                intro = refuse["tutor_reply"] or (
+                    "Let's pick a topic with stronger coverage:"
+                )
+                option_labels = gate.get("options") or []
+                numbered = "\n".join(
+                    f"  {i+1}. {opt}" for i, opt in enumerate(option_labels)
+                )
+                msg = f"{intro}\n\n{numbered}" if option_labels else intro
+                messages.append({"role": "tutor", "content": msg})
+                state["debug"]["turn_trace"].append({
+                    "wrapper": "dean.coverage_gate",
+                    "result": gate["reason"],
+                    "locked_topic": state.get("locked_topic"),
+                })
+                coverage_gap_events = int(state["debug"].get("coverage_gap_events", 0)) + 1
+                state["debug"]["coverage_gap_events"] = coverage_gap_events
+                # Persist the rejected TOC path so sample_diverse never re-offers
+                # it this session — kills the 2026-04-22 card-loop bug.
+                rejected = list(state.get("rejected_topic_paths", []) or [])
+                rejected_path = gate.get("rejected_path") or ""
+                if rejected_path and rejected_path not in rejected:
+                    rejected.append(rejected_path)
+                return {
+                    "messages": messages,
+                    "topic_confirmed": False,
+                    "topic_options": gate.get("options", []),
+                    "topic_question": "",
+                    "topic_selection": "",
+                    "locked_topic": None,
+                    "pending_user_choice": gate.get("pending_user_choice", {}),
+                    "retrieved_chunks": [],
+                    "locked_question": "",
+                    "locked_answer": "",
+                    "hint_level": 0,
+                    "student_state": "question",
+                    "rejected_topic_paths": rejected,
+                    "debug": state["debug"],
+                }
+
             anchors = self._lock_anchors_call(state)
             state["locked_question"] = str(anchors.get("locked_question", "") or "").strip()
             state["locked_answer"] = str(anchors.get("locked_answer", "") or "").strip()
@@ -864,74 +949,69 @@ class DeanAgent:
                     "result": f"anchors empty (attempt {anchor_fail_count}) — topic too broad or retrieval weak",
                     "rationale": str(anchors.get("rationale", "") or ""),
                 })
-                # After 2 failed attempts, fall back to a deterministic anchor from
-                # the top retrieved proposition rather than looping on 'narrower focus'.
-                if anchor_fail_count >= 2:
-                    forced_q, forced_a = _deterministic_anchor_fallback(
-                        state.get("retrieved_chunks", []),
-                        state.get("topic_selection", "") or "this topic",
-                    )
-                    if forced_q and forced_a:
-                        state["locked_question"] = forced_q
-                        state["locked_answer"] = forced_a
-                        state["debug"]["turn_trace"].append({
-                            "wrapper": "dean.anchor_forced_fallback",
-                            "result": "Deterministic fallback anchors accepted after 2 failures",
-                            "locked_question": forced_q,
-                            "locked_answer": forced_a,
-                        })
-                        # Continue into tutoring with the forced anchors.
-                    else:
-                        # Truly nothing useful retrieved — give up gracefully.
-                        messages = list(state.get("messages", []))
-                        messages.append({
-                            "role": "tutor",
-                            "content": (
-                                "I'm having trouble finding a focused angle for this topic "
-                                "in my materials. Let's try a different, more specific question "
-                                "— what aspect would you like to start with?"
-                            ),
-                        })
-                        return {
-                            "messages": messages,
-                            "topic_confirmed": False,
-                            "topic_options": [],
-                            "topic_question": "",
-                            "topic_selection": "",
-                            "pending_user_choice": {},
-                            "retrieved_chunks": [],
-                            "locked_question": "",
-                            "locked_answer": "",
-                            "hint_level": 0,
-                            "student_state": "question",
-                            "debug": state["debug"],
-                        }
-                else:
-                    messages = list(state.get("messages", []))
-                    example = getattr(cfg.domain, "example_topic_specific", "a specific concept")
-                    reprompt = (
-                        "I need a narrower focus before we begin tutoring. "
-                        f"Please pick one focus card or type a specific topic (for example: {example})."
-                    )
-                    messages.append({"role": "tutor", "content": reprompt})
-                    return {
-                        "messages": messages,
-                        "topic_confirmed": False,
-                        "topic_options": [],
-                        "topic_question": "",
-                        "topic_selection": "",
-                        "pending_user_choice": {},
-                        # Keep retrieved chunks so a narrowed follow-up can proceed
-                        # without re-firing retrieval in the same session.
-                        "retrieved_chunks": state.get("retrieved_chunks", []),
-                        "locked_question": "",
-                        "locked_answer": "",
-                        "hint_level": 0,
-                        "student_state": "question",
-                        "debug": state["debug"],
+                # Anchor extraction failed — unlock the topic and show fresh
+                # coverage-tested alternatives with an LLM-authored intro.
+                messages = list(state.get("messages", []))
+                matcher = get_topic_matcher()
+                rejected_set = set(state.get("rejected_topic_paths", []) or [])
+                failed_path = (state.get("locked_topic") or {}).get("path") or ""
+                if failed_path:
+                    rejected_set.add(failed_path)
+                alternatives = matcher.sample_diverse(
+                    3, min_chunk_count=5, exclude_paths=rejected_set,
+                )
+                option_labels = [_format_topic_label(m) for m in alternatives]
+                option_meta = {
+                    label: {
+                        "path": m.path, "chapter": m.chapter, "section": m.section,
+                        "subsection": m.subsection, "difficulty": m.difficulty,
+                        "chunk_count": m.chunk_count, "limited": m.limited, "score": m.score,
                     }
+                    for label, m in zip(option_labels, alternatives)
+                }
+                fail = self._prelock_anchor_fail_call(
+                    state, state.get("topic_selection", "") or ""
+                )
+                intro = fail["tutor_reply"] or (
+                    "Let's try a different angle. Pick one of these or type a more specific term:"
+                )
+                numbered = "\n".join(
+                    f"  {i+1}. {opt}" for i, opt in enumerate(option_labels)
+                )
+                msg = f"{intro}\n\n{numbered}" if option_labels else intro
+                messages.append({"role": "tutor", "content": msg})
+                rejected_list = list(state.get("rejected_topic_paths", []) or [])
+                if failed_path and failed_path not in rejected_list:
+                    rejected_list.append(failed_path)
+                return {
+                    "messages": messages,
+                    "topic_confirmed": False,
+                    "topic_options": option_labels,
+                    "topic_question": intro,
+                    "topic_selection": "",
+                    "locked_topic": None,
+                    "pending_user_choice": {
+                        "kind": "topic",
+                        "options": option_labels,
+                        "topic_meta": option_meta,
+                    },
+                    "retrieved_chunks": [],
+                    "locked_question": "",
+                    "locked_answer": "",
+                    "hint_level": 0,
+                    "student_state": "question",
+                    "rejected_topic_paths": rejected_list,
+                    "debug": state["debug"],
+                }
             if int(state.get("hint_level", 0)) <= 0:
                 state["hint_level"] = 1
+            # Sticky snapshot of the successful lock for the grading guard.
+            # state.locked_topic can be transiently cleared by later partial
+            # updates (e.g. a retry path); the snapshot is write-once and
+            # survives those clears, so grading can trust it reached a grounded
+            # state at least once this session.
+            if state.get("locked_topic") and not state["debug"].get("locked_topic_snapshot"):
+                state["debug"]["locked_topic_snapshot"] = dict(state["locked_topic"])
             state["debug"]["turn_trace"].append({
                 "wrapper": "dean.anchors_locked",
                 "locked_question": state["locked_question"],
@@ -1119,6 +1199,11 @@ class DeanAgent:
                 "active_hint": active_hint,
             })
 
+        # Exploration retrieval: LLM judges whether the student's turn has
+        # tangential curiosity that warrants a one-shot un-section-filtered
+        # retrieval. Budget-capped per session (cfg.session.exploration_max).
+        self._exploration_retrieval_maybe(state)
+
         # Teacher drafts one response.
         # Provide Dean QC guidance preflight on first attempt so Teacher is
         # aligned before generation, not only after a rejection.
@@ -1242,7 +1327,14 @@ class DeanAgent:
 
         # Anchor lock + hint plan benefit from wider recall — ask for more
         # candidate chunks here than a typical per-turn Teacher draft uses.
-        chunks = search_textbook(query, self.retriever, top_k=12)
+        locked = state.get("locked_topic") or {}
+        chunks = search_textbook(
+            query,
+            self.retriever,
+            top_k=12,
+            locked_section=locked.get("section") or None,
+            locked_subsection=locked.get("subsection") or None,
+        )
         state["retrieved_chunks"] = chunks
         state["debug"]["retrieval_calls"] = int(state["debug"].get("retrieval_calls", 0)) + 1
         retrieval_schema_keys = sorted(list(chunks[0].keys())) if chunks else []
@@ -1253,6 +1345,250 @@ class DeanAgent:
             "retrieval_calls": state["debug"]["retrieval_calls"],
             "retrieval_schema_keys": retrieval_schema_keys,
         })
+
+    def _exploration_retrieval_maybe(self, state: TutorState) -> None:
+        """
+        Budget-capped exploration retrieval. When the student asks something
+        tangential to the locked topic (a connected concept, a prerequisite,
+        a cross-system link), this fetches un-section-filtered chunks and
+        merges them into `retrieved_chunks` so Teacher can address the
+        tangent without drifting off the locked question.
+
+        Skipped if:
+          - no topic locked yet,
+          - no session budget remaining,
+          - LLM judge says the latest message is on-topic / venting / OOD.
+
+        Cost: one LLM classification per tutoring turn (small, Haiku-grade).
+        When the judge fires exploration, one extra retrieval call is made.
+        """
+        if not state.get("topic_confirmed") or not state.get("locked_question"):
+            return
+        budget = int(state.get("exploration_max", 0) or 0)
+        used = int(state.get("exploration_used", 0) or 0)
+        if budget <= 0 or used >= budget:
+            return
+
+        conversation_history = render_history(state.get("messages", []))
+        wrapper_delta = (
+            getattr(cfg.prompts, "dean_exploration_judge_delta", "")
+            or getattr(cfg.prompts, "dean_exploration_judge_static", "")
+        )
+        dynamic_prompt = getattr(cfg.prompts, "dean_exploration_judge_dynamic", "").format(
+            topic_selection=state.get("topic_selection", "") or "",
+            locked_question=state.get("locked_question", "") or "",
+            conversation_history=conversation_history,
+            **_domain_prompt_vars(),
+        )
+        resp = _timed_create(
+            self.client,
+            state,
+            "dean._exploration_judge",
+            model=self.model,
+            temperature=0,
+            max_tokens=200,
+            system=_cached_system(
+                getattr(cfg.prompts, "dean_base", ""),
+                wrapper_delta,
+                "",
+                conversation_history,
+                dynamic_prompt,
+            ),
+            messages=[{"role": "user", "content": "Judge and return strict JSON only."}],
+        )
+        parsed = _extract_json_object((resp.content[0].text or "").strip()) or {}
+        needed = bool(parsed.get("exploration_needed", False))
+        query = str(parsed.get("exploration_query", "") or "").strip()
+        if not needed or not query:
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean.exploration_judge",
+                "result": "skip",
+                "needed": needed,
+                "query": query,
+                "rationale": str(parsed.get("rationale", "") or ""),
+            })
+            return
+
+        # Exploration retrieval deliberately runs with NO section filter so it
+        # can surface related content from any chapter.
+        extra = search_textbook(query, self.retriever, top_k=3)
+        if not extra:
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean.exploration_retrieval",
+                "result": "empty",
+                "query": query,
+            })
+            return
+
+        tagged = []
+        for c in extra:
+            row = dict(c)
+            row["exploration"] = True
+            tagged.append(row)
+
+        # Append to locked-section chunks so Teacher sees both contexts; keep
+        # locked-section chunks first so Socratic questioning stays grounded.
+        state["retrieved_chunks"] = list(state.get("retrieved_chunks", []) or []) + tagged
+        state["exploration_used"] = used + 1
+        state["debug"]["turn_trace"].append({
+            "wrapper": "dean.exploration_retrieval",
+            "result": f"fired ({len(tagged)} chunks)",
+            "query": query,
+            "budget_remaining": budget - (used + 1),
+        })
+
+    def _prelock_intent_call(self, state: TutorState) -> dict:
+        """
+        LLM-driven intent classifier for the pre-lock (topic-selection) phase.
+        Replaces the rule-based low-effort / non-topic / ambiguity detectors.
+
+        Returns a dict: {intent, normalized_topic, tutor_reply, rationale}.
+          intent ∈ {topic_query, card_pick, greeting, distress, off_topic, ambiguous}
+          normalized_topic — cleaned topic string for topic_query/card_pick, else ""
+          tutor_reply      — LLM-written reply for non-topic intents, else ""
+        """
+        messages = state.get("messages", [])
+        latest = _latest_student_message(messages) or ""
+        topic_options = list(state.get("topic_options", []))
+        conversation_history = render_history(messages)
+
+        wrapper_delta = (
+            getattr(cfg.prompts, "dean_prelock_intent_delta", "")
+            or getattr(cfg.prompts, "dean_prelock_intent_static", "")
+        )
+        dynamic_prompt = getattr(cfg.prompts, "dean_prelock_intent_dynamic", "").format(
+            topic_options=json.dumps(topic_options, ensure_ascii=False),
+            conversation_history=conversation_history,
+            **_domain_prompt_vars(),
+        )
+        resp = _timed_create(
+            self.client,
+            state,
+            "dean._prelock_intent_call",
+            model=self.model,
+            temperature=0,
+            max_tokens=320,
+            system=_cached_system(
+                getattr(cfg.prompts, "dean_base", ""),
+                wrapper_delta,
+                "",
+                conversation_history,
+                dynamic_prompt,
+            ),
+            messages=[{
+                "role": "user",
+                "content": f"Student's latest message: {latest!r}\nReturn strict JSON only.",
+            }],
+        )
+        text = (resp.content[0].text or "").strip()
+        parsed = _extract_json_object(text) or {}
+
+        valid_intents = {
+            "topic_query", "card_pick", "greeting",
+            "distress", "off_topic", "ambiguous",
+        }
+        intent = str(parsed.get("intent", "") or "").strip().lower()
+        if intent not in valid_intents:
+            # Parse fallback: treat substantive multi-word text as a topic query,
+            # everything else as ambiguous (handled by LLM reply downstream).
+            tokens = [t for t in _normalize_text(latest).split() if t]
+            intent = "topic_query" if len(tokens) >= 2 else "ambiguous"
+
+        return {
+            "intent": intent,
+            "normalized_topic": str(parsed.get("normalized_topic", "") or "").strip(),
+            "tutor_reply": str(parsed.get("tutor_reply", "") or "").strip(),
+            "rationale": str(parsed.get("rationale", "") or "").strip(),
+        }
+
+    def _prelock_refuse_call(
+        self,
+        state: TutorState,
+        rejected_topic: str,
+        failure_count: int,
+        refuse_reason: str,
+    ) -> dict:
+        """
+        LLM-authored intro text for a refuse-with-cards turn. Used when a TOC
+        match fails or the coverage gate rejects a locked topic. The caller is
+        responsible for rendering the card list after `tutor_reply`.
+        """
+        conversation_history = render_history(state.get("messages", []))
+        wrapper_delta = (
+            getattr(cfg.prompts, "dean_prelock_refuse_delta", "")
+            or getattr(cfg.prompts, "dean_prelock_refuse_static", "")
+        )
+        dynamic_prompt = getattr(cfg.prompts, "dean_prelock_refuse_dynamic", "").format(
+            rejected_topic=rejected_topic or "",
+            failure_count=int(failure_count),
+            refuse_reason=refuse_reason or "",
+            conversation_history=conversation_history,
+            **_domain_prompt_vars(),
+        )
+        resp = _timed_create(
+            self.client,
+            state,
+            "dean._prelock_refuse_call",
+            model=self.model,
+            temperature=0.2,
+            max_tokens=220,
+            system=_cached_system(
+                getattr(cfg.prompts, "dean_base", ""),
+                wrapper_delta,
+                "",
+                conversation_history,
+                dynamic_prompt,
+            ),
+            messages=[{"role": "user", "content": "Write the refuse intro. Return strict JSON only."}],
+        )
+        text = (resp.content[0].text or "").strip()
+        parsed = _extract_json_object(text) or {}
+        return {
+            "tutor_reply": str(parsed.get("tutor_reply", "") or "").strip(),
+            "rationale": str(parsed.get("rationale", "") or "").strip(),
+        }
+
+    def _prelock_anchor_fail_call(
+        self,
+        state: TutorState,
+        topic_selection: str,
+    ) -> dict:
+        """
+        LLM-authored intro text for the anchor-extraction-failed path. Used when
+        retrieval succeeded but no clean pedagogical anchor could be locked.
+        """
+        conversation_history = render_history(state.get("messages", []))
+        wrapper_delta = (
+            getattr(cfg.prompts, "dean_prelock_anchor_fail_delta", "")
+            or getattr(cfg.prompts, "dean_prelock_anchor_fail_static", "")
+        )
+        dynamic_prompt = getattr(cfg.prompts, "dean_prelock_anchor_fail_dynamic", "").format(
+            topic_selection=topic_selection or "",
+            conversation_history=conversation_history,
+            **_domain_prompt_vars(),
+        )
+        resp = _timed_create(
+            self.client,
+            state,
+            "dean._prelock_anchor_fail_call",
+            model=self.model,
+            temperature=0.2,
+            max_tokens=180,
+            system=_cached_system(
+                getattr(cfg.prompts, "dean_base", ""),
+                wrapper_delta,
+                "",
+                conversation_history,
+                dynamic_prompt,
+            ),
+            messages=[{"role": "user", "content": "Write the anchor-fail intro. Return strict JSON only."}],
+        )
+        text = (resp.content[0].text or "").strip()
+        parsed = _extract_json_object(text) or {}
+        return {
+            "tutor_reply": str(parsed.get("tutor_reply", "") or "").strip(),
+            "rationale": str(parsed.get("rationale", "") or "").strip(),
+        }
 
     def _lock_anchors_call(self, state: TutorState) -> dict:
         """
@@ -1427,46 +1763,16 @@ class DeanAgent:
 
     def _extract_answer_parametric(self, state: TutorState) -> str:
         """
-        Fallback: ask Claude directly for the answer when RAG chunks don't yield a locked_answer.
-        Uses domain config to frame the expected answer format. Short, cheap call (max_tokens=15).
-        Returns a short answer string or "" if unclear.
+        Parametric (LLM-from-memory) answer extraction is disabled under the
+        strict-groundedness policy: answers must come from retrieval over the
+        indexed corpus, never from the model's training data. Callers fall
+        back to deterministic chunk-derived anchors instead.
         """
-        question = _latest_student_message(state.get("messages", []))
-        if not question:
-            return ""
-        answer_format = getattr(cfg.domain, "example_answer_format", "1-3 word answer term only")
-        domain_name = getattr(cfg.domain, "name", "the subject")
-        prompt = (
-            f"Student question: \"{question}\"\n\n"
-            f"Reply with ONLY the primary {domain_name} concept that is the correct answer.\n"
-            f"Format: {answer_format}\n"
-            "Maximum 4 words. No parentheses, no qualifiers.\n"
-            "If you cannot determine the answer with confidence, reply: unknown"
-        )
-        try:
-            resp = self.client.messages.create(
-                model=self.model,
-                max_tokens=15,
-                system=f"You are a precise {domain_name} expert. Reply with the answer term only — 1-4 words maximum.",
-                messages=[{"role": "user", "content": prompt}],
-            )
-            raw = (resp.content[0].text or "").strip().lower()
-            # Strip anything after a parenthesis or comma
-            raw = re.split(r"[,(]", raw)[0].strip()
-            in_tok = resp.usage.input_tokens
-            out_tok = resp.usage.output_tokens
-            cost = (in_tok * _PRICE_IN + out_tok * _PRICE_OUT) / 1_000_000
-            state["debug"]["api_calls"] += 1
-            state["debug"]["input_tokens"] += in_tok
-            state["debug"]["output_tokens"] += out_tok
-            state["debug"]["cost_usd"] = float(state["debug"].get("cost_usd", 0.0)) + cost
-            if raw in ("unknown", "unclear", "uncertain", ""):
-                return ""
-            if len(raw.split()) > 4:
-                return ""
-            return raw
-        except Exception:
-            return ""
+        state["debug"]["turn_trace"].append({
+            "wrapper": "dean._extract_answer_parametric",
+            "result": "disabled_strict_groundedness",
+        })
+        return ""
 
     def _setup_call(self, state: TutorState) -> dict:
         """
@@ -1737,10 +2043,16 @@ class DeanAgent:
                 getattr(cfg.prompts, "dean_quality_check_tutoring_delta", "")
                 or cfg.prompts.dean_quality_check_static
             )
+            # B'.2 — pass the prior preflight critique (set by the deterministic
+            # check or an earlier dean_critique on this turn) so the quality
+            # checker's rewrite_instruction is targeted at the actual failure
+            # mode, not generic. Empty on the first eval; populated on retry.
+            prior_critique = str(state.get("dean_critique", "") or "").strip()
             dynamic_prompt = cfg.prompts.dean_quality_check_dynamic.format(
                 locked_answer=state.get("locked_answer", ""),
                 last_student_message=last_student_msg,
                 teacher_draft=teacher_draft,
+                prior_preflight_critique=prior_critique,
                 conversation_history=conversation_history,
                 **_domain_prompt_vars(),
             )
