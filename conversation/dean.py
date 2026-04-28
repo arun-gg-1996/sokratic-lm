@@ -94,33 +94,107 @@ def _cached_system(
     turn_deltas: str,
 ) -> list:
     """
-    Stable cacheable system structure:
-      1) role_base + wrapper_delta
-      2) frozen retrieved chunks/propositions
-      3) rendered conversation history
-      4) turn-local deltas (uncached)
+    Multi-block cache layout (post-2026-04-29 rewrite).
+
+    Why this exists
+    ---------------
+    The previous implementation joined `role_base + wrapper_delta + chunks +
+    history` into a single cached block. Because `history` grows turn-over-
+    turn, the block's bytes changed every turn → cache prefix never matched
+    → cache hit rate was 0% in production (verified via cache_smoke_test
+    on 2026-04-29). Caching telemetry showed the previous code WAS writing
+    cache entries (e.g. one call cache_write=4922) but never reading them
+    on subsequent turns because the prefix had changed.
+
+    New layout
+    ----------
+      Block 1 [CACHED-if-large-enough]:  role_base + wrapper_delta + chunks
+        Stable across all turns of a session, so cache_read on Block 1
+        fires from turn 2 onward.
+      Block 2 [CACHED-if-large-enough]:  history
+        On turn N, the history is `messages[0..N-1]` rendered. Anthropic's
+        cache lookup matches the full prefix up to each cache_control marker:
+        for Block 2 to hit, the EXACT history bytes have to have been seen
+        before. So Block 2 caches only fire on retries within the same turn
+        (same history value) — not across turns. This is fine: the win on
+        cross-turn caching comes from Block 1 alone, since Block 1's prefix
+        is stable.
+      Block 3 UNCACHED: turn_deltas
+        Per-turn variable content (current student message, hints, etc.).
+
+    Why split history into its own block instead of leaving it uncached
+    -------------------------------------------------------------------
+    The Anthropic cache key for a breakpoint is the prefix UP TO AND
+    INCLUDING the marker. If history were in the SAME block as
+    role/wrapper/chunks, history's growth would invalidate the marker for
+    Block 1 too. Pulling history into a separate block means Block 1's
+    marker hashes only over (role + wrapper + chunks), which is stable.
+
+    Caching threshold notes
+    -----------------------
+    Haiku 4.5 caches blocks ≥ 4096 tokens; Sonnet 4.5 ≥ 1024. Our estimate
+    is len/4 and overshoots, so we use 4000 as the gate to be conservative
+    on Haiku. Sub-threshold blocks are sent without cache_control (Anthropic
+    silently ignores cache markers below the threshold anyway).
     """
     blocks: list[dict] = []
-    # Haiku 4.5 minimum is ~2048 actual tokens. Our estimate is len/4 and often
-    # overshoots vs the tokenizer on structured/repetitive text, so require a comfortable margin.
-    cache_min_tokens = 4000
+    # Per Anthropic 2026 docs: minimum cacheable prompt is 1024 tokens for
+    # Sonnet 4-5 and 2048 for Haiku 4-5. We use 1500 — covers Sonnet
+    # cleanly, slightly over-aggressive for Haiku. Sub-threshold
+    # cache_control markers are silently ignored by the API (no error,
+    # no charge), so a too-low threshold costs us nothing; a too-high
+    # threshold costs us cache hits we should be getting. The previous
+    # value 4000 was based on a misread — it ruled out caching on most of
+    # our calls (verified empirically 2026-04-29).
+    cache_min_tokens = 1500
     role_base = _apply_domain_vars(role_base)
     wrapper_delta = _apply_domain_vars(wrapper_delta)
     chunks = _apply_domain_vars(chunks)
+    history_rendered = _apply_domain_vars(history or "")
     turn_deltas = _apply_domain_vars(turn_deltas)
-    cached_primary = "\n\n".join(part for part in [role_base, wrapper_delta, chunks, history] if part)
 
-    # Anthropic caching needs large enough cacheable content.
-    # If stable content is short, include turn-local deltas in the cacheable block
-    # so prefix caching can still activate from turn 2 onward.
-    if turn_deltas and _estimate_tokens(cached_primary) < cache_min_tokens:
-        cached_primary = "\n\n".join(part for part in [cached_primary, turn_deltas] if part)
-        turn_deltas = ""
+    # Block 1: stable session content. role + wrapper + chunks. Caches
+    # from turn 2 onward provided it clears the threshold.
+    stable = "\n\n".join(part for part in [role_base, wrapper_delta, chunks] if part)
 
-    if cached_primary:
-        blocks.append({"type": "text", "text": cached_primary, "cache_control": {"type": "ephemeral"}})
+    # Optional per-call cache-block diagnostic (toggleable via env var).
+    # Used to verify the fix on 2026-04-29 against scripts/cache_smoke_test.py;
+    # leaving in as a debugging hook for future cache regressions.
+    import os as _os
+    _DEBUG = bool(_os.environ.get("SOKRATIC_CACHE_DEBUG"))
+
+    if stable:
+        b1: dict = {"type": "text", "text": stable}
+        est_stable = _estimate_tokens(stable)
+        if est_stable >= cache_min_tokens:
+            b1["cache_control"] = {"type": "ephemeral"}
+        if _DEBUG:
+            print(
+                f"  [_cached_system] Block 1 stable: est_tokens={est_stable} "
+                f"(role={_estimate_tokens(role_base)}, "
+                f"wrapper={_estimate_tokens(wrapper_delta)}, "
+                f"chunks={_estimate_tokens(chunks)}) "
+                f"cached={'cache_control' in b1}",
+                flush=True,
+            )
+        blocks.append(b1)
+
+    if history_rendered:
+        b2: dict = {"type": "text", "text": history_rendered}
+        est_hist = _estimate_tokens(history_rendered)
+        if est_hist >= cache_min_tokens:
+            b2["cache_control"] = {"type": "ephemeral"}
+        if _DEBUG:
+            print(
+                f"  [_cached_system] Block 2 history: est_tokens={est_hist} "
+                f"cached={'cache_control' in b2}",
+                flush=True,
+            )
+        blocks.append(b2)
+
     if turn_deltas:
         blocks.append({"type": "text", "text": turn_deltas})
+
     return blocks
 
 

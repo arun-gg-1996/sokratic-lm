@@ -69,30 +69,38 @@ def _cached_system(
     turn_deltas: str,
 ) -> list:
     """
-    Build system blocks with stable cacheable prefix.
+    Multi-block cache layout — see conversation/dean.py:_cached_system for
+    the full rationale. Mirror of that function so teacher and dean share
+    identical caching semantics.
 
-    Block layout:
-      1) role_base + wrapper_delta (cached, stable)
-      2) retrieved propositions/chunks (cached after topic-lock)
-      3) rendered history (cached append-only prefix)
-      4) turn deltas (uncached, volatile)
+    Layout:
+      Block 1 [CACHED-if-≥4000-tokens]: role_base + wrapper_delta + chunks  (stable)
+      Block 2 [CACHED-if-≥4000-tokens]: history                              (append-only)
+      Block 3 UNCACHED:                turn_deltas                          (per-turn)
+
+    Pre-fix behavior (until 2026-04-29): role+wrapper+chunks+history were
+    joined into one cached block, and history grew turn-over-turn → cache
+    prefix changed every turn → 0% cache hit rate. Fix splits history out
+    of the stable block so Block 1's prefix bytes stay constant across the
+    session.
     """
     blocks: list[dict] = []
-    # Haiku 4.5 minimum is ~2048 actual tokens. Our estimate is len/4 and often
-    # overshoots vs the tokenizer on structured/repetitive text, so require a comfortable margin.
-    cache_min_tokens = 4000
-    cached_primary = "\n\n".join(part for part in [role_base, wrapper_delta, chunks, history] if part)
+    # See dean.py:_cached_system for rationale on the 1500 threshold.
+    cache_min_tokens = 1500
 
-    # Anthropic prompt caching requires a sufficiently large cacheable prefix.
-    # If the stable block is still too small, temporarily promote turn_deltas
-    # into the cached block so cache writes/reads can happen instead of zeroing out.
-    # Prefix matching still reuses the unchanged leading bytes across turns.
-    if turn_deltas and _estimate_tokens(cached_primary) < cache_min_tokens:
-        cached_primary = "\n\n".join(part for part in [cached_primary, turn_deltas] if part)
-        turn_deltas = ""
+    stable = "\n\n".join(part for part in [role_base, wrapper_delta, chunks] if part)
 
-    if cached_primary:
-        blocks.append({"type": "text", "text": cached_primary, "cache_control": {"type": "ephemeral"}})
+    if stable:
+        b1: dict = {"type": "text", "text": stable}
+        if _estimate_tokens(stable) >= cache_min_tokens:
+            b1["cache_control"] = {"type": "ephemeral"}
+        blocks.append(b1)
+
+    if history:
+        b2: dict = {"type": "text", "text": history}
+        if _estimate_tokens(history) >= cache_min_tokens:
+            b2["cache_control"] = {"type": "ephemeral"}
+        blocks.append(b2)
 
     if turn_deltas:
         blocks.append({"type": "text", "text": turn_deltas})
