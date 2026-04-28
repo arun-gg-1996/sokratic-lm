@@ -58,6 +58,12 @@ from typing import Generator
 
 import fitz  # PyMuPDF
 
+from ingestion.sources.openstax_anatomy.filters import (
+    BACK_MATTER_HEADINGS,
+    is_back_matter_text,
+    strip_sidebar_markers,
+)
+
 # ── Font-size thresholds ───────────────────────────────────────────────────────
 
 CHAPTER_TITLE_MIN  = 20.0    # ≥ this          → chapter title
@@ -92,13 +98,14 @@ CALLOUT_RE = re.compile(
     re.IGNORECASE,
 )
 
-# End-of-chapter boilerplate headings to drop entirely
+# End-of-chapter boilerplate headings to drop entirely.
+# Augmented in B.2 with end-of-book back-matter labels (filters.BACK_MATTER_HEADINGS).
 BOILERPLATE_TITLES = {
     "key terms", "chapter review", "review questions",
     "interactive link questions", "critical thinking questions",
     "chapter objectives", "answers", "index", "references",
     "chapter summary",
-}
+} | set(BACK_MATTER_HEADINGS)
 
 
 # ── Line-level span aggregator ────────────────────────────────────────────────
@@ -207,6 +214,21 @@ def _build_sections(lines: list[dict], source_pdf: str, domain: str) -> list[dic
     def _flush(min_words: int) -> None:
         nonlocal section_index
         text = " ".join(body_parts).strip()
+
+        # B.2: drop sections whose body text looks like end-of-book back-matter
+        # (alphabetical index, glossary listing, references). These bypass
+        # heading detection because their fonts don't match L1/L2 thresholds,
+        # so they get accumulated into the most recently open section
+        # (typically the last section of Ch 28). Audit 2026-04-28 found
+        # ~50-100 polluting chunks from this path.
+        if is_back_matter_text(text):
+            return
+
+        # B.2: strip OpenStax sidebar marker phrases from inline body text.
+        # Removes standalone "INTERACTIVE LINK", "EVERYDAY CONNECTION", URL
+        # parens, etc. — the surrounding sidebar prose is preserved.
+        text = strip_sidebar_markers(text)
+
         wc   = len(text.split())
         if wc < min_words:
             return
