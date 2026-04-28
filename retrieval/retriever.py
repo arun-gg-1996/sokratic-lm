@@ -67,7 +67,12 @@ class Retriever:
         self.qdrant = QdrantClient(host=cfg.memory.qdrant_host, port=cfg.memory.qdrant_port)
         self._validate_embedding_dimension()
         self.bm25, self.bm25_props = load_bm25(bm25_path)
-        self.cross_encoder = CrossEncoder(cfg.models.cross_encoder)
+        # max_length=512 prevents the "tensor a vs b dimension mismatch"
+        # crash when (query + chunk_text) tokenizes to >512 — long student
+        # questions paired with full parent chunks blow past it. The MedCPT
+        # encoder was trained with 512 max anyway; truncating in the
+        # tokenizer matches its training distribution.
+        self.cross_encoder = CrossEncoder(cfg.models.cross_encoder, max_length=512)
         # Domain ontology adapter (UMLS for anatomy/OT, Noop for physics etc.).
         # Constructed cheaply; UMLS pipeline loads lazily on first entity call.
         from retrieval.ontology import get_ontology_adapter
