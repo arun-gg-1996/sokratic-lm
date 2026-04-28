@@ -21,7 +21,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from config import cfg
-from ingestion.parse_pdf import parse_pdf
+from ingestion.sources.openstax_anatomy.parse import parse_pdf
 
 load_dotenv()
 

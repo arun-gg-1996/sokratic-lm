@@ -1,0 +1,19 @@
+# OpenStax Anatomy & Physiology 2e — source-specific configuration
+# Populated in B.2 (parse_pdf font sizes etc.) and B.5 (textbook_id propagation).
+# Stub for now; the existing config/base.yaml + config/domains/ot.yaml still drive runtime.
+
+textbook_id: openstax_anatomy
+display_name: "OpenStax Anatomy & Physiology 2e"
+pdf_path: data/raw/Anatomy_and_Physiology_2e_-_WEB_c9nD9QL.pdf
+
+# Font-size heuristics for heading detection (currently inlined in parse.py;
+# B.2 will move them here so they're tunable per-source).
+parse:
+  l1_heading_min_font: null  # populated in B.2
+  l2_heading_min_font: null
+  body_min_font: 8
+
+# Back-matter / sidebar patterns (populated in B.2).
+filters:
+  back_matter_chapters: []
+  sidebar_markers: []

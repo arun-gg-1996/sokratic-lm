@@ -208,7 +208,9 @@ def _trim_overlap_to_budget(prefix: str, body: str, encoder, max_tokens: int) ->
 
 def load_raw_sections(path: str = RAW_SECTIONS_PATH) -> list[dict]:
     if not Path(path).exists():
-        from ingestion.extract import extract_pdf
+        # Source-specific extraction; this is a temporary inversion that B.7 (pipeline orchestrator)
+        # will replace by passing pre-extracted elements into the chunker.
+        from ingestion.sources.openstax_anatomy.extract import extract_pdf
         print(f"{path} not found. Running extraction first...")
         extract_pdf(cfg.paths.raw_ot_pdf)
 

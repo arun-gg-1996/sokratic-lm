@@ -25,7 +25,7 @@ from qdrant_client.models import FieldCondition, Filter, MatchValue
 from sentence_transformers import CrossEncoder
 
 from config import cfg
-from ingestion.index import load_bm25, stem_tokenize
+from ingestion.core.index import load_bm25, stem_tokenize
 
 load_dotenv(".env")
 
@@ -68,6 +68,11 @@ class Retriever:
         self._validate_embedding_dimension()
         self.bm25, self.bm25_props = load_bm25(bm25_path)
         self.cross_encoder = CrossEncoder(cfg.models.cross_encoder)
+        # Domain ontology adapter (UMLS for anatomy/OT, Noop for physics etc.).
+        # Constructed cheaply; UMLS pipeline loads lazily on first entity call.
+        from retrieval.ontology import get_ontology_adapter
+
+        self._ontology = get_ontology_adapter(self.default_domain)
 
     def _validate_embedding_dimension(self) -> None:
         # Strict contract: this codebase uses one embedding model for Qdrant.
@@ -98,8 +103,26 @@ class Retriever:
         resp = self.openai.embeddings.create(model=self.embed_model, input=[query])
         return resp.data[0].embedding
 
-    def _qdrant_search(self, query_vector: list[float], top_k: int, domain: str) -> list[dict]:
-        qfilter = Filter(must=[FieldCondition(key="domain", match=MatchValue(value=domain))])
+    def _qdrant_search(
+        self,
+        query_vector: list[float],
+        top_k: int,
+        domain: str,
+        locked_section: str | None = None,
+        locked_subsection: str | None = None,
+    ) -> list[dict]:
+        must: list = [FieldCondition(key="domain", match=MatchValue(value=domain))]
+        # Hard section/subsection filter at query time. This is the core
+        # groundedness guarantee: when a TOC topic is locked, retrieval cannot
+        # drift to another chapter because off-section chunks never enter the
+        # candidate pool. Prefer the most specific locked field available.
+        sub = (locked_subsection or "").strip()
+        sec = (locked_section or "").strip()
+        if sub:
+            must.append(FieldCondition(key="subsection_title", match=MatchValue(value=sub)))
+        elif sec:
+            must.append(FieldCondition(key="section_title", match=MatchValue(value=sec)))
+        qfilter = Filter(must=must)
         resp = self.qdrant.query_points(
             collection_name=self.collection,
             query=query_vector,
@@ -134,10 +157,30 @@ class Retriever:
             )
         return hits
 
-    def _bm25_search(self, query: str, top_k: int) -> list[dict]:
+    def _bm25_search(
+        self,
+        query: str,
+        top_k: int,
+        locked_section: str | None = None,
+        locked_subsection: str | None = None,
+    ) -> list[dict]:
         tokens = preprocess_for_bm25(query)
         scores = self.bm25.get_scores(tokens)
+
+        sub = (locked_subsection or "").strip()
+        sec = (locked_section or "").strip()
+        if sub or sec:
+            # Hard section/subsection filter: mask out-of-section propositions
+            # so BM25 can't rank a lucky keyword match from another chapter
+            # above in-section evidence. Mirrors the Qdrant-side hard filter.
+            for i, p in enumerate(self.bm25_props):
+                if sub and str(p.get("subsection_title", "")).strip() != sub:
+                    scores[i] = float("-inf")
+                elif not sub and sec and str(p.get("section_title", "")).strip() != sec:
+                    scores[i] = float("-inf")
+
         top_idx = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:top_k]
+        top_idx = [i for i in top_idx if scores[i] != float("-inf")]
 
         hits: list[dict] = []
         for rank, idx in enumerate(top_idx, start=1):
@@ -238,7 +281,11 @@ class Retriever:
         parent_chunks.sort(key=lambda x: float(x.get("rrf_score", 0.0)), reverse=True)
         return parent_chunks
 
-    def _cross_encoder_rerank(self, query: str, parent_chunks: list[dict]) -> list[dict]:
+    def _cross_encoder_rerank(
+        self,
+        query: str,
+        parent_chunks: list[dict],
+    ) -> list[dict]:
         if not parent_chunks:
             return []
         pairs = [(query, c.get("text", "")) for c in parent_chunks]
@@ -247,7 +294,9 @@ class Retriever:
         ranked: list[dict] = []
         for chunk, score in zip(parent_chunks, ce_scores):
             row = dict(chunk)
-            row["score"] = float(score)
+            base = float(score)
+            row["score"] = base
+            row["ce_score_raw"] = base
             ranked.append(row)
 
         ranked.sort(key=lambda x: float(x.get("score", 0.0)), reverse=True)
@@ -259,22 +308,39 @@ class Retriever:
         Decide whether the original-query retrieval is weak enough that HyDE
         rescue is worth the latency.
 
-        Signal used: max dense cosine over the top-20 Qdrant hits. When cosine
-        is below the `hyde_weak_cosine_threshold`, the question is likely in a
-        different linguistic register from the corpus (conversational vs
-        textbook) — exactly the case HyDE was designed to handle.
+        Distributional cosine signal (P1.4): a single high-cosine hit surrounded
+        by weak hits (e.g. one lucky chunk + noise) is NOT a strong retrieval —
+        it often reflects a single literal-keyword match rather than broad
+        topical coverage. We fire HyDE in two complementary cases:
+          (a) `max_cosine < hyde_weak_cosine_threshold` — primary signal; the
+              whole retrieval is below threshold.
+          (b) `topk_mean_cosine < hyde_weak_topk_mean_threshold` — secondary
+              signal; even though one chunk is decent, the top-K as a whole is
+              weak, which usually means the query's register mismatches the
+              corpus. HyDE's hypothetical passage often fixes this.
 
-        We deliberately do NOT use BM25 here: high BM25 on function-word
-        overlap can suppress HyDE on queries that genuinely need it (e.g. a
-        question about "the deltoid muscle" — "muscle" matches everywhere but
-        the correct "axillary nerve" chunk ranks poorly).
+        We deliberately do NOT use BM25 here: function-word overlap inflates
+        BM25 on genuinely off-topic queries.
 
-        We do NOT use CE either — running CE requires the full pipeline, which
-        defeats the purpose of a cheap pre-gate.
+        We deliberately do NOT use CE here: running CE requires the full
+        candidate expansion, which defeats the purpose of a cheap pre-gate.
         """
-        max_cosine = max((float(h.get("_qdrant_score", 0.0)) for h in qdrant_hits), default=0.0)
+        if not qdrant_hits:
+            return True  # empty dense side → HyDE can't hurt
+        cosines = [float(h.get("_qdrant_score", 0.0)) for h in qdrant_hits]
+        max_cosine = max(cosines, default=0.0)
         weak_cos = float(getattr(cfg.retrieval, "hyde_weak_cosine_threshold", 0.65))
-        return max_cosine < weak_cos
+        if max_cosine < weak_cos:
+            return True
+
+        topk = int(getattr(cfg.retrieval, "hyde_weak_topk", 5))
+        topk = max(1, min(topk, len(cosines)))
+        topk_mean = sum(cosines[:topk]) / topk
+        weak_mean = float(getattr(cfg.retrieval, "hyde_weak_topk_mean_threshold", 0.0))
+        # Threshold of 0.0 disables the distributional signal (keeps old behavior).
+        if weak_mean > 0.0 and topk_mean < weak_mean:
+            return True
+        return False
 
     def _hyde_rewrite(self, query: str) -> str:
         """
@@ -345,10 +411,16 @@ class Retriever:
         """
         Word-boundary substring expansion of configured query aliases.
 
-        For each (alias → expansion) in cfg.query_aliases, if the alias appears
-        as a word-bounded substring in the query (case-insensitive), append the
-        expansion to the query. We never REPLACE — the student's original
-        phrasing is preserved so BM25 / embedder can still match on it directly.
+        Curated high-precision fallback: each alias dict entry is a hand-written
+        (alias → expansion) mapping. For each alias that appears as a word-
+        bounded substring in the query (case-insensitive), append the expansion.
+        We never REPLACE — the student's original phrasing is preserved so
+        BM25 / embedder can still match on it directly.
+
+        Ontology expansion (via `_apply_ontology_expansion`) supersedes this for
+        the OT/anatomy domain when the UMLS pipeline is available. The alias
+        dict remains active as a safety net for cases UMLS misses and for
+        domains without an ontology adapter.
 
         Example: "CN VII palsy" → "CN VII palsy (facial nerve)"
         """
@@ -377,6 +449,56 @@ class Retriever:
                 seen.add(e)
                 uniq.append(e)
         return f"{query} ({' '.join(uniq)})"
+
+    def _apply_ontology_expansion(self, query: str) -> str:
+        """
+        Append UMLS canonical names (and, when available, a small number of
+        aliases) for entities detected in the query. Purely additive — the
+        original phrasing is preserved for BM25 / dense exact matches.
+
+        The ontology adapter is a NoopAdapter for domains without an ontology
+        configured, in which case this is a zero-cost no-op. For anatomy/OT,
+        UMLS turns "deltoid" into "Deltoid muscle" (matches section titles)
+        and "cn vii" into "Facial nerve" (bridges abbreviation gap).
+
+        Toggle: `cfg.retrieval.ontology_expansion_enabled` (default True).
+        Keeping it configurable lets us A/B with the curated alias dict
+        during the v2 ablation window before fully retiring the dict.
+        """
+        if not query:
+            return query
+        if not bool(getattr(cfg.retrieval, "ontology_expansion_enabled", True)):
+            return query
+        if self._ontology is None:
+            return query
+        try:
+            mentions = self._ontology.link_entities(query)
+        except Exception:
+            return query
+        if not mentions:
+            return query
+        lowered = query.lower()
+        seen: set[str] = {lowered}
+        extras: list[str] = []
+        # Cap total additions so a pathological query doesn't balloon the BM25
+        # tokens. In practice the linker returns 1-4 mentions per student query.
+        max_extras = int(getattr(cfg.retrieval, "ontology_max_extras", 6))
+        for m in mentions:
+            if len(extras) >= max_extras:
+                break
+            for term in (m.canonical, m.span):
+                t = (term or "").strip()
+                if not t:
+                    continue
+                if t.lower() in seen:
+                    continue
+                seen.add(t.lower())
+                extras.append(t)
+                if len(extras) >= max_extras:
+                    break
+        if not extras:
+            return query
+        return f"{query} ({' '.join(extras)})"
 
     @staticmethod
     def _is_in_scope(qdrant_hits: list[dict], bm25_hits: list[dict], reranked: list[dict]) -> bool:
@@ -411,7 +533,14 @@ class Retriever:
         # kept for compatibility with evaluation scripts
         return None
 
-    def retrieve(self, query: str, domain: str | None = None, top_k: int | None = None) -> list[dict]:
+    def retrieve(
+        self,
+        query: str,
+        domain: str | None = None,
+        top_k: int | None = None,
+        locked_section: str | None = None,
+        locked_subsection: str | None = None,
+    ) -> list[dict]:
         query = (query or "").strip()
         if not query:
             return []
@@ -422,9 +551,13 @@ class Retriever:
                 "(e.g., 'anatomy') or pass domain=... explicitly."
             )
 
-        # Expand domain-configurable query aliases (additive — original tokens
-        # preserved alongside the alias expansion).
-        expanded_query = self._apply_query_aliases(query)
+        # Expand query in two additive stages:
+        #   1) UMLS / domain ontology: canonical + abbreviated entity names.
+        #   2) Curated alias dict: high-precision fallback for misses.
+        # Both stages are additive — original phrasing is preserved so BM25
+        # and dense exact matches are unaffected.
+        expanded_query = self._apply_ontology_expansion(query)
+        expanded_query = self._apply_query_aliases(expanded_query)
 
         q_top_k = int(cfg.retrieval.qdrant_top_k)
         b_top_k = int(cfg.retrieval.bm25_top_k)
@@ -433,8 +566,19 @@ class Retriever:
 
         # --- Stage 1: original query (fast path, no LLM) -------------------
         orig_vec = self._embed_query(expanded_query)
-        orig_qdrant = self._qdrant_search(orig_vec, top_k=q_top_k, domain=domain)
-        orig_bm25 = self._bm25_search(expanded_query, top_k=b_top_k)
+        orig_qdrant = self._qdrant_search(
+            orig_vec,
+            top_k=q_top_k,
+            domain=domain,
+            locked_section=locked_section,
+            locked_subsection=locked_subsection,
+        )
+        orig_bm25 = self._bm25_search(
+            expanded_query,
+            top_k=b_top_k,
+            locked_section=locked_section,
+            locked_subsection=locked_subsection,
+        )
 
         # --- OOD short-circuit: if the ORIGINAL retrieval is so weak on the
         # primary scope signal (cosine) that the query is almost certainly
@@ -461,7 +605,13 @@ class Retriever:
             hyde_text = self._hyde_rewrite(query)
             if hyde_text:
                 hyde_vec = self._embed_query(hyde_text)
-                hyde_qdrant = self._qdrant_search(hyde_vec, top_k=q_top_k, domain=domain)
+                hyde_qdrant = self._qdrant_search(
+                    hyde_vec,
+                    top_k=q_top_k,
+                    domain=domain,
+                    locked_section=locked_section,
+                    locked_subsection=locked_subsection,
+                )
 
         # Merge Qdrant hit lists from both stages (dedupe by proposition_id).
         merged_qdrant = self._dedupe_hits_keep_best_rank(orig_qdrant, hyde_qdrant)

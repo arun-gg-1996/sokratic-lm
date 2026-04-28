@@ -132,7 +132,9 @@ def _load_cached_elements(path: Path) -> list[dict]:
 
 if __name__ == "__main__":
     from config import cfg
-    from ingestion.extract import extract_pdf
+    # Source-specific extraction; B.7 (pipeline orchestrator) will route this through
+    # source modules so build_structure.py stays generic.
+    from ingestion.sources.openstax_anatomy.extract import extract_pdf
 
     cached_raw = Path("data/processed/raw_elements_ot.jsonl")
     elements = _load_cached_elements(cached_raw)
