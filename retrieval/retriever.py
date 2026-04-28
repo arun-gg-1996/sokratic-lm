@@ -533,6 +533,168 @@ class Retriever:
         # kept for compatibility with evaluation scripts
         return None
 
+    # ── D.0 — Window expansion at retrieval time ─────────────────────────
+    # The new chunker produces fine-grained chunks (median ~89 tokens for
+    # paragraph chunks, ~133 tokens for overlap chunks). At top_k=5 with no
+    # window, the LLM sees only ~565 tokens of context — too thin for
+    # tutoring. Window expansion fetches W chunks before and W chunks after
+    # each retrieved primary chunk via the prev_chunk_id/next_chunk_id
+    # links that B.4 wrote into every Qdrant payload + chunks JSONL row.
+    #
+    # Implementation note: we lazy-load the chunks JSONL into an in-memory
+    # dict on first use. This avoids extra Qdrant round-trips per retrieval
+    # call (5 retrieved × 2 neighbors = 10 lookups each ~5-10ms otherwise).
+    # The full chunks dict is ~10 MB for the OpenStax corpus — trivial.
+
+    _chunks_index_cache: dict[str, dict] | None = None
+
+    def _load_chunks_index(self) -> dict[str, dict]:
+        """Lazy-load chunks_<domain>.jsonl into a chunk_id -> chunk dict map.
+        Idempotent; cached on the instance."""
+        if self._chunks_index_cache is not None:
+            return self._chunks_index_cache
+
+        domain = (self.default_domain or "").strip().lower()
+        # Look for explicit cfg path first, then fall back to standard naming.
+        candidate_paths: list[str] = []
+        path_attr = f"chunks_{domain}" if domain else ""
+        if path_attr and hasattr(cfg.paths, path_attr):
+            candidate_paths.append(getattr(cfg.paths, path_attr))
+        # Fallback: data/processed/chunks_<domain>.jsonl.
+        candidate_paths.append(f"data/processed/chunks_{domain}.jsonl")
+        # Final fallback: legacy chunks_ot.jsonl.
+        candidate_paths.append("data/processed/chunks_ot.jsonl")
+
+        loaded_path = None
+        index: dict[str, dict] = {}
+        import json as _json
+        from pathlib import Path as _Path
+        for p in candidate_paths:
+            if _Path(p).exists():
+                loaded_path = p
+                with open(p) as f:
+                    for line in f:
+                        c = _json.loads(line)
+                        cid = c.get("chunk_id")
+                        if cid:
+                            index[cid] = c
+                break
+        if loaded_path is None:
+            print(f"  [retriever] WARN: no chunks file found for domain {domain!r}; "
+                  "window expansion disabled.")
+        else:
+            print(f"  [retriever] loaded {len(index)} chunks for window expansion "
+                  f"from {loaded_path}")
+        self._chunks_index_cache = index
+        return index
+
+    def _expand_window(
+        self,
+        primary_chunks: list[dict],
+        window_size: int,
+        max_total_tokens: int = 4000,
+    ) -> list[dict]:
+        """For each chunk in `primary_chunks`, prepend up to W neighbors via
+        prev_chunk_id and append up to W neighbors via next_chunk_id.
+
+        Returns a flat list with `_window_role` markers:
+          "primary"   — the originally-retrieved chunk (kept first)
+          "neighbor_prev" — N-W..N-1 chunks
+          "neighbor_next" — N+1..N+W chunks
+        Each neighbor row has `_primary_chunk_id` pointing back to its primary.
+
+        Token budget cap: stops adding neighbors once total cumulative chunk
+        text exceeds max_total_tokens (rough estimate: chars/4).
+        """
+        if window_size <= 0 or not primary_chunks:
+            return primary_chunks
+
+        idx = self._load_chunks_index()
+        if not idx:
+            return primary_chunks  # No chunks file available; degrade gracefully.
+
+        # Avoid duplicates if two retrieved primaries share neighbors.
+        emitted: set[str] = set()
+        out: list[dict] = []
+        total_chars = 0
+
+        def _approx_tokens(text: str) -> int:
+            return max(1, len(text or "") // 4)
+
+        for primary in primary_chunks:
+            pid = primary.get("chunk_id")
+            if not pid or pid in emitted:
+                continue
+
+            # Build the prev neighbors (walking backward W steps).
+            prevs: list[dict] = []
+            cursor = idx.get(pid, {})
+            for _ in range(window_size):
+                prev_id = cursor.get("prev_chunk_id") if isinstance(cursor, dict) else None
+                if not prev_id or prev_id in emitted:
+                    break
+                prev_chunk = idx.get(prev_id)
+                if not prev_chunk:
+                    break
+                prevs.insert(0, prev_chunk)  # earliest first
+                cursor = prev_chunk
+
+            # Build the next neighbors (walking forward W steps).
+            nexts: list[dict] = []
+            cursor = idx.get(pid, {})
+            for _ in range(window_size):
+                next_id = cursor.get("next_chunk_id") if isinstance(cursor, dict) else None
+                if not next_id or next_id in emitted:
+                    break
+                next_chunk = idx.get(next_id)
+                if not next_chunk:
+                    break
+                nexts.append(next_chunk)
+                cursor = next_chunk
+
+            # Emit prevs (in reading order), then primary, then nexts.
+            for nb in prevs:
+                t = nb.get("text", "")
+                if total_chars // 4 + _approx_tokens(t) > max_total_tokens:
+                    break  # budget exhausted
+                out.append({
+                    **{k: nb.get(k, "") for k in (
+                        "chunk_id", "text", "chapter_num", "chapter_title",
+                        "section_title", "subsection_title", "page",
+                        "element_type", "image_filename",
+                    )},
+                    "_window_role": "neighbor_prev",
+                    "_primary_chunk_id": pid,
+                })
+                emitted.add(nb.get("chunk_id", ""))
+                total_chars += len(t)
+
+            # Always emit primary even if budget tight (it's the actual hit).
+            primary_row = dict(primary)
+            primary_row["_window_role"] = "primary"
+            primary_row["_primary_chunk_id"] = pid
+            out.append(primary_row)
+            emitted.add(pid)
+            total_chars += len(primary.get("text", ""))
+
+            for nb in nexts:
+                t = nb.get("text", "")
+                if total_chars // 4 + _approx_tokens(t) > max_total_tokens:
+                    break
+                out.append({
+                    **{k: nb.get(k, "") for k in (
+                        "chunk_id", "text", "chapter_num", "chapter_title",
+                        "section_title", "subsection_title", "page",
+                        "element_type", "image_filename",
+                    )},
+                    "_window_role": "neighbor_next",
+                    "_primary_chunk_id": pid,
+                })
+                emitted.add(nb.get("chunk_id", ""))
+                total_chars += len(t)
+
+        return out
+
     def retrieve(
         self,
         query: str,
@@ -540,6 +702,7 @@ class Retriever:
         top_k: int | None = None,
         locked_section: str | None = None,
         locked_subsection: str | None = None,
+        window_size: int | None = None,
     ) -> list[dict]:
         query = (query or "").strip()
         if not query:
@@ -648,6 +811,16 @@ class Retriever:
                     "image_filename": r.get("image_filename", ""),
                 }
             )
+
+        # D.0 — Window expansion. Default W=1 so 5 retrieved chunks become
+        # 15 chunks shown to LLM (~1700 tokens median context, vs ~565 tok
+        # without expansion at the new chunker's median 113 tok/chunk).
+        # Caller can pass window_size=0 to opt out, or larger for more context.
+        ws = window_size
+        if ws is None:
+            ws = int(getattr(cfg.retrieval, "window_size", 1))
+        if ws > 0:
+            payload = self._expand_window(payload, window_size=ws)
         return payload
 
 

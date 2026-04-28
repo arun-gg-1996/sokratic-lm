@@ -72,7 +72,14 @@ from anthropic import AsyncAnthropic
 DEFAULT_MODEL = "claude-haiku-4-5"
 DEFAULT_PROMPT_VERSION = "v1"
 DEFAULT_CONCURRENCY = 20
-DEFAULT_MAX_OUTPUT_TOKENS = 2048
+# Bumped 2048 → 8192 on 2026-04-28 after diagnosing B.9: ~18% of chunks errored
+# because Haiku's response (cleaned_text repeating the chunk + 10-15 propositions
+# of ~60-80 tokens each + JSON syntax) was hitting the 2048 cap mid-output and
+# leaving JSON unclosed. The diagnostic showed pathological responses topped out
+# around ~3000 tokens; 8192 gives ~2.7× headroom over that worst case so we
+# don't have to revisit this. Cost-neutral: we only pay for actual output
+# tokens generated, not max_tokens — the model returns what it needs and stops.
+DEFAULT_MAX_OUTPUT_TOKENS = 8192
 PROPOSITION_CAP = 20  # max propositions per chunk
 
 
