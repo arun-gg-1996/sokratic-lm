@@ -302,7 +302,7 @@ def _build_splitter(threshold: int) -> SemanticSplitterNodeParser:
 
 def semantic_chunk_sections(
     section_rows: list[dict],
-    threshold: int = 90,
+    threshold: int = 75,
     max_chunk_tokens: int = MAX_CHUNK_TOKENS,
 ) -> list[dict]:
     """Semantic split each section independently."""
@@ -893,7 +893,7 @@ def run_all_tests(chunks: list[dict], sections: list[dict]) -> dict:
 # CLI
 # ---------------------------------------------------------------------------
 
-def main(threshold: int = 90, out_path: str = CHUNKS_PATH, run_tests: bool = True) -> int:
+def main(threshold: int = 75, out_path: str = CHUNKS_PATH, run_tests: bool = True) -> int:
     sections = load_raw_sections(RAW_SECTIONS_PATH)
     print(f"Loaded section seeds: {len(sections)} from {RAW_SECTIONS_PATH}")
 
@@ -988,7 +988,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="Section-first semantic chunking with overlap")
-    parser.add_argument("--threshold", type=int, default=90)
+    parser.add_argument("--threshold", type=int, default=75)
     parser.add_argument("--output", type=str, default=CHUNKS_PATH)
     parser.add_argument("--no-tests", action="store_true")
     args = parser.parse_args()
