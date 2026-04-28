@@ -51,6 +51,14 @@ from anthropic import AsyncAnthropic
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
+# Sonnet 4-5 chosen over 4-6 (despite teammate's legacy choice of 4-6)
+# because empirically only 4-5 honors the cache_control: ephemeral marker
+# in our environment. Verified 2026-04-28 with serial back-to-back calls:
+#   4-5: call 1 cache_create=1813, call 2 cache_read=1813
+#   4-6: call 1 input=1826, call 2 input=1826  (no caching, even with beta header)
+# Same per-token pricing for both models, so caching is the deciding factor —
+# saves ~$20-25 on the full-corpus run by reading the system prompt at $0.30/M
+# instead of $3.00/M for ~99% of the 2766 calls.
 DEFAULT_MODEL = "claude-sonnet-4-5"
 DEFAULT_PROMPT_VERSION = "v1"
 DEFAULT_CONCURRENCY = 20
