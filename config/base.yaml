@@ -13,6 +13,12 @@ retrieval:
   rrf_k: 60
   top_chunks_final: 7
   cross_encoder_input: "chunk"
+  # D.0 — window expansion: after rerank, fetch this many chunks before/after
+  # each top-k primary chunk via prev_chunk_id/next_chunk_id walks (populated
+  # at index time by core/qdrant.py). With the new chunker's small chunks
+  # (median ~89 tok paragraph / ~133 tok overlap), W=1 brings the LLM
+  # context per turn from ~565 tok to ~1700 tok. Set to 0 to disable.
+  window_size: 1
   # HyDE (Hypothetical Document Embedding) fallback.
   # Fires ONLY when the original query's retrieval is weak (see _is_weak_retrieval).
   # Latency cost (~500-800 ms) is paid once per session at topic lock, not per turn.
