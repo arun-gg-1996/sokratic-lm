@@ -921,6 +921,201 @@ class Retriever:
         return payload
 
 
+class ChunkRetriever(Retriever):
+    """
+    Chunk-level (non-proposition) retriever variant.
+
+    Why this class exists
+    ---------------------
+    The default `Retriever` indexes propositions and expands them back to
+    parent chunks at retrieval time (the Dense-X-Retrieval architecture).
+    End-to-end testing on canonical anatomy questions ("which nerve
+    innervates the deltoid?") showed atomic propositions destroy the
+    relational verb that should be the discriminative retrieval signal.
+    Literature follow-up (arXiv 2510.04757, Oct 2025) corroborates: the
+    2025 SOTA pattern for biomedical RAG indexes full chunks with bi-encoder
+    retrieval, not propositions.
+
+    What this overrides
+    -------------------
+    Three points where the proposition pipeline differs from chunk-level:
+      1. `__init__`        — point at the chunks Qdrant collection +
+                              the chunks BM25 path produced by
+                              `scripts/reindex_chunks.py`.
+      2. `_qdrant_search`  — payload is already chunk-shaped; surface
+                              `chunk_id` directly, no parent-chunk indirection.
+      3. `_bm25_search`    — pickle file's "propositions" key now holds
+                              chunks (same structural type), but item-level
+                              fields are chunk fields.
+      4. `_rrf_merge`      — fuse by `chunk_id` instead of `proposition_id`.
+      5. `_expand_to_parent_chunks` — chunks ARE the parents; pass-through
+                              with normalised score / hit_count.
+
+    Everything else (HyDE, ontology expansion, alias dictionary, CE rerank,
+    in-scope check, window expansion, OOD short-circuit) is inherited
+    unchanged.
+    """
+
+    def __init__(self, *, collection: str = "sokratic_kb_chunks",
+                 bm25_path: str = "data/indexes/bm25_chunks_openstax_anatomy.pkl") -> None:
+        # Bypass Retriever.__init__ so we can swap collection + bm25 path
+        # without touching cfg.memory.kb_collection / cfg.paths.
+        from openai import OpenAI
+        from qdrant_client import QdrantClient
+        from sentence_transformers import CrossEncoder
+        from ingestion.core.index import load_bm25
+        from retrieval.ontology import get_ontology_adapter
+
+        self.index_dir = None
+        self.embed_model = cfg.models.embeddings
+        self.collection = collection
+        self.default_domain = getattr(getattr(cfg, "domain", object()),
+                                      "retrieval_domain", "")
+
+        self.openai = OpenAI()
+        self.qdrant = QdrantClient(host=cfg.memory.qdrant_host,
+                                   port=cfg.memory.qdrant_port)
+        # Validate the chunks collection's vector dimension matches the
+        # embedding model. We don't reuse Retriever._validate_embedding_dimension
+        # because that one reads from cfg.memory.kb_collection.
+        info = self.qdrant.get_collection(self.collection)
+        actual_dim = getattr(getattr(getattr(info, "config", None), "params", None),
+                             "vectors", None)
+        actual_dim = getattr(actual_dim, "size", None)
+        expected_dim = int(cfg.qdrant.vector_size)
+        if actual_dim is None or int(actual_dim) != expected_dim:
+            raise ValueError(
+                f"ChunkRetriever: dimension mismatch on '{self.collection}': "
+                f"expected {expected_dim}, got {actual_dim}. Run reindex_chunks.py first."
+            )
+
+        self.bm25, self.bm25_props = load_bm25(bm25_path)
+
+        # Cross-encoder + ontology — same setup as the parent.
+        try:
+            import torch
+            if torch.backends.mps.is_available():
+                _ce_device = "mps"
+            elif torch.cuda.is_available():
+                _ce_device = "cuda"
+            else:
+                _ce_device = "cpu"
+        except Exception:
+            _ce_device = "cpu"
+        self.cross_encoder = CrossEncoder(
+            cfg.models.cross_encoder, max_length=512, device=_ce_device
+        )
+
+        self._ontology = get_ontology_adapter(self.default_domain)
+        try:
+            self._ontology.link_entities("anatomy")
+        except Exception:
+            pass
+
+    # ----- payload extraction overrides -------------------------------------
+
+    def _qdrant_search(
+        self,
+        query_vector: list[float],
+        top_k: int,
+        domain: str,
+        locked_section: str | None = None,
+        locked_subsection: str | None = None,
+    ) -> list[dict]:
+        must: list = [FieldCondition(key="domain", match=MatchValue(value=domain))]
+        sub = (locked_subsection or "").strip()
+        sec = (locked_section or "").strip()
+        if sub:
+            must.append(FieldCondition(key="subsection_title", match=MatchValue(value=sub)))
+        elif sec:
+            must.append(FieldCondition(key="section_title", match=MatchValue(value=sec)))
+        qfilter = Filter(must=must)
+        resp = self.qdrant.query_points(
+            collection_name=self.collection,
+            query=query_vector,
+            query_filter=qfilter,
+            limit=top_k,
+            with_payload=True,
+        )
+        points = list(getattr(resp, "points", []))
+
+        hits: list[dict] = []
+        for rank, p in enumerate(points, start=1):
+            payload = p.payload or {}
+            cid = payload.get("chunk_id") or str(getattr(p, "id", rank))
+            hits.append(
+                {
+                    # Stamp `chunk_id` AND `proposition_id` so downstream code
+                    # that keys on either field (RRF, expand-to-parent) works
+                    # without branches. They're identical in chunks-mode.
+                    "chunk_id": str(cid),
+                    "proposition_id": str(cid),
+                    "text": payload.get("text", ""),
+                    "parent_chunk_id": str(cid),
+                    "parent_chunk_text": payload.get("text", ""),
+                    "chapter_num": payload.get("chapter_num", 0),
+                    "chapter_title": payload.get("chapter_title", ""),
+                    "section_title": payload.get("section_title", ""),
+                    "subsection_title": payload.get("subsection_title", ""),
+                    "page": payload.get("page", 0),
+                    "element_type": payload.get("element_type", "paragraph"),
+                    "domain": payload.get("domain", domain),
+                    "image_filename": payload.get("image_filename", ""),
+                    "_qdrant_rank": rank,
+                    "_qdrant_score": float(p.score or 0.0),
+                }
+            )
+        return hits
+
+    def _bm25_search(
+        self,
+        query: str,
+        top_k: int,
+        locked_section: str | None = None,
+        locked_subsection: str | None = None,
+    ) -> list[dict]:
+        tokens = preprocess_for_bm25(query)
+        scores = self.bm25.get_scores(tokens)
+
+        sub = (locked_subsection or "").strip()
+        sec = (locked_section or "").strip()
+        if sub or sec:
+            for i, p in enumerate(self.bm25_props):
+                if sub and str(p.get("subsection_title", "")).strip() != sub:
+                    scores[i] = float("-inf")
+                elif not sub and sec and str(p.get("section_title", "")).strip() != sec:
+                    scores[i] = float("-inf")
+
+        top_idx = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:top_k]
+
+        hits: list[dict] = []
+        for rank, idx in enumerate(top_idx, start=1):
+            if scores[idx] == float("-inf"):
+                break
+            chunk = self.bm25_props[idx]
+            cid = chunk.get("chunk_id") or f"bm25-{idx}"
+            hits.append(
+                {
+                    "chunk_id": str(cid),
+                    "proposition_id": str(cid),
+                    "text": chunk.get("text", ""),
+                    "parent_chunk_id": str(cid),
+                    "parent_chunk_text": chunk.get("text", ""),
+                    "chapter_num": chunk.get("chapter_num", 0),
+                    "chapter_title": chunk.get("chapter_title", ""),
+                    "section_title": chunk.get("section_title", ""),
+                    "subsection_title": chunk.get("subsection_title", ""),
+                    "page": chunk.get("page", 0),
+                    "element_type": chunk.get("element_type", "paragraph"),
+                    "domain": chunk.get("domain", self.default_domain or ""),
+                    "image_filename": chunk.get("image_filename", ""),
+                    "_bm25_rank": rank,
+                    "_bm25_score": float(scores[idx]),
+                }
+            )
+        return hits
+
+
 class MockRetriever:
     """
     Lightweight fallback retriever for local dev when Qdrant/BM25/embeddings

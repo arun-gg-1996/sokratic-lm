@@ -203,7 +203,16 @@ def save_result(result: dict):
 
 async def main():
     from conversation.graph import build_graph
-    from retrieval.retriever import Retriever
+    # Allow swapping retriever implementations via env var so we can A/B
+    # the chunk-level vs proposition-level architectures end-to-end.
+    #   SOKRATIC_RETRIEVER=chunks  → ChunkRetriever (chunk-level index)
+    #   anything else (default)    → Retriever (propositions)
+    import os as _os
+    _retriever_kind = _os.environ.get("SOKRATIC_RETRIEVER", "propositions").strip().lower()
+    if _retriever_kind == "chunks":
+        from retrieval.retriever import ChunkRetriever as Retriever  # type: ignore
+    else:
+        from retrieval.retriever import Retriever
     from memory.memory_manager import MemoryManager
 
     print("Building graph with real RAG retriever...")
@@ -220,12 +229,20 @@ async def main():
     print("Graph built.\n")
 
     saved_paths = []
-    for profile_id, topic in PROFILE_TOPICS.items():
+    # PROFILE_TOPICS maps a run-id (e.g. "S6a", "S6b") to a (profile_id, topic) tuple.
+    # The run-id is just a per-conversation tag — the real profile identifier
+    # to look up in PROFILES is the tuple's first element. Earlier versions of
+    # this loop assumed the key was the profile_id, which broke once we added
+    # multiple runs per profile (S6a/S6b for two topics on the same profile).
+    for run_id, (profile_id, topic) in PROFILE_TOPICS.items():
         print(f"\n{'='*60}")
-        print(f"Running {profile_id} — {PROFILES[profile_id].name}")
+        print(f"Running {run_id} (profile {profile_id}) — {PROFILES[profile_id].name}")
         print(f"Topic: {topic}")
         print('='*60)
         result = await run_one(profile_id, topic, graph)
+        # Tag the run_id into the saved record so multiple runs per profile
+        # don't collide on filename / be hard to tell apart on review.
+        result["run_id"] = run_id
         path = save_result(result)
         saved_paths.append(path)
         print(f"  Done: {len(result['turns'])} turns, reached_answer={result['outcome']['reached_answer']}, bugs={len(result['bugs_noted'])}")
