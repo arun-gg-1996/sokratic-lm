@@ -169,6 +169,7 @@ def main():
 
     scores: list[dict] = []
     latencies: list[int] = []
+    timings_log: list[dict] = []
     per_profile: dict[str, list[dict]] = defaultdict(list)
     per_type: dict[str, list[dict]] = defaultdict(list)
     fail_examples: list[dict] = []
@@ -186,6 +187,12 @@ def main():
             print(f"  [{i:>3}] ERROR: {type(e).__name__}: {e}", flush=True)
             chunks = []
         latencies.append(int((time.time() - t0) * 1000))
+        # Capture per-stage timings populated by Retriever.retrieve().
+        tcap = dict(getattr(retriever, "last_timings", {}) or {})
+        tcap["question"] = row["question"]
+        tcap["profile"] = row.get("profile", "")
+        tcap["type"] = row.get("type", "")
+        timings_log.append(tcap)
         s = score_row(row, chunks)
         s["question"] = row["question"]
         s["profile"] = row.get("profile", "")
@@ -305,6 +312,84 @@ def main():
             print(f"     expected: ch{s['expected_chapter']} | {s['expected_section']!r} | {s['expected_subsection']!r}")
             print(f"     got top:  {top}")
 
+    # ----- Per-stage latency breakdown -----
+    if timings_log:
+        STAGES = [
+            "ontology_ms", "alias_ms", "embed_orig_ms", "qdrant_orig_ms", "bm25_ms",
+            "hyde_rewrite_ms", "hyde_embed_ms", "hyde_qdrant_ms",
+            "rrf_merge_ms", "expand_parents_ms", "ce_rerank_ms",
+            "in_scope_ms", "window_expand_ms",
+        ]
+        n = len(timings_log)
+        n_hyde = sum(1 for tt in timings_log if tt.get("hyde_fired"))
+        n_ood_short = sum(1 for tt in timings_log if tt.get("ood_short_circuited"))
+
+        def pct(xs: list[float], p: float) -> float:
+            if not xs: return 0.0
+            xs = sorted(xs)
+            return xs[min(int(len(xs) * p), len(xs) - 1)]
+
+        def mean(xs: list[float]) -> float:
+            return sum(xs) / len(xs) if xs else 0.0
+
+        print(f"\n  --- Per-stage latency (ms) — {n} queries ---")
+        print(f"  HyDE fired: {n_hyde}/{n} ({n_hyde/n*100:.1f}%)   "
+              f"OOD short-circuit (no HyDE): {n_ood_short}/{n} ({n_ood_short/n*100:.1f}%)")
+        print(f"  {'stage':<22} {'mean':>8} {'p50':>8} {'p95':>8} {'max':>8}   "
+              f"{'mean_when_fired':>18}")
+        for stage in STAGES:
+            vals = [float(tt.get(stage, 0.0)) for tt in timings_log]
+            fired = [v for v in vals if v > 0]
+            if not any(vals):
+                continue  # skip never-run stages
+            mwf = mean(fired) if fired else 0.0
+            print(f"  {stage:<22} {mean(vals):>8.1f} {pct(vals, 0.50):>8.1f} "
+                  f"{pct(vals, 0.95):>8.1f} {max(vals):>8.1f}   "
+                  f"{mwf:>13.1f} ({len(fired):>3}/{n})")
+
+        totals = [float(tt.get("total_ms", 0.0)) for tt in timings_log]
+        print(f"  {'total_ms':<22} {mean(totals):>8.1f} {pct(totals, 0.50):>8.1f} "
+              f"{pct(totals, 0.95):>8.1f} {max(totals):>8.1f}")
+
+        # HyDE delta — show what HyDE-fired queries cost vs. not
+        no_hyde_totals = [float(tt.get("total_ms", 0.0)) for tt in timings_log if not tt.get("hyde_fired")]
+        hyde_totals = [float(tt.get("total_ms", 0.0)) for tt in timings_log if tt.get("hyde_fired")]
+        if hyde_totals and no_hyde_totals:
+            print(f"\n  HyDE-fired queries:    mean total = {mean(hyde_totals):>7.0f} ms (n={len(hyde_totals)})")
+            print(f"  HyDE-skipped queries:  mean total = {mean(no_hyde_totals):>7.0f} ms (n={len(no_hyde_totals)})")
+            print(f"  HyDE adds ~{mean(hyde_totals) - mean(no_hyde_totals):.0f} ms when it fires.")
+
+        # Cosine / CE diagnostics — to inform OOD threshold tuning.
+        in_scope_t = [tt for tt in timings_log
+                      if (tt.get("profile") or "").upper() != "OOD"]
+        ood_t = [tt for tt in timings_log
+                 if (tt.get("profile") or "").upper() == "OOD"]
+
+        def stats(xs):
+            xs = sorted(xs)
+            if not xs:
+                return (0, 0, 0, 0, 0)
+            n = len(xs)
+            return (xs[0], xs[n // 4], xs[n // 2], xs[(3 * n) // 4], xs[-1])
+
+        if in_scope_t and ood_t:
+            print(f"\n  --- Cosine / CE distribution (for OOD threshold tuning) ---")
+            print(f"  {'group':<28} {'min':>7} {'q25':>7} {'p50':>7} {'q75':>7} {'max':>7}")
+            for label, group in (("IN-SCOPE max_cosine", [t.get("max_cosine", 0) for t in in_scope_t]),
+                                 ("OOD       max_cosine", [t.get("max_cosine", 0) for t in ood_t]),
+                                 ("IN-SCOPE max_ce    ", [t.get("max_ce", 0) for t in in_scope_t]),
+                                 ("OOD       max_ce    ", [t.get("max_ce", 0) for t in ood_t])):
+                mn, q1, m, q3, mx = stats(group)
+                print(f"  {label:<28} {mn:>7.3f} {q1:>7.3f} {m:>7.3f} {q3:>7.3f} {mx:>7.3f}")
+            # Per-OOD-type cosine — useful for knowing if the off_topic vs out_of_corpus split needs different thresholds
+            from collections import defaultdict as _dd
+            by_type: dict = _dd(list)
+            for tt in ood_t:
+                by_type[tt.get("type", "")].append(tt.get("max_cosine", 0))
+            for t_name, vals in sorted(by_type.items()):
+                mn, q1, m, q3, mx = stats(vals)
+                print(f"  OOD/{t_name:<24} {mn:>7.3f} {q1:>7.3f} {m:>7.3f} {q3:>7.3f} {mx:>7.3f}  (n={len(vals)})")
+
     # ----- Save JSON -----
     stamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
     out_path = OUT_DIR / f"realistic_eval_{stamp}.json"
@@ -322,6 +407,7 @@ def main():
             "section_mrr": mrr(scores, 'section'),
             "ood_refusal_rate": (sum(1 for s in ood if s['ood_correct'])/len(ood)) if ood else None,
             "scores": scores,
+            "timings": timings_log,
         }, f, indent=2, default=str)
     print(f"\nSaved: {out_path}")
 

@@ -36,7 +36,11 @@ retrieval:
   # OpenAI text-embedding-3-large against this corpus; 0.65 catches mediocre
   # matches without firing on strong queries (0.70+). BM25 is intentionally
   # NOT part of this gate (see _is_weak_retrieval for rationale).
-  hyde_weak_cosine_threshold: 0.65
+  # Lowered 2026-04-28 from 0.65 → 0.50 after instrumented eval showed
+  # HyDE was firing on 68% of queries — too aggressive. At 0.50 HyDE only
+  # fires on genuinely weak retrievals (top cosine below "decent"), not
+  # merely "less than great." Re-evaluate hit@5 if you change this.
+  hyde_weak_cosine_threshold: 0.50
   # Distributional cosine signal (P1.4): also fire HyDE when the mean of the
   # top-K dense cosines is below this floor, even if `max_cosine` alone would
   # have passed. Catches "one lucky chunk + noise" cases that the single-max
@@ -54,7 +58,12 @@ retrieval:
   # BM25 is excluded from scope decision — function-word overlap inflates BM25
   # on genuinely off-topic queries (BM25 still drives ranking among candidates).
   # Thresholds are model-specific; recalibrate when swapping encoders.
-  ood_cosine_threshold: 0.30       # dense cosine floor (OpenAI text-embedding-3-large)
+  # Raised 2026-04-28 from 0.30 → 0.45. The realistic eval showed OOD
+  # off-topic queries (weather/ML/stocks) were leaking 50% of the time
+  # because OpenAI embeddings give baseline similarity ≥ 0.30 to anatomical
+  # text for any English query. 0.45 stays well below in-scope queries
+  # (which usually score 0.55-0.80) but excludes generic English noise.
+  ood_cosine_threshold: 0.45       # dense cosine floor (OpenAI text-embedding-3-large)
   out_of_scope_threshold: 0.90     # cross-encoder confidence floor (ncbi/MedCPT-Cross-Encoder) — very high because the secondary only needs to rescue confident matches the embedder missed
   # Soft section-affinity boost applied at CE-rerank time when the session is
   # locked to a TOC section/subsection. Additive bonus on the CE score for

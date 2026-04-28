@@ -72,12 +72,34 @@ class Retriever:
         # questions paired with full parent chunks blow past it. The MedCPT
         # encoder was trained with 512 max anyway; truncating in the
         # tokenizer matches its training distribution.
-        self.cross_encoder = CrossEncoder(cfg.models.cross_encoder, max_length=512)
+        # Device selection: prefer Apple-Silicon MPS, fall back to CUDA, then CPU.
+        # MPS gives ~3-5x speedup on M-series Macs vs CPU for the
+        # cross-encoder forward pass.
+        try:
+            import torch  # type: ignore
+            if torch.backends.mps.is_available():
+                _ce_device = "mps"
+            elif torch.cuda.is_available():
+                _ce_device = "cuda"
+            else:
+                _ce_device = "cpu"
+        except Exception:
+            _ce_device = "cpu"
+        self.cross_encoder = CrossEncoder(
+            cfg.models.cross_encoder, max_length=512, device=_ce_device
+        )
         # Domain ontology adapter (UMLS for anatomy/OT, Noop for physics etc.).
-        # Constructed cheaply; UMLS pipeline loads lazily on first entity call.
+        # Construct, then EAGERLY warm up so the first retrieve() call doesn't
+        # pay the ~70-second scispacy + UMLS KB load cost. Warmup is a single
+        # link_entities() invocation; subsequent calls hit the cached pipeline.
         from retrieval.ontology import get_ontology_adapter
 
         self._ontology = get_ontology_adapter(self.default_domain)
+        try:
+            self._ontology.link_entities("anatomy")
+        except Exception:
+            # Warmup failures degrade silently to noop semantics on first real call.
+            pass
 
     def _validate_embedding_dimension(self) -> None:
         # Strict contract: this codebase uses one embedding model for Qdrant.
@@ -709,8 +731,34 @@ class Retriever:
         locked_subsection: str | None = None,
         window_size: int | None = None,
     ) -> list[dict]:
+        # Per-call timing instrumentation. Each stage's elapsed wall-time
+        # is written to self.last_timings (in ms) so callers (eval scripts,
+        # observability) can read it after retrieve() returns. Cleared at
+        # the top of every call so stale stats don't leak across queries.
+        import time as _time
+        t = _time.perf_counter
+        timings: dict[str, Any] = {
+            "ontology_ms": 0.0, "alias_ms": 0.0,
+            "embed_orig_ms": 0.0, "qdrant_orig_ms": 0.0, "bm25_ms": 0.0,
+            "hyde_fired": False, "ood_short_circuited": False,
+            "hyde_rewrite_ms": 0.0, "hyde_embed_ms": 0.0, "hyde_qdrant_ms": 0.0,
+            "rrf_merge_ms": 0.0, "expand_parents_ms": 0.0,
+            "ce_rerank_ms": 0.0, "in_scope_ms": 0.0, "window_expand_ms": 0.0,
+            "n_qdrant_orig": 0, "n_qdrant_hyde": 0, "n_bm25": 0,
+            "n_parent_chunks": 0, "n_returned": 0, "total_ms": 0.0,
+            # Diagnostic signals for OOD threshold tuning. max_cosine is the
+            # top dense-similarity score from the original Qdrant search;
+            # max_ce is the top cross-encoder score post-rerank. These two
+            # govern whether _is_in_scope passes — capture them per query so
+            # callers can pick thresholds from real distributions.
+            "max_cosine": 0.0, "max_ce": 0.0,
+        }
+        self.last_timings = timings
+        t_call_start = t()
+
         query = (query or "").strip()
         if not query:
+            timings["total_ms"] = (t() - t_call_start) * 1000.0
             return []
         domain = (domain or self.default_domain or "").strip()
         if not domain:
@@ -724,8 +772,12 @@ class Retriever:
         #   2) Curated alias dict: high-precision fallback for misses.
         # Both stages are additive — original phrasing is preserved so BM25
         # and dense exact matches are unaffected.
+        t0 = t()
         expanded_query = self._apply_ontology_expansion(query)
+        timings["ontology_ms"] = (t() - t0) * 1000.0
+        t0 = t()
         expanded_query = self._apply_query_aliases(expanded_query)
+        timings["alias_ms"] = (t() - t0) * 1000.0
 
         q_top_k = int(cfg.retrieval.qdrant_top_k)
         b_top_k = int(cfg.retrieval.bm25_top_k)
@@ -733,7 +785,10 @@ class Retriever:
         rrf_k = int(cfg.retrieval.rrf_k)
 
         # --- Stage 1: original query (fast path, no LLM) -------------------
+        t0 = t()
         orig_vec = self._embed_query(expanded_query)
+        timings["embed_orig_ms"] = (t() - t0) * 1000.0
+        t0 = t()
         orig_qdrant = self._qdrant_search(
             orig_vec,
             top_k=q_top_k,
@@ -741,11 +796,21 @@ class Retriever:
             locked_section=locked_section,
             locked_subsection=locked_subsection,
         )
+        timings["qdrant_orig_ms"] = (t() - t0) * 1000.0
+        timings["n_qdrant_orig"] = len(orig_qdrant)
+        t0 = t()
         orig_bm25 = self._bm25_search(
             expanded_query,
             top_k=b_top_k,
             locked_section=locked_section,
             locked_subsection=locked_subsection,
+        )
+        timings["bm25_ms"] = (t() - t0) * 1000.0
+        timings["n_bm25"] = len(orig_bm25)
+        # Snapshot the top original-cosine for diagnostics (set before the
+        # OOD short-circuit reads the same value).
+        timings["max_cosine"] = max(
+            (float(h.get("_qdrant_score", 0.0)) for h in orig_qdrant), default=0.0
         )
 
         # --- OOD short-circuit: if the ORIGINAL retrieval is so weak on the
@@ -759,6 +824,7 @@ class Retriever:
             # Let the standard post-rerank OOD check make the final call (it
             # may still rescue via CE confidence), but DO NOT fire HyDE.
             use_hyde = False
+            timings["ood_short_circuited"] = True
         else:
             use_hyde = bool(getattr(cfg.retrieval, "hyde_enabled", True))
 
@@ -770,9 +836,15 @@ class Retriever:
         # text is used only for the dense side.
         hyde_qdrant: list[dict] = []
         if use_hyde and self._is_weak_retrieval(orig_qdrant, orig_bm25, query=expanded_query):
+            timings["hyde_fired"] = True
+            t0 = t()
             hyde_text = self._hyde_rewrite(query)
+            timings["hyde_rewrite_ms"] = (t() - t0) * 1000.0
             if hyde_text:
+                t0 = t()
                 hyde_vec = self._embed_query(hyde_text)
+                timings["hyde_embed_ms"] = (t() - t0) * 1000.0
+                t0 = t()
                 hyde_qdrant = self._qdrant_search(
                     hyde_vec,
                     top_k=q_top_k,
@@ -780,23 +852,39 @@ class Retriever:
                     locked_section=locked_section,
                     locked_subsection=locked_subsection,
                 )
+                timings["hyde_qdrant_ms"] = (t() - t0) * 1000.0
+                timings["n_qdrant_hyde"] = len(hyde_qdrant)
 
         # Merge Qdrant hit lists from both stages (dedupe by proposition_id).
+        t0 = t()
         merged_qdrant = self._dedupe_hits_keep_best_rank(orig_qdrant, hyde_qdrant)
-
         merged = self._rrf_merge(merged_qdrant, orig_bm25, k=rrf_k)
+        timings["rrf_merge_ms"] = (t() - t0) * 1000.0
+        t0 = t()
         parent_chunks = self._expand_to_parent_chunks(merged)
+        timings["expand_parents_ms"] = (t() - t0) * 1000.0
+        timings["n_parent_chunks"] = len(parent_chunks)
         # CE reranks against the alias-expanded query (`expanded_query`), not
         # the HyDE rewrite. The alias expansion is deterministic and high-
         # precision (curated human-written mappings); the HyDE rewrite is LLM
         # output that may introduce paraphrased terminology. So keep the alias
         # signal at rerank time, but not the HyDE signal.
+        t0 = t()
         reranked = self._cross_encoder_rerank(expanded_query, parent_chunks)
+        timings["ce_rerank_ms"] = (t() - t0) * 1000.0
+        timings["max_ce"] = max(
+            (float(r.get("score", 0.0)) for r in reranked), default=0.0
+        )
 
         if not reranked:
+            timings["total_ms"] = (t() - t_call_start) * 1000.0
             return []
 
-        if not self._is_in_scope(merged_qdrant, orig_bm25, reranked):
+        t0 = t()
+        in_scope = self._is_in_scope(merged_qdrant, orig_bm25, reranked)
+        timings["in_scope_ms"] = (t() - t0) * 1000.0
+        if not in_scope:
+            timings["total_ms"] = (t() - t_call_start) * 1000.0
             return []
 
         final_results = reranked[:final_k]
@@ -825,7 +913,11 @@ class Retriever:
         if ws is None:
             ws = int(getattr(cfg.retrieval, "window_size", 1))
         if ws > 0:
+            t0 = t()
             payload = self._expand_window(payload, window_size=ws)
+            timings["window_expand_ms"] = (t() - t0) * 1000.0
+        timings["n_returned"] = len(payload)
+        timings["total_ms"] = (t() - t_call_start) * 1000.0
         return payload
 
 
