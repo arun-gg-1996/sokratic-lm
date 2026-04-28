@@ -36,6 +36,17 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+# Force line-buffered stdout so progress prints (cost ticks, stage markers)
+# flush immediately when piped through `tee`. Without this, Python block-
+# buffers stdout when stdout is a pipe, and a 10-min run that gets killed
+# mid-flight loses all progress visibility — that bug let B.9 run dual-task
+# silently for ~6 minutes on 2026-04-28 before it was caught.
+try:
+    sys.stdout.reconfigure(line_buffering=True)
+    sys.stderr.reconfigure(line_buffering=True)
+except AttributeError:
+    pass  # Python < 3.7 fallback; not relevant for our 3.10+ target.
+
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env", override=True)
 
@@ -121,6 +132,12 @@ def main(argv: list[str] | None = None) -> int:
         "--dry-run", action="store_true",
         help="print the plan + cost estimates, do NOT make API calls",
     )
+    parser.add_argument(
+        "--max-cost", type=float, default=None,
+        help="hard kill switch: abort dual-task as soon as accumulated Sonnet/Haiku "
+             "cost exceeds this dollar threshold. In-flight calls finish; no new "
+             "calls fire. Pre-paid (parse, chunk) stages run regardless.",
+    )
 
     args = parser.parse_args(argv)
 
@@ -144,6 +161,7 @@ def main(argv: list[str] | None = None) -> int:
         fresh=args.fresh,
         embed_model=args.embed_model,
         dry_run=args.dry_run,
+        max_dual_task_cost=args.max_cost,
     )
 
     results = asyncio.run(run_pipeline(opts))

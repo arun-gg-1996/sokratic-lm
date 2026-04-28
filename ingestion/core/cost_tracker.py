@@ -92,7 +92,7 @@ class CostTracker:
         print(tracker.summary())
         print(f"projected total: ${tracker.estimated_total(2766):.2f}")
     """
-    model: str = "claude-sonnet-4-5"
+    model: str = "claude-haiku-4-5"
     pricing: dict[str, float] = field(default_factory=dict)
 
     input_tokens: int = 0
@@ -276,6 +276,10 @@ def make_progress_printer(
 
     def _cb(done: int, total: int) -> None:
         if done == total or done % print_every == 0:
-            print(tracker.progress_line(done, total))
+            # flush=True so live cost ticks reach the operator's terminal /
+            # log file immediately. Without it, Python block-buffers stdout
+            # when piped through `tee`, hiding cost progression for minutes
+            # (the bug behind the B.9 invisible $13 runaway on 2026-04-28).
+            print(tracker.progress_line(done, total), flush=True)
 
     return _cb

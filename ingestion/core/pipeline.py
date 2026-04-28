@@ -156,6 +156,13 @@ class PipelineOptions:
     # Misc
     dry_run: bool = False       # print plan + cost estimates, no API calls
 
+    # Hard cost cap for dual-task. None = no cap. When set, the orchestrator
+    # checks tracker.total_cost after each completed call; if it exceeds the
+    # cap, the abort_event is set so subsequently-firing parallel calls
+    # short-circuit with an "aborted by cost cap" error. In-flight calls
+    # complete (we already paid for them).
+    max_dual_task_cost: float | None = None
+
     def is_active(self, stage: str) -> bool:
         """True if `stage` should run given skip/only filters."""
         if self.only_stages is not None and stage not in self.only_stages:
@@ -409,15 +416,48 @@ async def stage_dual_task(
             cached_system=cached_system, tracker=tracker,
         )
 
+    # Cost-cap kill switch: when set, the orchestrator monitors tracker.total_cost
+    # after each completed call. Once spent exceeds the cap, abort_event fires;
+    # subsequently-launching parallel calls short-circuit instead of hitting the
+    # API. In-flight calls finish (already paid for). This protects against the
+    # B.9-style invisible cost runaway.
+    abort_event: asyncio.Event | None = None
+    if opts.max_dual_task_cost is not None:
+        abort_event = asyncio.Event()
+        max_cost = opts.max_dual_task_cost
+        print(f"  [pipeline] cost cap armed: ${max_cost:.2f} "
+              "(in-flight calls finish; further calls abort)", flush=True)
+
+        # Wrap tracker.record so it ALSO checks the cap after each accounting.
+        # progress_callback only fires every print_every=20, which would let
+        # cost overshoot by ~20 calls; checking on every record() is tighter.
+        original_record = tracker.record
+        def _record_with_cap(usage: dict) -> float:
+            cost = original_record(usage)
+            if tracker.total_cost > max_cost and not abort_event.is_set():  # type: ignore[union-attr]
+                print(
+                    f"  [pipeline] !! COST CAP HIT: spent ${tracker.total_cost:.4f} "
+                    f"> cap ${max_cost:.2f} after {tracker.call_count} calls; "
+                    "aborting remaining calls",
+                    flush=True,
+                )
+                abort_event.set()  # type: ignore[union-attr]
+            return cost
+        record_callback = _record_with_cap
+    else:
+        record_callback = tracker.record
+
     print(f"  [pipeline] dual-task on {len(chunks)} chunks "
-          f"@ concurrency={opts.concurrency}, model={opts.propositions_model}")
+          f"@ concurrency={opts.concurrency}, model={opts.propositions_model}",
+          flush=True)
     results = await run_dual_task_batch(
         chunks,
         model=opts.propositions_model,
         extra_system_suffix=source.proposition_prompt_suffix,
         concurrency=opts.concurrency,
-        usage_callback=tracker.record,
+        usage_callback=record_callback,
         progress_callback=make_progress_printer(tracker, print_every=max(opts.concurrency, 20)),
+        abort_event=abort_event,
     )
 
     n_ok = sum(1 for r in results if r.error is None)

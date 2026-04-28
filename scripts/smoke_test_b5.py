@@ -100,6 +100,23 @@ def pick_stratified_chunks() -> list[dict]:
 
 
 async def main() -> int:
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--model", default=DEFAULT_MODEL,
+                    help="Anthropic model to test (default: %(default)s)")
+    ap.add_argument("--concurrency", type=int, default=10)
+    args = ap.parse_args()
+
+    # Re-derive pricing for the chosen model so the cost report is correct
+    # whether we test Sonnet or Haiku.
+    from ingestion.core.cost_tracker import get_pricing
+    p = get_pricing(args.model)
+    global PRICE_INPUT, PRICE_OUTPUT, PRICE_CACHE_WRITE, PRICE_CACHE_READ
+    PRICE_INPUT = p["input_tokens"]
+    PRICE_OUTPUT = p["output_tokens"]
+    PRICE_CACHE_WRITE = p["cache_creation_input_tokens"]
+    PRICE_CACHE_READ = p["cache_read_input_tokens"]
+
     picks = pick_stratified_chunks()
     print(f"Picked {len(picks)} chunks (stratified)")
     for i, c in enumerate(picks, 1):
@@ -116,7 +133,7 @@ async def main() -> int:
               f"len={len(text):>4} [{flags_str:>5}] {c.get('section_title','')[:55]}")
 
     print(f"\nRunning dual-task batch on {len(picks)} chunks "
-          f"(model={DEFAULT_MODEL}, concurrency=10)...")
+          f"(model={args.model}, concurrency={args.concurrency})...")
 
     usage_log: list[dict] = []
     progress_log: list[tuple[int, int]] = []
@@ -124,7 +141,8 @@ async def main() -> int:
     t0 = time.time()
     results = await run_dual_task_batch(
         picks,
-        concurrency=10,
+        model=args.model,
+        concurrency=args.concurrency,
         usage_callback=usage_log.append,
         progress_callback=lambda d, t: progress_log.append((d, t)),
     )

@@ -51,15 +51,25 @@ from anthropic import AsyncAnthropic
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
-# Sonnet 4-5 chosen over 4-6 (despite teammate's legacy choice of 4-6)
-# because empirically only 4-5 honors the cache_control: ephemeral marker
-# in our environment. Verified 2026-04-28 with serial back-to-back calls:
-#   4-5: call 1 cache_create=1813, call 2 cache_read=1813
-#   4-6: call 1 input=1826, call 2 input=1826  (no caching, even with beta header)
-# Same per-token pricing for both models, so caching is the deciding factor —
-# saves ~$20-25 on the full-corpus run by reading the system prompt at $0.30/M
-# instead of $3.00/M for ~99% of the 2766 calls.
-DEFAULT_MODEL = "claude-sonnet-4-5"
+# Haiku 4-5 chosen for v1 ingestion (revised 2026-04-28 after smoke testing).
+#
+# History of this decision:
+#   - First picked Sonnet 4-5 because empirically Sonnet 4-6 silently ignores
+#     cache_control in our environment (verified with serial back-to-back calls).
+#   - Then verified via Anthropic docs that Sonnet 4-6 has a 2048-token cache
+#     minimum, and Haiku 4-5 has a 4096-token cache minimum. Our original
+#     1659-token system prompt was below both thresholds for those models, but
+#     above Sonnet 4-5's 1024-token threshold — that's why only Sonnet 4-5
+#     appeared to "honor" caching.
+#   - Expanded the system prompt to 4488 tokens with 6 additional few-shot
+#     examples covering edge cases. Now Haiku 4-5 (4096 threshold) caches.
+#   - 10-chunk side-by-side smoke test (same chunks, both models): Haiku 4-5
+#     matches or beats Sonnet 4-5 on 5/10 chunks (better pronoun resolution,
+#     stricter atomicity, preserved chemical equation notation), ties on 4,
+#     loses slightly on 1. JSON parse rate 100% on both. Same cleaning fidelity.
+#   - Cost on 7570 chunks: Haiku ~$29 vs Sonnet ~$86. Haiku wins on cost AND
+#     on adherence to the prompt's atomicity / faithfulness rules.
+DEFAULT_MODEL = "claude-haiku-4-5"
 DEFAULT_PROMPT_VERSION = "v1"
 DEFAULT_CONCURRENCY = 20
 DEFAULT_MAX_OUTPUT_TOKENS = 2048
@@ -127,6 +137,29 @@ Return ONLY valid JSON in this exact shape, with NO surrounding prose,
 NO markdown fences, and NO commentary:
 {"cleaned_text": "...", "propositions": ["...", "..."]}
 
+CRITICAL CONSTRAINTS — read before producing output for every chunk:
+  - cleaned_text and propositions must be CONSISTENT: every proposition's
+    content must trace back to a sentence (or fragment) that you preserved
+    in cleaned_text. If you removed something as noise, do NOT generate
+    propositions from it.
+  - propositions must STAY in the source's terminology: do not substitute
+    synonyms ("augment" must not become "increase", "Other larger structures"
+    must not become "Some biological structures"). Lossless paraphrase only —
+    no semantic drift.
+  - Numeric data, dose ranges, and unit symbols (mg/dL, mmHg, mL/min, °C) are
+    PROTECTED CONTENT: copy them verbatim. Never round, summarize, or
+    convert units across systems.
+  - Acronym handling: when an acronym is introduced via "<Full Term>
+    (<ACRONYM>)" syntax, propositions may use either form, but the EXPANDED
+    form should appear in at least one proposition that introduces the term.
+  - Lists: when the source enumerates items ("A, B, and C"), produce one
+    proposition that names the full list AND, if needed, separate
+    propositions for each individual item's distinct attributes. Do NOT
+    collapse a 5-item list into one compound proposition that loses the
+    individual items.
+  - Empty results are valid output. Do NOT fabricate propositions to fill
+    an apparent gap when the chunk contains no asserted content.
+
 ═══════════════════════════════════════════════════════════════════════
 EXAMPLE 1 — learning-objective preamble + URL + interactive link
 
@@ -171,6 +204,107 @@ targets the thyroid gland to stimulate the release of thyroxine.
 
 Expected output:
 {"cleaned_text": "The endocrine glands secrete a variety of hormones, each with distinct target tissues and effects. Table 17.4 summarizes the major hormones of the anterior pituitary: growth hormone (GH) targets bone and muscle to promote growth, prolactin (PRL) targets the mammary glands to stimulate milk production, and thyroid-stimulating hormone (TSH) targets the thyroid gland to stimulate the release of thyroxine.", "propositions": ["The endocrine glands secrete a variety of hormones.", "Each hormone has distinct target tissues and effects.", "Growth hormone (GH) targets bone and muscle.", "Growth hormone promotes growth.", "Prolactin (PRL) targets the mammary glands.", "Prolactin stimulates milk production.", "Thyroid-stimulating hormone (TSH) targets the thyroid gland.", "Thyroid-stimulating hormone stimulates the release of thyroxine."]}
+
+═══════════════════════════════════════════════════════════════════════
+EXAMPLE 4 — clean prose with no noise; pass-through of the source text
+
+Input chunk:
+ATP is the primary energy currency of the cell. ATP is produced
+through cellular respiration, which occurs in three main stages:
+glycolysis, the citric acid cycle, and the electron transport chain.
+Glycolysis takes place in the cytoplasm and breaks glucose into two
+pyruvate molecules. The citric acid cycle and the electron transport
+chain occur in the mitochondria. Together, these stages produce a
+net total of approximately 30 to 32 ATP molecules per glucose
+molecule under aerobic conditions.
+
+Expected output:
+{"cleaned_text": "ATP is the primary energy currency of the cell. ATP is produced through cellular respiration, which occurs in three main stages: glycolysis, the citric acid cycle, and the electron transport chain. Glycolysis takes place in the cytoplasm and breaks glucose into two pyruvate molecules. The citric acid cycle and the electron transport chain occur in the mitochondria. Together, these stages produce a net total of approximately 30 to 32 ATP molecules per glucose molecule under aerobic conditions.", "propositions": ["ATP is the primary energy currency of the cell.", "ATP is produced through cellular respiration.", "Cellular respiration occurs in three main stages.", "The three stages of cellular respiration are glycolysis, the citric acid cycle, and the electron transport chain.", "Glycolysis takes place in the cytoplasm.", "Glycolysis breaks glucose into two pyruvate molecules.", "The citric acid cycle occurs in the mitochondria.", "The electron transport chain occurs in the mitochondria.", "Cellular respiration produces a net total of approximately 30 to 32 ATP molecules per glucose molecule under aerobic conditions."]}
+
+═══════════════════════════════════════════════════════════════════════
+EXAMPLE 5 — chunk that is ONLY noise; return empty cleaned_text + empty propositions
+
+This pattern arises in OpenStax-style textbooks when a section break is
+filled by a single sidebar or media reference that contains no asserted
+facts about the body — just an instruction to consume external media.
+Do NOT invent propositions from the implied content the video might
+teach. The textbook itself did not assert them.
+
+Input chunk:
+INTERACTIVE LINK Watch this animation (http://openstax.org/l/spinalcord)
+to see how the spinal cord transmits signals between the brain and the
+peripheral nerves. ► Click play to begin. (Figure 13.4) Visit our
+website at http://openstax.org for additional review materials and
+practice questions on this topic.
+
+Expected output:
+{"cleaned_text": "", "propositions": []}
+
+═══════════════════════════════════════════════════════════════════════
+EXAMPLE 6 — numerical and measurement data must be preserved verbatim
+
+Input chunk:
+Normal fasting blood glucose levels in adults range from 70 to 99 mg/dL.
+Fasting levels between 100 and 125 mg/dL indicate prediabetes. Fasting
+levels of 126 mg/dL or higher on two separate tests confirm a diagnosis
+of diabetes mellitus. Postprandial blood glucose levels typically peak
+within 1 to 2 hours after a meal and should remain below 140 mg/dL in
+healthy adults. (See Table 24.6 for a summary of these ranges.)
+
+Expected output:
+{"cleaned_text": "Normal fasting blood glucose levels in adults range from 70 to 99 mg/dL. Fasting levels between 100 and 125 mg/dL indicate prediabetes. Fasting levels of 126 mg/dL or higher on two separate tests confirm a diagnosis of diabetes mellitus. Postprandial blood glucose levels typically peak within 1 to 2 hours after a meal and should remain below 140 mg/dL in healthy adults.", "propositions": ["Normal fasting blood glucose levels in adults range from 70 to 99 mg/dL.", "Fasting blood glucose levels between 100 and 125 mg/dL indicate prediabetes.", "Fasting blood glucose levels of 126 mg/dL or higher on two separate tests confirm a diagnosis of diabetes mellitus.", "Postprandial blood glucose levels typically peak within 1 to 2 hours after a meal.", "Postprandial blood glucose levels should remain below 140 mg/dL in healthy adults."]}
+
+═══════════════════════════════════════════════════════════════════════
+EXAMPLE 7 — multi-step mechanism; decompose ordered process into atomic steps
+
+Input chunk:
+When a skeletal muscle fiber is stimulated by a motor neuron, an action
+potential travels along the sarcolemma and propagates into the
+T-tubules. The action potential triggers the sarcoplasmic reticulum to
+release calcium ions into the sarcoplasm. Calcium ions then bind to
+troponin on the actin filaments, which causes tropomyosin to shift and
+expose the myosin-binding sites on actin. Myosin heads bind to actin
+and undergo a power stroke, pulling the actin filaments toward the
+center of the sarcomere and shortening the muscle fiber.
+
+Expected output:
+{"cleaned_text": "When a skeletal muscle fiber is stimulated by a motor neuron, an action potential travels along the sarcolemma and propagates into the T-tubules. The action potential triggers the sarcoplasmic reticulum to release calcium ions into the sarcoplasm. Calcium ions then bind to troponin on the actin filaments, which causes tropomyosin to shift and expose the myosin-binding sites on actin. Myosin heads bind to actin and undergo a power stroke, pulling the actin filaments toward the center of the sarcomere and shortening the muscle fiber.", "propositions": ["A skeletal muscle fiber is stimulated by a motor neuron.", "Stimulation of a skeletal muscle fiber generates an action potential along the sarcolemma.", "The action potential propagates from the sarcolemma into the T-tubules.", "The action potential triggers the sarcoplasmic reticulum to release calcium ions into the sarcoplasm.", "Calcium ions bind to troponin on the actin filaments.", "Calcium binding to troponin causes tropomyosin to shift.", "The shift of tropomyosin exposes the myosin-binding sites on actin.", "Myosin heads bind to actin.", "Myosin heads undergo a power stroke.", "The power stroke pulls actin filaments toward the center of the sarcomere.", "Pulling actin filaments toward the center of the sarcomere shortens the muscle fiber."]}
+
+═══════════════════════════════════════════════════════════════════════
+EXAMPLE 8 — L2 subsection with technical terminology; preserve exact terms
+
+Input chunk:
+(Figure 14.5) The brachial plexus is formed by the ventral rami of
+spinal nerves C5 through T1. The plexus gives rise to five major
+peripheral nerves of the upper limb: the musculocutaneous nerve, the
+axillary nerve, the radial nerve, the median nerve, and the ulnar
+nerve. Each of these nerves innervates a specific group of muscles
+and a defined region of skin. Damage to any one of them produces a
+characteristic pattern of motor and sensory deficits.
+
+Expected output:
+{"cleaned_text": "The brachial plexus is formed by the ventral rami of spinal nerves C5 through T1. The plexus gives rise to five major peripheral nerves of the upper limb: the musculocutaneous nerve, the axillary nerve, the radial nerve, the median nerve, and the ulnar nerve. Each of these nerves innervates a specific group of muscles and a defined region of skin. Damage to any one of them produces a characteristic pattern of motor and sensory deficits.", "propositions": ["The brachial plexus is formed by the ventral rami of spinal nerves C5 through T1.", "The brachial plexus gives rise to five major peripheral nerves of the upper limb.", "The five major peripheral nerves of the upper limb are the musculocutaneous, axillary, radial, median, and ulnar nerves.", "Each of the five major peripheral nerves of the upper limb innervates a specific group of muscles.", "Each of the five major peripheral nerves of the upper limb innervates a defined region of skin.", "Damage to any one of the five major peripheral nerves of the upper limb produces a characteristic pattern of motor and sensory deficits."]}
+
+═══════════════════════════════════════════════════════════════════════
+EXAMPLE 9 — clinical/disease comparison; preserve cause-effect and category distinctions
+
+Input chunk:
+DISORDERS OF THE Endocrine System Diabetes mellitus is a chronic
+metabolic disorder characterized by hyperglycemia. There are two main
+forms of the disease. Type 1 diabetes is an autoimmune condition in
+which the immune system destroys the insulin-producing beta cells of
+the pancreas, resulting in an absolute deficiency of insulin. It
+typically begins in childhood or adolescence and requires lifelong
+insulin replacement therapy. Type 2 diabetes, in contrast, results
+from a combination of insulin resistance in peripheral tissues and a
+relative deficiency of insulin secretion. It is most often associated
+with obesity, physical inactivity, and a family history of the
+disease, and is usually managed initially with lifestyle modification
+and oral hypoglycemic agents. (Figure 17.18) See the interactive
+animation at http://openstax.org/l/diabetes for additional review.
+
+Expected output:
+{"cleaned_text": "Diabetes mellitus is a chronic metabolic disorder characterized by hyperglycemia. There are two main forms of the disease. Type 1 diabetes is an autoimmune condition in which the immune system destroys the insulin-producing beta cells of the pancreas, resulting in an absolute deficiency of insulin. It typically begins in childhood or adolescence and requires lifelong insulin replacement therapy. Type 2 diabetes, in contrast, results from a combination of insulin resistance in peripheral tissues and a relative deficiency of insulin secretion. It is most often associated with obesity, physical inactivity, and a family history of the disease, and is usually managed initially with lifestyle modification and oral hypoglycemic agents.", "propositions": ["Diabetes mellitus is a chronic metabolic disorder.", "Diabetes mellitus is characterized by hyperglycemia.", "There are two main forms of diabetes mellitus.", "Type 1 diabetes is an autoimmune condition.", "In type 1 diabetes, the immune system destroys the insulin-producing beta cells of the pancreas.", "Type 1 diabetes results in an absolute deficiency of insulin.", "Type 1 diabetes typically begins in childhood or adolescence.", "Type 1 diabetes requires lifelong insulin replacement therapy.", "Type 2 diabetes results from a combination of insulin resistance in peripheral tissues and a relative deficiency of insulin secretion.", "Type 2 diabetes is most often associated with obesity.", "Type 2 diabetes is most often associated with physical inactivity.", "Type 2 diabetes is most often associated with a family history of the disease.", "Type 2 diabetes is usually managed initially with lifestyle modification and oral hypoglycemic agents."]}
 """
 
 
@@ -271,9 +405,15 @@ async def extract_dual_task(
     cached_system: list[dict],
     usage_callback: Callable[[dict], None] | None = None,
     max_output_tokens: int = DEFAULT_MAX_OUTPUT_TOKENS,
+    abort_event: asyncio.Event | None = None,
 ) -> DualTaskResult:
     """Run dual-task extraction on one chunk. Never raises; returns a
-    DualTaskResult whose `error` field is non-None on failure."""
+    DualTaskResult whose `error` field is non-None on failure.
+
+    abort_event: optional asyncio.Event. If set when this coroutine runs,
+    the API call is skipped and an error result is returned. Used by the
+    pipeline orchestrator to short-circuit remaining calls once the cost
+    cap is reached."""
     chunk_id = chunk.get("chunk_id", "unknown")
     chunk_text = (chunk.get("text") or "").strip()
     if not chunk_text:
@@ -281,7 +421,20 @@ async def extract_dual_task(
             chunk_id=chunk_id, cleaned_text="", error="empty chunk text",
         )
 
+    if abort_event is not None and abort_event.is_set():
+        return DualTaskResult(
+            chunk_id=chunk_id, cleaned_text=chunk_text,
+            error="aborted by cost cap before API call",
+        )
+
     async with semaphore:
+        # Re-check after acquiring the semaphore — cost may have crossed the
+        # cap while we were queued behind earlier calls.
+        if abort_event is not None and abort_event.is_set():
+            return DualTaskResult(
+                chunk_id=chunk_id, cleaned_text=chunk_text,
+                error="aborted by cost cap before API call",
+            )
         try:
             resp = await client.messages.create(
                 model=model,
@@ -354,6 +507,7 @@ async def run_dual_task_batch(
     usage_callback: Callable[[dict], None] | None = None,
     progress_callback: Callable[[int, int], None] | None = None,
     max_output_tokens: int = DEFAULT_MAX_OUTPUT_TOKENS,
+    abort_event: asyncio.Event | None = None,
 ) -> list[DualTaskResult]:
     """
     Run dual-task extraction across a list of chunks in parallel.
@@ -396,6 +550,7 @@ async def run_dual_task_batch(
             cached_system=cached_system,
             usage_callback=usage_callback,
             max_output_tokens=max_output_tokens,
+            abort_event=abort_event,
         )
         done_counter += 1
         if progress_callback is not None:
