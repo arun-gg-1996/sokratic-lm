@@ -807,8 +807,81 @@ class Retriever:
         )
         timings["bm25_ms"] = (t() - t0) * 1000.0
         timings["n_bm25"] = len(orig_bm25)
-        # Snapshot the top original-cosine for diagnostics (set before the
-        # OOD short-circuit reads the same value).
+
+        # --- D.1: Soft metadata fallback (post-lock tutoring only) ---------
+        # If the student is in a locked-topic conversation and the strict
+        # section/subsection filter returned a thin pool (< softfallback_min),
+        # progressively widen scope:
+        #   Tier 0: locked subsection (default; what we just ran above)
+        #   Tier 1: drop subsection filter, keep section (penalty 0.05)
+        #   Tier 2: drop section filter entirely (penalty 0.15)
+        # Penalties are applied to `_qdrant_score` so the strict-tier content
+        # still ranks higher when both are in the candidate pool. CE rerank
+        # downstream sees the full pool and picks based on text relevance.
+        #
+        # Why only post-lock (not at topic-lock time): relaxing at lock-time
+        # re-opens the card-loop bug — would lock topics that don't actually
+        # have content. At tutoring time, the topic is already proven
+        # teachable; the soft fallback only widens recall on legitimate
+        # follow-ups that drift slightly (e.g., "loop of Henle" while locked
+        # on "Nephrons: The Functional Unit").
+        timings["softfallback_used_tier"] = 0
+        sfb_min = int(getattr(cfg.retrieval, "softfallback_min_chunks", 3))
+        sfb_enabled = bool(getattr(cfg.retrieval, "softfallback_enabled", True))
+        if (
+            sfb_enabled
+            and (locked_section or locked_subsection)
+            and len(orig_qdrant) + len(orig_bm25) < sfb_min
+        ):
+            existing_q_ids = {h.get("chunk_id") for h in orig_qdrant}
+            existing_b_ids = {h.get("chunk_id") for h in orig_bm25}
+
+            # Tier 1: drop subsection filter, keep section.
+            if locked_subsection and locked_section:
+                more_q = self._qdrant_search(
+                    orig_vec, top_k=q_top_k, domain=domain,
+                    locked_section=locked_section, locked_subsection=None,
+                )
+                more_b = self._bm25_search(
+                    expanded_query, top_k=b_top_k,
+                    locked_section=locked_section, locked_subsection=None,
+                )
+                for h in more_q:
+                    h["_softfallback_tier"] = 1
+                    h["_qdrant_score"] = max(0.0, float(h.get("_qdrant_score", 0.0)) - 0.05)
+                for h in more_b:
+                    h["_softfallback_tier"] = 1
+                orig_qdrant.extend(h for h in more_q if h.get("chunk_id") not in existing_q_ids)
+                orig_bm25.extend(h for h in more_b if h.get("chunk_id") not in existing_b_ids)
+                existing_q_ids = {h.get("chunk_id") for h in orig_qdrant}
+                existing_b_ids = {h.get("chunk_id") for h in orig_bm25}
+                timings["softfallback_used_tier"] = 1
+
+            # Tier 2: drop section filter entirely (still domain-filtered).
+            if len(orig_qdrant) + len(orig_bm25) < sfb_min:
+                more_q = self._qdrant_search(
+                    orig_vec, top_k=q_top_k, domain=domain,
+                    locked_section=None, locked_subsection=None,
+                )
+                more_b = self._bm25_search(
+                    expanded_query, top_k=b_top_k,
+                    locked_section=None, locked_subsection=None,
+                )
+                for h in more_q:
+                    h["_softfallback_tier"] = 2
+                    h["_qdrant_score"] = max(0.0, float(h.get("_qdrant_score", 0.0)) - 0.15)
+                for h in more_b:
+                    h["_softfallback_tier"] = 2
+                orig_qdrant.extend(h for h in more_q if h.get("chunk_id") not in existing_q_ids)
+                orig_bm25.extend(h for h in more_b if h.get("chunk_id") not in existing_b_ids)
+                timings["softfallback_used_tier"] = 2
+
+            timings["n_qdrant_orig"] = len(orig_qdrant)
+            timings["n_bm25"] = len(orig_bm25)
+
+        # Snapshot the top original-cosine for diagnostics (set after soft
+        # fallback so it reflects the final candidate-pool top score, which
+        # is what the OOD short-circuit needs to evaluate).
         timings["max_cosine"] = max(
             (float(h.get("_qdrant_score", 0.0)) for h in orig_qdrant), default=0.0
         )

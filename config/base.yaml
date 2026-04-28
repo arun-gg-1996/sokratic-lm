@@ -71,6 +71,20 @@ retrieval:
   # signals. CE bimodality (in-scope ≈ 1.0, OOD ≈ 0.0) means a 0.05 threshold
   # passes virtually any non-trivial match.
   dean_topic_gate_ce_threshold: 0.05
+
+  # D.1 — soft metadata fallback (post-lock tutoring only).
+  # When a topic is locked and strict section/subsection filtering returns
+  # fewer than `softfallback_min_chunks` candidates (Qdrant + BM25 combined),
+  # progressively widen scope: drop subsection → keep section (penalty 0.05),
+  # then drop section → global within domain (penalty 0.15). This handles
+  # legitimate mid-conversation drift (student locked on "Nephrons" asks
+  # about "loop of Henle" which lives in a sibling subsection) without
+  # losing groundedness — strict-tier content still ranks higher because
+  # of the cosine penalty applied to widened candidates.
+  # NOT applied at topic-lock time: relaxing there would re-open the
+  # card-loop bug (locking topics that aren't actually teachable).
+  softfallback_enabled: true
+  softfallback_min_chunks: 3
   out_of_scope_threshold: 0.90     # cross-encoder confidence floor (ncbi/MedCPT-Cross-Encoder) — very high because the secondary only needs to rescue confident matches the embedder missed
   # Soft section-affinity boost applied at CE-rerank time when the session is
   # locked to a TOC section/subsection. Additive bonus on the CE score for
