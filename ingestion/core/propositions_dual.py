@@ -69,9 +69,11 @@ do TWO things and return the result as JSON.
 TASK 1 — CLEAN the chunk text.
 Remove ONLY the following kinds of noise. Do NOT remove anything else.
   (a) Learning-objective preambles ("Objectives:", "By the end of this
-      section/chapter you will...", "Goals:", "Outcomes:", and similar).
+      section/chapter you will...", "Goals:", "Outcomes:", and similar
+      bulleted lists of learning goals at the top of a section).
   (b) URLs, video/animation links, and navigation markers ("Watch this
-      video", "INTERACTIVE LINK", "Click here", "►", "View this animation").
+      video", "INTERACTIVE LINK", "Click here", "►", "View this animation",
+      "Visit this website", "Use this online resource").
   (c) Decorative parenthetical figure/table references that don't carry
       information by themselves: "(Figure 5.2)", "(see Table 3.1)",
       "(Fig 2-3)". KEEP descriptions that contain real content even if
@@ -80,24 +82,45 @@ Remove ONLY the following kinds of noise. Do NOT remove anything else.
   (d) Page numbers, copyright footers, chapter-header repeats, ISBNs,
       attribution lines ("Adapted from...").
 
+CRITICAL — when noise WRAPS factual content, keep the facts.
+A sentence like "Watch this video to understand how the kidney filters
+blood through the glomerulus and processes urea" contains a real fact
+about the kidney. Strip only the "Watch this video to understand" frame
+and KEEP "the kidney filters blood through the glomerulus and processes
+urea" as part of the cleaned text. The video reference is removable; the
+biology it describes is not.
+
 DO NOT remove or paraphrase anything else. Specifically PRESERVE:
   - Every anatomical, physiological, biochemical, or clinical fact.
   - Numerical data, measurements, drug names, doses, units.
   - Cause-and-effect relationships, comparisons, mechanisms.
   - Disease names, conditions, symptoms, examples, edge cases.
-Use the source's exact terminology. Do not rewrite for style.
+Use the source's exact terminology. Do not rewrite for style. Do not
+abbreviate or expand acronyms. Do not soften technical language.
+
+If the chunk contains ONLY a learning-objectives list, ONLY a video
+reference with no embedded biology, ONLY navigation markers, or ONLY a
+discussion question with no asserted content, return cleaned_text as the
+empty string and propositions as an empty list. Do not invent content.
 
 TASK 2 — DECOMPOSE the cleaned text into propositions.
 Each proposition must be:
-  - Atomic (one fact per statement).
-  - Self-contained (no pronouns referring to other propositions).
-  - Faithful to the source (same terminology, no added concepts).
-  - Cap at 20 propositions per chunk.
+  - Atomic (one fact per statement; no compound clauses connected by
+    "and" / "but" / "because" unless the connection IS the fact).
+  - Self-contained (no pronouns referring to other propositions; expand
+    "it" / "they" / "this" using the antecedent).
+  - Faithful to the source (same terminology, no added concepts, no
+    inferred causation that isn't in the source).
+  - At most 20 propositions per chunk.
+Only emit propositions for content that appears in the cleaned_text.
+Do not generate propositions from material that was removed as noise.
 
-Return ONLY valid JSON in this exact shape, with NO surrounding prose:
+Return ONLY valid JSON in this exact shape, with NO surrounding prose,
+NO markdown fences, and NO commentary:
 {"cleaned_text": "...", "propositions": ["...", "..."]}
 
-EXAMPLE
+═══════════════════════════════════════════════════════════════════════
+EXAMPLE 1 — learning-objective preamble + URL + interactive link
 
 Input chunk:
 LEARNING OBJECTIVES By the end of this section, you will be able to:
@@ -112,6 +135,34 @@ blood to the lungs via the pulmonary artery.
 
 Expected output:
 {"cleaned_text": "The heart is a four-chambered muscular organ located in the mediastinum between the lungs. The right atrium receives deoxygenated blood from the venae cavae. The right ventricle pumps blood to the lungs via the pulmonary artery.", "propositions": ["The heart is a four-chambered muscular organ.", "The heart is located in the mediastinum.", "The mediastinum is between the lungs.", "The right atrium receives deoxygenated blood from the venae cavae.", "The right ventricle pumps blood to the lungs.", "The right ventricle pumps blood via the pulmonary artery."]}
+
+═══════════════════════════════════════════════════════════════════════
+EXAMPLE 2 — fact-bearing sentence wrapped in a video reference
+
+Input chunk:
+Watch this video (http://openstax.org/l/osteoporosis) to get a better
+understanding of how thoracic vertebrae may become weakened and may
+fracture due to osteoporosis, especially in postmenopausal women.
+Vertebral osteoporosis can lead to compression fractures of the
+vertebral bodies, which contribute to kyphosis of the thoracic spine.
+
+Expected output:
+{"cleaned_text": "Thoracic vertebrae may become weakened and may fracture due to osteoporosis, especially in postmenopausal women. Vertebral osteoporosis can lead to compression fractures of the vertebral bodies, which contribute to kyphosis of the thoracic spine.", "propositions": ["Thoracic vertebrae may become weakened due to osteoporosis.", "Thoracic vertebrae may fracture due to osteoporosis.", "Postmenopausal women are especially susceptible to thoracic vertebrae weakening from osteoporosis.", "Vertebral osteoporosis can lead to compression fractures of the vertebral bodies.", "Compression fractures of the vertebral bodies contribute to kyphosis of the thoracic spine."]}
+
+═══════════════════════════════════════════════════════════════════════
+EXAMPLE 3 — table reference WITH embedded content; preserve the content
+
+Input chunk:
+The endocrine glands secrete a variety of hormones, each with distinct
+target tissues and effects. Table 17.4 summarizes the major hormones
+of the anterior pituitary: growth hormone (GH) targets bone and muscle
+to promote growth, prolactin (PRL) targets the mammary glands to
+stimulate milk production, and thyroid-stimulating hormone (TSH)
+targets the thyroid gland to stimulate the release of thyroxine.
+(Figure 17.7)
+
+Expected output:
+{"cleaned_text": "The endocrine glands secrete a variety of hormones, each with distinct target tissues and effects. Table 17.4 summarizes the major hormones of the anterior pituitary: growth hormone (GH) targets bone and muscle to promote growth, prolactin (PRL) targets the mammary glands to stimulate milk production, and thyroid-stimulating hormone (TSH) targets the thyroid gland to stimulate the release of thyroxine.", "propositions": ["The endocrine glands secrete a variety of hormones.", "Each hormone has distinct target tissues and effects.", "Growth hormone (GH) targets bone and muscle.", "Growth hormone promotes growth.", "Prolactin (PRL) targets the mammary glands.", "Prolactin stimulates milk production.", "Thyroid-stimulating hormone (TSH) targets the thyroid gland.", "Thyroid-stimulating hormone stimulates the release of thyroxine."]}
 """
 
 
