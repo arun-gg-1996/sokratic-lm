@@ -37,14 +37,20 @@ from simulation.student_simulator import StudentSimulator
 OUTPUT_DIR = Path(cfg.paths.artifacts) / "final_convo"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-# Curated topics — specific enough for good retrieval
+# Curated topics — must be TEXTBOOK-ANSWERABLE in OpenStax A&P 2e.
+# 2026-04-29: previous topics (deltoid innervation, wrist drop / humeral fracture)
+# turned out to be NOT in the corpus (verified: 0 chunks mention 'axillary' +
+# 'deltoid' together; 'wrist drop' appears 0 times). The OLD pipeline's
+# "successes" on these were LLM parametric-knowledge hallucinations. Switching
+# to topics with strong, demonstrated coverage in the corpus so the e2e tests
+# the system on questions it can honestly answer.
 PROFILE_TOPICS = {
-    "S6a": ("S6", "What nerve innervates the deltoid muscle?"),
-    "S6b": ("S6", "Which nerve is damaged in a humeral shaft fracture causing wrist drop?"),
-    "S3a": ("S3", "What nerve innervates the deltoid muscle?"),
-    "S1b": ("S1", "Which nerve is damaged in a humeral shaft fracture causing wrist drop?"),
-    "S2b": ("S2", "What nerve innervates the deltoid muscle?"),
-    "S4b": ("S4", "What nerve innervates the deltoid muscle?"),
+    "S1a": ("S1", "What are the structural and functional differences between T helper cells and cytotoxic T cells?"),  # Ch21 T Cell-Mediated Immune Responses (24 chunks)
+    "S2a": ("S2", "How does the body regulate blood pressure through neural mechanisms?"),  # Ch20 Neural Regulation (24 chunks)
+    "S3a": ("S3", "what are the parts of a nephron"),  # Ch25 Nephrons (24 chunks)
+    "S4a": ("S4", "Reflexes are basically just instant nerve reactions, right?"),  # Ch15 Structure of Reflexes (16 chunks)
+    "S5a": ("S5", "elbow joint"),  # Ch9 Elbow Joint (8 chunks)
+    "S6a": ("S6", "I'm not sure I really understand chemical digestion — could we go through it?"),  # Ch23 Chemical Digestion (58 chunks)
 }
 
 

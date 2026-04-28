@@ -805,11 +805,54 @@ class DeanAgent:
                         )
 
             # Free-text topic query (or a card_pick that couldn't resolve) →
-            # TOC matcher. Use the LLM-normalized topic when available, falling
-            # back to the raw latest message.
+            # SEMANTIC topic resolution via the chunks retriever.
+            #
+            # 2026-04-29: replaced the rapidfuzz token_set_ratio TopicMatcher
+            # for free-text resolution. Empirically, fuzzy string matching of
+            # natural student queries against TOC titles is not reliable: for
+            # "What are the structural and functional differences between T
+            # helper cells and cytotoxic T cells?" the matcher ranked "Stem
+            # Cells" (token-set 67) above "T Cell Types and their Functions"
+            # (43) because the latter title doesn't share the plural "Cells"
+            # token. The chunks retriever uses dense embeddings + BM25 + CE
+            # rerank — it gets this right (returns Ch21 T-cell content) — so
+            # we use it directly to identify the topic and only fall back to
+            # the title matcher when the retriever cannot.
             if picked_topic is None:
-                matcher = get_topic_matcher()
                 query_for_match = normalized_topic or latest_student
+                semantic_top: TopicMatch | None = None
+                try:
+                    sem_chunks = self.retriever.retrieve(query_for_match)
+                except Exception as _e:
+                    sem_chunks = []
+                # Take the top primary chunk and lock to its (chapter,
+                # section, subsection) — that IS our topic in the TOC tree.
+                primaries = [c for c in sem_chunks
+                             if c.get("_window_role", "primary") == "primary"]
+                top_primary = primaries[0] if primaries else None
+                if top_primary and float(top_primary.get("score", 0.0)) >= float(
+                    getattr(cfg.retrieval, "dean_topic_gate_ce_threshold", 0.05)
+                ):
+                    semantic_top = TopicMatch(
+                        path=f"Ch{top_primary.get('chapter_num', 0)}|"
+                             f"{top_primary.get('section_title', '')}|"
+                             f"{top_primary.get('subsection_title', '')}",
+                        chapter=str(top_primary.get("chapter_title", "")),
+                        section=str(top_primary.get("section_title", "")),
+                        subsection=str(top_primary.get("subsection_title", "")),
+                        difficulty="moderate",
+                        chunk_count=0,
+                        limited=False,
+                        teachable=True,
+                        score=float(top_primary.get("score", 1.0)),
+                    )
+
+                # Fallback: if the retriever couldn't resolve, run the legacy
+                # fuzzy-title matcher (with relaxed thresholds) so the
+                # rejection-with-alternatives path still works for ambiguous
+                # one-word queries like "joints" where retrieval has nothing
+                # specific to lock on.
+                matcher = get_topic_matcher()
                 result: MatchResult = matcher.match(query_for_match)
                 state["debug"]["turn_trace"].append({
                     "wrapper": "dean.topic_match",
@@ -817,9 +860,13 @@ class DeanAgent:
                     "tier": result.tier,
                     "top_score": result.top.score if result.top else 0.0,
                     "top_path": result.top.path if result.top else "",
+                    "semantic_resolved": bool(semantic_top),
+                    "semantic_path": semantic_top.path if semantic_top else "",
                 })
 
-                if result.tier == "strong" and result.top is not None:
+                if semantic_top is not None:
+                    picked_topic = semantic_top
+                elif result.tier == "strong" and result.top is not None:
                     picked_topic = result.top
                 else:
                     rejected_set = set(state.get("rejected_topic_paths", []) or [])

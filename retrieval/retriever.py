@@ -957,7 +957,14 @@ class ChunkRetriever(Retriever):
     """
 
     def __init__(self, *, collection: str = "sokratic_kb_chunks",
-                 bm25_path: str = "data/indexes/bm25_chunks_openstax_anatomy.pkl") -> None:
+                 bm25_path: str | None = None) -> None:
+        # Resolve BM25 path to an absolute path relative to the project root
+        # so the retriever works no matter what cwd the caller is in.
+        # Default lives at <project_root>/data/indexes/bm25_chunks_openstax_anatomy.pkl.
+        if bm25_path is None:
+            from pathlib import Path as _Path
+            _root = _Path(__file__).resolve().parent.parent
+            bm25_path = str(_root / "data/indexes/bm25_chunks_openstax_anatomy.pkl")
         # Bypass Retriever.__init__ so we can swap collection + bm25 path
         # without touching cfg.memory.kb_collection / cfg.paths.
         from openai import OpenAI
