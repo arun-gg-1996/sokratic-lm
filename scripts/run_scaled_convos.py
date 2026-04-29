@@ -410,6 +410,10 @@ async def main():
                     help="Number of conversations to run concurrently "
                          "(default: 3; 1 = serial). Higher values get rate-"
                          "limited by Anthropic API.")
+    ap.add_argument("--clear-memory", action="store_true",
+                    help="Wipe the mem0 namespace before this run. Use for "
+                         "clean baseline measurements so prior session "
+                         "memories don't bleed into the metrics.")
     args = ap.parse_args()
 
     profiles = [p.strip() for p in (args.profiles or ",".join(PROFILES_TO_RUN)).split(",") if p.strip()]
@@ -434,6 +438,10 @@ async def main():
         return
 
     memory_manager = MemoryManager()
+    if args.clear_memory:
+        n = memory_manager.clear_namespace()
+        print(f"Cleared mem0 namespace (returned {n}).", flush=True)
+    print(f"MemoryManager status: {memory_manager.last_flush_status}", flush=True)
     graph = build_graph(retriever, memory_manager)
     print("Graph built.", flush=True)
 

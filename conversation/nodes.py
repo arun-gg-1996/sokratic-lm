@@ -131,6 +131,31 @@ def dean_node(state: TutorState, dean, teacher) -> dict:
         turn_count += 1
     partial_update["turn_count"] = turn_count
 
+    # P4 observability: per-tutoring-turn groundedness accounting + invariant
+    # check. A tutoring turn is "grounded" iff it has a locked_topic AND non-
+    # empty retrieved_chunks when the Teacher drafted. We track both counts
+    # directly (rather than deriving groundedness from coverage_gap_events)
+    # because coverage-gap events don't include turns where retrieval was
+    # never attempted but the state was inconsistent.
+    debug = state["debug"]
+    if is_tutoring_turn:
+        locked = partial_update.get("locked_topic", state.get("locked_topic"))
+        chunks = partial_update.get("retrieved_chunks", state.get("retrieved_chunks", []))
+        grounded_now = bool(locked) and bool(chunks)
+        if grounded_now:
+            debug["grounded_turns"] = int(debug.get("grounded_turns", 0)) + 1
+        else:
+            debug["ungrounded_turns"] = int(debug.get("ungrounded_turns", 0)) + 1
+            # Invariant violation: tutoring turn without grounded state.
+            # This should only happen after a coverage-gap unlock (handled),
+            # so log it with enough detail to investigate otherwise.
+            debug.setdefault("invariant_violations", []).append({
+                "turn": turn_count,
+                "kind": "ungrounded_tutoring_turn",
+                "has_locked_topic": bool(locked),
+                "chunk_count": len(chunks) if chunks else 0,
+            })
+
     # Fire summarizer when approaching the turn limit
     summarizer_trigger = state["max_turns"] - cfg.session.summarizer_keep_recent
     if turn_count >= summarizer_trigger:
@@ -356,13 +381,30 @@ def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
     """
     Phase 4 — Memory Update.
 
-    Memory persistence is stubbed out for now (no mem0).
+    Calls memory_manager.flush() which writes 5 categories of mem0 entries
+    for the session: session summary, misconceptions, open thread (if not
+    reached), topics covered, and learning style cues. See
+    memory/memory_manager.py for category formats.
+
+    Falls back to no-op if mem0 / Qdrant is unavailable (memory_manager
+    handles that internally) — never blocks session-end.
+
     Returns phase = "memory_update" to signal session end.
     """
     state["debug"]["current_node"] = "memory_update_node"
+    student_id = state.get("student_id", "") or ""
+    flush_status = "skipped_no_student_id"
+    flushed = False
+    if student_id:
+        try:
+            flushed = memory_manager.flush(student_id, state, summary_text="")
+            flush_status = getattr(memory_manager, "last_flush_status", "ok")
+        except Exception as e:
+            flush_status = f"error: {type(e).__name__}: {str(e)[:80]}"
     state["debug"]["turn_trace"].append({
         "wrapper": "memory_manager.flush",
-        "result": "stubbed_no_op",
+        "result": flush_status,
+        "flushed": flushed,
     })
 
     return {
@@ -376,21 +418,51 @@ def _log_conversation(state: TutorState, messages: list[dict]) -> None:
     try:
         out_dir = Path(cfg.paths.artifacts) / "conversations"
         out_dir.mkdir(parents=True, exist_ok=True)
+        dbg = state.get("debug", {}) or {}
+        locked_topic = state.get("locked_topic") or dbg.get("locked_topic_snapshot")
+        tutoring_turns = int(state.get("turn_count", 0))
+        coverage_gap_events = int(dbg.get("coverage_gap_events", 0))
+        retrieval_calls = int(dbg.get("retrieval_calls", 0))
+        grounded_turns = int(dbg.get("grounded_turns", 0))
+        ungrounded_turns = int(dbg.get("ungrounded_turns", 0))
+        invariant_violations = list(dbg.get("invariant_violations", []) or [])
+        topic_locked_to_toc = locked_topic is not None
+        if tutoring_turns <= 0 or not topic_locked_to_toc or retrieval_calls < 1:
+            groundedness_score = 0.0
+        else:
+            # Prefer explicit grounded/ungrounded counters when populated
+            # (P4 observability). Falls back to coverage_gap_events for
+            # older sessions that only have that signal.
+            counted = grounded_turns + ungrounded_turns
+            if counted > 0:
+                groundedness_score = grounded_turns / float(counted)
+            else:
+                groundedness_score = max(
+                    0.0, 1.0 - (coverage_gap_events / float(tutoring_turns))
+                )
         conv_data = {
             "student_id": state["student_id"],
             "locked_question": state.get("locked_question", ""),
             "locked_answer": state.get("locked_answer", ""),
             "student_reached_answer": state.get("student_reached_answer", False),
             "hint_level": state.get("hint_level", 1),
-            "turn_count": state.get("turn_count", 0),
+            "turn_count": tutoring_turns,
             "core_mastery_tier": state.get("core_mastery_tier", "not_assessed"),
             "clinical_mastery_tier": state.get("clinical_mastery_tier", "not_assessed"),
             "mastery_tier": state.get("mastery_tier", "not_assessed"),
             "clinical_turn_count": state.get("clinical_turn_count", 0),
             "clinical_completed": state.get("clinical_completed", False),
             "weak_topics": state.get("weak_topics", []),
+            "topic_locked_to_toc": topic_locked_to_toc,
+            "locked_topic": locked_topic,
+            "retrieval_calls": retrieval_calls,
+            "coverage_gap_events": coverage_gap_events,
+            "grounded_turns": grounded_turns,
+            "ungrounded_turns": ungrounded_turns,
+            "invariant_violations": invariant_violations,
+            "groundedness_score": round(groundedness_score, 4),
             "messages": messages,
-            "debug": {k: v for k, v in state.get("debug", {}).items() if k != "turn_trace"},
+            "debug": {k: v for k, v in dbg.items() if k != "turn_trace"},
         }
         turn = state.get("turn_count", 0)
         out_path = out_dir / f"{state['student_id']}_turn_{turn}.json"
@@ -411,13 +483,48 @@ def _close_session_with_dean(state: TutorState, dean, messages: list[dict]) -> d
     state["grading_rationale"] = closeout.get("grading_rationale", "")
     state["session_memory_summary"] = closeout.get("memory_summary", "")
 
+    # Strict-groundedness grading guard: a session that never locked to a TOC
+    # node, or had zero successful retrieval calls, cannot be graded on
+    # mastery — any tier Dean returned would be based on ungrounded content.
+    # Override to `ungraded` so downstream memory/export treats it correctly.
+    #
+    # `locked_topic` can be transiently cleared by partial updates during the
+    # session (e.g. a retry path), so we also accept the sticky snapshot
+    # written by dean.anchors_locked as evidence of a successful lock. If
+    # either signal says the session was grounded, we trust it.
+    dbg = state.get("debug", {}) or {}
+    locked_topic = state.get("locked_topic")
+    locked_topic_snapshot = dbg.get("locked_topic_snapshot")
+    topic_confirmed = bool(state.get("topic_confirmed"))
+    was_grounded = bool(locked_topic or locked_topic_snapshot)
+    retrieval_calls = int(dbg.get("retrieval_calls", 0))
+    if not was_grounded or retrieval_calls == 0:
+        state["core_mastery_tier"] = "ungraded"
+        state["clinical_mastery_tier"] = "ungraded"
+        state["mastery_tier"] = "ungraded"
+        state["grading_rationale"] = (
+            "Session was not grounded to a textbook topic — "
+            "ungraded by policy (no TOC lock or no retrieval calls)."
+        )
+        state["debug"]["turn_trace"].append({
+            "wrapper": "nodes.grading_guard",
+            "result": "forced_ungraded",
+            "locked_topic_present": bool(locked_topic),
+            "locked_topic_snapshot_present": bool(locked_topic_snapshot),
+            "topic_confirmed": topic_confirmed,
+            "retrieval_calls": retrieval_calls,
+        })
+
     # Update weak topics for developing/needs_review outcomes.
+    # `ungraded` sessions deliberately skip weak-topic updates — we don't
+    # want random student inputs polluting long-term memory.
     weak_topics = list(state.get("weak_topics", []))
     if state.get("mastery_tier") in {"developing", "needs_review"}:
         topic_name = _session_topic_name(state)
-        difficulty = "moderate" if state.get("mastery_tier") == "developing" else "hard"
-        weak_topics = _upsert_weak_topic(weak_topics, topic_name, difficulty=difficulty, bump=1)
-        state["weak_topics"] = weak_topics
+        if topic_name:
+            difficulty = "moderate" if state.get("mastery_tier") == "developing" else "hard"
+            weak_topics = _upsert_weak_topic(weak_topics, topic_name, difficulty=difficulty, bump=1)
+            state["weak_topics"] = weak_topics
 
     final_msg = str(closeout.get("student_facing_message", "") or "").strip()
     if final_msg:
@@ -516,12 +623,24 @@ def _classify_opt_in(msg: str) -> str:
 
 
 def _session_topic_name(state: TutorState) -> str:
+    """
+    Canonical TOC-node name for this session — used for weak_topics and
+    memory write-back. Prefers the locked TOC entry (set by dean.run_turn
+    after TopicMatcher resolves the student's request) so we never persist
+    a raw free-text selection or a menu-option label.
+    Returns "" when the session was never grounded to a TOC node; callers
+    should skip weak-topic updates in that case (P0.6 grading guard).
+    """
+    locked = state.get("locked_topic") or {}
+    node = (locked.get("subsection") or locked.get("section") or locked.get("chapter") or "").strip()
+    if node:
+        return node[:120]
+    # No TOC lock — fall back to topic_selection only when it looks like a
+    # canonical label (short, no numeric prefix). Otherwise return empty so
+    # the caller treats the session as ungraded.
     selected = str(state.get("topic_selection", "") or "").strip()
-    if selected:
+    if selected and len(selected.split()) <= 10 and not selected[:1].isdigit():
         return selected[:120]
-    for msg in state.get("messages", []):
-        if msg.get("role") == "student":
-            return str(msg.get("content", "") or "").strip()[:120]
     return ""
 
 

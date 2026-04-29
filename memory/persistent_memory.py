@@ -34,6 +34,12 @@ class PersistentMemory:
             vector_size = int(getattr(getattr(cfg, "qdrant", object()), "vector_size", 3072))
             self.namespace = getattr(getattr(cfg, "domain", object()), "mem0_namespace", "default")
             mem_collection = getattr(getattr(cfg, "domain", object()), "memory_collection", cfg.memory.memory_collection)
+            # mem0 defaults to text-embedding-3-small (1536 dim). We use
+            # text-embedding-3-large (3072 dim) everywhere else and the
+            # sokratic_memory Qdrant collection is sized at 3072. Configure
+            # mem0's embedder explicitly so the dimensions match (otherwise
+            # Qdrant rejects every add() with: "Vector dimension error:
+            # expected dim: 3072, got 1536").
             config = {
                 "vector_store": {
                     "provider": "qdrant",
@@ -43,7 +49,14 @@ class PersistentMemory:
                         "collection_name": mem_collection,
                         "embedding_model_dims": vector_size,
                     }
-                }
+                },
+                "embedder": {
+                    "provider": "openai",
+                    "config": {
+                        "model": cfg.models.embeddings,  # text-embedding-3-large
+                        "embedding_dims": vector_size,
+                    },
+                },
             }
             self.client = Memory.from_config(config)
             self.available = True
@@ -75,8 +88,18 @@ class PersistentMemory:
         try:
             user_id = self._namespaced_user_id(student_id)
             if query:
-                return self.client.search(query, user_id=user_id)
-            return self.client.get_all(user_id=user_id)
+                resp = self.client.search(query, user_id=user_id)
+            else:
+                resp = self.client.get_all(user_id=user_id)
+            # mem0's response shape varies: sometimes a list of dicts,
+            # sometimes {'results': [list of dicts]} on newer versions.
+            # Normalize to always return a flat list of memory dicts so
+            # callers don't need to introspect.
+            if isinstance(resp, dict) and "results" in resp:
+                return list(resp.get("results") or [])
+            if isinstance(resp, list):
+                return resp
+            return []
         except Exception:
             return []
 
