@@ -124,27 +124,54 @@ class TeacherAgent:
         self.client = anthropic.Anthropic()
         self.model = cfg.models.teacher
 
-    def draft_rapport(self, weak_topics: list[dict], state: TutorState | None = None) -> str:
+    def draft_rapport(
+        self,
+        weak_topics: list[dict],
+        state: TutorState | None = None,
+        past_session_memories: list[dict] | None = None,
+    ) -> str:
         """
         Generate a personalized greeting for session start. Uses cfg.prompts.teacher_rapport.
         Called once by rapport_node. No student message yet — this is the opening.
 
         Args:
-            weak_topics: List of {topic, difficulty, failure_count} from mem0.
-                         Empty list = new student with no history.
+            weak_topics: legacy field kept for backward compat with existing
+                         callers. Empty list = new student. Currently unused
+                         in the rapport prompt; superseded by
+                         `past_session_memories` (mem0-driven).
+            past_session_memories: list of mem0 result dicts (each with a
+                         'memory' or 'data' field carrying the natural-
+                         language fact). When non-empty, the rapport
+                         prompt may reference one prior topic. Empty / None
+                         → fresh-session behavior.
 
         Returns:
-            str: Greeting message. If weak_topics non-empty: suggest most-failed topic
-                 and ask if student wants to revisit it or pick something new.
-                 If empty: warm welcome + invite student to type a topic they want to explore.
+            str: Greeting message. If past_session_memories non-empty:
+                 may reference one specific past topic. If empty: warm
+                 welcome + invite student to type a topic.
         """
-        if weak_topics:
-            topics_str = "\n".join(
-                f"  - {wt['topic']} (failed {wt['failure_count']} times, difficulty: {wt.get('difficulty', 'unknown')})"
-                for wt in weak_topics
-            )
-        else:
-            topics_str = "No previous history — new student."
+        # Format past session memories for the prompt. mem0 atomizes our
+        # structured strings into individual facts, so the most natural
+        # representation is a bulleted list of those facts. Cap at 8
+        # entries so the prompt stays compact.
+        past_str = "No previous history — new student."
+        if past_session_memories:
+            bullets: list[str] = []
+            for m in past_session_memories[:8]:
+                if isinstance(m, dict):
+                    text = (
+                        m.get("memory")
+                        or m.get("data")
+                        or m.get("text")
+                        or ""
+                    )
+                else:
+                    text = str(m)
+                text = str(text).strip()
+                if text:
+                    bullets.append(f"  - {text}")
+            if bullets:
+                past_str = "\n".join(bullets)
 
         hour = datetime.now().hour
         if hour < 12:
@@ -154,14 +181,27 @@ class TeacherAgent:
         else:
             tod = "evening"
 
-        system = cfg.prompts.teacher_rapport.format(
-            weak_topics=topics_str, time_of_day=tod, **_domain_prompt_vars()
+        # Resolve delta template, filling BOTH domain vars (via str.format)
+        # and the dynamic placeholders (past_session_memories, time_of_day).
+        # If teacher_rapport_delta is missing we fall back to the full
+        # teacher_rapport template so wrapper_delta still carries the
+        # populated placeholder text — never the raw "{past_session_memories}"
+        # literal, which is what was reaching the LLM before this fix.
+        delta_template = getattr(
+            cfg.prompts,
+            "teacher_rapport_delta",
+            cfg.prompts.teacher_rapport,
+        )
+        wrapper_delta_filled = delta_template.format(
+            past_session_memories=past_str,
+            time_of_day=tod,
+            **_domain_prompt_vars(),
         )
         return self._call(
             user_msg="Start the session.",
             state=state,
             role_base=getattr(cfg.prompts, "teacher_base", ""),
-            wrapper_delta=getattr(cfg.prompts, "teacher_rapport_delta", system),
+            wrapper_delta=wrapper_delta_filled,
             wrapper_name="teacher.draft_rapport",
         )
 

@@ -29,9 +29,12 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
     """
     Phase 1 — Rapport.
 
-    - Memory is stubbed out (no mem0 for now); weak_topics always starts empty.
-    - TopicSuggester provides initial topic suggestions from textbook_structure.json
-      for new students (weak_topics empty).
+    - Loads cross-session memory via memory_manager.load(student_id) (mem0/Qdrant).
+      Returning students get a brief reference to one prior topic; new students
+      get a fresh greeting.
+    - weak_topics is still empty here (legacy slot reserved for future
+      knowledge-tracing-derived weak concepts).
+    - TopicSuggester provides initial topic suggestions from textbook_structure.json.
     - Teacher generates personalized greeting.
     - Transition phase to "tutoring".
 
@@ -41,15 +44,32 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
     if state.get("phase") != "rapport":
         return {}
 
-    # Memory is stubbed — always empty for now
+    # Legacy slot — kept for knowledge-tracing wiring (D.3).
     weak_topics: list[dict] = []
+
+    # Pull cross-session memories from mem0. Empty list for new students or
+    # if Qdrant/mem0 is unavailable (memory_manager swallows all errors).
+    student_id = state.get("student_id", "") or ""
+    past_memories: list[dict] = []
+    if student_id:
+        try:
+            past_memories = memory_manager.load(
+                student_id,
+                query="topics covered, misconceptions, and outcomes from past sessions",
+            )
+        except Exception:
+            past_memories = []
 
     # For new students, seed initial_suggestions from textbook structure
     initial_suggestions: list[str] = []
     if not weak_topics:
         initial_suggestions = _topic_suggester.suggest(n=6)
 
-    greeting = teacher.draft_rapport(weak_topics, state=state)
+    greeting = teacher.draft_rapport(
+        weak_topics,
+        state=state,
+        past_session_memories=past_memories,
+    )
 
     messages = list(state.get("messages", []))
     messages.append({"role": "tutor", "content": greeting, "phase": "rapport"})
