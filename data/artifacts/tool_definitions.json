@@ -1,0 +1,104 @@
+[
+  {
+    "name": "search_textbook",
+    "description": "Search the textbook knowledge base and return the top relevant passages. Only call this if you do not already have relevant context for the current student message.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string",
+          "description": "The student's question or the topic to search for."
+        }
+      },
+      "required": [
+        "query"
+      ]
+    }
+  },
+  {
+    "name": "get_student_memory",
+    "description": "Fetch this student's past session history from memory: mastered topics, weak topics with failure counts, and session summaries.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "student_id": {
+          "type": "string",
+          "description": "The unique identifier for the student."
+        }
+      },
+      "required": [
+        "student_id"
+      ]
+    }
+  },
+  {
+    "name": "update_student_memory",
+    "description": "Write the outcome of this session to the student's memory. Call this once at the end of the session. Include what was covered, what was mastered, and what the student struggled with.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "student_id": {
+          "type": "string",
+          "description": "The unique identifier for the student."
+        },
+        "memory_text": {
+          "type": "string",
+          "description": "Natural language summary of the session outcome. Example: 'Session 3. Covered deltoid and rotator cuff. Mastered: deltoid origin/insertion. Struggled with: axillary nerve innervation (failed 3 times).'"
+        }
+      },
+      "required": [
+        "student_id",
+        "memory_text"
+      ]
+    }
+  },
+  {
+    "name": "submit_turn_evaluation",
+    "description": "Submit your structured evaluation of this tutoring turn. Call this tool after reviewing the student's message and retrieving any needed context. This is the required way to return your assessment \u2014 do not write it as free text.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "student_state": {
+          "type": "string",
+          "enum": [
+            "correct",
+            "partial_correct",
+            "incorrect",
+            "question",
+            "irrelevant",
+            "low_effort"
+          ],
+          "description": "Classification of the student's last message."
+        },
+        "student_reached_answer": {
+          "type": "boolean",
+          "description": "True only when student_state is 'correct' and the student identified the locked answer."
+        },
+        "hint_level": {
+          "type": "integer",
+          "description": "The hint level that should apply for Teacher's next response (1-3)."
+        },
+        "locked_answer": {
+          "type": "string",
+          "description": "The correct answer for this question. Set this on first extraction and return the same value every subsequent turn. Never change it once set."
+        },
+        "search_needed": {
+          "type": "boolean",
+          "description": "Whether you called search_textbook this turn."
+        },
+        "critique": {
+          "type": "string",
+          "description": "Empty string on most turns. If this evaluation is in response to a Teacher draft that failed quality check, provide a short critique so Teacher can improve the retry."
+        }
+      },
+      "required": [
+        "student_state",
+        "student_reached_answer",
+        "hint_level",
+        "locked_answer",
+        "search_needed",
+        "critique"
+      ]
+    }
+  }
+]

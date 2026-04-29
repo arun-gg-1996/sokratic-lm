@@ -1,0 +1,3269 @@
+[
+  {
+    "chapter": "An Introduction to the Human Body",
+    "section": "Anatomical Terminology",
+    "subsection": "Body Cavities and Serous Membranes",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 1: An Introduction to the Human Body > Anatomical Terminology > Body Cavities and Serous Membranes"
+  },
+  {
+    "chapter": "An Introduction to the Human Body",
+    "section": "Anatomical Terminology",
+    "subsection": "Body Planes",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 1: An Introduction to the Human Body > Anatomical Terminology > Body Planes"
+  },
+  {
+    "chapter": "An Introduction to the Human Body",
+    "section": "Anatomical Terminology",
+    "subsection": "Directional Terms",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 1: An Introduction to the Human Body > Anatomical Terminology > Directional Terms"
+  },
+  {
+    "chapter": "An Introduction to the Human Body",
+    "section": "Homeostasis",
+    "subsection": "Negative Feedback",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 1: An Introduction to the Human Body > Homeostasis > Negative Feedback"
+  },
+  {
+    "chapter": "An Introduction to the Human Body",
+    "section": "Homeostasis",
+    "subsection": "Positive Feedback",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 1: An Introduction to the Human Body > Homeostasis > Positive Feedback"
+  },
+  {
+    "chapter": "An Introduction to the Human Body",
+    "section": "Medical Imaging",
+    "subsection": "Modern Medical Imaging",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 1: An Introduction to the Human Body > Medical Imaging > Modern Medical Imaging"
+  },
+  {
+    "chapter": "An Introduction to the Human Body",
+    "section": "Overview of Anatomy and Physiology",
+    "subsection": "",
+    "difficulty": "easy",
+    "chunk_count": 5,
+    "limited": false,
+    "path": "Chapter 1: An Introduction to the Human Body > Overview of Anatomy and Physiology"
+  },
+  {
+    "chapter": "An Introduction to the Human Body",
+    "section": "Requirements for Human Life",
+    "subsection": "Narrow Range of Atmospheric Pressure",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 1: An Introduction to the Human Body > Requirements for Human Life > Narrow Range of Atmospheric Pressure"
+  },
+  {
+    "chapter": "An Introduction to the Human Body",
+    "section": "Requirements for Human Life",
+    "subsection": "Narrow Range of Temperature",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 1: An Introduction to the Human Body > Requirements for Human Life > Narrow Range of Temperature"
+  },
+  {
+    "chapter": "An Introduction to the Human Body",
+    "section": "Structural Organization of the Human Body",
+    "subsection": "The Levels of Organization",
+    "difficulty": "easy",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 1: An Introduction to the Human Body > Structural Organization of the Human Body > The Levels of Organization"
+  },
+  {
+    "chapter": "Anatomy of the Nervous System",
+    "section": "Circulation and the Central Nervous System",
+    "subsection": "Blood Supply to the Brain",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 13: Anatomy of the Nervous System > Circulation and the Central Nervous System > Blood Supply to the Brain"
+  },
+  {
+    "chapter": "Anatomy of the Nervous System",
+    "section": "Circulation and the Central Nervous System",
+    "subsection": "Protective Coverings of the Brain and Spinal Cord",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 13: Anatomy of the Nervous System > Circulation and the Central Nervous System > Protective Coverings of the Brain and Spinal Cord"
+  },
+  {
+    "chapter": "Anatomy of the Nervous System",
+    "section": "Circulation and the Central Nervous System",
+    "subsection": "The Ventricular System",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 13: Anatomy of the Nervous System > Circulation and the Central Nervous System > The Ventricular System"
+  },
+  {
+    "chapter": "Anatomy of the Nervous System",
+    "section": "The Central Nervous System",
+    "subsection": "Brain Stem",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 13: Anatomy of the Nervous System > The Central Nervous System > Brain Stem"
+  },
+  {
+    "chapter": "Anatomy of the Nervous System",
+    "section": "The Central Nervous System",
+    "subsection": "The Cerebellum",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 13: Anatomy of the Nervous System > The Central Nervous System > The Cerebellum"
+  },
+  {
+    "chapter": "Anatomy of the Nervous System",
+    "section": "The Central Nervous System",
+    "subsection": "The Cerebrum",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 13: Anatomy of the Nervous System > The Central Nervous System > The Cerebrum"
+  },
+  {
+    "chapter": "Anatomy of the Nervous System",
+    "section": "The Central Nervous System",
+    "subsection": "The Spinal Cord",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 13: Anatomy of the Nervous System > The Central Nervous System > The Spinal Cord"
+  },
+  {
+    "chapter": "Anatomy of the Nervous System",
+    "section": "The Embryologic Perspective",
+    "subsection": "Primary Vesicles",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 13: Anatomy of the Nervous System > The Embryologic Perspective > Primary Vesicles"
+  },
+  {
+    "chapter": "Anatomy of the Nervous System",
+    "section": "The Embryologic Perspective",
+    "subsection": "Relating Embryonic Development to the Adult Brain",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 13: Anatomy of the Nervous System > The Embryologic Perspective > Relating Embryonic Development to the Adult Brain"
+  },
+  {
+    "chapter": "Anatomy of the Nervous System",
+    "section": "The Embryologic Perspective",
+    "subsection": "Secondary Vesicles",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 13: Anatomy of the Nervous System > The Embryologic Perspective > Secondary Vesicles"
+  },
+  {
+    "chapter": "Anatomy of the Nervous System",
+    "section": "The Embryologic Perspective",
+    "subsection": "The Neural Tube",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 13: Anatomy of the Nervous System > The Embryologic Perspective > The Neural Tube"
+  },
+  {
+    "chapter": "Axial Skeleton",
+    "section": "Embryonic Development of the Axial Skeleton",
+    "subsection": "Development of the Skull",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 7: Axial Skeleton > Embryonic Development of the Axial Skeleton > Development of the Skull"
+  },
+  {
+    "chapter": "Axial Skeleton",
+    "section": "Embryonic Development of the Axial Skeleton",
+    "subsection": "Development of the Vertebral Column and Thoracic cage",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 7: Axial Skeleton > Embryonic Development of the Axial Skeleton > Development of the Vertebral Column and Thoracic cage"
+  },
+  {
+    "chapter": "Axial Skeleton",
+    "section": "The Skull",
+    "subsection": "Anterior View of Skull",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 7: Axial Skeleton > The Skull > Anterior View of Skull"
+  },
+  {
+    "chapter": "Axial Skeleton",
+    "section": "The Skull",
+    "subsection": "Bones of the Brain Case",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 7: Axial Skeleton > The Skull > Bones of the Brain Case"
+  },
+  {
+    "chapter": "Axial Skeleton",
+    "section": "The Skull",
+    "subsection": "Cranial Fossae",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 7: Axial Skeleton > The Skull > Cranial Fossae"
+  },
+  {
+    "chapter": "Axial Skeleton",
+    "section": "The Skull",
+    "subsection": "Facial Bones of the Skull",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 7: Axial Skeleton > The Skull > Facial Bones of the Skull"
+  },
+  {
+    "chapter": "Axial Skeleton",
+    "section": "The Skull",
+    "subsection": "Lateral View of Skull",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 7: Axial Skeleton > The Skull > Lateral View of Skull"
+  },
+  {
+    "chapter": "Axial Skeleton",
+    "section": "The Skull",
+    "subsection": "Paranasal Sinuses",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 7: Axial Skeleton > The Skull > Paranasal Sinuses"
+  },
+  {
+    "chapter": "Axial Skeleton",
+    "section": "The Skull",
+    "subsection": "Sutures of the Skull",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 7: Axial Skeleton > The Skull > Sutures of the Skull"
+  },
+  {
+    "chapter": "Axial Skeleton",
+    "section": "The Skull",
+    "subsection": "The Nasal Septum and Nasal Conchae",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 7: Axial Skeleton > The Skull > The Nasal Septum and Nasal Conchae"
+  },
+  {
+    "chapter": "Axial Skeleton",
+    "section": "The Skull",
+    "subsection": "The Orbit",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 7: Axial Skeleton > The Skull > The Orbit"
+  },
+  {
+    "chapter": "Axial Skeleton",
+    "section": "The Vertebral Column",
+    "subsection": "Curvatures of the Vertebral Column",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 7: Axial Skeleton > The Vertebral Column > Curvatures of the Vertebral Column"
+  },
+  {
+    "chapter": "Axial Skeleton",
+    "section": "The Vertebral Column",
+    "subsection": "General Structure of a Vertebra",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 7: Axial Skeleton > The Vertebral Column > General Structure of a Vertebra"
+  },
+  {
+    "chapter": "Axial Skeleton",
+    "section": "The Vertebral Column",
+    "subsection": "Intervertebral Discs and Ligaments of the Vertebral Column",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 7: Axial Skeleton > The Vertebral Column > Intervertebral Discs and Ligaments of the Vertebral Column"
+  },
+  {
+    "chapter": "Axial Skeleton",
+    "section": "The Vertebral Column",
+    "subsection": "Regional Modifications of Vertebrae",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 7: Axial Skeleton > The Vertebral Column > Regional Modifications of Vertebrae"
+  },
+  {
+    "chapter": "Axial Skeleton",
+    "section": "The Vertebral Column",
+    "subsection": "Regions of the Vertebral Column",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 7: Axial Skeleton > The Vertebral Column > Regions of the Vertebral Column"
+  },
+  {
+    "chapter": "Bone Tissue and the Skeletal System",
+    "section": "Bone Formation and Development",
+    "subsection": "Bone Remodeling",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Formation and Development > Bone Remodeling"
+  },
+  {
+    "chapter": "Bone Tissue and the Skeletal System",
+    "section": "Bone Formation and Development",
+    "subsection": "Endochondral Ossification",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Formation and Development > Endochondral Ossification"
+  },
+  {
+    "chapter": "Bone Tissue and the Skeletal System",
+    "section": "Bone Formation and Development",
+    "subsection": "How Bones Grow in Length",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Formation and Development > How Bones Grow in Length"
+  },
+  {
+    "chapter": "Bone Tissue and the Skeletal System",
+    "section": "Bone Formation and Development",
+    "subsection": "Intramembranous Ossification",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Formation and Development > Intramembranous Ossification"
+  },
+  {
+    "chapter": "Bone Tissue and the Skeletal System",
+    "section": "Bone Structure",
+    "subsection": "Blood and Nerve Supply",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Structure > Blood and Nerve Supply"
+  },
+  {
+    "chapter": "Bone Tissue and the Skeletal System",
+    "section": "Bone Structure",
+    "subsection": "Bone Cells and Tissue",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Structure > Bone Cells and Tissue"
+  },
+  {
+    "chapter": "Bone Tissue and the Skeletal System",
+    "section": "Bone Structure",
+    "subsection": "Bone Markings",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Structure > Bone Markings"
+  },
+  {
+    "chapter": "Bone Tissue and the Skeletal System",
+    "section": "Bone Structure",
+    "subsection": "Compact and Spongy Bone",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Structure > Compact and Spongy Bone"
+  },
+  {
+    "chapter": "Bone Tissue and the Skeletal System",
+    "section": "Bone Structure",
+    "subsection": "Gross Anatomy of Bone",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Structure > Gross Anatomy of Bone"
+  },
+  {
+    "chapter": "Bone Tissue and the Skeletal System",
+    "section": "Exercise, Nutrition, Hormones, and Bone Tissue",
+    "subsection": "Exercise and Bone Tissue",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Exercise, Nutrition, Hormones, and Bone Tissue > Exercise and Bone Tissue"
+  },
+  {
+    "chapter": "Bone Tissue and the Skeletal System",
+    "section": "Exercise, Nutrition, Hormones, and Bone Tissue",
+    "subsection": "Hormones and Bone Tissue",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Exercise, Nutrition, Hormones, and Bone Tissue > Hormones and Bone Tissue"
+  },
+  {
+    "chapter": "Bone Tissue and the Skeletal System",
+    "section": "Exercise, Nutrition, Hormones, and Bone Tissue",
+    "subsection": "Nutrition and Bone Tissue",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Exercise, Nutrition, Hormones, and Bone Tissue > Nutrition and Bone Tissue"
+  },
+  {
+    "chapter": "Bone Tissue and the Skeletal System",
+    "section": "Fractures: Bone Repair",
+    "subsection": "Bone Repair",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Fractures: Bone Repair > Bone Repair"
+  },
+  {
+    "chapter": "Bone Tissue and the Skeletal System",
+    "section": "Fractures: Bone Repair",
+    "subsection": "Types of Fractures",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Fractures: Bone Repair > Types of Fractures"
+  },
+  {
+    "chapter": "Bone Tissue and the Skeletal System",
+    "section": "The Functions of the Skeletal System",
+    "subsection": "Support, Movement, and Protection",
+    "difficulty": "moderate",
+    "chunk_count": 3,
+    "limited": false,
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > The Functions of the Skeletal System > Support, Movement, and Protection"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Adjustments of the Infant at Birth and Postnatal Stages",
+    "subsection": "Circulatory Adjustments",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 28: Development and Inheritance > Adjustments of the Infant at Birth and Postnatal Stages > Circulatory Adjustments"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Adjustments of the Infant at Birth and Postnatal Stages",
+    "subsection": "Respiratory Adjustments",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 28: Development and Inheritance > Adjustments of the Infant at Birth and Postnatal Stages > Respiratory Adjustments"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Adjustments of the Infant at Birth and Postnatal Stages",
+    "subsection": "Thermoregulatory Adjustments",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 28: Development and Inheritance > Adjustments of the Infant at Birth and Postnatal Stages > Thermoregulatory Adjustments"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Changes During Pregnancy, Labor, and Birth",
+    "subsection": "Changes in Organ Systems During Pregnancy",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 28: Development and Inheritance > Changes During Pregnancy, Labor, and Birth > Changes in Organ Systems During Pregnancy"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Changes During Pregnancy, Labor, and Birth",
+    "subsection": "Effects of Hormones",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 28: Development and Inheritance > Changes During Pregnancy, Labor, and Birth > Effects of Hormones"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Changes During Pregnancy, Labor, and Birth",
+    "subsection": "Physiology of Labor",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 28: Development and Inheritance > Changes During Pregnancy, Labor, and Birth > Physiology of Labor"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Changes During Pregnancy, Labor, and Birth",
+    "subsection": "Stages of Childbirth",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 28: Development and Inheritance > Changes During Pregnancy, Labor, and Birth > Stages of Childbirth"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Changes During Pregnancy, Labor, and Birth",
+    "subsection": "Weight Gain",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 28: Development and Inheritance > Changes During Pregnancy, Labor, and Birth > Weight Gain"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Embryonic Development",
+    "subsection": "Development of the Placenta",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 28: Development and Inheritance > Embryonic Development > Development of the Placenta"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Embryonic Development",
+    "subsection": "Embryonic Membranes",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 28: Development and Inheritance > Embryonic Development > Embryonic Membranes"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Embryonic Development",
+    "subsection": "Pre-implantation Embryonic Development",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 28: Development and Inheritance > Embryonic Development > Pre-implantation Embryonic Development"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Fertilization",
+    "subsection": "Contact Between Sperm and Oocyte",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 28: Development and Inheritance > Fertilization > Contact Between Sperm and Oocyte"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Fertilization",
+    "subsection": "The Zygote",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 28: Development and Inheritance > Fertilization > The Zygote"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Fertilization",
+    "subsection": "Transit of Sperm",
+    "difficulty": "moderate",
+    "chunk_count": 1,
+    "limited": true,
+    "path": "Chapter 28: Development and Inheritance > Fertilization > Transit of Sperm"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Fetal Development",
+    "subsection": "Other Organ Systems",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 28: Development and Inheritance > Fetal Development > Other Organ Systems"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Fetal Development",
+    "subsection": "The Fetal Circulatory System",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 28: Development and Inheritance > Fetal Development > The Fetal Circulatory System"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Lactation",
+    "subsection": "Changes in the Composition of Breast Milk",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 28: Development and Inheritance > Lactation > Changes in the Composition of Breast Milk"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Lactation",
+    "subsection": "The Process of Lactation",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 28: Development and Inheritance > Lactation > The Process of Lactation"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Patterns of Inheritance",
+    "subsection": "Autosomal Dominant Inheritance",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 28: Development and Inheritance > Patterns of Inheritance > Autosomal Dominant Inheritance"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Patterns of Inheritance",
+    "subsection": "Autosomal Recessive Inheritance",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 28: Development and Inheritance > Patterns of Inheritance > Autosomal Recessive Inheritance"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Patterns of Inheritance",
+    "subsection": "From Genotype to Phenotype",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 28: Development and Inheritance > Patterns of Inheritance > From Genotype to Phenotype"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Patterns of Inheritance",
+    "subsection": "Mendel\u2019s Theory of Inheritance",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 28: Development and Inheritance > Patterns of Inheritance > Mendel\u2019s Theory of Inheritance"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Patterns of Inheritance",
+    "subsection": "Other Inheritance Patterns: Incomplete Dominance, Codominance, and Lethal Alleles",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 28: Development and Inheritance > Patterns of Inheritance > Other Inheritance Patterns: Incomplete Dominance, Codominance, and Lethal Alleles"
+  },
+  {
+    "chapter": "Development and Inheritance",
+    "section": "Patterns of Inheritance",
+    "subsection": "X-linked Dominant or Recessive Inheritance",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 28: Development and Inheritance > Patterns of Inheritance > X-linked Dominant or Recessive Inheritance"
+  },
+  {
+    "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
+    "section": "Acid-Base Balance",
+    "subsection": "Buffer Systems in the Body",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Acid-Base Balance > Buffer Systems in the Body"
+  },
+  {
+    "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
+    "section": "Acid-Base Balance",
+    "subsection": "Renal Regulation of Acid-Base Balance",
+    "difficulty": "hard",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Acid-Base Balance > Renal Regulation of Acid-Base Balance"
+  },
+  {
+    "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
+    "section": "Acid-Base Balance",
+    "subsection": "Respiratory Regulation of Acid-Base Balance",
+    "difficulty": "hard",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Acid-Base Balance > Respiratory Regulation of Acid-Base Balance"
+  },
+  {
+    "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
+    "section": "Body Fluids and Fluid Compartments",
+    "subsection": "Composition of Body Fluids",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Body Fluids and Fluid Compartments > Composition of Body Fluids"
+  },
+  {
+    "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
+    "section": "Body Fluids and Fluid Compartments",
+    "subsection": "Fluid Compartments",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Body Fluids and Fluid Compartments > Fluid Compartments"
+  },
+  {
+    "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
+    "section": "Body Fluids and Fluid Compartments",
+    "subsection": "Fluid Movement between Compartments",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Body Fluids and Fluid Compartments > Fluid Movement between Compartments"
+  },
+  {
+    "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
+    "section": "Body Fluids and Fluid Compartments",
+    "subsection": "Solute Movement between Compartments",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Body Fluids and Fluid Compartments > Solute Movement between Compartments"
+  },
+  {
+    "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
+    "section": "Disorders of Acid-Base Balance",
+    "subsection": "Compensation Mechanisms",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Disorders of Acid-Base Balance > Compensation Mechanisms"
+  },
+  {
+    "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
+    "section": "Disorders of Acid-Base Balance",
+    "subsection": "Metabolic Acidosis: Primary Bicarbonate Deficiency",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Disorders of Acid-Base Balance > Metabolic Acidosis: Primary Bicarbonate Deficiency"
+  },
+  {
+    "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
+    "section": "Disorders of Acid-Base Balance",
+    "subsection": "Metabolic Alkalosis: Primary Bicarbonate Excess",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Disorders of Acid-Base Balance > Metabolic Alkalosis: Primary Bicarbonate Excess"
+  },
+  {
+    "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
+    "section": "Electrolyte Balance",
+    "subsection": "Regulation of Sodium and Potassium",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Electrolyte Balance > Regulation of Sodium and Potassium"
+  },
+  {
+    "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
+    "section": "Electrolyte Balance",
+    "subsection": "Roles of Electrolytes",
+    "difficulty": "hard",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Electrolyte Balance > Roles of Electrolytes"
+  },
+  {
+    "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
+    "section": "Water Balance",
+    "subsection": "Regulation of Water Intake",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Water Balance > Regulation of Water Intake"
+  },
+  {
+    "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
+    "section": "Water Balance",
+    "subsection": "Role of ADH",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Water Balance > Role of ADH"
+  },
+  {
+    "chapter": "Joints",
+    "section": "Anatomy of Selected Synovial Joints",
+    "subsection": "Ankle and Foot Joints",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Ankle and Foot Joints"
+  },
+  {
+    "chapter": "Joints",
+    "section": "Anatomy of Selected Synovial Joints",
+    "subsection": "Articulations of the Vertebral Column",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Articulations of the Vertebral Column"
+  },
+  {
+    "chapter": "Joints",
+    "section": "Anatomy of Selected Synovial Joints",
+    "subsection": "Elbow Joint",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Elbow Joint"
+  },
+  {
+    "chapter": "Joints",
+    "section": "Anatomy of Selected Synovial Joints",
+    "subsection": "Hip Joint",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Hip Joint"
+  },
+  {
+    "chapter": "Joints",
+    "section": "Anatomy of Selected Synovial Joints",
+    "subsection": "Knee Joint",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Knee Joint"
+  },
+  {
+    "chapter": "Joints",
+    "section": "Anatomy of Selected Synovial Joints",
+    "subsection": "Shoulder Joint",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Shoulder Joint"
+  },
+  {
+    "chapter": "Joints",
+    "section": "Anatomy of Selected Synovial Joints",
+    "subsection": "Temporomandibular Joint",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Temporomandibular Joint"
+  },
+  {
+    "chapter": "Joints",
+    "section": "Classification of Joints",
+    "subsection": "Functional Classification of Joints",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 9: Joints > Classification of Joints > Functional Classification of Joints"
+  },
+  {
+    "chapter": "Joints",
+    "section": "Development of Joints",
+    "subsection": "",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 9: Joints > Development of Joints"
+  },
+  {
+    "chapter": "Joints",
+    "section": "Synovial Joints",
+    "subsection": "Additional Structures Associated with Synovial Joints",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 9: Joints > Synovial Joints > Additional Structures Associated with Synovial Joints"
+  },
+  {
+    "chapter": "Joints",
+    "section": "Synovial Joints",
+    "subsection": "Structural Features of Synovial Joints",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 9: Joints > Synovial Joints > Structural Features of Synovial Joints"
+  },
+  {
+    "chapter": "Joints",
+    "section": "Synovial Joints",
+    "subsection": "Types of Synovial Joints",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 9: Joints > Synovial Joints > Types of Synovial Joints"
+  },
+  {
+    "chapter": "Joints",
+    "section": "Types of Body Movements",
+    "subsection": "Abduction and Adduction",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 9: Joints > Types of Body Movements > Abduction and Adduction"
+  },
+  {
+    "chapter": "Joints",
+    "section": "Types of Body Movements",
+    "subsection": "Flexion and Extension",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 9: Joints > Types of Body Movements > Flexion and Extension"
+  },
+  {
+    "chapter": "Joints",
+    "section": "Types of Body Movements",
+    "subsection": "Opposition and Reposition",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 9: Joints > Types of Body Movements > Opposition and Reposition"
+  },
+  {
+    "chapter": "Joints",
+    "section": "Types of Body Movements",
+    "subsection": "Superior Rotation and Inferior Rotation",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 9: Joints > Types of Body Movements > Superior Rotation and Inferior Rotation"
+  },
+  {
+    "chapter": "Joints",
+    "section": "Types of Body Movements",
+    "subsection": "Supination and Pronation",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 9: Joints > Types of Body Movements > Supination and Pronation"
+  },
+  {
+    "chapter": "Metabolism and Nutrition",
+    "section": "Carbohydrate Metabolism",
+    "subsection": "Krebs Cycle/Citric Acid Cycle/Tricarboxylic Acid Cycle",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 24: Metabolism and Nutrition > Carbohydrate Metabolism > Krebs Cycle/Citric Acid Cycle/Tricarboxylic Acid Cycle"
+  },
+  {
+    "chapter": "Metabolism and Nutrition",
+    "section": "Carbohydrate Metabolism",
+    "subsection": "Oxidative Phosphorylation and the Electron Transport Chain",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 24: Metabolism and Nutrition > Carbohydrate Metabolism > Oxidative Phosphorylation and the Electron Transport Chain"
+  },
+  {
+    "chapter": "Metabolism and Nutrition",
+    "section": "Energy and Heat Balance",
+    "subsection": "Mechanisms of Heat Exchange",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 24: Metabolism and Nutrition > Energy and Heat Balance > Mechanisms of Heat Exchange"
+  },
+  {
+    "chapter": "Metabolism and Nutrition",
+    "section": "Lipid Metabolism",
+    "subsection": "Ketone Body Oxidation",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 24: Metabolism and Nutrition > Lipid Metabolism > Ketone Body Oxidation"
+  },
+  {
+    "chapter": "Metabolism and Nutrition",
+    "section": "Metabolic States of the Body",
+    "subsection": "The Absorptive State",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 24: Metabolism and Nutrition > Metabolic States of the Body > The Absorptive State"
+  },
+  {
+    "chapter": "Metabolism and Nutrition",
+    "section": "Metabolic States of the Body",
+    "subsection": "The Postabsorptive State",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 24: Metabolism and Nutrition > Metabolic States of the Body > The Postabsorptive State"
+  },
+  {
+    "chapter": "Metabolism and Nutrition",
+    "section": "Nutrition and Diet",
+    "subsection": "Food and Metabolism",
+    "difficulty": "hard",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 24: Metabolism and Nutrition > Nutrition and Diet > Food and Metabolism"
+  },
+  {
+    "chapter": "Metabolism and Nutrition",
+    "section": "Overview of Metabolic Reactions",
+    "subsection": "Catabolic Reactions",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 24: Metabolism and Nutrition > Overview of Metabolic Reactions > Catabolic Reactions"
+  },
+  {
+    "chapter": "Metabolism and Nutrition",
+    "section": "Overview of Metabolic Reactions",
+    "subsection": "Hormonal Regulation of Metabolism",
+    "difficulty": "hard",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 24: Metabolism and Nutrition > Overview of Metabolic Reactions > Hormonal Regulation of Metabolism"
+  },
+  {
+    "chapter": "Metabolism and Nutrition",
+    "section": "Protein Metabolism",
+    "subsection": "Urea Cycle",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 24: Metabolism and Nutrition > Protein Metabolism > Urea Cycle"
+  },
+  {
+    "chapter": "Muscle Tissue",
+    "section": "Exercise and Muscle Performance",
+    "subsection": "Endurance Exercise",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 10: Muscle Tissue > Exercise and Muscle Performance > Endurance Exercise"
+  },
+  {
+    "chapter": "Muscle Tissue",
+    "section": "Exercise and Muscle Performance",
+    "subsection": "Performance-Enhancing Substances",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 10: Muscle Tissue > Exercise and Muscle Performance > Performance-Enhancing Substances"
+  },
+  {
+    "chapter": "Muscle Tissue",
+    "section": "Exercise and Muscle Performance",
+    "subsection": "Resistance Exercise",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 10: Muscle Tissue > Exercise and Muscle Performance > Resistance Exercise"
+  },
+  {
+    "chapter": "Muscle Tissue",
+    "section": "Muscle Fiber Contraction and Relaxation",
+    "subsection": "ATP and Muscle Contraction",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 10: Muscle Tissue > Muscle Fiber Contraction and Relaxation > ATP and Muscle Contraction"
+  },
+  {
+    "chapter": "Muscle Tissue",
+    "section": "Muscle Fiber Contraction and Relaxation",
+    "subsection": "Sources of ATP",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 10: Muscle Tissue > Muscle Fiber Contraction and Relaxation > Sources of ATP"
+  },
+  {
+    "chapter": "Muscle Tissue",
+    "section": "Muscle Fiber Contraction and Relaxation",
+    "subsection": "The Sliding Filament Model of Contraction",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 10: Muscle Tissue > Muscle Fiber Contraction and Relaxation > The Sliding Filament Model of Contraction"
+  },
+  {
+    "chapter": "Muscle Tissue",
+    "section": "Nervous System Control of Muscle Tension",
+    "subsection": "Motor Units",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 10: Muscle Tissue > Nervous System Control of Muscle Tension > Motor Units"
+  },
+  {
+    "chapter": "Muscle Tissue",
+    "section": "Nervous System Control of Muscle Tension",
+    "subsection": "Muscle Tone",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 10: Muscle Tissue > Nervous System Control of Muscle Tension > Muscle Tone"
+  },
+  {
+    "chapter": "Muscle Tissue",
+    "section": "Nervous System Control of Muscle Tension",
+    "subsection": "The Frequency of Motor Neuron Stimulation",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 10: Muscle Tissue > Nervous System Control of Muscle Tension > The Frequency of Motor Neuron Stimulation"
+  },
+  {
+    "chapter": "Muscle Tissue",
+    "section": "Nervous System Control of Muscle Tension",
+    "subsection": "The Length-Tension Range of a Sarcomere",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 10: Muscle Tissue > Nervous System Control of Muscle Tension > The Length-Tension Range of a Sarcomere"
+  },
+  {
+    "chapter": "Muscle Tissue",
+    "section": "Overview of Muscle Tissues",
+    "subsection": "",
+    "difficulty": "easy",
+    "chunk_count": 3,
+    "limited": false,
+    "path": "Chapter 10: Muscle Tissue > Overview of Muscle Tissues"
+  },
+  {
+    "chapter": "Muscle Tissue",
+    "section": "Skeletal Muscle",
+    "subsection": "Excitation-Contraction Coupling",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 10: Muscle Tissue > Skeletal Muscle > Excitation-Contraction Coupling"
+  },
+  {
+    "chapter": "Muscle Tissue",
+    "section": "Skeletal Muscle",
+    "subsection": "The Sarcomere",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 10: Muscle Tissue > Skeletal Muscle > The Sarcomere"
+  },
+  {
+    "chapter": "Muscle Tissue",
+    "section": "Types of Muscle Fibers",
+    "subsection": "",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 10: Muscle Tissue > Types of Muscle Fibers"
+  },
+  {
+    "chapter": "The Appendicular Skeleton",
+    "section": "Bones of the Lower Limb",
+    "subsection": "Arches of the Foot",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 8: The Appendicular Skeleton > Bones of the Lower Limb > Arches of the Foot"
+  },
+  {
+    "chapter": "The Appendicular Skeleton",
+    "section": "Bones of the Lower Limb",
+    "subsection": "Metatarsal Bones",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 8: The Appendicular Skeleton > Bones of the Lower Limb > Metatarsal Bones"
+  },
+  {
+    "chapter": "The Appendicular Skeleton",
+    "section": "Bones of the Lower Limb",
+    "subsection": "Tarsal Bones",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 8: The Appendicular Skeleton > Bones of the Lower Limb > Tarsal Bones"
+  },
+  {
+    "chapter": "The Appendicular Skeleton",
+    "section": "Bones of the Upper Limb",
+    "subsection": "Carpal Bones",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 8: The Appendicular Skeleton > Bones of the Upper Limb > Carpal Bones"
+  },
+  {
+    "chapter": "The Appendicular Skeleton",
+    "section": "Bones of the Upper Limb",
+    "subsection": "Metacarpal Bones",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 8: The Appendicular Skeleton > Bones of the Upper Limb > Metacarpal Bones"
+  },
+  {
+    "chapter": "The Appendicular Skeleton",
+    "section": "Development of the Appendicular Skeleton",
+    "subsection": "Limb Growth",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 8: The Appendicular Skeleton > Development of the Appendicular Skeleton > Limb Growth"
+  },
+  {
+    "chapter": "The Appendicular Skeleton",
+    "section": "Development of the Appendicular Skeleton",
+    "subsection": "Ossification of Appendicular Bones",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 8: The Appendicular Skeleton > Development of the Appendicular Skeleton > Ossification of Appendicular Bones"
+  },
+  {
+    "chapter": "The Appendicular Skeleton",
+    "section": "The Pelvic Girdle and Pelvis",
+    "subsection": "Hip Bone",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 8: The Appendicular Skeleton > The Pelvic Girdle and Pelvis > Hip Bone"
+  },
+  {
+    "chapter": "The Autonomic Nervous System",
+    "section": "Autonomic Reflexes and Homeostasis",
+    "subsection": "Balance in Competing Autonomic Reflex Arcs",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 15: The Autonomic Nervous System > Autonomic Reflexes and Homeostasis > Balance in Competing Autonomic Reflex Arcs"
+  },
+  {
+    "chapter": "The Autonomic Nervous System",
+    "section": "Autonomic Reflexes and Homeostasis",
+    "subsection": "The Structure of Reflexes",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 15: The Autonomic Nervous System > Autonomic Reflexes and Homeostasis > The Structure of Reflexes"
+  },
+  {
+    "chapter": "The Autonomic Nervous System",
+    "section": "Central Control",
+    "subsection": "Forebrain Structures",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 15: The Autonomic Nervous System > Central Control > Forebrain Structures"
+  },
+  {
+    "chapter": "The Autonomic Nervous System",
+    "section": "Central Control",
+    "subsection": "The Medulla",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 15: The Autonomic Nervous System > Central Control > The Medulla"
+  },
+  {
+    "chapter": "The Autonomic Nervous System",
+    "section": "Divisions of the Autonomic Nervous System",
+    "subsection": "Chemical Signaling in the Autonomic Nervous System",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 15: The Autonomic Nervous System > Divisions of the Autonomic Nervous System > Chemical Signaling in the Autonomic Nervous System"
+  },
+  {
+    "chapter": "The Autonomic Nervous System",
+    "section": "Divisions of the Autonomic Nervous System",
+    "subsection": "Parasympathetic Division of the Autonomic Nervous System",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 15: The Autonomic Nervous System > Divisions of the Autonomic Nervous System > Parasympathetic Division of the Autonomic Nervous System"
+  },
+  {
+    "chapter": "The Autonomic Nervous System",
+    "section": "Divisions of the Autonomic Nervous System",
+    "subsection": "Sympathetic Division of the Autonomic Nervous System",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 15: The Autonomic Nervous System > Divisions of the Autonomic Nervous System > Sympathetic Division of the Autonomic Nervous System"
+  },
+  {
+    "chapter": "The Autonomic Nervous System",
+    "section": "Drugs that Affect the Autonomic System",
+    "subsection": "Broad Autonomic Effects",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 15: The Autonomic Nervous System > Drugs that Affect the Autonomic System > Broad Autonomic Effects"
+  },
+  {
+    "chapter": "The Autonomic Nervous System",
+    "section": "Drugs that Affect the Autonomic System",
+    "subsection": "Parasympathetic Effects",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 15: The Autonomic Nervous System > Drugs that Affect the Autonomic System > Parasympathetic Effects"
+  },
+  {
+    "chapter": "The Autonomic Nervous System",
+    "section": "Drugs that Affect the Autonomic System",
+    "subsection": "Sympathetic Effect",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 15: The Autonomic Nervous System > Drugs that Affect the Autonomic System > Sympathetic Effect"
+  },
+  {
+    "chapter": "The Cardiovascular System: Blood",
+    "section": "An Overview of Blood",
+    "subsection": "Blood Plasma",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 18: The Cardiovascular System: Blood > An Overview of Blood > Blood Plasma"
+  },
+  {
+    "chapter": "The Cardiovascular System: Blood",
+    "section": "An Overview of Blood",
+    "subsection": "Characteristics of Blood",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 18: The Cardiovascular System: Blood > An Overview of Blood > Characteristics of Blood"
+  },
+  {
+    "chapter": "The Cardiovascular System: Blood",
+    "section": "An Overview of Blood",
+    "subsection": "Composition of Blood",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 18: The Cardiovascular System: Blood > An Overview of Blood > Composition of Blood"
+  },
+  {
+    "chapter": "The Cardiovascular System: Blood",
+    "section": "An Overview of Blood",
+    "subsection": "Functions of Blood",
+    "difficulty": "moderate",
+    "chunk_count": 3,
+    "limited": false,
+    "path": "Chapter 18: The Cardiovascular System: Blood > An Overview of Blood > Functions of Blood"
+  },
+  {
+    "chapter": "The Cardiovascular System: Blood",
+    "section": "Blood Typing",
+    "subsection": "ABO Transfusion Protocols",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 18: The Cardiovascular System: Blood > Blood Typing > ABO Transfusion Protocols"
+  },
+  {
+    "chapter": "The Cardiovascular System: Blood",
+    "section": "Blood Typing",
+    "subsection": "Antigens, Antibodies, and Transfusion Reactions",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 18: The Cardiovascular System: Blood > Blood Typing > Antigens, Antibodies, and Transfusion Reactions"
+  },
+  {
+    "chapter": "The Cardiovascular System: Blood",
+    "section": "Blood Typing",
+    "subsection": "Rh Blood Groups",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 18: The Cardiovascular System: Blood > Blood Typing > Rh Blood Groups"
+  },
+  {
+    "chapter": "The Cardiovascular System: Blood",
+    "section": "Blood Typing",
+    "subsection": "The ABO Blood Group",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 18: The Cardiovascular System: Blood > Blood Typing > The ABO Blood Group"
+  },
+  {
+    "chapter": "The Cardiovascular System: Blood",
+    "section": "Erythrocytes",
+    "subsection": "Disorders of Erythrocytes",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 18: The Cardiovascular System: Blood > Erythrocytes > Disorders of Erythrocytes"
+  },
+  {
+    "chapter": "The Cardiovascular System: Blood",
+    "section": "Erythrocytes",
+    "subsection": "Lifecycle of Erythrocytes",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 18: The Cardiovascular System: Blood > Erythrocytes > Lifecycle of Erythrocytes"
+  },
+  {
+    "chapter": "The Cardiovascular System: Blood",
+    "section": "Erythrocytes",
+    "subsection": "Shape and Structure of Erythrocytes",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 18: The Cardiovascular System: Blood > Erythrocytes > Shape and Structure of Erythrocytes"
+  },
+  {
+    "chapter": "The Cardiovascular System: Blood",
+    "section": "Hemostasis",
+    "subsection": "Disorders of Clotting",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 18: The Cardiovascular System: Blood > Hemostasis > Disorders of Clotting"
+  },
+  {
+    "chapter": "The Cardiovascular System: Blood",
+    "section": "Hemostasis",
+    "subsection": "Formation of the Platelet Plug",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 18: The Cardiovascular System: Blood > Hemostasis > Formation of the Platelet Plug"
+  },
+  {
+    "chapter": "The Cardiovascular System: Blood",
+    "section": "Leukocytes and Platelets",
+    "subsection": "Characteristics of Leukocytes",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 18: The Cardiovascular System: Blood > Leukocytes and Platelets > Characteristics of Leukocytes"
+  },
+  {
+    "chapter": "The Cardiovascular System: Blood",
+    "section": "Leukocytes and Platelets",
+    "subsection": "Classification of Leukocytes",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 18: The Cardiovascular System: Blood > Leukocytes and Platelets > Classification of Leukocytes"
+  },
+  {
+    "chapter": "The Cardiovascular System: Blood",
+    "section": "Leukocytes and Platelets",
+    "subsection": "Disorders of Leukocytes",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 18: The Cardiovascular System: Blood > Leukocytes and Platelets > Disorders of Leukocytes"
+  },
+  {
+    "chapter": "The Cardiovascular System: Blood",
+    "section": "Leukocytes and Platelets",
+    "subsection": "Disorders of Platelets",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 18: The Cardiovascular System: Blood > Leukocytes and Platelets > Disorders of Platelets"
+  },
+  {
+    "chapter": "The Cardiovascular System: Blood",
+    "section": "Production of the Formed Elements",
+    "subsection": "Differentiation of Formed Elements from Stem Cells",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 18: The Cardiovascular System: Blood > Production of the Formed Elements > Differentiation of Formed Elements from Stem Cells"
+  },
+  {
+    "chapter": "The Cardiovascular System: Blood",
+    "section": "Production of the Formed Elements",
+    "subsection": "Hemopoietic Growth Factors",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 18: The Cardiovascular System: Blood > Production of the Formed Elements > Hemopoietic Growth Factors"
+  },
+  {
+    "chapter": "The Cardiovascular System: The Heart",
+    "section": "Cardiac Cycle",
+    "subsection": "Heart Sounds",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Cycle > Heart Sounds"
+  },
+  {
+    "chapter": "The Cardiovascular System: The Heart",
+    "section": "Cardiac Cycle",
+    "subsection": "Phases of the Cardiac Cycle",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Cycle > Phases of the Cardiac Cycle"
+  },
+  {
+    "chapter": "The Cardiovascular System: The Heart",
+    "section": "Cardiac Muscle and Electrical Activity",
+    "subsection": "Conduction System of the Heart",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart"
+  },
+  {
+    "chapter": "The Cardiovascular System: The Heart",
+    "section": "Cardiac Muscle and Electrical Activity",
+    "subsection": "Structure of Cardiac Muscle",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Structure of Cardiac Muscle"
+  },
+  {
+    "chapter": "The Cardiovascular System: The Heart",
+    "section": "Cardiac Physiology",
+    "subsection": "Cardiovascular Centers",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Physiology > Cardiovascular Centers"
+  },
+  {
+    "chapter": "The Cardiovascular System: The Heart",
+    "section": "Cardiac Physiology",
+    "subsection": "Correlation Between Heart Rates and Cardiac Output",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Physiology > Correlation Between Heart Rates and Cardiac Output"
+  },
+  {
+    "chapter": "The Cardiovascular System: The Heart",
+    "section": "Cardiac Physiology",
+    "subsection": "Input to the Cardiovascular Center",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Physiology > Input to the Cardiovascular Center"
+  },
+  {
+    "chapter": "The Cardiovascular System: The Heart",
+    "section": "Cardiac Physiology",
+    "subsection": "Resting Cardiac Output",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Physiology > Resting Cardiac Output"
+  },
+  {
+    "chapter": "The Cardiovascular System: The Heart",
+    "section": "Cardiac Physiology",
+    "subsection": "Stroke Volume",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Physiology > Stroke Volume"
+  },
+  {
+    "chapter": "The Cardiovascular System: The Heart",
+    "section": "Development of the Heart",
+    "subsection": "",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Development of the Heart"
+  },
+  {
+    "chapter": "The Cardiovascular System: The Heart",
+    "section": "Heart Anatomy",
+    "subsection": "Chambers and Circulation through the Heart",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Heart Anatomy > Chambers and Circulation through the Heart"
+  },
+  {
+    "chapter": "The Cardiovascular System: The Heart",
+    "section": "Heart Anatomy",
+    "subsection": "Coronary Circulation",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Heart Anatomy > Coronary Circulation"
+  },
+  {
+    "chapter": "The Cardiovascular System: The Heart",
+    "section": "Heart Anatomy",
+    "subsection": "Internal Structure of the Heart",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Heart Anatomy > Internal Structure of the Heart"
+  },
+  {
+    "chapter": "The Cardiovascular System: The Heart",
+    "section": "Heart Anatomy",
+    "subsection": "Location of the Heart",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Heart Anatomy > Location of the Heart"
+  },
+  {
+    "chapter": "The Cardiovascular System: The Heart",
+    "section": "Heart Anatomy",
+    "subsection": "Membranes, Surface Features, and Layers",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Heart Anatomy > Membranes, Surface Features, and Layers"
+  },
+  {
+    "chapter": "The Cardiovascular System: The Heart",
+    "section": "Heart Anatomy",
+    "subsection": "Shape and Size of the Heart",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Heart Anatomy > Shape and Size of the Heart"
+  },
+  {
+    "chapter": "The Cellular Level of Organization",
+    "section": "Cell Growth and Division",
+    "subsection": "Cell Cycle Control",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 3: The Cellular Level of Organization > Cell Growth and Division > Cell Cycle Control"
+  },
+  {
+    "chapter": "The Cellular Level of Organization",
+    "section": "Cell Growth and Division",
+    "subsection": "The Cell Cycle",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 3: The Cellular Level of Organization > Cell Growth and Division > The Cell Cycle"
+  },
+  {
+    "chapter": "The Cellular Level of Organization",
+    "section": "Cellular Differentiation",
+    "subsection": "Stem Cells",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 3: The Cellular Level of Organization > Cellular Differentiation > Stem Cells"
+  },
+  {
+    "chapter": "The Cellular Level of Organization",
+    "section": "Protein Synthesis",
+    "subsection": "From DNA to RNA: Transcription",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 3: The Cellular Level of Organization > Protein Synthesis > From DNA to RNA: Transcription"
+  },
+  {
+    "chapter": "The Cellular Level of Organization",
+    "section": "Protein Synthesis",
+    "subsection": "From RNA to Protein: Translation",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 3: The Cellular Level of Organization > Protein Synthesis > From RNA to Protein: Translation"
+  },
+  {
+    "chapter": "The Cellular Level of Organization",
+    "section": "The Cell Membrane",
+    "subsection": "Membrane Proteins",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 3: The Cellular Level of Organization > The Cell Membrane > Membrane Proteins"
+  },
+  {
+    "chapter": "The Cellular Level of Organization",
+    "section": "The Cell Membrane",
+    "subsection": "Structure and Composition of the Cell Membrane",
+    "difficulty": "moderate",
+    "chunk_count": 3,
+    "limited": false,
+    "path": "Chapter 3: The Cellular Level of Organization > The Cell Membrane > Structure and Composition of the Cell Membrane"
+  },
+  {
+    "chapter": "The Cellular Level of Organization",
+    "section": "The Cell Membrane",
+    "subsection": "Transport across the Cell Membrane",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 3: The Cellular Level of Organization > The Cell Membrane > Transport across the Cell Membrane"
+  },
+  {
+    "chapter": "The Cellular Level of Organization",
+    "section": "The Cytoplasm and Cellular Organelles",
+    "subsection": "Organelles for Energy Production and Detoxification",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 3: The Cellular Level of Organization > The Cytoplasm and Cellular Organelles > Organelles for Energy Production and Detoxification"
+  },
+  {
+    "chapter": "The Cellular Level of Organization",
+    "section": "The Cytoplasm and Cellular Organelles",
+    "subsection": "Organelles of the Endomembrane System",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 3: The Cellular Level of Organization > The Cytoplasm and Cellular Organelles > Organelles of the Endomembrane System"
+  },
+  {
+    "chapter": "The Cellular Level of Organization",
+    "section": "The Cytoplasm and Cellular Organelles",
+    "subsection": "The Cytoskeleton",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 3: The Cellular Level of Organization > The Cytoplasm and Cellular Organelles > The Cytoskeleton"
+  },
+  {
+    "chapter": "The Cellular Level of Organization",
+    "section": "The Nucleus and DNA Replication",
+    "subsection": "DNA Replication",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 3: The Cellular Level of Organization > The Nucleus and DNA Replication > DNA Replication"
+  },
+  {
+    "chapter": "The Cellular Level of Organization",
+    "section": "The Nucleus and DNA Replication",
+    "subsection": "Organization of the Nucleus and Its DNA",
+    "difficulty": "easy",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 3: The Cellular Level of Organization > The Nucleus and DNA Replication > Organization of the Nucleus and Its DNA"
+  },
+  {
+    "chapter": "The Chemical Level of Organization",
+    "section": "Chemical Bonds",
+    "subsection": "Covalent Bonds",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 2: The Chemical Level of Organization > Chemical Bonds > Covalent Bonds"
+  },
+  {
+    "chapter": "The Chemical Level of Organization",
+    "section": "Chemical Bonds",
+    "subsection": "Hydrogen Bonds",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 2: The Chemical Level of Organization > Chemical Bonds > Hydrogen Bonds"
+  },
+  {
+    "chapter": "The Chemical Level of Organization",
+    "section": "Chemical Bonds",
+    "subsection": "Ions and Ionic Bonds",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 2: The Chemical Level of Organization > Chemical Bonds > Ions and Ionic Bonds"
+  },
+  {
+    "chapter": "The Chemical Level of Organization",
+    "section": "Chemical Reactions",
+    "subsection": "Characteristics of Chemical Reactions",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 2: The Chemical Level of Organization > Chemical Reactions > Characteristics of Chemical Reactions"
+  },
+  {
+    "chapter": "The Chemical Level of Organization",
+    "section": "Chemical Reactions",
+    "subsection": "Factors Influencing the Rate of Chemical Reactions",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 2: The Chemical Level of Organization > Chemical Reactions > Factors Influencing the Rate of Chemical Reactions"
+  },
+  {
+    "chapter": "The Chemical Level of Organization",
+    "section": "Chemical Reactions",
+    "subsection": "The Role of Energy in Chemical Reactions",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 2: The Chemical Level of Organization > Chemical Reactions > The Role of Energy in Chemical Reactions"
+  },
+  {
+    "chapter": "The Chemical Level of Organization",
+    "section": "Elements and Atoms: The Building Blocks of Matter",
+    "subsection": "Atoms and Subatomic Particles",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 2: The Chemical Level of Organization > Elements and Atoms: The Building Blocks of Matter > Atoms and Subatomic Particles"
+  },
+  {
+    "chapter": "The Chemical Level of Organization",
+    "section": "Elements and Atoms: The Building Blocks of Matter",
+    "subsection": "Elements and Compounds",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 2: The Chemical Level of Organization > Elements and Atoms: The Building Blocks of Matter > Elements and Compounds"
+  },
+  {
+    "chapter": "The Chemical Level of Organization",
+    "section": "Elements and Atoms: The Building Blocks of Matter",
+    "subsection": "The Behavior of Electrons",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 2: The Chemical Level of Organization > Elements and Atoms: The Building Blocks of Matter > The Behavior of Electrons"
+  },
+  {
+    "chapter": "The Chemical Level of Organization",
+    "section": "Inorganic Compounds Essential to Human Functioning",
+    "subsection": "Acids and Bases",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 2: The Chemical Level of Organization > Inorganic Compounds Essential to Human Functioning > Acids and Bases"
+  },
+  {
+    "chapter": "The Chemical Level of Organization",
+    "section": "Organic Compounds Essential to Human Functioning",
+    "subsection": "The Chemistry of Carbon",
+    "difficulty": "moderate",
+    "chunk_count": 28,
+    "limited": false,
+    "path": "Chapter 2: The Chemical Level of Organization > Organic Compounds Essential to Human Functioning > The Chemistry of Carbon"
+  },
+  {
+    "chapter": "The Digestive System",
+    "section": "Accessory Organs in Digestion: The Liver, Pancreas, and Gallbladder",
+    "subsection": "The Liver",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 23: The Digestive System > Accessory Organs in Digestion: The Liver, Pancreas, and Gallbladder > The Liver"
+  },
+  {
+    "chapter": "The Digestive System",
+    "section": "Accessory Organs in Digestion: The Liver, Pancreas, and Gallbladder",
+    "subsection": "The Pancreas",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 23: The Digestive System > Accessory Organs in Digestion: The Liver, Pancreas, and Gallbladder > The Pancreas"
+  },
+  {
+    "chapter": "The Digestive System",
+    "section": "Chemical Digestion and Absorption: A Closer Look",
+    "subsection": "Chemical Digestion",
+    "difficulty": "moderate",
+    "chunk_count": 22,
+    "limited": false,
+    "path": "Chapter 23: The Digestive System > Chemical Digestion and Absorption: A Closer Look > Chemical Digestion"
+  },
+  {
+    "chapter": "The Digestive System",
+    "section": "Digestive System Processes and Regulation",
+    "subsection": "Digestive Processes",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 23: The Digestive System > Digestive System Processes and Regulation > Digestive Processes"
+  },
+  {
+    "chapter": "The Digestive System",
+    "section": "Overview of the Digestive System",
+    "subsection": "Blood Supply",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 23: The Digestive System > Overview of the Digestive System > Blood Supply"
+  },
+  {
+    "chapter": "The Digestive System",
+    "section": "Overview of the Digestive System",
+    "subsection": "Digestive System Organs",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 23: The Digestive System > Overview of the Digestive System > Digestive System Organs"
+  },
+  {
+    "chapter": "The Digestive System",
+    "section": "Overview of the Digestive System",
+    "subsection": "Histology of the Alimentary Canal",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 23: The Digestive System > Overview of the Digestive System > Histology of the Alimentary Canal"
+  },
+  {
+    "chapter": "The Digestive System",
+    "section": "Overview of the Digestive System",
+    "subsection": "Nerve Supply",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 23: The Digestive System > Overview of the Digestive System > Nerve Supply"
+  },
+  {
+    "chapter": "The Digestive System",
+    "section": "Overview of the Digestive System",
+    "subsection": "The Peritoneum",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 23: The Digestive System > Overview of the Digestive System > The Peritoneum"
+  },
+  {
+    "chapter": "The Digestive System",
+    "section": "The Mouth, Pharynx, and Esophagus",
+    "subsection": "The Esophagus",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 23: The Digestive System > The Mouth, Pharynx, and Esophagus > The Esophagus"
+  },
+  {
+    "chapter": "The Digestive System",
+    "section": "The Mouth, Pharynx, and Esophagus",
+    "subsection": "The Mouth",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 23: The Digestive System > The Mouth, Pharynx, and Esophagus > The Mouth"
+  },
+  {
+    "chapter": "The Digestive System",
+    "section": "The Mouth, Pharynx, and Esophagus",
+    "subsection": "The Pharynx",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 23: The Digestive System > The Mouth, Pharynx, and Esophagus > The Pharynx"
+  },
+  {
+    "chapter": "The Digestive System",
+    "section": "The Mouth, Pharynx, and Esophagus",
+    "subsection": "The Salivary Glands",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 23: The Digestive System > The Mouth, Pharynx, and Esophagus > The Salivary Glands"
+  },
+  {
+    "chapter": "The Digestive System",
+    "section": "The Mouth, Pharynx, and Esophagus",
+    "subsection": "The Teeth",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 23: The Digestive System > The Mouth, Pharynx, and Esophagus > The Teeth"
+  },
+  {
+    "chapter": "The Digestive System",
+    "section": "The Mouth, Pharynx, and Esophagus",
+    "subsection": "The Tongue",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 23: The Digestive System > The Mouth, Pharynx, and Esophagus > The Tongue"
+  },
+  {
+    "chapter": "The Digestive System",
+    "section": "The Small and Large Intestines",
+    "subsection": "The Large Intestine",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 23: The Digestive System > The Small and Large Intestines > The Large Intestine"
+  },
+  {
+    "chapter": "The Digestive System",
+    "section": "The Small and Large Intestines",
+    "subsection": "The Small Intestine",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 23: The Digestive System > The Small and Large Intestines > The Small Intestine"
+  },
+  {
+    "chapter": "The Digestive System",
+    "section": "The Stomach",
+    "subsection": "Digestive Functions of the Stomach",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 23: The Digestive System > The Stomach > Digestive Functions of the Stomach"
+  },
+  {
+    "chapter": "The Digestive System",
+    "section": "The Stomach",
+    "subsection": "Gastric Secretion",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 23: The Digestive System > The Stomach > Gastric Secretion"
+  },
+  {
+    "chapter": "The Endocrine System",
+    "section": "An Overview of the Endocrine System",
+    "subsection": "Neural and Endocrine Signaling",
+    "difficulty": "hard",
+    "chunk_count": 3,
+    "limited": false,
+    "path": "Chapter 17: The Endocrine System > An Overview of the Endocrine System > Neural and Endocrine Signaling"
+  },
+  {
+    "chapter": "The Endocrine System",
+    "section": "An Overview of the Endocrine System",
+    "subsection": "Other Types of Chemical Signaling",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 17: The Endocrine System > An Overview of the Endocrine System > Other Types of Chemical Signaling"
+  },
+  {
+    "chapter": "The Endocrine System",
+    "section": "An Overview of the Endocrine System",
+    "subsection": "Structures of the Endocrine System",
+    "difficulty": "hard",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 17: The Endocrine System > An Overview of the Endocrine System > Structures of the Endocrine System"
+  },
+  {
+    "chapter": "The Endocrine System",
+    "section": "Development and Aging of the Endocrine System",
+    "subsection": "",
+    "difficulty": "hard",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 17: The Endocrine System > Development and Aging of the Endocrine System"
+  },
+  {
+    "chapter": "The Endocrine System",
+    "section": "Hormones",
+    "subsection": "Factors Affecting Target Cell Response",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 17: The Endocrine System > Hormones > Factors Affecting Target Cell Response"
+  },
+  {
+    "chapter": "The Endocrine System",
+    "section": "Hormones",
+    "subsection": "Pathways of Hormone Action",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 17: The Endocrine System > Hormones > Pathways of Hormone Action"
+  },
+  {
+    "chapter": "The Endocrine System",
+    "section": "Hormones",
+    "subsection": "Regulation of Hormone Secretion",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 17: The Endocrine System > Hormones > Regulation of Hormone Secretion"
+  },
+  {
+    "chapter": "The Endocrine System",
+    "section": "Hormones",
+    "subsection": "Types of Hormones",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 17: The Endocrine System > Hormones > Types of Hormones"
+  },
+  {
+    "chapter": "The Endocrine System",
+    "section": "Organs with Secondary Endocrine Functions",
+    "subsection": "Adipose Tissue",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 17: The Endocrine System > Organs with Secondary Endocrine Functions > Adipose Tissue"
+  },
+  {
+    "chapter": "The Endocrine System",
+    "section": "Organs with Secondary Endocrine Functions",
+    "subsection": "Gastrointestinal Tract",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 17: The Endocrine System > Organs with Secondary Endocrine Functions > Gastrointestinal Tract"
+  },
+  {
+    "chapter": "The Endocrine System",
+    "section": "The Adrenal Glands",
+    "subsection": "Adrenal Cortex",
+    "difficulty": "hard",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 17: The Endocrine System > The Adrenal Glands > Adrenal Cortex"
+  },
+  {
+    "chapter": "The Endocrine System",
+    "section": "The Adrenal Glands",
+    "subsection": "Adrenal Medulla",
+    "difficulty": "hard",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 17: The Endocrine System > The Adrenal Glands > Adrenal Medulla"
+  },
+  {
+    "chapter": "The Endocrine System",
+    "section": "The Endocrine Pancreas",
+    "subsection": "Regulation of Blood Glucose Levels by Insulin and Glucagon",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 17: The Endocrine System > The Endocrine Pancreas > Regulation of Blood Glucose Levels by Insulin and Glucagon"
+  },
+  {
+    "chapter": "The Endocrine System",
+    "section": "The Pituitary Gland and Hypothalamus",
+    "subsection": "Anterior Pituitary",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 17: The Endocrine System > The Pituitary Gland and Hypothalamus > Anterior Pituitary"
+  },
+  {
+    "chapter": "The Endocrine System",
+    "section": "The Pituitary Gland and Hypothalamus",
+    "subsection": "Posterior Pituitary",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 17: The Endocrine System > The Pituitary Gland and Hypothalamus > Posterior Pituitary"
+  },
+  {
+    "chapter": "The Endocrine System",
+    "section": "The Thyroid Gland",
+    "subsection": "Functions of Thyroid Hormones",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 17: The Endocrine System > The Thyroid Gland > Functions of Thyroid Hormones"
+  },
+  {
+    "chapter": "The Endocrine System",
+    "section": "The Thyroid Gland",
+    "subsection": "Synthesis and Release of Thyroid Hormones",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 17: The Endocrine System > The Thyroid Gland > Synthesis and Release of Thyroid Hormones"
+  },
+  {
+    "chapter": "The Integumentary System",
+    "section": "Accessory Structures of the Skin",
+    "subsection": "Sweat Glands",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 5: The Integumentary System > Accessory Structures of the Skin > Sweat Glands"
+  },
+  {
+    "chapter": "The Integumentary System",
+    "section": "Diseases, Disorders, and Injuries of the Integumentary System",
+    "subsection": "Skin Disorders",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 5: The Integumentary System > Diseases, Disorders, and Injuries of the Integumentary System > Skin Disorders"
+  },
+  {
+    "chapter": "The Integumentary System",
+    "section": "Layers of the Skin",
+    "subsection": "The Epidermis",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 5: The Integumentary System > Layers of the Skin > The Epidermis"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "Anatomy of the Lymphatic and Immune Systems",
+    "subsection": "Functions of the Lymphatic System",
+    "difficulty": "moderate",
+    "chunk_count": 1,
+    "limited": true,
+    "path": "Chapter 21: The Lymphatic and Immune System > Anatomy of the Lymphatic and Immune Systems > Functions of the Lymphatic System"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "Anatomy of the Lymphatic and Immune Systems",
+    "subsection": "Lymphocytes: B Cells, T Cells, Plasma Cells, and Natural Killer Cells",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 21: The Lymphatic and Immune System > Anatomy of the Lymphatic and Immune Systems > Lymphocytes: B Cells, T Cells, Plasma Cells, and Natural Killer Cells"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "Anatomy of the Lymphatic and Immune Systems",
+    "subsection": "Primary Lymphoid Organs and Lymphocyte Development",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 21: The Lymphatic and Immune System > Anatomy of the Lymphatic and Immune Systems > Primary Lymphoid Organs and Lymphocyte Development"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "Anatomy of the Lymphatic and Immune Systems",
+    "subsection": "Secondary Lymphoid Organs and their Roles in Active Immune Responses",
+    "difficulty": "hard",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 21: The Lymphatic and Immune System > Anatomy of the Lymphatic and Immune Systems > Secondary Lymphoid Organs and their Roles in Active Immune Responses"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "Anatomy of the Lymphatic and Immune Systems",
+    "subsection": "Structure of the Lymphatic System",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 21: The Lymphatic and Immune System > Anatomy of the Lymphatic and Immune Systems > Structure of the Lymphatic System"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "Anatomy of the Lymphatic and Immune Systems",
+    "subsection": "The Organization of Immune Function",
+    "difficulty": "hard",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 21: The Lymphatic and Immune System > Anatomy of the Lymphatic and Immune Systems > The Organization of Immune Function"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "Barrier Defenses and the Innate Immune Response",
+    "subsection": "Cells of the Innate Immune Response",
+    "difficulty": "hard",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 21: The Lymphatic and Immune System > Barrier Defenses and the Innate Immune Response > Cells of the Innate Immune Response"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "Barrier Defenses and the Innate Immune Response",
+    "subsection": "Inflammatory Response",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 21: The Lymphatic and Immune System > Barrier Defenses and the Innate Immune Response > Inflammatory Response"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "Barrier Defenses and the Innate Immune Response",
+    "subsection": "Recognition of Pathogens",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 21: The Lymphatic and Immune System > Barrier Defenses and the Innate Immune Response > Recognition of Pathogens"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "Barrier Defenses and the Innate Immune Response",
+    "subsection": "Soluble Mediators of the Innate Immune Response",
+    "difficulty": "hard",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 21: The Lymphatic and Immune System > Barrier Defenses and the Innate Immune Response > Soluble Mediators of the Innate Immune Response"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "Diseases Associated with Depressed or Overactive Immune Responses",
+    "subsection": "Autoimmune Responses",
+    "difficulty": "hard",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 21: The Lymphatic and Immune System > Diseases Associated with Depressed or Overactive Immune Responses > Autoimmune Responses"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "The Adaptive Immune Response: B-lymphocytes and Antibodies",
+    "subsection": "Active versus Passive Immunity",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > Active versus Passive Immunity"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "The Adaptive Immune Response: B-lymphocytes and Antibodies",
+    "subsection": "Antibody Structure",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > Antibody Structure"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "The Adaptive Immune Response: B-lymphocytes and Antibodies",
+    "subsection": "B Cell Differentiation and Activation",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "The Adaptive Immune Response: B-lymphocytes and Antibodies",
+    "subsection": "T cell-dependent versus T cell-independent Antigens",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > T cell-dependent versus T cell-independent Antigens"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "The Immune Response against Pathogens",
+    "subsection": "Defenses against Viruses",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 21: The Lymphatic and Immune System > The Immune Response against Pathogens > Defenses against Viruses"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "The Immune Response against Pathogens",
+    "subsection": "Evasion of the Immune System by Pathogens",
+    "difficulty": "hard",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 21: The Lymphatic and Immune System > The Immune Response against Pathogens > Evasion of the Immune System by Pathogens"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "Transplantation and Cancer Immunology",
+    "subsection": "Immune Responses Against Cancer",
+    "difficulty": "hard",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 21: The Lymphatic and Immune System > Transplantation and Cancer Immunology > Immune Responses Against Cancer"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "Transplantation and Cancer Immunology",
+    "subsection": "The Rh Factor",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 21: The Lymphatic and Immune System > Transplantation and Cancer Immunology > The Rh Factor"
+  },
+  {
+    "chapter": "The Lymphatic and Immune System",
+    "section": "Transplantation and Cancer Immunology",
+    "subsection": "Tissue Transplantation",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 21: The Lymphatic and Immune System > Transplantation and Cancer Immunology > Tissue Transplantation"
+  },
+  {
+    "chapter": "The Muscular System",
+    "section": "Appendicular Muscles of the Pelvic Girdle and Lower Limbs",
+    "subsection": "Muscles That Move the Feet and Toes",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 11: The Muscular System > Appendicular Muscles of the Pelvic Girdle and Lower Limbs > Muscles That Move the Feet and Toes"
+  },
+  {
+    "chapter": "The Muscular System",
+    "section": "Appendicular Muscles of the Pelvic Girdle and Lower Limbs",
+    "subsection": "Muscles of the Thigh",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 11: The Muscular System > Appendicular Muscles of the Pelvic Girdle and Lower Limbs > Muscles of the Thigh"
+  },
+  {
+    "chapter": "The Muscular System",
+    "section": "Axial Muscles of the Abdominal Wall, and Thorax",
+    "subsection": "Muscles of the Abdomen",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 11: The Muscular System > Axial Muscles of the Abdominal Wall, and Thorax > Muscles of the Abdomen"
+  },
+  {
+    "chapter": "The Muscular System",
+    "section": "Axial Muscles of the Abdominal Wall, and Thorax",
+    "subsection": "Muscles of the Pelvic Floor and Perineum",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 11: The Muscular System > Axial Muscles of the Abdominal Wall, and Thorax > Muscles of the Pelvic Floor and Perineum"
+  },
+  {
+    "chapter": "The Muscular System",
+    "section": "Axial Muscles of the Abdominal Wall, and Thorax",
+    "subsection": "Muscles of the Thorax",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 11: The Muscular System > Axial Muscles of the Abdominal Wall, and Thorax > Muscles of the Thorax"
+  },
+  {
+    "chapter": "The Muscular System",
+    "section": "Axial Muscles of the Head, Neck, and Back",
+    "subsection": "Muscles That Create Facial Expression",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 11: The Muscular System > Axial Muscles of the Head, Neck, and Back > Muscles That Create Facial Expression"
+  },
+  {
+    "chapter": "The Muscular System",
+    "section": "Axial Muscles of the Head, Neck, and Back",
+    "subsection": "Muscles That Move the Eyes",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 11: The Muscular System > Axial Muscles of the Head, Neck, and Back > Muscles That Move the Eyes"
+  },
+  {
+    "chapter": "The Muscular System",
+    "section": "Axial Muscles of the Head, Neck, and Back",
+    "subsection": "Muscles That Move the Head",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 11: The Muscular System > Axial Muscles of the Head, Neck, and Back > Muscles That Move the Head"
+  },
+  {
+    "chapter": "The Muscular System",
+    "section": "Axial Muscles of the Head, Neck, and Back",
+    "subsection": "Muscles That Move the Lower Jaw",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 11: The Muscular System > Axial Muscles of the Head, Neck, and Back > Muscles That Move the Lower Jaw"
+  },
+  {
+    "chapter": "The Muscular System",
+    "section": "Axial Muscles of the Head, Neck, and Back",
+    "subsection": "Muscles of the Anterior Neck",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 11: The Muscular System > Axial Muscles of the Head, Neck, and Back > Muscles of the Anterior Neck"
+  },
+  {
+    "chapter": "The Muscular System",
+    "section": "Axial Muscles of the Head, Neck, and Back",
+    "subsection": "Muscles of the Posterior Neck and the Back",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 11: The Muscular System > Axial Muscles of the Head, Neck, and Back > Muscles of the Posterior Neck and the Back"
+  },
+  {
+    "chapter": "The Muscular System",
+    "section": "Muscles of the Pectoral Girdle and Upper Limbs",
+    "subsection": "Muscles That Move the Humerus",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 11: The Muscular System > Muscles of the Pectoral Girdle and Upper Limbs > Muscles That Move the Humerus"
+  },
+  {
+    "chapter": "The Muscular System",
+    "section": "Muscles of the Pectoral Girdle and Upper Limbs",
+    "subsection": "Muscles That Move the Wrist, Hand, and Fingers",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 11: The Muscular System > Muscles of the Pectoral Girdle and Upper Limbs > Muscles That Move the Wrist, Hand, and Fingers"
+  },
+  {
+    "chapter": "The Muscular System",
+    "section": "Muscles of the Pectoral Girdle and Upper Limbs",
+    "subsection": "Muscles That Position the Pectoral Girdle",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 11: The Muscular System > Muscles of the Pectoral Girdle and Upper Limbs > Muscles That Position the Pectoral Girdle"
+  },
+  {
+    "chapter": "The Muscular System",
+    "section": "Naming Skeletal Muscles",
+    "subsection": "",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 11: The Muscular System > Naming Skeletal Muscles"
+  },
+  {
+    "chapter": "The Nervous System and Nervous Tissue",
+    "section": "Basic Structure and Function of the Nervous System",
+    "subsection": "Functional Divisions of the Nervous System",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 12: The Nervous System and Nervous Tissue > Basic Structure and Function of the Nervous System > Functional Divisions of the Nervous System"
+  },
+  {
+    "chapter": "The Nervous System and Nervous Tissue",
+    "section": "Basic Structure and Function of the Nervous System",
+    "subsection": "The Central and Peripheral Nervous Systems",
+    "difficulty": "hard",
+    "chunk_count": 7,
+    "limited": false,
+    "path": "Chapter 12: The Nervous System and Nervous Tissue > Basic Structure and Function of the Nervous System > The Central and Peripheral Nervous Systems"
+  },
+  {
+    "chapter": "The Nervous System and Nervous Tissue",
+    "section": "Communication Between Neurons",
+    "subsection": "Graded Potentials",
+    "difficulty": "moderate",
+    "chunk_count": 18,
+    "limited": false,
+    "path": "Chapter 12: The Nervous System and Nervous Tissue > Communication Between Neurons > Graded Potentials"
+  },
+  {
+    "chapter": "The Nervous System and Nervous Tissue",
+    "section": "Nervous Tissue",
+    "subsection": "Glial Cells",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 12: The Nervous System and Nervous Tissue > Nervous Tissue > Glial Cells"
+  },
+  {
+    "chapter": "The Nervous System and Nervous Tissue",
+    "section": "The Action Potential",
+    "subsection": "Electrically Active Cell Membranes",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 12: The Nervous System and Nervous Tissue > The Action Potential > Electrically Active Cell Membranes"
+  },
+  {
+    "chapter": "The Nervous System and Nervous Tissue",
+    "section": "The Action Potential",
+    "subsection": "The Membrane Potential",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 12: The Nervous System and Nervous Tissue > The Action Potential > The Membrane Potential"
+  },
+  {
+    "chapter": "The Neurological Exam",
+    "section": "Overview of the Neurological Exam",
+    "subsection": "Causes of Neurological Deficits",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 16: The Neurological Exam > Overview of the Neurological Exam > Causes of Neurological Deficits"
+  },
+  {
+    "chapter": "The Neurological Exam",
+    "section": "Overview of the Neurological Exam",
+    "subsection": "Neuroanatomy and the Neurological Exam",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 16: The Neurological Exam > Overview of the Neurological Exam > Neuroanatomy and the Neurological Exam"
+  },
+  {
+    "chapter": "The Neurological Exam",
+    "section": "The Coordination and Gait Exams",
+    "subsection": "Coordination and Alternating Movement",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 16: The Neurological Exam > The Coordination and Gait Exams > Coordination and Alternating Movement"
+  },
+  {
+    "chapter": "The Neurological Exam",
+    "section": "The Coordination and Gait Exams",
+    "subsection": "Location and Connections of the Cerebellum",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 16: The Neurological Exam > The Coordination and Gait Exams > Location and Connections of the Cerebellum"
+  },
+  {
+    "chapter": "The Neurological Exam",
+    "section": "The Coordination and Gait Exams",
+    "subsection": "Posture and Gait",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 16: The Neurological Exam > The Coordination and Gait Exams > Posture and Gait"
+  },
+  {
+    "chapter": "The Neurological Exam",
+    "section": "The Cranial Nerve Exam",
+    "subsection": "Gaze Control",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 16: The Neurological Exam > The Cranial Nerve Exam > Gaze Control"
+  },
+  {
+    "chapter": "The Neurological Exam",
+    "section": "The Cranial Nerve Exam",
+    "subsection": "Motor Nerves of the Neck",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 16: The Neurological Exam > The Cranial Nerve Exam > Motor Nerves of the Neck"
+  },
+  {
+    "chapter": "The Neurological Exam",
+    "section": "The Cranial Nerve Exam",
+    "subsection": "Nerves of the Face and Oral Cavity",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 16: The Neurological Exam > The Cranial Nerve Exam > Nerves of the Face and Oral Cavity"
+  },
+  {
+    "chapter": "The Neurological Exam",
+    "section": "The Cranial Nerve Exam",
+    "subsection": "Sensory Nerves",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 16: The Neurological Exam > The Cranial Nerve Exam > Sensory Nerves"
+  },
+  {
+    "chapter": "The Neurological Exam",
+    "section": "The Mental Status Exam",
+    "subsection": "Cognitive Abilities",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 16: The Neurological Exam > The Mental Status Exam > Cognitive Abilities"
+  },
+  {
+    "chapter": "The Neurological Exam",
+    "section": "The Mental Status Exam",
+    "subsection": "Functions of the Cerebral Cortex",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 16: The Neurological Exam > The Mental Status Exam > Functions of the Cerebral Cortex"
+  },
+  {
+    "chapter": "The Neurological Exam",
+    "section": "The Sensory and Motor Exams",
+    "subsection": "Muscle Strength and Voluntary Movement",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 16: The Neurological Exam > The Sensory and Motor Exams > Muscle Strength and Voluntary Movement"
+  },
+  {
+    "chapter": "The Neurological Exam",
+    "section": "The Sensory and Motor Exams",
+    "subsection": "Sensory Modalities and Location",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 16: The Neurological Exam > The Sensory and Motor Exams > Sensory Modalities and Location"
+  },
+  {
+    "chapter": "The Reproductive System",
+    "section": "Anatomy and Physiology of the Ovarian Reproductive System",
+    "subsection": "External Female Genitals",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > External Female Genitals"
+  },
+  {
+    "chapter": "The Reproductive System",
+    "section": "Anatomy and Physiology of the Ovarian Reproductive System",
+    "subsection": "Hormonal Birth Control",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > Hormonal Birth Control"
+  },
+  {
+    "chapter": "The Reproductive System",
+    "section": "Anatomy and Physiology of the Ovarian Reproductive System",
+    "subsection": "The Breasts",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > The Breasts"
+  },
+  {
+    "chapter": "The Reproductive System",
+    "section": "Anatomy and Physiology of the Ovarian Reproductive System",
+    "subsection": "The Menstrual Cycle",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > The Menstrual Cycle"
+  },
+  {
+    "chapter": "The Reproductive System",
+    "section": "Anatomy and Physiology of the Ovarian Reproductive System",
+    "subsection": "The Ovarian Cycle",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > The Ovarian Cycle"
+  },
+  {
+    "chapter": "The Reproductive System",
+    "section": "Anatomy and Physiology of the Ovarian Reproductive System",
+    "subsection": "The Uterine Tubes",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > The Uterine Tubes"
+  },
+  {
+    "chapter": "The Reproductive System",
+    "section": "Anatomy and Physiology of the Ovarian Reproductive System",
+    "subsection": "The Uterus and Cervix",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > The Uterus and Cervix"
+  },
+  {
+    "chapter": "The Reproductive System",
+    "section": "Anatomy and Physiology of the Testicular Reproductive System",
+    "subsection": "Sperm Transport",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Testicular Reproductive System > Sperm Transport"
+  },
+  {
+    "chapter": "The Reproductive System",
+    "section": "Anatomy and Physiology of the Testicular Reproductive System",
+    "subsection": "Structure of Formed Sperm",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Testicular Reproductive System > Structure of Formed Sperm"
+  },
+  {
+    "chapter": "The Reproductive System",
+    "section": "Anatomy and Physiology of the Testicular Reproductive System",
+    "subsection": "The Penis",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Testicular Reproductive System > The Penis"
+  },
+  {
+    "chapter": "The Reproductive System",
+    "section": "Development of the Male and Female Reproductive Systems",
+    "subsection": "Development of the Sexual Organs in the Embryo and Fetus",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 27: The Reproductive System > Development of the Male and Female Reproductive Systems > Development of the Sexual Organs in the Embryo and Fetus"
+  },
+  {
+    "chapter": "The Reproductive System",
+    "section": "Development of the Male and Female Reproductive Systems",
+    "subsection": "Further Sexual Development Occurs at Puberty",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 27: The Reproductive System > Development of the Male and Female Reproductive Systems > Further Sexual Development Occurs at Puberty"
+  },
+  {
+    "chapter": "The Respiratory System",
+    "section": "Embryonic Development of the Respiratory System",
+    "subsection": "Fetal \u201cBreathing\u201d",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 22: The Respiratory System > Embryonic Development of the Respiratory System > Fetal \u201cBreathing\u201d"
+  },
+  {
+    "chapter": "The Respiratory System",
+    "section": "Embryonic Development of the Respiratory System",
+    "subsection": "Time Line",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 22: The Respiratory System > Embryonic Development of the Respiratory System > Time Line"
+  },
+  {
+    "chapter": "The Respiratory System",
+    "section": "Gas Exchange",
+    "subsection": "Gas Exchange",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 22: The Respiratory System > Gas Exchange > Gas Exchange"
+  },
+  {
+    "chapter": "The Respiratory System",
+    "section": "Modifications in Respiratory Functions",
+    "subsection": "High Altitude Effects",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 22: The Respiratory System > Modifications in Respiratory Functions > High Altitude Effects"
+  },
+  {
+    "chapter": "The Respiratory System",
+    "section": "Organs and Structures of the Respiratory System",
+    "subsection": "Conducting Zone",
+    "difficulty": "moderate",
+    "chunk_count": 13,
+    "limited": false,
+    "path": "Chapter 22: The Respiratory System > Organs and Structures of the Respiratory System > Conducting Zone"
+  },
+  {
+    "chapter": "The Respiratory System",
+    "section": "Organs and Structures of the Respiratory System",
+    "subsection": "Respiratory Zone",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 22: The Respiratory System > Organs and Structures of the Respiratory System > Respiratory Zone"
+  },
+  {
+    "chapter": "The Respiratory System",
+    "section": "The Lungs",
+    "subsection": "Blood Supply and Nervous Innervation of the Lungs",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 22: The Respiratory System > The Lungs > Blood Supply and Nervous Innervation of the Lungs"
+  },
+  {
+    "chapter": "The Respiratory System",
+    "section": "The Lungs",
+    "subsection": "Gross Anatomy of the Lungs",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 22: The Respiratory System > The Lungs > Gross Anatomy of the Lungs"
+  },
+  {
+    "chapter": "The Respiratory System",
+    "section": "The Lungs",
+    "subsection": "Pleura of the Lungs",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 22: The Respiratory System > The Lungs > Pleura of the Lungs"
+  },
+  {
+    "chapter": "The Respiratory System",
+    "section": "The Process of Breathing",
+    "subsection": "Pulmonary Ventilation",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 22: The Respiratory System > The Process of Breathing > Pulmonary Ventilation"
+  },
+  {
+    "chapter": "The Respiratory System",
+    "section": "The Process of Breathing",
+    "subsection": "Respiratory Rate and Control of Ventilation",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 22: The Respiratory System > The Process of Breathing > Respiratory Rate and Control of Ventilation"
+  },
+  {
+    "chapter": "The Respiratory System",
+    "section": "The Process of Breathing",
+    "subsection": "Respiratory Volumes and Capacities",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 22: The Respiratory System > The Process of Breathing > Respiratory Volumes and Capacities"
+  },
+  {
+    "chapter": "The Respiratory System",
+    "section": "Transport of Gases",
+    "subsection": "Carbon Dioxide Transport in the Blood",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 22: The Respiratory System > Transport of Gases > Carbon Dioxide Transport in the Blood"
+  },
+  {
+    "chapter": "The Respiratory System",
+    "section": "Transport of Gases",
+    "subsection": "Oxygen Transport in the Blood",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 22: The Respiratory System > Transport of Gases > Oxygen Transport in the Blood"
+  },
+  {
+    "chapter": "The Somatic Nervous System",
+    "section": "Central Processing",
+    "subsection": "Cortical Processing",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 14: The Somatic Nervous System > Central Processing > Cortical Processing"
+  },
+  {
+    "chapter": "The Somatic Nervous System",
+    "section": "Central Processing",
+    "subsection": "Sensory Pathways",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 14: The Somatic Nervous System > Central Processing > Sensory Pathways"
+  },
+  {
+    "chapter": "The Somatic Nervous System",
+    "section": "Motor Responses",
+    "subsection": "Cortical Responses",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 14: The Somatic Nervous System > Motor Responses > Cortical Responses"
+  },
+  {
+    "chapter": "The Somatic Nervous System",
+    "section": "Motor Responses",
+    "subsection": "Descending Pathways",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 14: The Somatic Nervous System > Motor Responses > Descending Pathways"
+  },
+  {
+    "chapter": "The Somatic Nervous System",
+    "section": "Motor Responses",
+    "subsection": "Extrapyramidal Controls",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 14: The Somatic Nervous System > Motor Responses > Extrapyramidal Controls"
+  },
+  {
+    "chapter": "The Somatic Nervous System",
+    "section": "Motor Responses",
+    "subsection": "Ventral Horn Output",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 14: The Somatic Nervous System > Motor Responses > Ventral Horn Output"
+  },
+  {
+    "chapter": "The Somatic Nervous System",
+    "section": "Sensory Perception",
+    "subsection": "Sensory Modalities",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 14: The Somatic Nervous System > Sensory Perception > Sensory Modalities"
+  },
+  {
+    "chapter": "The Somatic Nervous System",
+    "section": "Sensory Perception",
+    "subsection": "Sensory Nerves",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 14: The Somatic Nervous System > Sensory Perception > Sensory Nerves"
+  },
+  {
+    "chapter": "The Somatic Nervous System",
+    "section": "Sensory Perception",
+    "subsection": "Sensory Receptors",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 14: The Somatic Nervous System > Sensory Perception > Sensory Receptors"
+  },
+  {
+    "chapter": "The Tissue Level of Organization",
+    "section": "Connective Tissue Supports and Protects",
+    "subsection": "Classification of Connective Tissues",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 4: The Tissue Level of Organization > Connective Tissue Supports and Protects > Classification of Connective Tissues"
+  },
+  {
+    "chapter": "The Tissue Level of Organization",
+    "section": "Connective Tissue Supports and Protects",
+    "subsection": "Connective Tissue Proper",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 4: The Tissue Level of Organization > Connective Tissue Supports and Protects > Connective Tissue Proper"
+  },
+  {
+    "chapter": "The Tissue Level of Organization",
+    "section": "Connective Tissue Supports and Protects",
+    "subsection": "Supportive Connective Tissues",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 4: The Tissue Level of Organization > Connective Tissue Supports and Protects > Supportive Connective Tissues"
+  },
+  {
+    "chapter": "The Tissue Level of Organization",
+    "section": "Epithelial Tissue",
+    "subsection": "Cell to Cell Junctions",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 4: The Tissue Level of Organization > Epithelial Tissue > Cell to Cell Junctions"
+  },
+  {
+    "chapter": "The Tissue Level of Organization",
+    "section": "Epithelial Tissue",
+    "subsection": "Classification of Epithelial Tissues",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 4: The Tissue Level of Organization > Epithelial Tissue > Classification of Epithelial Tissues"
+  },
+  {
+    "chapter": "The Tissue Level of Organization",
+    "section": "Epithelial Tissue",
+    "subsection": "Glandular Epithelium",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 4: The Tissue Level of Organization > Epithelial Tissue > Glandular Epithelium"
+  },
+  {
+    "chapter": "The Tissue Level of Organization",
+    "section": "Tissue Injury and Aging",
+    "subsection": "Tissue Injury and Repair",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 4: The Tissue Level of Organization > Tissue Injury and Aging > Tissue Injury and Repair"
+  },
+  {
+    "chapter": "The Tissue Level of Organization",
+    "section": "Tissue Injury and Aging",
+    "subsection": "Tissue and Aging",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 4: The Tissue Level of Organization > Tissue Injury and Aging > Tissue and Aging"
+  },
+  {
+    "chapter": "The Tissue Level of Organization",
+    "section": "Types of Tissues",
+    "subsection": "Embryonic Origin of Tissues",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 4: The Tissue Level of Organization > Types of Tissues > Embryonic Origin of Tissues"
+  },
+  {
+    "chapter": "The Tissue Level of Organization",
+    "section": "Types of Tissues",
+    "subsection": "Tissue Membranes",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 4: The Tissue Level of Organization > Types of Tissues > Tissue Membranes"
+  },
+  {
+    "chapter": "The Urinary System",
+    "section": "Endocrine Regulation of Kidney Function",
+    "subsection": "Antidiuretic Hormone (ADH)",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 25: The Urinary System > Endocrine Regulation of Kidney Function > Antidiuretic Hormone (ADH)"
+  },
+  {
+    "chapter": "The Urinary System",
+    "section": "Endocrine Regulation of Kidney Function",
+    "subsection": "Natriuretic Hormones",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 25: The Urinary System > Endocrine Regulation of Kidney Function > Natriuretic Hormones"
+  },
+  {
+    "chapter": "The Urinary System",
+    "section": "Gross Anatomy of the Kidney",
+    "subsection": "Renal Hilum",
+    "difficulty": "hard",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 25: The Urinary System > Gross Anatomy of the Kidney > Renal Hilum"
+  },
+  {
+    "chapter": "The Urinary System",
+    "section": "Microscopic Anatomy of the Kidney",
+    "subsection": "Nephrons: The Functional Unit",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 25: The Urinary System > Microscopic Anatomy of the Kidney > Nephrons: The Functional Unit"
+  },
+  {
+    "chapter": "The Urinary System",
+    "section": "Physical Characteristics of Urine",
+    "subsection": "",
+    "difficulty": "moderate",
+    "chunk_count": 9,
+    "limited": false,
+    "path": "Chapter 25: The Urinary System > Physical Characteristics of Urine"
+  },
+  {
+    "chapter": "The Urinary System",
+    "section": "Physiology of Urine Formation",
+    "subsection": "Glomerular Filtration Rate (GFR)",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 25: The Urinary System > Physiology of Urine Formation > Glomerular Filtration Rate (GFR)"
+  },
+  {
+    "chapter": "The Urinary System",
+    "section": "Physiology of Urine Formation",
+    "subsection": "Net Filtration Pressure (NFP)",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 25: The Urinary System > Physiology of Urine Formation > Net Filtration Pressure (NFP)"
+  },
+  {
+    "chapter": "The Urinary System",
+    "section": "Regulation of Fluid Volume and Composition",
+    "subsection": "Diuretics and Fluid Volume",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 25: The Urinary System > Regulation of Fluid Volume and Composition > Diuretics and Fluid Volume"
+  },
+  {
+    "chapter": "The Urinary System",
+    "section": "Regulation of Fluid Volume and Composition",
+    "subsection": "Volume-sensing Mechanisms",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 25: The Urinary System > Regulation of Fluid Volume and Composition > Volume-sensing Mechanisms"
+  },
+  {
+    "chapter": "The Urinary System",
+    "section": "Regulation of Renal Blood Flow",
+    "subsection": "Sympathetic Nerves",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 25: The Urinary System > Regulation of Renal Blood Flow > Sympathetic Nerves"
+  },
+  {
+    "chapter": "The Urinary System",
+    "section": "The Urinary System and Homeostasis",
+    "subsection": "Blood Pressure Regulation",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 25: The Urinary System > The Urinary System and Homeostasis > Blood Pressure Regulation"
+  },
+  {
+    "chapter": "The Urinary System",
+    "section": "The Urinary System and Homeostasis",
+    "subsection": "Vitamin D Synthesis",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 25: The Urinary System > The Urinary System and Homeostasis > Vitamin D Synthesis"
+  },
+  {
+    "chapter": "The Urinary System",
+    "section": "Tubular Reabsorption",
+    "subsection": "Collecting Ducts and Recovery of Water",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 25: The Urinary System > Tubular Reabsorption > Collecting Ducts and Recovery of Water"
+  },
+  {
+    "chapter": "The Urinary System",
+    "section": "Tubular Reabsorption",
+    "subsection": "Mechanisms of Recovery",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 25: The Urinary System > Tubular Reabsorption > Mechanisms of Recovery"
+  },
+  {
+    "chapter": "The Urinary System",
+    "section": "Tubular Reabsorption",
+    "subsection": "Reabsorption and Secretion in the Distal Convoluted Tubule",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 25: The Urinary System > Tubular Reabsorption > Reabsorption and Secretion in the Distal Convoluted Tubule"
+  },
+  {
+    "chapter": "The Urinary System",
+    "section": "Tubular Reabsorption",
+    "subsection": "Reabsorption and Secretion in the Loop of Henle",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 25: The Urinary System > Tubular Reabsorption > Reabsorption and Secretion in the Loop of Henle"
+  },
+  {
+    "chapter": "The Urinary System",
+    "section": "Tubular Reabsorption",
+    "subsection": "Reabsorption and Secretion in the PCT",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 25: The Urinary System > Tubular Reabsorption > Reabsorption and Secretion in the PCT"
+  }
+]

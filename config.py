@@ -72,6 +72,7 @@ class Config:
     qdrant     = _Section(_raw["qdrant"])
     prompts    = _Section(_raw["prompts"])
     query_aliases = _raw.get("query_aliases", {}) or {}
+    topic_index   = _Section(_raw.get("topic_index", {}) or {})
 
     @staticmethod
     def reload():
@@ -90,6 +91,7 @@ class Config:
         Config.qdrant     = _Section(_raw["qdrant"])
         Config.prompts    = _Section(_raw["prompts"])
         Config.query_aliases = _raw.get("query_aliases", {}) or {}
+        Config.topic_index   = _Section(_raw.get("topic_index", {}) or {})
 
 
 cfg = Config()

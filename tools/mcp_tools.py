@@ -170,27 +170,48 @@ def save_tool_definitions():
 
 # --- Tool implementations (called by dean.py when Claude makes a tool call) ---
 
-def search_textbook(query: str, retriever, top_k: int | None = None) -> list[dict]:
+def search_textbook(
+    query: str,
+    retriever,
+    top_k: int | None = None,
+    locked_section: str | None = None,
+    locked_subsection: str | None = None,
+) -> list[dict]:
     """
     Run hybrid retrieval and return top chunks.
 
     Args:
-        query:     Student's question or topic string.
-        retriever: Retriever or MockRetriever instance.
-        top_k:     Optional override of the default top_chunks_final.
-                   Lock-anchors and hint-plan benefit from wider recall
-                   (~12); per-turn Teacher drafts can stick with default.
+        query:             Student's question or topic string.
+        retriever:         Retriever or MockRetriever instance.
+        top_k:             Optional override of the default top_chunks_final.
+                           Lock-anchors and hint-plan benefit from wider recall
+                           (~12); per-turn Teacher drafts can stick with default.
+        locked_section:    When set, CE rerank applies a soft bonus to chunks
+                           whose section_title contains this section name.
+                           Preserves cross-chapter recall (no hard filter).
+        locked_subsection: Stronger version of locked_section for subsection-level
+                           matches.
 
     Returns:
         List of chunk dicts with text, metadata, and score.
     """
+    kwargs: dict = {}
     if top_k is not None:
-        try:
-            return retriever.retrieve(query, top_k=int(top_k))
-        except TypeError:
-            # MockRetriever or older signature without top_k — fallback.
-            pass
-    return retriever.retrieve(query)
+        kwargs["top_k"] = int(top_k)
+    if locked_section:
+        kwargs["locked_section"] = locked_section
+    if locked_subsection:
+        kwargs["locked_subsection"] = locked_subsection
+    try:
+        return retriever.retrieve(query, **kwargs)
+    except TypeError:
+        # MockRetriever or older signature — fall back to the basic call.
+        if top_k is not None:
+            try:
+                return retriever.retrieve(query, top_k=int(top_k))
+            except TypeError:
+                pass
+        return retriever.retrieve(query)
 
 
 def get_student_memory(student_id: str, memory_client) -> list[dict]:
