@@ -43,6 +43,33 @@ data/artifacts/simulation_analysis_latest2.json
 data/artifacts/turn_quality_bad_root_causes.json
 data/artifacts/turn_quality_report.json
 
+# Eval-run output dirs (per-conversation JSONs, summaries) — these are
+# regenerable from scripts/run_*.py and would bloat the repo. Audit
+# markdown files inside are kept (curated writeups about specific runs).
+data/artifacts/scaled_convo/
+!data/artifacts/scaled_convo/**/*.md
+data/artifacts/multi_session/
+!data/artifacts/multi_session/**/*.md
+data/artifacts/validate_gates/
+
+# One-off diagnostic / comparison dumps
+data/artifacts/failed_chunks_diagnostic.json
+data/artifacts/proposition_model_comparison.json
+
+# RAPTOR precomputed summaries — large (1MB+), regenerable, belong
+# in the HF corpus snapshot, not git
+data/artifacts/raptor_section_summaries.jsonl
+data/artifacts/raptor_subsection_summaries.jsonl
+
+# Per-student mastery store (private to each user; written at session end)
+data/student_state/
+
+# Legacy eval outputs from data/eval/ (only the legacy_compare_* and
+# realistic_eval_* time-stamped variants — curated topic banks etc.
+# stay tracked).
+data/eval/legacy_compare_*.json
+data/eval/realistic_eval_*.json
+
 # Claude Code local state (worktrees, plan files, session traces)
 .claude/
 
