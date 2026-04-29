@@ -505,10 +505,21 @@ def _sanitize_locked_answer(
     cand_norm = _normalize_text(cand)
     prior_norm = _normalize_text(prior or "")
 
-    # locked_answer must be a canonical short noun phrase (1-5 words).
-    # If it's longer, the Dean produced a sentence/description, not an anchor.
+    # locked_answer must be a canonical noun phrase, NOT a sentence. Sentences
+    # are caught by `sentence_markers` below. The word-count cap is a separate
+    # guard against runaway descriptions. The original cap of 6 was tuned for
+    # the proposition-era pipeline when answers were single anatomical terms
+    # ("axillary nerve"). Some legitimate textbook answers ARE multi-component
+    # lists — e.g. "Pivot, hinge, condyloid, saddle, plane, ball-and-socket"
+    # for the 6 types of synovial joints, or "Bones as levers, synovial joints
+    # as fulcrums, muscle contraction as effort, load as resistance" for the 4
+    # components of a musculoskeletal lever system. The 6-word cap rejected
+    # these as "too long" (verified 2026-04-29 via dean.py debug trace), which
+    # broke the topic-engagement gate for any list-shaped topic. Relaxed to
+    # 15 to allow comma-separated noun lists; sentence detection below still
+    # catches actual prose.
     word_count = len(cand_norm.split())
-    if word_count > 6:
+    if word_count > 15:
         return prior_norm, "wiped_too_long"
     # Also reject anchors that are clearly sentences (contain verbs like "innervates",
     # "arises", "branches", "passes", "courses", etc.), even if short enough.
@@ -938,6 +949,19 @@ class DeanAgent:
                     "semantic_path": semantic_top.path if semantic_top else "",
                 })
 
+                # Optional topic-resolution trace (toggleable via env var).
+                # Used to diagnose stuck-topic regressions; left in as a
+                # debugging hook for future investigations.
+                import os as _os_dbg
+                if _os_dbg.environ.get("SOKRATIC_TOPIC_DEBUG"):
+                    print(f"  [topic-resolve] query={query_for_match!r} "
+                          f"semantic_top={'yes' if semantic_top else 'no'} "
+                          f"semantic_path={(semantic_top.path if semantic_top else '')!r} "
+                          f"fuzzy_tier={result.tier} "
+                          f"fuzzy_top={(result.top.label if result.top else '')!r} "
+                          f"fuzzy_score={(result.top.score if result.top else 0)}",
+                          flush=True)
+
                 if semantic_top is not None:
                     picked_topic = semantic_top
                 elif result.tier == "strong" and result.top is not None:
@@ -1099,6 +1123,14 @@ class DeanAgent:
             state["locked_question"] = str(anchors.get("locked_question", "") or "").strip()
             state["locked_answer"] = str(anchors.get("locked_answer", "") or "").strip()
             if not state["locked_question"] or not state["locked_answer"]:
+                # Optional debug trace (toggleable via SOKRATIC_TOPIC_DEBUG env var).
+                import os as _os_dbg
+                if _os_dbg.environ.get("SOKRATIC_TOPIC_DEBUG"):
+                    print(f"  [anchor-fail] locked_topic={state.get('locked_topic')} "
+                          f"locked_question={state.get('locked_question')!r} "
+                          f"locked_answer={state.get('locked_answer')!r} "
+                          f"rationale={anchors.get('rationale','')!r}",
+                          flush=True)
                 anchor_fail_count = int(state.get("debug", {}).get("anchor_fail_count", 0)) + 1
                 state["debug"]["anchor_fail_count"] = anchor_fail_count
                 state["debug"]["turn_trace"].append({
@@ -1808,6 +1840,12 @@ class DeanAgent:
             state.get("retrieved_chunks", []),
             "",
         )
+        # Optional debug trace (toggleable via SOKRATIC_TOPIC_DEBUG env var).
+        import os as _os_dbg
+        if _os_dbg.environ.get("SOKRATIC_TOPIC_DEBUG"):
+            print(f"  [lock-anchors] raw_answer={locked_answer_raw!r} "
+                  f"action={sanitize_action!r} final={locked_answer!r}",
+                  flush=True)
         state["debug"]["turn_trace"].append({
             "wrapper": "dean.sanitize_locked_answer",
             "candidate": locked_answer_raw[:100],
@@ -1850,6 +1888,11 @@ class DeanAgent:
                     state.get("retrieved_chunks", []),
                     "",
                 )
+                # Optional debug trace (toggleable via SOKRATIC_TOPIC_DEBUG env var).
+                if _os_dbg.environ.get("SOKRATIC_TOPIC_DEBUG"):
+                    print(f"  [lock-anchors-repair] raw={repaired_raw!r} "
+                          f"action={repaired_action!r} final={repaired_answer!r}",
+                          flush=True)
                 state["debug"]["turn_trace"].append({
                     "wrapper": "dean.sanitize_locked_answer",
                     "candidate": repaired_raw[:100],
