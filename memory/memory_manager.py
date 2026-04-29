@@ -3,7 +3,7 @@ memory/memory_manager.py
 -------------------------
 Orchestrates cross-session memory for the conversation graph.
 
-What gets persisted (one mem0 string per category, per session):
+What gets persisted (one mem0 entry per category, per session):
   1. session_summary    — overview: topic, anchor question, target answer,
                           turns, reached/not, brief outcome
   2. misconceptions     — observed factual errors corrected during assessment
@@ -16,8 +16,28 @@ What gets persisted (one mem0 string per category, per session):
                           verbose, hedging frequency, hint usage); future
                           sessions can synthesize a consolidated style note
 
-Each is stored as its own mem0 entry so semantic search at read time can
-target one category. mem0 namespaces by (cfg.domain.mem0_namespace, student_id).
+Each entry is stored with structured metadata payload alongside the NL
+text:
+    {
+      "category":          one of the 5 above,
+      "chapter_num":       int (parsed from locked_topic.path "ChN|..."),
+      "chapter_title":     str,
+      "section_title":     str,
+      "subsection_title":  str,
+      "topic_path":        str (full "ChN|sec|sub" string),
+      "outcome":           "reached" | "not_reached" | None,
+      "session_date":      ISO date,
+    }
+
+This enables filtered retrieval at read time:
+  - rapport_node: filter category in {"session_summary","open_thread"}
+                  to avoid noise from misconceptions / style cues.
+  - topic_suggester (D.3): filter category="topics_covered" + outcome=
+                  "not_reached" for "weak topics to revisit".
+  - per-subsection memory: filter subsection_title=X for "everything
+                  this student has done on this specific subsection".
+
+mem0 namespaces by (cfg.domain.mem0_namespace, student_id).
 
 If mem0 / Qdrant is unavailable, all operations silently no-op (the
 underlying PersistentMemory class is wrapped in try/except and degrades
@@ -26,7 +46,9 @@ on a memory failure.
 """
 from __future__ import annotations
 
+import re
 from datetime import datetime
+from typing import Optional
 
 from conversation.state import TutorState
 
@@ -67,21 +89,30 @@ class MemoryManager:
     # ------------------------------------------------------------------
     # READ
     # ------------------------------------------------------------------
-    def load(self, student_id: str, query: str = "") -> list[dict]:
+    def load(
+        self,
+        student_id: str,
+        query: str = "",
+        filters: Optional[dict] = None,
+    ) -> list[dict]:
         """
         Fetch relevant past memories for a student.
 
         Args:
             student_id: unique student identifier.
-            query:      optional semantic search query (e.g. topic being
-                        studied, or "weak concepts"). Empty returns all.
+            query:      optional semantic search query. Empty returns all.
+            filters:    optional metadata filter dict (mem0 forwards this
+                        to Qdrant payload-level filters). Examples:
+                          {"category": "session_summary"}
+                          {"category": "topics_covered", "outcome": "not_reached"}
+                          {"subsection_title": "Conduction System of the Heart"}
 
         Returns:
             List of mem0 dicts (may be empty). Never raises.
         """
         if not self.persistent.available:
             return []
-        return self.persistent.get(student_id, query)
+        return self.persistent.get(student_id, query, filters=filters)
 
     # ------------------------------------------------------------------
     # WRITE
@@ -104,9 +135,9 @@ class MemoryManager:
         attempts = 0
         successes = 0
 
-        for memory_text in self._build_memories(state, summary_text):
+        for memory_text, metadata in self._build_memories(state, summary_text):
             attempts += 1
-            if self.persistent.add(student_id, memory_text):
+            if self.persistent.add(student_id, memory_text, metadata=metadata):
                 successes += 1
 
         self.last_flush_status = f"wrote_{successes}_of_{attempts}"
@@ -165,30 +196,84 @@ class MemoryManager:
     # ------------------------------------------------------------------
     # Internal: memory string builders
     # ------------------------------------------------------------------
-    def _build_memories(self, state: TutorState, summary_text: str) -> list[str]:
-        """Return the list of memory strings to write for this session.
+    @staticmethod
+    def _topic_metadata(state: TutorState) -> dict:
+        """Extract chapter/section/subsection tags from state['locked_topic'].
+
+        These tags are shared across all 5 memory categories for a given
+        session — they describe WHICH part of the textbook this session
+        was about, regardless of category.
+
+        Schema:
+          chapter_num:      int (parsed from path "Ch20|...") or 0 if absent
+          chapter_title:    str (locked_topic.chapter)
+          section_title:    str
+          subsection_title: str
+          topic_path:       str (full "ChN|sec|sub")
+
+        Returns an empty dict's worth of zero/empty values when no topic
+        was locked (early aborts, ambiguous sessions). Caller should still
+        write the memory — useful for category=learning_style_cue which
+        is meaningful even without a topic.
+        """
+        locked = state.get("locked_topic") or {}
+        path = str(locked.get("path", "") or "")
+        chapter_num = 0
+        m = re.match(r"Ch(\d+)\|", path)
+        if m:
+            chapter_num = int(m.group(1))
+        return {
+            "chapter_num": chapter_num,
+            "chapter_title": str(locked.get("chapter", "") or ""),
+            "section_title": str(locked.get("section", "") or ""),
+            "subsection_title": str(locked.get("subsection", "") or ""),
+            "topic_path": path,
+        }
+
+    def _build_memories(
+        self, state: TutorState, summary_text: str
+    ) -> list[tuple[str, dict]]:
+        """Return the list of (memory_text, metadata) pairs for this session.
+
         Empty / None values are filtered out so we never write meaningless
-        entries."""
-        out: list[str] = []
+        entries. Each pair carries a `category` tag and the topic metadata
+        from `_topic_metadata`. Metadata is what mem0 stores in the Qdrant
+        payload for filterable retrieval.
+        """
+        out: list[tuple[str, dict]] = []
         ts = datetime.now().strftime("%Y-%m-%d")
+        topic_meta = self._topic_metadata(state)
+        reached = bool(state.get("student_reached_answer"))
+        outcome = "reached" if reached else "not_reached"
+
+        def _meta(category: str, **extra) -> dict:
+            base = {
+                "category": category,
+                "outcome": outcome,
+                "session_date": ts,
+                **topic_meta,
+            }
+            base.update(extra)
+            return base
 
         sess = self._build_session_summary(state, summary_text, ts)
         if sess:
-            out.append(sess)
+            out.append((sess, _meta("session_summary")))
 
-        out.extend(self._build_misconceptions(state, ts))
+        for misc_text in self._build_misconceptions(state, ts):
+            out.append((misc_text, _meta("misconception")))
 
         thread = self._build_open_thread(state, ts)
         if thread:
-            out.append(thread)
+            out.append((thread, _meta("open_thread")))
 
         topics = self._build_topics_covered(state, ts)
         if topics:
-            out.append(topics)
+            out.append((topics, _meta("topics_covered")))
 
         style = self._build_learning_style(state, ts)
         if style:
-            out.append(style)
+            out.append((style, _meta("learning_style_cue")))
 
         return out
 

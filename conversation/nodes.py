@@ -50,17 +50,44 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
     # Pull cross-session memories from mem0. Empty list for new students,
     # if memory is disabled for this session (frontend toggle), or if
     # Qdrant/mem0 is unavailable (memory_manager swallows all errors).
+    #
+    # Two TARGETED queries instead of one generic "topics + misconceptions
+    # + outcomes" sweep. Why: the rapport opener should reference at most
+    # ONE prior topic or open thread (per the prompt rules in
+    # config/base.yaml::teacher_rapport). Misconceptions and learning-
+    # style cues are tutor-internal — not material for an opener — and
+    # surfacing them in the rapport prompt creates noise the LLM has to
+    # ignore. This used to be one generic search returning a mixed bag;
+    # now we filter at the mem0 layer to:
+    #   1. session_summary  → "the most recent session's topic"
+    #   2. open_thread      → "any unresolved thread to offer continuation"
+    # Both filters require the metadata payload added in commit
+    # 'feat(memory): tag mem0 entries with category + topic metadata'.
     student_id = state.get("student_id", "") or ""
     memory_enabled = bool(state.get("memory_enabled", True))
     past_memories: list[dict] = []
     if student_id and memory_enabled:
         try:
-            past_memories = memory_manager.load(
+            recent_summaries = memory_manager.load(
                 student_id,
-                query="topics covered, misconceptions, and outcomes from past sessions",
+                query="most recent session topic",
+                filters={"category": "session_summary"},
             )
         except Exception:
-            past_memories = []
+            recent_summaries = []
+        try:
+            open_threads = memory_manager.load(
+                student_id,
+                query="unresolved thread to resume",
+                filters={"category": "open_thread"},
+            )
+        except Exception:
+            open_threads = []
+        # Cap each list and merge. The rapport prompt only needs a few
+        # bullets — more memory just dilutes the LLM's attention. Keep
+        # open_threads first (more rapport-actionable than completed
+        # summaries) and trim to 6 total entries.
+        past_memories = (open_threads[:3] + recent_summaries[:3])[:6]
 
     # For new students, seed initial_suggestions from textbook structure
     initial_suggestions: list[str] = []

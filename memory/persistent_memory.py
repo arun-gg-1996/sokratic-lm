@@ -70,7 +70,12 @@ class PersistentMemory:
     def _namespaced_user_id(self, student_id: str) -> str:
         return f"{self.namespace}:{student_id}"
 
-    def get(self, student_id: str, query: str = "") -> list[dict]:
+    def get(
+        self,
+        student_id: str,
+        query: str = "",
+        filters: dict | None = None,
+    ) -> list[dict]:
         """
         Fetch relevant past memories for a student.
 
@@ -78,6 +83,12 @@ class PersistentMemory:
             student_id: Unique student identifier.
             query:      Optional semantic search query (e.g. topic being studied).
                         If empty, returns all memories for this student.
+            filters:    Optional metadata filter dict forwarded to mem0,
+                        which forwards to Qdrant payload-level filters.
+                        Examples:
+                          {"category": "session_summary"}
+                          {"category": "topics_covered", "outcome": "not_reached"}
+                          {"subsection_title": "Conduction System of the Heart"}
 
         Returns:
             List of memory dicts from mem0 (may be empty).
@@ -88,9 +99,13 @@ class PersistentMemory:
         try:
             user_id = self._namespaced_user_id(student_id)
             if query:
-                resp = self.client.search(query, user_id=user_id)
+                resp = self.client.search(
+                    query, user_id=user_id, filters=filters
+                )
             else:
-                resp = self.client.get_all(user_id=user_id)
+                resp = self.client.get_all(
+                    user_id=user_id, filters=filters
+                )
             # mem0's response shape varies: sometimes a list of dicts,
             # sometimes {'results': [list of dicts]} on newer versions.
             # Normalize to always return a flat list of memory dicts so
@@ -103,13 +118,25 @@ class PersistentMemory:
         except Exception:
             return []
 
-    def add(self, student_id: str, memory_text: str) -> bool:
+    def add(
+        self,
+        student_id: str,
+        memory_text: str,
+        metadata: dict | None = None,
+    ) -> bool:
         """
         Store a new memory for a student.
 
         Args:
             student_id:   Unique student identifier.
             memory_text:  Natural language description of what happened.
+            metadata:     Optional structured payload (category, chapter_num,
+                          subsection_title, outcome, etc.). mem0 forwards
+                          this to Qdrant as the entry's payload, enabling
+                          filtered retrieval at search time. mem0 applies
+                          the same metadata to every fact it atomizes from
+                          memory_text, so the category/topic tags stay
+                          consistent across fragments.
 
         Non-fatal: if Qdrant is down, this is silently skipped.
         Session has already ended by this point — no user impact.
@@ -117,7 +144,11 @@ class PersistentMemory:
         if self.client is None:
             return False
         try:
-            self.client.add(memory_text, user_id=self._namespaced_user_id(student_id))
+            self.client.add(
+                memory_text,
+                user_id=self._namespaced_user_id(student_id),
+                metadata=metadata,
+            )
             return True
         except Exception:
             return False
