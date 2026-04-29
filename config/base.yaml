@@ -111,6 +111,13 @@ dean:
   max_teacher_retries: 2
   help_abuse_threshold: 3
   max_interventions_before_force_assessment: 4
+  # D.2 — Adaptive-RAG (Jeong 2024) query complexity classifier.
+  # When enabled, every tutoring turn classifies the student's message
+  # into simple|tangential|complex and logs to turn_trace. Currently
+  # logged-only — does NOT gate downstream behavior. See
+  # conversation/dean.py::_classify_complexity for the routing rationale.
+  # Disable to drop the per-turn LLM call for cost-sensitive runs.
+  adaptive_rag_enabled: true
 
 thresholds:
   reached_answer_confidence: 0.72
@@ -1154,6 +1161,61 @@ prompts:
 
     Conversation to summarize:
     {old_turns}
+
+  dean_complexity_classifier_static: |
+    You are the Dean of a Socratic {domain_name} tutoring system. Classify
+    the complexity of the student's most recent message into ONE of three
+    tiers (Adaptive-RAG, Jeong 2024). The tier drives downstream retrieval
+    strategy.
+
+    Tiers:
+      simple
+        — Direct factual or definitional question on the locked topic.
+        — Answerable from a single retrieval pass.
+        — Examples:
+            "What is the SA node?"
+            "Where is the brachial plexus located?"
+            "Define synaptic cleft."
+
+      tangential
+        — Curiosity drift outside the locked topic but still within the
+          domain. Worth a one-shot un-section-filtered retrieval to
+          surface the related concept without losing the locked topic.
+        — Examples (when locked on Cardiac Conduction):
+            "Wait, how does this connect to blood pressure?"
+            "I read about heart attacks — is that the same as arrhythmia?"
+
+      complex
+        — Multi-step reasoning question, comparison across topics, or
+          synthesis spanning multiple subsections. May benefit from
+          multi-hop retrieval (D.4 — currently treated as `simple`).
+        — Examples:
+            "How does the autonomic nervous system regulate cardiac
+             output during exercise?"
+            "Compare and contrast skeletal vs cardiac muscle tissue at
+             the cellular and functional levels."
+
+    Output a 1-sentence rationale citing the specific aspect of the
+    student's message that drove the classification. Do not classify
+    based on locked topic alone — the message content is what matters.
+
+    Return strict JSON only, no prose:
+    {
+      "tier": "simple|tangential|complex",
+      "rationale": ""
+    }
+
+  dean_complexity_classifier_dynamic: |
+    Locked topic (subsection): {locked_subsection}
+    Locked anchor question: {locked_question}
+
+    Recent conversation history (most recent last):
+    {conversation_history}
+
+    Student's latest message:
+    {latest_student_message}
+
+    Classify.
 
   mastery_scorer_static: |
     You are evaluating a tutoring session for the purpose of knowledge tracing.

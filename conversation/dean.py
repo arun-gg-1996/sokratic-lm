@@ -1465,6 +1465,15 @@ class DeanAgent:
                 "active_hint": active_hint,
             })
 
+        # D.2 — Adaptive-RAG (Jeong 2024) complexity tier classification.
+        # Logged only today; doesn't gate behavior. Provides citable
+        # architectural component for the thesis lit-review section and
+        # produces telemetry (per-turn tier distribution) for evaluation.
+        # See _classify_complexity docstring for the full rationale on
+        # why we don't yet replace the existing exploration judge.
+        if bool(getattr(cfg.dean, "adaptive_rag_enabled", True)):
+            self._classify_complexity(state)
+
         # Exploration retrieval: LLM judges whether the student's turn has
         # tangential curiosity that warrants a one-shot un-section-filtered
         # retrieval. Budget-capped per session (cfg.session.exploration_max).
@@ -1611,6 +1620,106 @@ class DeanAgent:
             "retrieval_calls": state["debug"]["retrieval_calls"],
             "retrieval_schema_keys": retrieval_schema_keys,
         })
+
+    def _classify_complexity(self, state: TutorState) -> dict:
+        """D.2 — Adaptive-RAG (Jeong 2024) query complexity classifier.
+
+        Classifies the student's most recent message into one of three
+        tiers driving downstream retrieval strategy:
+
+          simple      — direct factual / definitional, single-hop
+          tangential  — curiosity drift, warrants exploration retrieval
+          complex     — multi-step / cross-topic synthesis, multi-hop
+                        candidate (D.4 stub — currently treated as simple)
+
+        Returns:
+            {"tier": "simple"|"tangential"|"complex", "rationale": str}
+            or {"tier": "simple", "rationale": "<error>"} on any failure
+            so callers can rely on the dict shape.
+
+        Cost: one Haiku-tier LLM call per turn (~$0.001). Result is also
+        logged to turn_trace under wrapper="dean.complexity_classifier"
+        for thesis-evaluable telemetry — frequency distribution across
+        tiers can be reported in the ablation table.
+
+        Behavior coupling: today the tier is logged only — runtime
+        behavior is unchanged (the existing _exploration_retrieval_maybe
+        still uses its internal judge). A future commit can replace
+        that judge with the tier signal once we have data on how often
+        the two agree.
+        """
+        if not state.get("topic_confirmed"):
+            # Pre-lock messages aren't tutoring queries; classifier is
+            # only meaningful after a topic is locked.
+            return {"tier": "simple", "rationale": "pre_lock_no_classification"}
+
+        last_student_msg = ""
+        for msg in reversed(state.get("messages", [])):
+            if msg.get("role") == "student":
+                last_student_msg = str(msg.get("content", ""))
+                break
+        if not last_student_msg.strip():
+            return {"tier": "simple", "rationale": "empty_student_message"}
+
+        static_prompt = getattr(cfg.prompts, "dean_complexity_classifier_static", "")
+        dynamic_template = getattr(cfg.prompts, "dean_complexity_classifier_dynamic", "")
+        if not static_prompt or not dynamic_template:
+            return {"tier": "simple", "rationale": "classifier_prompts_missing"}
+
+        conversation_history = render_history(state.get("messages", []))
+        try:
+            user_prompt = dynamic_template.format(
+                locked_subsection=str(
+                    (state.get("locked_topic") or {}).get("subsection", "") or "(none)"
+                ),
+                locked_question=state.get("locked_question", "") or "(none)",
+                conversation_history=conversation_history,
+                latest_student_message=last_student_msg,
+                **_domain_prompt_vars(),
+            )
+        except Exception:
+            return {"tier": "simple", "rationale": "prompt_format_error"}
+
+        # Re-use _timed_create + _cached_system from this module so
+        # cache + telemetry behave identically to the other Dean calls.
+        try:
+            resp = _timed_create(
+                self.client,
+                state,
+                "dean.complexity_classifier",
+                model=self.model,
+                temperature=0,
+                max_tokens=160,
+                system=_cached_system(
+                    getattr(cfg.prompts, "dean_base", ""),
+                    static_prompt,
+                    "",
+                    "",
+                    "",
+                ),
+                messages=[{"role": "user", "content": user_prompt}],
+            )
+            text = (resp.content[0].text or "").strip()
+        except Exception as e:
+            return {"tier": "simple", "rationale": f"call_error:{type(e).__name__}"}
+
+        parsed = _extract_json_object(text) or {}
+        tier = str(parsed.get("tier", "") or "").strip().lower()
+        rationale = str(parsed.get("rationale", "") or "").strip()
+        if tier not in ("simple", "tangential", "complex"):
+            tier = "simple"
+            if not rationale:
+                rationale = "fallback_invalid_tier"
+
+        state["debug"]["turn_trace"].append({
+            "wrapper": "dean.complexity_classifier",
+            "tier": tier,
+            "rationale": rationale[:200],
+        })
+        # Persist on debug for the dashboard / export. NOT used for
+        # routing yet — see method docstring.
+        state["debug"]["complexity_tier"] = tier
+        return {"tier": tier, "rationale": rationale}
 
     def _exploration_retrieval_maybe(self, state: TutorState) -> None:
         """
