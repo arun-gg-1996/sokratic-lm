@@ -60,14 +60,22 @@ sys.path.insert(0, str(ROOT))
 import anthropic  # noqa: E402
 
 _ALL_API_CALLS: list[dict] = []
-_CURRENT_CONVO_ID = {"id": ""}
+# contextvars: async-safe per-task storage. Each parallel conversation gets
+# its own value, so cache-stat attribution works correctly even when
+# `asyncio.gather` is running multiple conversations concurrently.
+import contextvars  # noqa: E402
+_current_convo: contextvars.ContextVar[str] = contextvars.ContextVar(
+    "scaled_convos_current_id", default=""
+)
 
 
 def _patched_messages_create(self, *args, **kwargs):
     resp = self._original_messages_create(*args, **kwargs)
     usage = getattr(resp, "usage", None)
+    # list.append is atomic under the GIL — safe even under thread-pool
+    # scheduling that LangGraph uses to run sync nodes from async ainvoke.
     _ALL_API_CALLS.append({
-        "convo_id": _CURRENT_CONVO_ID["id"],
+        "convo_id": _current_convo.get(),
         "input_tokens": int(getattr(usage, "input_tokens", 0) or 0),
         "output_tokens": int(getattr(usage, "output_tokens", 0) or 0),
         "cache_read_input_tokens": int(getattr(usage, "cache_read_input_tokens", 0) or 0),
@@ -129,7 +137,10 @@ async def run_one_convo(
     expected_chapter = topic_row.get("chapter_num")
 
     # Tag every API call inside this conversation with its conv_id.
-    _CURRENT_CONVO_ID["id"] = conv_id
+    # contextvars.set returns a token we MUST reset to keep parallel
+    # conversations isolated — without reset, a later sibling task could
+    # inherit this convo's id.
+    _convo_token = _current_convo.set(conv_id)
     api_calls_before = len(_ALL_API_CALLS)
     t_start = time.time()
 
@@ -271,6 +282,9 @@ async def run_one_convo(
         f"locked={(locked_answer or '<empty>')[:30]}",
         flush=True,
     )
+    # Reset the contextvar so a sibling task in the same parent context
+    # doesn't accidentally inherit this convo's id.
+    _current_convo.reset(_convo_token)
     return record
 
 
@@ -392,6 +406,10 @@ async def main():
                     help="Tag for this run (used in output dir name)")
     ap.add_argument("--seed", type=int, default=42,
                     help="Random seed for topic selection")
+    ap.add_argument("--concurrency", type=int, default=3,
+                    help="Number of conversations to run concurrently "
+                         "(default: 3; 1 = serial). Higher values get rate-"
+                         "limited by Anthropic API.")
     args = ap.parse_args()
 
     profiles = [p.strip() for p in (args.profiles or ",".join(PROFILES_TO_RUN)).split(",") if p.strip()]
@@ -434,17 +452,42 @@ async def main():
     print(f"\nPlan: {len(plan)} conversations across {len(profiles)} profiles "
           f"× {args.seeds} seeds.\n", flush=True)
 
-    records = []
+    # Parallelize via asyncio.gather + Semaphore. Each conversation runs in
+    # its own asyncio task; the semaphore caps in-flight conversations to
+    # `args.concurrency`. Each task gets its own contextvar value (set inside
+    # run_one_convo) so cache-stat attribution stays correct.
+    #
+    # Why this gives real parallelism even though dean/teacher use sync
+    # `anthropic.Anthropic`: LangGraph's `ainvoke` schedules sync nodes onto
+    # an executor thread pool. Multiple awaiting `ainvoke` calls run their
+    # nodes on different threads. Network I/O (Anthropic + OpenAI + Qdrant)
+    # is the actual time spent, and that I/O happens concurrently across
+    # threads.
+    #
+    # Concurrency limits:
+    #   - Anthropic Sonnet 4.5 Tier-1 ≈ 50 RPM. Each convo emits ~30-70
+    #     calls over ~2 min ≈ 15-35 RPM peak. Safe up to ~3 concurrent.
+    #   - OpenAI text-embedding-3-large: large rate budget; not a bottleneck.
+    #   - Qdrant: local; not a bottleneck.
+    sem = asyncio.Semaphore(max(1, int(args.concurrency)))
+
+    async def _run_with_sem(prof, topic, seed_idx, k):
+        async with sem:
+            print(f"\n--- [{k:>2}/{len(plan)}] {prof}/seed{seed_idx} — "
+                  f"{topic.get('subsection_title', '')} ---", flush=True)
+            return await run_one_convo(prof, topic, seed_idx, graph, out_dir)
+
+    print(f"Running with concurrency={args.concurrency}.\n", flush=True)
     t_run_start = time.time()
-    for k, (prof, topic, seed_idx) in enumerate(plan, 1):
-        print(f"\n--- [{k:>2}/{len(plan)}] {prof}/seed{seed_idx} — "
-              f"{topic.get('subsection_title', '')} ---", flush=True)
-        rec = await run_one_convo(prof, topic, seed_idx, graph, out_dir)
-        records.append(rec)
+    tasks = [
+        _run_with_sem(prof, topic, seed_idx, k)
+        for k, (prof, topic, seed_idx) in enumerate(plan, 1)
+    ]
+    records = await asyncio.gather(*tasks, return_exceptions=False)
 
     print(f"\n{'='*60}\nALL CONVOS DONE in {int(time.time()-t_run_start)}s.\n",
           flush=True)
-    aggregate_report(records, out_dir, run_label=args.label)
+    aggregate_report(list(records), out_dir, run_label=args.label)
 
 
 if __name__ == "__main__":
