@@ -822,6 +822,29 @@ class Retriever:
         rrf_k = int(cfg.retrieval.rrf_k)
 
         # --- Stage 1: original query (fast path, no LLM) -------------------
+        # D.6c: speculatively fire HyDE rewrite in parallel with original
+        # retrieval. The rewrite is the expensive step (~500-1500ms LLM
+        # call); when HyDE later turns out to be needed (weak-retrieval
+        # gate), the rewrite has already completed and we save its
+        # latency. When the original is strong, the rewrite is discarded
+        # (~$0.001 Haiku cost wasted — negligible). Cache hit rate on
+        # the rewrite (D.6b-3) further reduces the worst-case waste.
+        #
+        # The rewrite must NOT depend on Qdrant/BM25 results, so it is
+        # safe to start before they run. We pass it through a Future
+        # and read the result lazily inside the HyDE branch below.
+        from concurrent.futures import ThreadPoolExecutor
+        # NOTE: ThreadPoolExecutor with one worker is enough — we only
+        # speculatively fire ONE LLM call. Could share a process-wide
+        # executor for efficiency; for now, the per-call overhead
+        # (microseconds) is invisible against the LLM call (500ms+).
+        _hyde_executor = ThreadPoolExecutor(max_workers=1)
+        hyde_text_future = (
+            _hyde_executor.submit(self._hyde_rewrite, query)
+            if bool(getattr(cfg.retrieval, "hyde_enabled", True))
+            else None
+        )
+
         t0 = t()
         orig_vec = self._embed_query(expanded_query)
         timings["embed_orig_ms"] = (t() - t0) * 1000.0
@@ -947,8 +970,19 @@ class Retriever:
         hyde_qdrant: list[dict] = []
         if use_hyde and self._is_weak_retrieval(orig_qdrant, orig_bm25, query=expanded_query):
             timings["hyde_fired"] = True
+            # D.6c: collect the speculatively-launched rewrite. By now it
+            # has either completed (overlap savings realized) or is still
+            # running, in which case we wait normally — net latency is
+            # max(orig_retrieval, hyde_rewrite) instead of the previous
+            # sum. timing_ms reflects the OBSERVED wait here, not the
+            # rewrite duration in isolation, so a value near 0 means the
+            # parallelization paid off.
             t0 = t()
-            hyde_text = self._hyde_rewrite(query)
+            if hyde_text_future is not None:
+                hyde_text = hyde_text_future.result() or ""
+                hyde_text_future = None  # consumed
+            else:
+                hyde_text = self._hyde_rewrite(query)
             timings["hyde_rewrite_ms"] = (t() - t0) * 1000.0
             if hyde_text:
                 t0 = t()
@@ -964,6 +998,16 @@ class Retriever:
                 )
                 timings["hyde_qdrant_ms"] = (t() - t0) * 1000.0
                 timings["n_qdrant_hyde"] = len(hyde_qdrant)
+        # Discard the speculative rewrite if it wasn't needed. Cancel is
+        # best-effort (the future may already be running) — we just don't
+        # wait. Shut the executor down without blocking; pending threads
+        # finish in the background and exit naturally.
+        if hyde_text_future is not None:
+            hyde_text_future.cancel()
+        try:
+            _hyde_executor.shutdown(wait=False)
+        except Exception:
+            pass
 
         # Merge Qdrant hit lists from both stages (dedupe by proposition_id).
         t0 = t()
