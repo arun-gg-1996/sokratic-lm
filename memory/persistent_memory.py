@@ -121,3 +121,39 @@ class PersistentMemory:
             return True
         except Exception:
             return False
+
+    def delete_user(self, student_id: str) -> int:
+        """
+        Delete all memories for a single student.
+
+        Args:
+            student_id: Unique student identifier.
+
+        Returns:
+            Number of memories deleted, or -1 if mem0/Qdrant is unavailable
+            or the operation failed. Returns 0 if the student had no memories.
+
+        Why per-user delete (not clear_namespace)
+        ----------------------------------------
+        clear_namespace() drops the entire 'sokratic_memory' Qdrant
+        collection — wiping every student's data. That's correct for
+        --clear-memory in eval scripts but catastrophic to expose to
+        end users via a UI.
+
+        This method only deletes the calling user's mem0 entries:
+          - Privacy / forget-me operations from the frontend
+          - Per-student reset for demos without affecting other users
+        """
+        if self.client is None:
+            return -1
+        try:
+            user_id = self._namespaced_user_id(student_id)
+            # Snapshot count before delete so we can report something useful
+            existing = self.get(student_id)
+            n_before = len(existing) if existing else 0
+            # mem0 exposes delete_all(user_id=...) which removes every memory
+            # filed under that namespaced user_id. Verified in mem0 0.1.x.
+            self.client.delete_all(user_id=user_id)
+            return n_before
+        except Exception:
+            return -1

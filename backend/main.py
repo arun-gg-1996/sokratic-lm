@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.api import chat, session, users
+from backend.api import chat, memory, session, users
 
 app = FastAPI(title="Sokratic Backend", version="0.1")
 
@@ -15,6 +15,7 @@ app.add_middleware(
 
 app.include_router(users.router, prefix="/api")
 app.include_router(session.router, prefix="/api")
+app.include_router(memory.router, prefix="/api")
 app.include_router(chat.router)
 
 

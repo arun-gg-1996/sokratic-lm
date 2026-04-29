@@ -47,11 +47,13 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
     # Legacy slot — kept for knowledge-tracing wiring (D.3).
     weak_topics: list[dict] = []
 
-    # Pull cross-session memories from mem0. Empty list for new students or
-    # if Qdrant/mem0 is unavailable (memory_manager swallows all errors).
+    # Pull cross-session memories from mem0. Empty list for new students,
+    # if memory is disabled for this session (frontend toggle), or if
+    # Qdrant/mem0 is unavailable (memory_manager swallows all errors).
     student_id = state.get("student_id", "") or ""
+    memory_enabled = bool(state.get("memory_enabled", True))
     past_memories: list[dict] = []
-    if student_id:
+    if student_id and memory_enabled:
         try:
             past_memories = memory_manager.load(
                 student_id,

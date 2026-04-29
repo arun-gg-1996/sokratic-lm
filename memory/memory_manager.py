@@ -148,6 +148,20 @@ class MemoryManager:
         except Exception:
             return 0
 
+    def forget(self, student_id: str) -> int:
+        """Delete all mem0 entries for a single student.
+
+        Wraps PersistentMemory.delete_user. Use this for the frontend
+        "forget me" / privacy reset action — it does NOT touch other
+        students' memories.
+
+        Returns:
+            Count of memories deleted, or -1 on failure / unavailability.
+        """
+        if not self.persistent.available:
+            return -1
+        return self.persistent.delete_user(student_id)
+
     # ------------------------------------------------------------------
     # Internal: memory string builders
     # ------------------------------------------------------------------

@@ -7,6 +7,11 @@ from pydantic import BaseModel
 
 class StartSessionRequest(BaseModel):
     student_id: str
+    # Optional toggle. When False, rapport_node skips memory_manager.load
+    # and the session opens as a fresh-student greeting regardless of
+    # whether the student has prior mem0 entries. Used by the demo UI's
+    # "Memory enabled" switch — defaults to True for the normal experience.
+    memory_enabled: bool = True
 
 
 class StartSessionResponse(BaseModel):

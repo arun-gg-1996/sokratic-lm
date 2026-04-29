@@ -117,6 +117,11 @@ class TutorState(TypedDict):
     topic_question: str
     # Final selected scoped topic used for retrieval/tutoring.
     topic_selection: str
+    # The TOC entry this session is grounded to (set at topic-lock time by the
+    # TopicMatcher). None when the session is not grounded to a TOC node —
+    # grading should treat such sessions as `ungraded`. Schema:
+    # {path, chapter, section, subsection, difficulty, chunk_count, limited, score}
+    locked_topic: Optional[dict]
     # UI deterministic-choice helper for card/button flows.
     pending_user_choice: dict
 
@@ -126,6 +131,28 @@ class TutorState(TypedDict):
     # When it reaches cfg.dean.help_abuse_threshold, hint_level advances anyway and counter resets.
     # Gated entirely in Python (dean.py) — not LLM logic.
     help_abuse_count: int
+
+    # --- Topic-lock rejection tracking ---
+    # TOC paths that failed the coverage gate in this session. Used by
+    # sample_diverse to avoid re-suggesting topics we've already proven we
+    # can't teach, which caused the card-loop bug in the 2026-04-22 session.
+    rejected_topic_paths: list[str]
+
+    # --- Exploration budget ---
+    # Students occasionally ask about concepts outside the locked topic.
+    # When Dean detects a tangential question and budget remains, we fire one
+    # un-section-filtered retrieval and attach those chunks as exploration
+    # context for Teacher's next draft. Capped per session to prevent drift.
+    exploration_max: int
+    exploration_used: int
+
+    # --- Memory toggle (frontend-controlled) ---
+    # When False, rapport_node skips reading mem0 and the session opens as
+    # a fresh greeting regardless of any prior history. Default True. The
+    # write side (memory_update_node) is NOT gated by this flag — sessions
+    # always persist their summary so a future re-enable still has data.
+    # Set per-session via the StartSessionRequest payload from the UI.
+    memory_enabled: bool
 
     # --- Multimodal ---
     is_multimodal: bool
@@ -199,8 +226,13 @@ def initial_state(student_id: str, cfg) -> TutorState:
         topic_options=[],
         topic_question="",
         topic_selection="",
+        locked_topic=None,
         pending_user_choice={},
         help_abuse_count=0,
+        rejected_topic_paths=[],
+        exploration_max=int(getattr(getattr(cfg, "session", object()), "exploration_max", 3)),
+        exploration_used=0,
+        memory_enabled=True,
         is_multimodal=False,
         image_structures=[],
         debug={
@@ -210,6 +242,10 @@ def initial_state(student_id: str, cfg) -> TutorState:
             "cost_usd": 0.0,
             "interventions": 0,
             "retrieval_calls": 0,
+            "coverage_gap_events": 0,
+            "grounded_turns": 0,
+            "ungrounded_turns": 0,
+            "invariant_violations": [],
             "current_node": "",
             "last_routing": "",
             "turn_trace": [],

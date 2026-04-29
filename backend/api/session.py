@@ -47,6 +47,10 @@ async def start_session(req: StartSessionRequest):
     runtime = get_runtime_store()
 
     state = initial_state(req.student_id, cfg)
+    # Apply per-session memory toggle from the request. Default True is set
+    # by initial_state; we only override when the client passes False so
+    # demo mode can show fresh-student behavior on demand.
+    state["memory_enabled"] = bool(req.memory_enabled)
     config = {"configurable": {"thread_id": thread_id}}
     state = graph.invoke(state, config=config)
     state.setdefault("debug", {}).setdefault("all_turn_traces", [])
