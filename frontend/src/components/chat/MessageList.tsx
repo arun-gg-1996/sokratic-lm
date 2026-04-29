@@ -13,17 +13,27 @@ export function MessageList() {
   // permanent tutor message is added — keeps the rendered output
   // identical end-state to the non-streaming path.
   const streaming = useSessionStore((s) => s.streamingTutorContent);
+  // Per-turn backend activity log (D.6 UX). Each backend stage emits
+  // a short label; we render them as a small status feed so the user
+  // sees what's happening (Searching textbook → Drafting → Reviewing).
+  const activityLog = useSessionStore((s) => s.activityLog);
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages.length, isWaiting, streaming.length]);
+  }, [messages.length, isWaiting, streaming.length, activityLog.length]);
 
-  // The "thinking…" indicator should only show while we are waiting
-  // AND no tokens have streamed yet. Once tokens start arriving, the
-  // streaming bubble below replaces the indicator (avoids both
-  // showing simultaneously).
-  const showThinking = isWaiting && streaming.length === 0;
+  // The "thinking…" indicator only shows while we're waiting AND
+  // there's no other live signal (no streaming tokens yet, no activity
+  // labels yet). Once either lands, the spinner disappears so the user
+  // isn't seeing two indicators at once.
+  const showThinking =
+    isWaiting && streaming.length === 0 && activityLog.length === 0;
+  // The activity feed lingers while waiting; once the streaming
+  // bubble appears or the final message lands, the activity feed
+  // can fade out (we hide it once streaming has any content).
+  const showActivity =
+    isWaiting && activityLog.length > 0 && streaming.length === 0;
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -31,6 +41,31 @@ export function MessageList() {
         {messages.map((m) => (
           <MessageBubble key={m.id} message={m} />
         ))}
+        {showActivity && (
+          <div className="rounded-card border border-border bg-panel px-4 py-3 max-w-md">
+            <div className="text-xs text-muted uppercase tracking-wide mb-2">
+              Working on it
+            </div>
+            <ul className="text-sm space-y-1">
+              {activityLog.map((label, idx) => {
+                const isLatest = idx === activityLog.length - 1;
+                return (
+                  <li
+                    key={`${idx}-${label}`}
+                    className={`flex items-center gap-2 ${
+                      isLatest ? "text-text" : "text-muted"
+                    }`}
+                  >
+                    <span className="shrink-0">
+                      {isLatest ? "•" : "✓"}
+                    </span>
+                    <span>{label}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
         {streaming && (
           <div className="rounded-card bg-panel border border-border px-4 py-3">
             <div className="whitespace-pre-wrap">{streaming}</div>

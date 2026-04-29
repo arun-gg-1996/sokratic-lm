@@ -16,6 +16,8 @@ export function useWebSocket(threadId: string | null) {
   // message_complete arrives.
   const appendStreamingToken = useSessionStore((s) => s.appendStreamingToken);
   const clearStreamingBuffer = useSessionStore((s) => s.clearStreamingBuffer);
+  const appendActivity = useSessionStore((s) => s.appendActivity);
+  const clearActivityLog = useSessionStore((s) => s.clearActivityLog);
 
   const connect = useCallback(() => {
     if (!threadId) return;
@@ -41,6 +43,13 @@ export function useWebSocket(threadId: string | null) {
           // the user sees a clean "thinking..." pause rather than
           // an abrupt content swap when message_complete arrives.
           clearStreamingBuffer();
+          return;
+        }
+        if (payload.type === "activity") {
+          // Backend stage label — append to the per-turn activity log.
+          // Cleared by the student-submit path (see useSession), so the
+          // log only shows what's happening for THIS turn.
+          if (payload.content) appendActivity(payload.content);
           return;
         }
         if (payload.type === "message_complete") {
@@ -95,6 +104,7 @@ export function useWebSocket(threadId: string | null) {
     };
   }, [
     addTutorMessage,
+    appendActivity,
     appendStreamingToken,
     clearStreamingBuffer,
     setDebug,

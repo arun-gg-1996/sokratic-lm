@@ -29,7 +29,11 @@ export interface ServerMessage {
   // clears the streaming buffer immediately so the user sees a clean
   // "thinking..." pause rather than content X being abruptly replaced
   // by content Y when message_complete arrives.
-  type: "token" | "stream_reset" | "message_complete" | "error";
+  // "activity" carries short user-facing labels for backend stages
+  // (e.g. "Searching textbook", "Reviewing draft for accuracy"). The
+  // frontend appends each to a per-turn activity log so the user sees
+  // a Claude-Code-style live status feed instead of an opaque spinner.
+  type: "token" | "stream_reset" | "activity" | "message_complete" | "error";
   content?: string;
   pending_choice?: PendingChoice | null;
   topic_confirmed?: boolean;

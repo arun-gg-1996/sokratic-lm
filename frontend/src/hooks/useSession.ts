@@ -126,6 +126,10 @@ export function useSession() {
     addStudentMessage(trimmed);
     setPendingChoice(null);
     setWaiting(true);
+    // Clear the previous turn's activity log so the new turn starts
+    // with an empty status feed. Activity events from the new turn
+    // will populate it as the backend progresses through stages.
+    useSessionStore.getState().clearActivityLog();
     const sent = sendStudentMessage(trimmed);
     if (!sent) {
       addTutorMessage("Connection not ready. Please retry.", "system");

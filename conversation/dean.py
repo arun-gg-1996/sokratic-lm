@@ -1333,6 +1333,8 @@ class DeanAgent:
                 "result": "bypassed_setup_classification_on_topic_selection",
             })
         else:
+            from conversation.teacher import fire_activity as _fire_activity
+            _fire_activity("Reading your message")
             eval_result = self._setup_call(state)
         try:
             parsed_hint_level = int(eval_result.get("hint_level", state.get("hint_level", 0)))
@@ -1487,6 +1489,8 @@ class DeanAgent:
                 "active_hint": active_hint,
             })
 
+        from conversation.teacher import fire_activity
+
         # D.2 — Adaptive-RAG (Jeong 2024) complexity tier classification.
         # Logged only today; doesn't gate behavior. Provides citable
         # architectural component for the thesis lit-review section and
@@ -1494,18 +1498,24 @@ class DeanAgent:
         # See _classify_complexity docstring for the full rationale on
         # why we don't yet replace the existing exploration judge.
         if bool(getattr(cfg.dean, "adaptive_rag_enabled", True)):
-            self._classify_complexity(state)
+            fire_activity("Classifying your question")
+            classification = self._classify_complexity(state)
+            tier = classification.get("tier", "simple")
+            fire_activity(f"Question tier: {tier}")
 
         # Exploration retrieval: LLM judges whether the student's turn has
         # tangential curiosity that warrants a one-shot un-section-filtered
         # retrieval. Budget-capped per session (cfg.session.exploration_max).
+        fire_activity("Considering related topics")
         self._exploration_retrieval_maybe(state)
 
         # Teacher drafts one response.
         # Provide Dean QC guidance preflight on first attempt so Teacher is
         # aligned before generation, not only after a rejection.
         state["dean_critique"] = self._teacher_preflight_brief(state)
+        fire_activity("Drafting response")
         draft = teacher.draft_socratic(state)
+        fire_activity("Reviewing draft for accuracy")
         quality = self._evaluate_tutoring_draft(state, draft)
 
         if quality["pass"]:
@@ -1536,6 +1546,7 @@ class DeanAgent:
                 # no callback is installed, e.g. eval harness.)
                 from conversation.teacher import fire_stream_invalidate
                 fire_stream_invalidate()
+                fire_activity("Refining response")
             else:
                 state["dean_critique"] = self._format_dean_critique(quality)
                 state["dean_retry_count"] = 1
@@ -1553,6 +1564,7 @@ class DeanAgent:
                 # discarded in favor of the dean's fallback message.
                 from conversation.teacher import fire_stream_invalidate
                 fire_stream_invalidate()
+                fire_activity("Falling back to safe response")
 
         state["messages"].append({"role": "tutor", "content": approved_response, "phase": "tutoring"})
 

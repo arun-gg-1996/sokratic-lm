@@ -10,8 +10,10 @@ from backend.dependencies import get_graph, get_runtime_store
 from backend.models.schemas import ClientMessage
 from config import cfg
 from conversation.teacher import (
+    reset_activity_callback,
     reset_stream_callback,
     reset_stream_invalidate_callback,
+    set_activity_callback,
     set_stream_callback,
     set_stream_invalidate_callback,
 )
@@ -116,48 +118,69 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
             # only enqueues bytes; the WS write happens here in the
             # event loop.
             loop = asyncio.get_running_loop()
-            # Queue items: str = token delta to forward, None = stream
-            # finished sentinel, "" = stream invalidated (dean discarded
-            # the streamed draft and substituted; clear frontend buffer).
-            token_queue: asyncio.Queue[str | None] = asyncio.Queue()
+            # Queue items are dicts with at minimum a "kind" field. The
+            # drain task switches on kind. Possible kinds:
+            #   {"kind":"token","text":"..."}     — streaming partial
+            #   {"kind":"stream_reset"}           — dean rewrote draft
+            #   {"kind":"activity","label":"..."} — backend activity log
+            #   {"kind":"end"}                    — finalize sentinel
+            # Earlier this used (str|None|"") sentinels; the dict shape
+            # is clearer and extends without re-meaning conventions.
+            token_queue: asyncio.Queue[dict] = asyncio.Queue()
 
             def _on_token(text: str) -> None:
-                # Cross-thread enqueue. This is safe because Queue is
-                # thread-safe via the loop.call_soon_threadsafe shim.
+                # Cross-thread enqueue. Queue is thread-safe via
+                # loop.call_soon_threadsafe.
                 try:
-                    loop.call_soon_threadsafe(token_queue.put_nowait, text)
+                    loop.call_soon_threadsafe(
+                        token_queue.put_nowait, {"kind": "token", "text": text}
+                    )
                 except Exception:
                     pass
 
             def _on_stream_invalidate() -> None:
-                # Sentinel: empty string. The drain task interprets this
-                # as "send a stream_reset event to the client". Distinct
-                # from None which ends the drain task.
                 try:
-                    loop.call_soon_threadsafe(token_queue.put_nowait, "")
+                    loop.call_soon_threadsafe(
+                        token_queue.put_nowait, {"kind": "stream_reset"}
+                    )
+                except Exception:
+                    pass
+
+            def _on_activity(label: str) -> None:
+                try:
+                    loop.call_soon_threadsafe(
+                        token_queue.put_nowait, {"kind": "activity", "label": label}
+                    )
                 except Exception:
                     pass
 
             stream_token = set_stream_callback(_on_token)
             invalidate_token = set_stream_invalidate_callback(_on_stream_invalidate)
+            activity_token = set_activity_callback(_on_activity)
 
             async def _drain_tokens() -> None:
-                """Forward each token to the WS. Stops on None sentinel.
-                Empty string is a stream-reset signal (dean discarded
-                the draft) — sent as its own event type."""
+                """Forward each queue item to the WS. Stops on the
+                "end" sentinel. Each kind maps to a distinct WS event
+                type so the frontend can route them independently."""
                 while True:
                     item = await token_queue.get()
-                    if item is None:
+                    kind = item.get("kind")
+                    if kind == "end":
                         return
                     try:
-                        if item == "":
+                        if kind == "token":
+                            await websocket.send_text(json.dumps({
+                                "type": "token",
+                                "content": item.get("text", ""),
+                            }))
+                        elif kind == "stream_reset":
                             await websocket.send_text(json.dumps({
                                 "type": "stream_reset",
                             }))
-                        else:
+                        elif kind == "activity":
                             await websocket.send_text(json.dumps({
-                                "type": "token",
-                                "content": item,
+                                "type": "activity",
+                                "content": item.get("label", ""),
                             }))
                     except Exception:
                         return
@@ -171,9 +194,10 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
             finally:
                 reset_stream_callback(stream_token)
                 reset_stream_invalidate_callback(invalidate_token)
+                reset_activity_callback(activity_token)
                 # Sentinel ends the drain task. Always send it so the
                 # task can finish even if graph.invoke raised.
-                await token_queue.put(None)
+                await token_queue.put({"kind": "end"})
                 await drain_task
             tutor_message = _latest_tutor_message(new_state)
             _append_full_turn_trace(new_state, client_msg.content, tutor_message)

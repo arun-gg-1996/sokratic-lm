@@ -19,6 +19,13 @@ interface SessionState {
   // backend sends the final aggregated text — we replace this
   // buffer with a permanent tutor message and clear the buffer.
   streamingTutorContent: string;
+  // Per-turn activity log. Each backend stage (retrieval, classifier,
+  // draft, QC, etc.) appends a short label here. ChatView renders
+  // these as a live status feed below the user's last message —
+  // similar to Claude Code's tool-call display. Cleared at the start
+  // of each new student turn so labels from a prior turn don't
+  // linger.
+  activityLog: string[];
   setThreadId: (id: string) => void;
   setSessionPhase: (phase: string) => void;
   addStudentMessage: (content: string) => void;
@@ -37,6 +44,8 @@ interface SessionState {
   setDebug: (d: Record<string, unknown> | null) => void;
   appendStreamingToken: (delta: string) => void;
   clearStreamingBuffer: () => void;
+  appendActivity: (label: string) => void;
+  clearActivityLog: () => void;
   reset: () => void;
 }
 
@@ -49,6 +58,7 @@ export const useSessionStore = create<SessionState>((set) => ({
   selectedDebugMessageId: null,
   debug: null,
   streamingTutorContent: "",
+  activityLog: [],
   setThreadId: (id) => set({ threadId: id }),
   setSessionPhase: (phase) => set({ sessionPhase: phase || "tutoring" }),
   addStudentMessage: (content) =>
@@ -101,6 +111,9 @@ export const useSessionStore = create<SessionState>((set) => ({
   appendStreamingToken: (delta) =>
     set((s) => ({ streamingTutorContent: s.streamingTutorContent + delta })),
   clearStreamingBuffer: () => set({ streamingTutorContent: "" }),
+  appendActivity: (label) =>
+    set((s) => ({ activityLog: [...s.activityLog, label] })),
+  clearActivityLog: () => set({ activityLog: [] }),
   reset: () =>
     set({
       threadId: null,
@@ -111,5 +124,6 @@ export const useSessionStore = create<SessionState>((set) => ({
       selectedDebugMessageId: null,
       debug: null,
       streamingTutorContent: "",
+      activityLog: [],
     }),
 }));

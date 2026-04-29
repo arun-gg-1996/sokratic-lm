@@ -69,6 +69,18 @@ _stream_invalidate_callback: contextvars.ContextVar[Optional[Callable[[], None]]
     contextvars.ContextVar("teacher_stream_invalidate_callback", default=None)
 )
 
+# UX hook for surfacing what the system is doing during a turn. Each
+# step in dean.run_turn (setup, retrieval, classification, draft, QC,
+# memory write) fires a short user-facing label via this callback.
+# The WS handler forwards these to the frontend as "activity" events,
+# which renders a Claude-Code-style live log so the user sees
+#   "Reading your message → Searching textbook → Drafting response..."
+# instead of an opaque "thinking..." spinner. No-op if no callback
+# installed (eval harness, batch scripts).
+_activity_callback: contextvars.ContextVar[Optional[Callable[[str], None]]] = (
+    contextvars.ContextVar("teacher_activity_callback", default=None)
+)
+
 
 def set_stream_callback(cb: Optional[Callable[[str], None]]) -> contextvars.Token:
     """Install a per-task streaming callback for draft_socratic. Returns
@@ -115,6 +127,33 @@ def fire_stream_invalidate() -> None:
     except Exception:
         # Mirror set_stream_callback's swallow-all policy: a callback
         # failure must not break the LLM call.
+        pass
+
+
+def set_activity_callback(
+    cb: Optional[Callable[[str], None]]
+) -> contextvars.Token:
+    """Install a callback that receives short user-facing activity
+    labels (e.g. "Searching textbook", "Reviewing draft for accuracy").
+    The WS handler uses this to drive a live activity log in the UI."""
+    return _activity_callback.set(cb)
+
+
+def reset_activity_callback(token: contextvars.Token) -> None:
+    _activity_callback.reset(token)
+
+
+def fire_activity(label: str) -> None:
+    """Emit a user-facing activity label. No-op when no callback
+    installed (eval harness, batch scripts) so call sites can sprinkle
+    these freely without conditional checks. Errors swallowed so a
+    bad callback never breaks the actual work."""
+    cb = _activity_callback.get()
+    if cb is None:
+        return
+    try:
+        cb(label)
+    except Exception:
         pass
 
 
