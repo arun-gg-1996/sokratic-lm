@@ -93,7 +93,7 @@ from memory.memory_manager import MemoryManager  # noqa: E402
 from simulation.profiles import PROFILES  # noqa: E402
 from simulation.student_simulator import StudentSimulator  # noqa: E402
 
-TOPIC_BANK_PATH = ROOT / "data/eval/topic_bank_v1.jsonl"
+TOPIC_BANK_PATH = ROOT / "data/eval/topic_bank_v2.jsonl"  # v2: anatomy-only (Ch3-Ch28)
 PROFILES_TO_RUN = ["S1", "S2", "S3", "S4", "S5", "S6"]
 MAX_TURNS_PER_CONVO = 25  # safety cap
 
@@ -182,15 +182,42 @@ async def run_one_convo(
     total_cache_read = sum(c["cache_read_input_tokens"] for c in api_calls_in_convo)
     total_cache_write = sum(c["cache_creation_input_tokens"] for c in api_calls_in_convo)
 
-    # Score: did the locked subsection match the expected?
+    # Score: did retrieval ground the conversation in the right area?
+    # We score "on_topic" based on whether ANY of the retrieved chunks the
+    # tutor was working from carry the expected (chapter, section,
+    # subsection). State["locked_topic"] is set by the dean but isn't
+    # always retained on the LangGraph state at session end (depends on
+    # what the most-recent node returned), so retrieved_chunks is the
+    # more reliable proxy.
     locked_answer = state.get("locked_answer", "") or ""
     locked_topic = state.get("locked_topic") or {}
-    on_topic = (
-        bool(locked_topic.get("subsection") and expected_subsection
-             and locked_topic.get("subsection") == expected_subsection)
-        or bool(locked_topic.get("section") and expected_section
-                and locked_topic.get("section") == expected_section)
-    )
+    retrieved = state.get("retrieved_chunks", []) or []
+
+    def _on_topic(chunks: list[dict]) -> tuple[bool, bool, bool]:
+        """Returns (subsection_match, section_match, chapter_match)."""
+        if not chunks:
+            return (False, False, False)
+        sub = bool(expected_subsection) and any(
+            (c.get("subsection_title") or "") == expected_subsection for c in chunks
+        )
+        sec = bool(expected_section) and any(
+            (c.get("section_title") or "") == expected_section for c in chunks
+        )
+        ch = expected_chapter is not None and any(
+            c.get("chapter_num") == expected_chapter for c in chunks
+        )
+        return (sub, sec, ch)
+
+    sub_hit, sec_hit, ch_hit = _on_topic(retrieved)
+    # locked_topic still useful when present — fall back to it if retrieved
+    # was emptied at session end.
+    if not (sub_hit or sec_hit or ch_hit) and locked_topic:
+        if locked_topic.get("subsection") == expected_subsection:
+            sub_hit = True
+        if locked_topic.get("section") == expected_section:
+            sec_hit = True
+    on_topic_section = sub_hit or sec_hit
+    on_topic_chapter = sub_hit or sec_hit or ch_hit
 
     record = {
         "conv_id": conv_id,
@@ -207,7 +234,8 @@ async def run_one_convo(
             "reached_answer": bool(state.get("student_reached_answer")),
             "phase_final": state.get("phase"),
             "turn_count": int(state.get("turn_count", turn_count)),
-            "on_topic": on_topic,
+            "on_topic_section": on_topic_section,
+            "on_topic_chapter": on_topic_chapter,
             "locked_topic_path": (
                 f"{locked_topic.get('chapter','')}|"
                 f"{locked_topic.get('section','')}|"
@@ -237,7 +265,7 @@ async def run_one_convo(
 
     print(
         f"  ✓ {profile_id}/seed{seed_idx} "
-        f"on_topic={on_topic} reached={record['outcome']['reached_answer']} "
+        f"sec_hit={on_topic_section} ch_hit={on_topic_chapter} reached={record['outcome']['reached_answer']} "
         f"turns={record['outcome']['turn_count']} wall={elapsed:.0f}s "
         f"calls={len(api_calls_in_convo)} cache_hit={record['metrics']['cache_hit_ratio']*100:.0f}% "
         f"locked={(locked_answer or '<empty>')[:30]}",
@@ -262,7 +290,8 @@ def aggregate_report(records: list[dict], out_dir: Path, run_label: str) -> None
         "n_convos": n,
         "topic_confirmed_rate": sum(1 for r in records if r["outcome"]["topic_confirmed"]) / max(n, 1),
         "reached_answer_rate": sum(1 for r in records if r["outcome"]["reached_answer"]) / max(n, 1),
-        "on_topic_rate": sum(1 for r in records if r["outcome"]["on_topic"]) / max(n, 1),
+        "on_topic_section_rate": sum(1 for r in records if r["outcome"]["on_topic_section"]) / max(n, 1),
+        "on_topic_chapter_rate": sum(1 for r in records if r["outcome"]["on_topic_chapter"]) / max(n, 1),
         "locked_answer_present_rate": sum(
             1 for r in records if r["outcome"]["locked_answer"]
         ) / max(n, 1),
@@ -293,7 +322,8 @@ def aggregate_report(records: list[dict], out_dir: Path, run_label: str) -> None
     lines.append("")
     lines.append("Overall:")
     lines.append(f"  topic_confirmed:     {pct(overall['topic_confirmed_rate'] * n, n)}")
-    lines.append(f"  on_topic (lock=req): {pct(overall['on_topic_rate'] * n, n)}")
+    lines.append(f"  on_topic (section):  {pct(overall['on_topic_section_rate'] * n, n)}")
+    lines.append(f"  on_topic (chapter):  {pct(overall['on_topic_chapter_rate'] * n, n)}")
     lines.append(f"  locked_answer set:   {pct(overall['locked_answer_present_rate'] * n, n)}")
     lines.append(f"  reached_answer:      {pct(overall['reached_answer_rate'] * n, n)}")
     lines.append(f"  avg turns/convo:     {overall['avg_turns']:.1f}")
@@ -305,26 +335,27 @@ def aggregate_report(records: list[dict], out_dir: Path, run_label: str) -> None
     lines.append(f"  cache hit ratio:     {overall['overall_cache_hit_ratio']*100:.1f}%")
     lines.append("")
     lines.append("Per profile:")
-    lines.append(f"  {'profile':<10} {'n':>3} {'topic✓':>8} {'on_topic':>9} {'locked✓':>9} {'reached':>8} {'turns':>6} {'wall_s':>7}")
+    lines.append(f"  {'profile':<10} {'n':>3} {'topic✓':>8} {'sec_hit':>8} {'ch_hit':>7} {'locked✓':>9} {'reached':>8} {'turns':>6} {'wall_s':>7}")
     for prof in PROFILES_TO_RUN:
         rs = by_profile.get(prof, [])
         if not rs:
             continue
         nn = len(rs)
         tc = sum(1 for r in rs if r["outcome"]["topic_confirmed"])
-        ot = sum(1 for r in rs if r["outcome"]["on_topic"])
+        ot_sec = sum(1 for r in rs if r["outcome"]["on_topic_section"])
+        ot_ch = sum(1 for r in rs if r["outcome"]["on_topic_chapter"])
         la = sum(1 for r in rs if r["outcome"]["locked_answer"])
         ra = sum(1 for r in rs if r["outcome"]["reached_answer"])
         avg_t = sum(r["outcome"]["turn_count"] for r in rs) / nn
         avg_w = sum(r["metrics"]["wall_seconds"] for r in rs) / nn
         lines.append(
-            f"  {prof:<10} {nn:>3} {pct(tc, nn):>8} {pct(ot, nn):>9} "
+            f"  {prof:<10} {nn:>3} {pct(tc, nn):>8} {pct(ot_sec, nn):>8} {pct(ot_ch, nn):>7} "
             f"{pct(la, nn):>9} {pct(ra, nn):>8} {avg_t:>6.1f} {avg_w:>7.1f}"
         )
     lines.append("")
-    lines.append("Failures (no on_topic and no locked_answer):")
+    lines.append("Failures (no chapter hit AND no locked_answer):")
     for r in records:
-        if not r["outcome"]["on_topic"] and not r["outcome"]["locked_answer"]:
+        if not r["outcome"]["on_topic_chapter"] and not r["outcome"]["locked_answer"]:
             lines.append(
                 f"  [{r['profile_id']}/seed{r['seed_idx']}] {r['query'][:80]}"
             )
