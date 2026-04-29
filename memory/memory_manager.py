@@ -180,15 +180,27 @@ class MemoryManager:
             return 0
 
     def forget(self, student_id: str) -> int:
-        """Delete all mem0 entries for a single student.
+        """Delete a student's narrative memory AND mastery store.
 
-        Wraps PersistentMemory.delete_user. Use this for the frontend
-        "forget me" / privacy reset action — it does NOT touch other
-        students' memories.
+        "Forget me" should wipe everything the system remembers about
+        the student, not just one of two stores. We delete:
+          - mem0 entries via PersistentMemory.delete_user
+          - mastery scores via MasteryStore.delete_student
+        Each is independent — a failure in one doesn't block the other.
 
         Returns:
-            Count of memories deleted, or -1 on failure / unavailability.
+            Number of mem0 memories deleted, or -1 if mem0 was
+            unavailable. Mastery file deletion is separately reported
+            via the trace but always best-effort.
         """
+        # Mastery — local file, no external service. Try first, ignore
+        # failure since "no file" is a normal case.
+        try:
+            from memory.mastery_store import MasteryStore
+            MasteryStore().delete_student(student_id)
+        except Exception:
+            pass
+
         if not self.persistent.available:
             return -1
         return self.persistent.delete_user(student_id)

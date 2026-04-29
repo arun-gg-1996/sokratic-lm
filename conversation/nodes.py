@@ -456,6 +456,38 @@ def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
         "flushed": flushed,
     })
 
+    # D.3: per-concept knowledge tracing. Update the locked subsection's
+    # mastery score using the deterministic heuristic on
+    # (outcome, hints, turns). The store is the source of truth for the
+    # /mastery dashboard and feeds the topic suggester + rapport opener
+    # on the NEXT session start. Wrapped in try/except so a mastery
+    # failure never blocks session end.
+    mastery_status = "skipped"
+    if student_id:
+        try:
+            from memory.mastery_store import MasteryStore, score_session
+            locked_path = (state.get("locked_topic") or {}).get("path", "") or ""
+            if locked_path:
+                ms = MasteryStore()
+                score = score_session(state)
+                outcome = (
+                    "reached" if state.get("student_reached_answer")
+                    else "not_reached"
+                )
+                rec = ms.update(student_id, locked_path, score, outcome)
+                mastery_status = (
+                    f"updated mastery={rec.get('mastery')} "
+                    f"sessions={rec.get('sessions')}"
+                )
+            else:
+                mastery_status = "skipped_no_locked_topic"
+        except Exception as e:
+            mastery_status = f"error: {type(e).__name__}: {str(e)[:80]}"
+    state["debug"]["turn_trace"].append({
+        "wrapper": "mastery_store.update",
+        "result": mastery_status,
+    })
+
     return {
         "phase": "memory_update",
         "debug": state["debug"],
