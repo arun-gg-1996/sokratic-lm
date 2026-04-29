@@ -6,6 +6,9 @@ import { useWebSocket } from "./useWebSocket";
 
 export function useSession() {
   const studentId = useUserStore((s) => s.studentId);
+  // Read once at session-start time. If the user toggles memory mid-session,
+  // it takes effect on the NEXT session (a restart re-runs this effect).
+  const memoryEnabled = useUserStore((s) => s.memoryEnabled);
 
   const threadId = useSessionStore((s) => s.threadId);
   const setThreadId = useSessionStore((s) => s.setThreadId);
@@ -33,7 +36,7 @@ export function useSession() {
     const seq = bootstrapSeqRef.current;
     const bootstrap = (async () => {
       try {
-        const session = await startSession(studentId);
+        const session = await startSession(studentId, memoryEnabled);
         // Ignore stale bootstrap responses (prevents duplicate greetings/threads).
         if (bootstrapSeqRef.current !== seq) return;
         if (useSessionStore.getState().threadId) return;
@@ -54,7 +57,7 @@ export function useSession() {
       }
     })();
     bootstrapRef.current = bootstrap;
-  }, [addTutorMessage, setDebug, setSessionPhase, setThreadId, studentId, threadId]);
+  }, [addTutorMessage, memoryEnabled, setDebug, setSessionPhase, setThreadId, studentId, threadId]);
 
   const submitMessage = (content: string) => {
     const trimmed = content.trim();

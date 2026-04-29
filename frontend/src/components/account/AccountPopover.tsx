@@ -5,9 +5,11 @@ import { downloadJson } from "../../utils/export";
 import { useTheme } from "../../hooks/useTheme";
 import { useSessionStore } from "../../stores/sessionStore";
 import { useUserStore } from "../../stores/userStore";
+import { MemoryDrawer } from "./MemoryDrawer";
 
 export function AccountPopover({ studentId }: { studentId: string | null }) {
   const [open, setOpen] = useState(false);
+  const [memoryDrawerOpen, setMemoryDrawerOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
 
@@ -15,6 +17,8 @@ export function AccountPopover({ studentId }: { studentId: string | null }) {
   const debugMode = useUserStore((s) => s.debugMode);
   const setDebugMode = useUserStore((s) => s.setDebugMode);
   const setStudentId = useUserStore((s) => s.setStudentId);
+  const memoryEnabled = useUserStore((s) => s.memoryEnabled);
+  const setMemoryEnabled = useUserStore((s) => s.setMemoryEnabled);
   const threadId = useSessionStore((s) => s.threadId);
 
   useEffect(() => {
@@ -67,6 +71,23 @@ export function AccountPopover({ studentId }: { studentId: string | null }) {
             Debug mode: {debugMode ? "on" : "off"}
           </button>
           <button
+            className="w-full rounded-lg border border-border px-3 py-2 text-left hover:border-accent"
+            onClick={() => setMemoryEnabled(!memoryEnabled)}
+            title="When off, the tutor opens each session as if you were a new student. Takes effect on next session."
+          >
+            Cross-session memory: {memoryEnabled ? "on" : "off"}
+          </button>
+          <button
+            disabled={!studentId}
+            className="w-full rounded-lg border border-border px-3 py-2 text-left hover:border-accent disabled:opacity-50"
+            onClick={() => {
+              setOpen(false);
+              setMemoryDrawerOpen(true);
+            }}
+          >
+            Manage my memory →
+          </button>
+          <button
             disabled={!threadId}
             className="w-full rounded-lg border border-border px-3 py-2 text-left hover:border-accent disabled:opacity-50"
             onClick={() => {
@@ -76,6 +97,14 @@ export function AccountPopover({ studentId }: { studentId: string | null }) {
             Export current session
           </button>
         </div>
+      )}
+
+      {studentId && (
+        <MemoryDrawer
+          studentId={studentId}
+          open={memoryDrawerOpen}
+          onClose={() => setMemoryDrawerOpen(false)}
+        />
       )}
     </div>
   );

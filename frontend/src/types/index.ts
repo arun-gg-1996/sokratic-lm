@@ -46,3 +46,23 @@ export interface StudentOverviewResponse {
   weak_topics: Array<Record<string, unknown>>;
   strong_topics: Array<Record<string, unknown>>;
 }
+
+export interface MemoryEntry {
+  id: string | null;
+  text: string;
+  created_at: string | null;
+  score: number | null;
+}
+
+export interface MemoryListResponse {
+  student_id: string;
+  available: boolean;
+  count: number;
+  entries: MemoryEntry[];
+}
+
+export interface MemoryDeleteResponse {
+  student_id: string;
+  deleted: number;
+  available: boolean;
+}
