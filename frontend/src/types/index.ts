@@ -17,7 +17,13 @@ export interface PendingChoice {
 }
 
 export interface ServerMessage {
-  type: "message_complete" | "error";
+  // "token" is incremental streaming output (D.6a). Emitted multiple
+  // times during a tutoring turn while the teacher draft streams; the
+  // ChatView appends each delta to the currently-streaming tutor
+  // message. Followed by a single "message_complete" with the full
+  // aggregated content + final state — that event finalizes the
+  // streaming buffer and refreshes pending_choice / debug.
+  type: "token" | "message_complete" | "error";
   content?: string;
   pending_choice?: PendingChoice | null;
   topic_confirmed?: boolean;

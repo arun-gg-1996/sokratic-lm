@@ -31,13 +31,48 @@ Uses Anthropic SDK (anthropic.Anthropic()), NOT OpenAI.
 
 import time
 from datetime import datetime
+import contextvars
 import json
 import re
 import hashlib
+from typing import Callable, Optional
 import anthropic
 from conversation.state import TutorState
 from conversation.rendering import render_history
 from config import cfg
+
+
+# D.6a: streaming hook. When set (typically by the WS handler before
+# graph.invoke), draft_socratic streams tokens via Anthropic's
+# streaming API and invokes this callback for each text delta. The
+# callback is responsible for forwarding deltas to whatever sink the
+# caller wants (WebSocket, event log, stdout). When None (the default
+# for non-WS callers like the eval harness), draft_socratic uses the
+# non-streaming API exactly as before — full backward compat.
+#
+# A contextvar (not a thread/module global) so concurrent sessions
+# under asyncio.gather don't bleed callbacks across each other. The
+# WS handler sets it on its own task; other tasks see None.
+_stream_callback: contextvars.ContextVar[Optional[Callable[[str], None]]] = (
+    contextvars.ContextVar("teacher_stream_callback", default=None)
+)
+
+
+def set_stream_callback(cb: Optional[Callable[[str], None]]) -> contextvars.Token:
+    """Install a per-task streaming callback for draft_socratic. Returns
+    a token; pass it to reset_stream_callback() to remove the callback.
+
+    The callback is invoked from inside draft_socratic with each text
+    delta as the LLM streams. After the stream completes draft_socratic
+    returns the full aggregated text exactly as the non-streaming path
+    would; the callback is purely additive — no behavior changes for
+    callers that don't read tokens via the callback.
+    """
+    return _stream_callback.set(cb)
+
+
+def reset_stream_callback(token: contextvars.Token) -> None:
+    _stream_callback.reset(token)
 
 
 def _domain_prompt_vars() -> dict:
@@ -381,15 +416,69 @@ class TeacherAgent:
         input_hash = _trace_input_hash(system_text, messages)
 
         t0 = time.time()
-        resp = self.client.messages.create(
-            model=self.model,
-            max_tokens=220,
-            system=system_blocks,
-            messages=messages,
-            extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"},
+        # D.6a: stream when a callback is installed AND this is the
+        # tutoring-loop draft (the perceived-latency hot path). Other
+        # wrappers (rapport, clinical) skip streaming because they're
+        # called once at session boundaries — non-streaming + the cache
+        # is the right shape there.
+        cb = _stream_callback.get()
+        should_stream = (
+            cb is not None and wrapper_name == "teacher.draft_socratic"
         )
+
+        if should_stream:
+            chunks_collected: list[str] = []
+            in_tok = 0
+            out_tok = 0
+            cache_read = 0
+            cache_write = 0
+            with self.client.messages.stream(
+                model=self.model,
+                max_tokens=220,
+                system=system_blocks,
+                messages=messages,
+                extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"},
+            ) as stream:
+                for text in stream.text_stream:
+                    if not text:
+                        continue
+                    chunks_collected.append(text)
+                    try:
+                        cb(text)
+                    except Exception:
+                        # Callback failure must not break the LLM call.
+                        pass
+                final_message = stream.get_final_message()
+            response_text = "".join(chunks_collected)
+            usage = getattr(final_message, "usage", None)
+            if usage is not None:
+                in_tok = int(getattr(usage, "input_tokens", 0) or 0)
+                out_tok = int(getattr(usage, "output_tokens", 0) or 0)
+                cache_read = int(getattr(usage, "cache_read_input_tokens", 0) or 0)
+                cache_write = int(getattr(usage, "cache_creation_input_tokens", 0) or 0)
+            # Bind to the same names the non-streaming branch produces
+            # below so the debug-update code path stays unified.
+            class _UsageShim:
+                pass
+            _shim = _UsageShim()
+            _shim.input_tokens = in_tok
+            _shim.output_tokens = out_tok
+            _shim.cache_read_input_tokens = cache_read
+            _shim.cache_creation_input_tokens = cache_write
+            class _RespShim:
+                pass
+            resp = _RespShim()
+            resp.usage = _shim
+        else:
+            resp = self.client.messages.create(
+                model=self.model,
+                max_tokens=220,
+                system=system_blocks,
+                messages=messages,
+                extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"},
+            )
+            response_text = resp.content[0].text if resp.content else ""
         elapsed = time.time() - t0
-        response_text = resp.content[0].text if resp.content else ""
 
         if state is not None:
             in_tok = resp.usage.input_tokens

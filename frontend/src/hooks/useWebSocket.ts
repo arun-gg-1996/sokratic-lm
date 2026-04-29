@@ -12,6 +12,10 @@ export function useWebSocket(threadId: string | null) {
   const setSessionPhase = useSessionStore((s) => s.setSessionPhase);
   const addTutorMessage = useSessionStore((s) => s.addTutorMessage);
   const setWaiting = useSessionStore((s) => s.setWaiting);
+  // D.6a streaming: append per-token deltas + clear when the final
+  // message_complete arrives.
+  const appendStreamingToken = useSessionStore((s) => s.appendStreamingToken);
+  const clearStreamingBuffer = useSessionStore((s) => s.clearStreamingBuffer);
 
   const connect = useCallback(() => {
     if (!threadId) return;
@@ -23,7 +27,20 @@ export function useWebSocket(threadId: string | null) {
     ws.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data) as ServerMessage;
+        if (payload.type === "token") {
+          // Streaming partial — append to the live buffer. The
+          // ChatView renders this buffer as a "live" tutor bubble
+          // that grows in real time. Final aggregated content
+          // arrives in the subsequent message_complete event.
+          if (payload.content) appendStreamingToken(payload.content);
+          return;
+        }
         if (payload.type === "message_complete") {
+          // Always clear the streaming buffer first — message_complete
+          // is authoritative; the buffered partials may have been from
+          // a streaming draft that was later revised by the dean's
+          // quality check (a rare but real path). Replace, don't merge.
+          clearStreamingBuffer();
           const content = (payload.content ?? "").trim();
           const debugObj = (payload.debug ?? null) as Record<string, unknown> | null;
           const trace = Array.isArray(debugObj?.turn_trace)
@@ -42,11 +59,13 @@ export function useWebSocket(threadId: string | null) {
           return;
         }
         if (payload.type === "error") {
+          clearStreamingBuffer();
           const content = payload.content || "Socket error.";
           addTutorMessage(content, "system");
           setWaiting(false);
         }
       } catch {
+        clearStreamingBuffer();
         addTutorMessage("Could not parse server response.", "system");
         setWaiting(false);
       }
@@ -57,7 +76,16 @@ export function useWebSocket(threadId: string | null) {
       if (!threadId) return;
       reconnectRef.current = window.setTimeout(() => connect(), 1200);
     };
-  }, [addTutorMessage, setDebug, setPendingChoice, setSessionPhase, setWaiting, threadId]);
+  }, [
+    addTutorMessage,
+    appendStreamingToken,
+    clearStreamingBuffer,
+    setDebug,
+    setPendingChoice,
+    setSessionPhase,
+    setWaiting,
+    threadId,
+  ]);
 
   useEffect(() => {
     connect();

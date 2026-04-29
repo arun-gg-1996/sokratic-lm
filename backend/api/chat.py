@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
@@ -8,6 +9,7 @@ from fastapi.encoders import jsonable_encoder
 from backend.dependencies import get_graph, get_runtime_store
 from backend.models.schemas import ClientMessage
 from config import cfg
+from conversation.teacher import set_stream_callback, reset_stream_callback
 
 router = APIRouter()
 
@@ -94,7 +96,60 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
             state.setdefault("debug", {}).setdefault("turn_trace", [])
             state["debug"]["turn_trace"] = []
 
-            new_state = graph.invoke(state, config=config)
+            # D.6a: install a streaming callback before invoking the
+            # graph. The teacher's draft_socratic checks this contextvar
+            # and uses Anthropic's streaming API when set, calling the
+            # callback with each text delta as the LLM generates. We
+            # buffer deltas onto the asyncio event loop and forward via
+            # the websocket from this coroutine — sending from inside
+            # the sync teacher callback would require run_coroutine_
+            # threadsafe across loops, which is fragile.
+            #
+            # The callback runs on a worker thread (LangGraph schedules
+            # sync nodes on a thread pool when graph.ainvoke is used,
+            # or directly on the calling thread for graph.invoke). It
+            # only enqueues bytes; the WS write happens here in the
+            # event loop.
+            loop = asyncio.get_running_loop()
+            token_queue: asyncio.Queue[str | None] = asyncio.Queue()
+
+            def _on_token(text: str) -> None:
+                # Cross-thread enqueue. This is safe because Queue is
+                # thread-safe via the loop.call_soon_threadsafe shim.
+                try:
+                    loop.call_soon_threadsafe(token_queue.put_nowait, text)
+                except Exception:
+                    pass
+
+            stream_token = set_stream_callback(_on_token)
+
+            async def _drain_tokens() -> None:
+                """Forward each token to the WS as a partial event.
+                Stops when sentinel None arrives in the queue."""
+                while True:
+                    item = await token_queue.get()
+                    if item is None:
+                        return
+                    try:
+                        await websocket.send_text(json.dumps({
+                            "type": "token",
+                            "content": item,
+                        }))
+                    except Exception:
+                        return
+
+            drain_task = asyncio.create_task(_drain_tokens())
+
+            try:
+                new_state = await asyncio.to_thread(
+                    graph.invoke, state, config
+                )
+            finally:
+                reset_stream_callback(stream_token)
+                # Sentinel ends the drain task. Always send it so the
+                # task can finish even if graph.invoke raised.
+                await token_queue.put(None)
+                await drain_task
             tutor_message = _latest_tutor_message(new_state)
             _append_full_turn_trace(new_state, client_msg.content, tutor_message)
             runtime.set(thread_id, new_state)

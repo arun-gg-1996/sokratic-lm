@@ -13,6 +13,12 @@ interface SessionState {
   isWaitingForTutor: boolean;
   selectedDebugMessageId: string | null;
   debug: Record<string, unknown> | null;
+  // D.6a: while the backend streams the teacher's draft, partial
+  // tokens accumulate here. ChatView renders this as a live tutor
+  // bubble that grows token-by-token. On message_complete the
+  // backend sends the final aggregated text — we replace this
+  // buffer with a permanent tutor message and clear the buffer.
+  streamingTutorContent: string;
   setThreadId: (id: string) => void;
   setSessionPhase: (phase: string) => void;
   addStudentMessage: (content: string) => void;
@@ -29,6 +35,8 @@ interface SessionState {
   setWaiting: (w: boolean) => void;
   setSelectedDebugMessageId: (id: string | null) => void;
   setDebug: (d: Record<string, unknown> | null) => void;
+  appendStreamingToken: (delta: string) => void;
+  clearStreamingBuffer: () => void;
   reset: () => void;
 }
 
@@ -40,6 +48,7 @@ export const useSessionStore = create<SessionState>((set) => ({
   isWaitingForTutor: false,
   selectedDebugMessageId: null,
   debug: null,
+  streamingTutorContent: "",
   setThreadId: (id) => set({ threadId: id }),
   setSessionPhase: (phase) => set({ sessionPhase: phase || "tutoring" }),
   addStudentMessage: (content) =>
@@ -89,6 +98,9 @@ export const useSessionStore = create<SessionState>((set) => ({
   setWaiting: (w) => set({ isWaitingForTutor: w }),
   setSelectedDebugMessageId: (id) => set({ selectedDebugMessageId: id }),
   setDebug: (d) => set({ debug: d }),
+  appendStreamingToken: (delta) =>
+    set((s) => ({ streamingTutorContent: s.streamingTutorContent + delta })),
+  clearStreamingBuffer: () => set({ streamingTutorContent: "" }),
   reset: () =>
     set({
       threadId: null,
@@ -98,5 +110,6 @@ export const useSessionStore = create<SessionState>((set) => ({
       isWaitingForTutor: false,
       selectedDebugMessageId: null,
       debug: null,
+      streamingTutorContent: "",
     }),
 }));
