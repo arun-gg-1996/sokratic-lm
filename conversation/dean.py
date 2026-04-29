@@ -827,6 +827,9 @@ class DeanAgent:
             state["pending_user_choice"] = {}
 
         if not state.get("topic_confirmed", False):
+            from conversation.teacher import fire_activity as _fire_activity_pre
+            _fire_activity_pre("Reading your message")
+
             messages = list(state.get("messages", []))
             topic_options = list(state.get("topic_options", []))
             latest_student = _latest_student_message(messages)
@@ -834,6 +837,7 @@ class DeanAgent:
             # LLM intent classifier — replaces the old regex-based low-effort /
             # non-topic / ambiguity detectors. Returns {intent, normalized_topic,
             # tutor_reply, rationale}.
+            _fire_activity_pre("Understanding your intent")
             intent_result = self._prelock_intent_call(state)
             intent = intent_result["intent"]
             normalized_topic = intent_result["normalized_topic"] or latest_student
@@ -923,6 +927,7 @@ class DeanAgent:
                 query_for_match = latest_clean or normalized_topic
                 fuzzy_query = normalized_topic or latest_clean
                 semantic_top: TopicMatch | None = None
+                _fire_activity_pre("Searching textbook for the topic")
                 try:
                     sem_chunks = self.retriever.retrieve(query_for_match)
                 except Exception as _e:
@@ -1162,6 +1167,8 @@ class DeanAgent:
             topic_just_locked = True
 
         if topic_just_locked:
+            _fire_activity_pre(f"Topic locked: {selected_label}")
+            _fire_activity_pre("Loading textbook context")
             self._retrieve_on_topic_lock(state)
 
             # Strict-groundedness coverage gate: retrieval must return real,
@@ -1218,6 +1225,7 @@ class DeanAgent:
                     "debug": state["debug"],
                 }
 
+            _fire_activity_pre("Setting up the anchor question")
             anchors = self._lock_anchors_call(state)
             state["locked_question"] = str(anchors.get("locked_question", "") or "").strip()
             state["locked_answer"] = str(anchors.get("locked_answer", "") or "").strip()
@@ -1306,6 +1314,7 @@ class DeanAgent:
                 "locked_answer": state["locked_answer"],
                 "rationale": str(anchors.get("rationale", "") or ""),
             })
+            _fire_activity_pre("Planning the hint progression")
             hint_plan = self._hint_plan_call(state)
             state["debug"]["hint_plan"] = hint_plan
             state["debug"]["turn_trace"].append({
