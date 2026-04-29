@@ -295,8 +295,17 @@ def assessment_node(state: TutorState, dean, teacher) -> dict:
     reached = state.get("student_reached_answer", False)
     assessment_turn = state.get("assessment_turn", 0)
 
+    # Activity log instrumentation (D.6 UX). Each LLM-bound step in the
+    # assessment phase fires a short user-facing label so the activity
+    # feed populates during clinical-question generation, follow-up
+    # evaluation, and session-end mastery wrap-up — same pattern the
+    # tutoring path uses via dean.run_turn.
+    from conversation.teacher import fire_activity
+
     if reached and assessment_turn == 0:
         # Step 1: ask whether student wants the optional clinical application question.
+        fire_activity("Reading your message")
+        fire_activity("Preparing assessment prompt")
         opt_in_q = teacher.draft_clinical_opt_in(state)
         messages.append({"role": "tutor", "content": opt_in_q, "phase": "assessment"})
         return {
@@ -313,11 +322,14 @@ def assessment_node(state: TutorState, dean, teacher) -> dict:
 
     elif reached and assessment_turn == 1:
         # Step 2: parse yes/no on optional clinical question.
+        fire_activity("Reading your message")
         student_msg = _latest_student_message(messages).strip().lower()
         intent = _classify_opt_in(student_msg)
         if intent == "yes":
+            fire_activity("Drafting clinical scenario")
             state["dean_critique"] = ""
             draft = teacher.draft_clinical(state, dean_critique="")
+            fire_activity("Reviewing clinical question")
             quality = dean._quality_check_call(state, draft, phase="assessment")
             if quality.get("pass", False):
                 clinical_q = draft
@@ -370,7 +382,9 @@ def assessment_node(state: TutorState, dean, teacher) -> dict:
                 "wrapper": "assessment.opt_in_implicit_yes",
                 "result": "long reply treated as yes",
             })
+            fire_activity("Drafting clinical scenario")
             draft = teacher.draft_clinical(state, dean_critique="")
+            fire_activity("Reviewing clinical question")
             quality = dean._quality_check_call(state, draft, phase="assessment")
             if quality.get("pass", False):
                 clinical_q = draft
@@ -413,6 +427,8 @@ def assessment_node(state: TutorState, dean, teacher) -> dict:
 
     elif reached and assessment_turn == 2:
         # Step 3: multi-turn clinical reasoning loop (max N turns).
+        fire_activity("Reading your message")
+        fire_activity("Evaluating your clinical reasoning")
         state["clinical_opt_in"] = True
         eval_result = dean._clinical_turn_call(state)
 
@@ -435,10 +451,12 @@ def assessment_node(state: TutorState, dean, teacher) -> dict:
         clinical_pass = bool(eval_result.get("pass", False)) and state["clinical_confidence"] >= clinical_threshold
 
         if clinical_pass:
+            fire_activity("Wrapping up the session")
             state["clinical_completed"] = True
             return _close_session_with_dean(state, dean, messages)
 
         if clinical_turn_count < clinical_max_turns:
+            fire_activity("Drafting follow-up question")
             follow_up = str(eval_result.get("feedback_message", "") or "").strip()
             if not follow_up:
                 follow_up = dean._assessment_clinical_followup_fallback(state)
@@ -484,6 +502,8 @@ def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
     Returns phase = "memory_update" to signal session end.
     """
     state["debug"]["current_node"] = "memory_update_node"
+    from conversation.teacher import fire_activity
+    fire_activity("Saving session memory")
     student_id = state.get("student_id", "") or ""
     flush_status = "skipped_no_student_id"
     flushed = False
@@ -518,6 +538,7 @@ def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
             import anthropic
             locked_path = (state.get("locked_topic") or {}).get("path", "") or ""
             if locked_path:
+                fire_activity("Scoring concept mastery")
                 ms = MasteryStore()
                 priors = ms.recent_rationales(student_id, locked_path, limit=3)
                 client = anthropic.Anthropic()
