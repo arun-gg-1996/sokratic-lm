@@ -34,7 +34,8 @@ interface SessionState {
     phase?: string,
     debugTrace?: Array<Record<string, unknown>>,
     debugTurn?: number,
-    pendingChoiceAfterStream?: PendingChoice | null
+    pendingChoiceAfterStream?: PendingChoice | null,
+    activityLog?: string[]
   ) => void;
   addSystemMessage: (content: string) => void;
   markTutorMessageStreamed: (id: string) => void;
@@ -65,7 +66,14 @@ export const useSessionStore = create<SessionState>((set) => ({
     set((s) => ({
       messages: [...s.messages, { id: messageId("student"), role: "student", content }],
     })),
-  addTutorMessage: (content, phase, debugTrace, debugTurn, pendingChoiceAfterStream) =>
+  addTutorMessage: (
+    content,
+    phase,
+    debugTrace,
+    debugTurn,
+    pendingChoiceAfterStream,
+    activityLog,
+  ) =>
     set((s) => {
       const last = s.messages[s.messages.length - 1];
       if (last && last.role === "tutor" && last.content.trim() === content.trim()) {
@@ -83,6 +91,9 @@ export const useSessionStore = create<SessionState>((set) => ({
             pendingChoiceAfterStream: pendingChoiceAfterStream ?? null,
             debugTrace: debugTrace ?? [],
             debugTurn,
+            activityLog: activityLog && activityLog.length > 0
+              ? [...activityLog]
+              : undefined,
           },
         ],
       };

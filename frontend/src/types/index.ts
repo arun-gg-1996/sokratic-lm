@@ -9,6 +9,11 @@ export interface ChatMessage {
   pendingChoiceAfterStream?: PendingChoice | null;
   debugTrace?: Array<Record<string, unknown>>;
   debugTurn?: number;
+  // Snapshot of the activity log captured when this tutor message
+  // was finalized. Lets us show a collapsed "Activity log (N steps)"
+  // affordance below the message for users who want to inspect what
+  // the system did during that turn.
+  activityLog?: string[];
 }
 
 export interface PendingChoice {

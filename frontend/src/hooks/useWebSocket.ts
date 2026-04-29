@@ -73,7 +73,20 @@ export function useWebSocket(threadId: string | null) {
           const turn = typeof debugObj?.turn_count === "number" ? (debugObj.turn_count as number) : undefined;
           const phase = (payload.phase ?? debugObj?.phase ?? "") as string;
           if (content) {
-            addTutorMessage(content, phase, trace, turn, payload.pending_choice ?? null);
+            // Snapshot the activity log onto the new tutor message so
+            // it can be re-inspected later via the collapsed
+            // "Activity log (N steps)" button on the bubble. Read
+            // synchronously so a near-simultaneous next-turn submit
+            // doesn't blank our snapshot before it's captured.
+            const liveLog = useSessionStore.getState().activityLog;
+            addTutorMessage(
+              content,
+              phase,
+              trace,
+              turn,
+              payload.pending_choice ?? null,
+              liveLog,
+            );
           } else {
             setPendingChoice(payload.pending_choice ?? null);
           }

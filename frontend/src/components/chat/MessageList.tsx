@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useSessionStore } from "../../stores/sessionStore";
+import { ActivityFeed } from "./ActivityFeed";
 import { MessageBubble } from "./MessageBubble";
 import { ThinkingIndicator } from "./ThinkingIndicator";
 
@@ -41,31 +42,7 @@ export function MessageList() {
         {messages.map((m) => (
           <MessageBubble key={m.id} message={m} />
         ))}
-        {showActivity && (
-          <div className="rounded-card border border-border bg-panel px-4 py-3 max-w-md">
-            <div className="text-xs text-muted uppercase tracking-wide mb-2">
-              Working on it
-            </div>
-            <ul className="text-sm space-y-1">
-              {activityLog.map((label, idx) => {
-                const isLatest = idx === activityLog.length - 1;
-                return (
-                  <li
-                    key={`${idx}-${label}`}
-                    className={`flex items-center gap-2 ${
-                      isLatest ? "text-text" : "text-muted"
-                    }`}
-                  >
-                    <span className="shrink-0">
-                      {isLatest ? "•" : "✓"}
-                    </span>
-                    <span>{label}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
+        {showActivity && <ActivityFeed labels={activityLog} mode="live" />}
         {streaming && (
           <div className="rounded-card bg-panel border border-border px-4 py-3">
             <div className="whitespace-pre-wrap">{streaming}</div>
