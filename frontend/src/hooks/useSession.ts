@@ -4,10 +4,21 @@ import { useSessionStore } from "../stores/sessionStore";
 import { useUserStore } from "../stores/userStore";
 import { useWebSocket } from "./useWebSocket";
 
-// localStorage key used by the /mastery page's "Revisit" buttons. When
-// set, the next bootstrapped session auto-sends this value as the
-// first student message after the tutor's rapport, then clears the key
-// so subsequent sessions don't keep reusing it.
+// localStorage keys used by the /mastery page's "Revisit" buttons.
+//
+// REVISIT_TOPIC_PATH (preferred): the canonical "ChN|sec|sub" path.
+//   When set, startSession sends it as `prelocked_topic` and the
+//   backend pre-fills locked_topic + anchor question, skipping the
+//   dean's free-text topic resolution. We also auto-send a brief
+//   "Let's continue" message so the dean fires the first hint
+//   without the user having to type anything.
+//
+// REVISIT_KEY (legacy / fallback): just the subsection title text.
+//   Used when the click happens before path metadata is present
+//   (e.g. older session cards). The bootstrap sends this as the
+//   first student message and the dean resolves topic the usual
+//   way — historically prone to mis-locking on short queries.
+const REVISIT_TOPIC_PATH = "sokratic_revisit_topic_path";
 const REVISIT_KEY = "sokratic_revisit_topic";
 
 export function useSession() {
@@ -44,9 +55,20 @@ export function useSession() {
     if (!studentId || threadId || bootstrapRef.current) return;
 
     const seq = bootstrapSeqRef.current;
+    // Read the prelocked-topic path BEFORE startSession so we can pass
+    // it through. Clear after read so a subsequent fresh-chat doesn't
+    // inherit it. The lookup is wrapped in try/catch — localStorage
+    // is unavailable in some private-browsing modes, fail-soft.
+    let prelockedPath: string | null = null;
+    try {
+      prelockedPath = localStorage.getItem(REVISIT_TOPIC_PATH);
+      if (prelockedPath) localStorage.removeItem(REVISIT_TOPIC_PATH);
+    } catch {
+      prelockedPath = null;
+    }
     const bootstrap = (async () => {
       try {
-        const session = await startSession(studentId, memoryEnabled);
+        const session = await startSession(studentId, memoryEnabled, prelockedPath);
         // Ignore stale bootstrap responses (prevents duplicate greetings/threads).
         if (bootstrapSeqRef.current !== seq) return;
         if (useSessionStore.getState().threadId) return;
@@ -59,17 +81,32 @@ export function useSession() {
           ? (initialDebug?.turn_trace as Array<Record<string, unknown>>)
           : [];
         if (session.initial_message) addTutorMessage(session.initial_message, "rapport", initialTrace, 0);
-        // After the bootstrap places the rapport message, check for a
-        // /mastery "Revisit" topic queued in localStorage. We just
-        // STAGE it here — a separate effect polls until the websocket
-        // is ready and then actually dispatches it via
-        // sendStudentMessage. localStorage is cleared in both spots
-        // so a retry doesn't double-send.
+        // After the bootstrap places the rapport message, queue an
+        // auto-send if the user clicked Revisit. Two cases:
+        //
+        //   prelocked path: topic + anchors are already set on the
+        //     server. We just need ANY first message to trigger the
+        //     dean's tutoring loop, which will fire the locked anchor
+        //     question via the teacher's first hint. Send a short
+        //     neutral prompt — the dean treats it as a low-effort
+        //     start and the teacher generates the first guided
+        //     question. We avoid sending the subsection title here
+        //     because with topic already locked the title is
+        //     redundant and produces an awkward transcript.
+        //
+        //   legacy REVISIT_KEY: free-text fallback. Send the
+        //     subsection title and let the dean resolve topic via
+        //     the usual path (vulnerable to mis-locking but kept for
+        //     backward compat with older session cards).
         try {
-          const revisit = localStorage.getItem(REVISIT_KEY);
-          if (revisit && revisit.trim()) {
-            pendingRevisitRef.current = revisit.trim();
-            localStorage.removeItem(REVISIT_KEY);
+          if (prelockedPath) {
+            pendingRevisitRef.current = "Let's begin with the first question.";
+          } else {
+            const revisit = localStorage.getItem(REVISIT_KEY);
+            if (revisit && revisit.trim()) {
+              pendingRevisitRef.current = revisit.trim();
+              localStorage.removeItem(REVISIT_KEY);
+            }
           }
         } catch {
           // localStorage unavailable — ignore, user just won't get auto-send

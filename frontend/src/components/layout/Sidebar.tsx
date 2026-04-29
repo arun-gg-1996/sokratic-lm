@@ -53,9 +53,16 @@ export function Sidebar() {
         </button>
 
         <nav className="flex flex-col gap-1 text-sm">
-          <Link className="rounded-lg px-3 py-2 hover:bg-bg transition" to="/overview">
-            Session overview
-          </Link>
+          {/*
+            "Session overview" was a legacy weak/strong-topic page
+            built before /mastery existed — it reads the stub
+            weak_topics state field which is never populated since
+            we replaced it with the per-concept MasteryStore. The
+            route is left registered in App.tsx in case we want to
+            repurpose the file later (e.g. as a chats history
+            list), but hidden from nav so users don't land on the
+            "Unknown topic" placeholder cards.
+          */}
           <Link className="rounded-lg px-3 py-2 hover:bg-bg transition" to="/chat">
             Chats
           </Link>

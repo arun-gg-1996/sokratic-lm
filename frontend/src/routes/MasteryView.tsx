@@ -29,6 +29,13 @@ import type {
   MasterySessionEntry,
 } from "../types";
 
+// Two keys, in priority order:
+//   REVISIT_TOPIC_PATH — preferred; the canonical "ChN|sec|sub" path.
+//     When present the bootstrap calls /api/session/start with
+//     prelocked_topic, skipping the dean's free-text resolution.
+//   REVISIT_KEY — legacy; subsection title only. Older session cards
+//     without path metadata fall back to this.
+const REVISIT_TOPIC_PATH = "sokratic_revisit_topic_path";
 const REVISIT_KEY = "sokratic_revisit_topic";
 
 // "Mastered" requires BOTH a high mastery score AND enough evidence
@@ -112,7 +119,7 @@ function SessionCard({
   onRevisit,
 }: {
   session: MasterySessionEntry;
-  onRevisit: (subsectionTitle: string) => void;
+  onRevisit: (subsectionTitle: string, path: string) => void;
 }) {
   const reached = session.outcome === "reached";
   const hasMastery = typeof session.mastery === "number";
@@ -143,7 +150,10 @@ function SessionCard({
         <div className="pt-1">
           <button
             onClick={() =>
-              onRevisit(session.subsection_title || session.section_title)
+              onRevisit(
+                session.subsection_title || session.section_title,
+                session.subsection_path,
+              )
             }
             className="rounded-lg border border-border px-3 py-1.5 text-sm hover:border-accent transition"
           >
@@ -164,7 +174,7 @@ function ChapterRow({
   chapter: MasteryChapterRow;
   expanded: boolean;
   onToggle: () => void;
-  onRevisit: (subsectionTitle: string) => void;
+  onRevisit: (subsectionTitle: string, path: string) => void;
 }) {
   return (
     <div className="rounded-card border border-border bg-panel">
@@ -204,7 +214,7 @@ function ConceptRow({
   onRevisit,
 }: {
   concept: MasteryConcept;
-  onRevisit: (subsectionTitle: string) => void;
+  onRevisit: (subsectionTitle: string, path: string) => void;
 }) {
   const mastered = isMastered(concept);
   const weak = isWeak(concept);
@@ -234,7 +244,7 @@ function ConceptRow({
       </div>
       {weak && (
         <button
-          onClick={() => onRevisit(concept.subsection_title)}
+          onClick={() => onRevisit(concept.subsection_title, concept.path)}
           className="rounded-lg border border-border px-2 py-1 text-xs hover:border-accent transition shrink-0"
           title="Start a session on this topic"
         >
@@ -283,14 +293,22 @@ export function MasteryView() {
     });
   };
 
-  const handleRevisit = (subsectionTitle: string) => {
-    if (!subsectionTitle) return;
-    // Store the topic; ChatView reads + clears this on bootstrap and
-    // dispatches it as the first student message after the tutor's
-    // rapport. Using localStorage rather than URL params so the value
-    // survives any session reset triggered by studentId change.
+  const handleRevisit = (subsectionTitle: string, path: string) => {
+    if (!subsectionTitle && !path) return;
+    // Prefer the path-based prelock — it's the path mastery cards
+    // already carry, and the backend uses it to skip topic resolution
+    // entirely (avoids the mis-lock seen on short queries like
+    // "Conduction System of the Heart" resolving to a different
+    // chapter via vote noise). Fall back to the legacy title-only
+    // key when path isn't available (e.g. older session cards).
     try {
-      localStorage.setItem(REVISIT_KEY, subsectionTitle);
+      if (path) {
+        localStorage.setItem(REVISIT_TOPIC_PATH, path);
+        localStorage.removeItem(REVISIT_KEY);
+      } else {
+        localStorage.setItem(REVISIT_KEY, subsectionTitle);
+        localStorage.removeItem(REVISIT_TOPIC_PATH);
+      }
     } catch {
       // ignore — user without localStorage just won't get the auto-send
     }

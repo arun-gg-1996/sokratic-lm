@@ -19,20 +19,27 @@ export async function listUsers(): Promise<User[]> {
 
 export async function startSession(
   studentId: string,
-  memoryEnabled: boolean = true
+  memoryEnabled: boolean = true,
+  prelockedTopic: string | null = null
 ): Promise<SessionStartResponse> {
   // D.6b-5: send the user's local hour so rapport's "Good morning/
   // afternoon/evening" comes from their clock, not the server's tz.
-  // Cheap to compute, harmless if backend ignores it (older deploys).
   const clientHour = new Date().getHours();
+  // Revisit pre-lock: when set, the backend skips topic resolution
+  // and pre-fills locked_topic + anchor question from the path. Sent
+  // by the /mastery page's Revisit buttons (where we already know
+  // exactly which subsection the user wants). Falls back to normal
+  // free-text flow when null.
+  const body: Record<string, unknown> = {
+    student_id: studentId,
+    memory_enabled: memoryEnabled,
+    client_hour: clientHour,
+  };
+  if (prelockedTopic) body.prelocked_topic = prelockedTopic;
   const res = await fetch(`${API_BASE}/api/session/start`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      student_id: studentId,
-      memory_enabled: memoryEnabled,
-      client_hour: clientHour,
-    }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error("Failed to start session");
   return res.json();

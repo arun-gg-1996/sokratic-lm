@@ -5,6 +5,7 @@ from functools import lru_cache
 from threading import RLock
 from typing import Any
 
+from conversation.dean import DeanAgent
 from conversation.graph import build_graph
 from memory.memory_manager import MemoryManager
 from retrieval.retriever import Retriever
@@ -45,6 +46,18 @@ def get_graph():
     retriever = get_retriever()
     memory_manager = get_memory_manager()
     return build_graph(retriever, memory_manager)
+
+
+@lru_cache(maxsize=1)
+def get_dean() -> DeanAgent:
+    """Direct DeanAgent reference. The graph holds one internally but
+    doesn't expose it; some endpoints (notably the Revisit pre-lock in
+    session.py) need to call dean.* methods imperatively before the
+    graph runs. Reuses the same retriever + memory_client singletons
+    so dean state stays consistent across the two construction sites."""
+    retriever = get_retriever()
+    memory_client = get_memory_manager().persistent
+    return DeanAgent(retriever, memory_client)
 
 
 @lru_cache(maxsize=1)

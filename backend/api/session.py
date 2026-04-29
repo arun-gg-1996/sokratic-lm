@@ -8,7 +8,12 @@ from fastapi import APIRouter, HTTPException
 from fastapi.encoders import jsonable_encoder
 
 from backend.api.users import known_student_id
-from backend.dependencies import get_graph, get_memory_manager, get_runtime_store
+from backend.dependencies import (
+    get_dean,
+    get_graph,
+    get_memory_manager,
+    get_runtime_store,
+)
 from backend.models.schemas import (
     StartSessionRequest,
     StartSessionResponse,
@@ -16,8 +21,106 @@ from backend.models.schemas import (
 )
 from config import cfg
 from conversation.state import initial_state
+from retrieval.topic_matcher import get_topic_matcher
 
 router = APIRouter()
+
+
+def _apply_prelock(state: dict, path: str) -> None:
+    """Pre-fill state with a TOC-locked topic, skipping the dean's
+    free-text topic resolution. Called at session-start when the
+    frontend's Revisit button knows the exact subsection.
+
+    The path is the SAME format the dean writes to
+    state["locked_topic"]["path"] and the mastery store uses:
+        "Ch{N}|{section_title}|{subsection_title}"
+    So we parse it directly here rather than looking up via the
+    topic matcher (which uses a different "Chapter N: ... > ..."
+    path format derived from textbook_structure.json).
+
+    Steps:
+      1. Parse the path → chapter_num, section, subsection.
+      2. Reject if the format is wrong (raises — caller falls
+         back to normal flow).
+      3. Populate state["locked_topic"] / topic_confirmed /
+         topic_selection in the same shape post-resolution does.
+      4. Eagerly run dean._retrieve_on_topic_lock(state) so
+         retrieved_chunks is populated. If the subsection has no
+         chunks (bad path), this fails the coverage gate
+         downstream — caller's except block catches and falls
+         back to free-text resolution.
+      5. Eagerly run dean._lock_anchors_call(state) so
+         locked_question + locked_answer are set before the first
+         student message.
+      6. Stamp state["debug"]["locked_topic_snapshot"] — the sticky
+         record memory_update_node + memory_manager fall back to
+         when state["locked_topic"] gets cleared by partial-merge
+         artifacts later.
+
+    Raises any error encountered. The caller in start_session
+    catches and falls back to the normal free-text flow.
+    """
+    parts = path.split("|", 2)
+    if len(parts) != 3 or not parts[0].startswith("Ch") or not parts[0][2:].isdigit():
+        raise ValueError(f"prelocked_topic path malformed: {path!r}")
+    chapter_num = int(parts[0][2:])
+    section = parts[1].strip()
+    subsection = parts[2].strip()
+    if not subsection:
+        raise ValueError(f"prelocked_topic missing subsection: {path!r}")
+
+    # Construct locked_topic in the same shape post-lock writes. The
+    # `chapter` field is conventionally the chapter title — we don't
+    # have it from the path alone, so we use the section as a
+    # human-readable stand-in (matches what the dean does when its
+    # vote-based resolver also lacks chapter_title metadata).
+    state["locked_topic"] = {
+        "path": path,
+        "chapter": section,    # best-effort; real chapter title not in the path
+        "section": section,
+        "subsection": subsection,
+        "difficulty": "moderate",
+        "chunk_count": 0,       # dean's coverage gate populates this from real retrieval
+        "limited": False,
+        "score": 1.0,
+    }
+    state["topic_confirmed"] = True
+    state["topic_selection"] = subsection
+    state["topic_options"] = []
+    state["topic_question"] = ""
+    state["pending_user_choice"] = {}
+
+    # Sticky snapshot. memory_manager._topic_metadata and
+    # memory_update_node both fall back to this when
+    # state["locked_topic"] is None at session-end.
+    state.setdefault("debug", {})
+    state["debug"]["locked_topic_snapshot"] = dict(state["locked_topic"])
+
+    # Eagerly retrieve + lock anchors so the first tutoring turn has
+    # everything ready. Both are idempotent on state — they read
+    # state["locked_topic"] and write retrieved_chunks /
+    # locked_question / locked_answer. Failures here propagate up to
+    # the caller's except block which falls back to free-text flow.
+    dean = get_dean()
+    dean._retrieve_on_topic_lock(state)
+    if not state.get("retrieved_chunks"):
+        raise ValueError(
+            f"prelocked_topic {path!r} returned 0 chunks — bad path or corpus mismatch"
+        )
+    anchors = dean._lock_anchors_call(state)
+    state["locked_question"] = str(anchors.get("locked_question", "") or "").strip()
+    state["locked_answer"] = str(anchors.get("locked_answer", "") or "").strip()
+    if not state["locked_question"] or not state["locked_answer"]:
+        raise ValueError(
+            f"prelocked_topic {path!r} anchor lock returned empty question/answer"
+        )
+    state["debug"].setdefault("turn_trace", []).append({
+        "wrapper": "session.prelock_applied",
+        "path": path,
+        "subsection": subsection,
+        "anchor_set": True,
+        "chunk_count": len(state.get("retrieved_chunks") or []),
+    })
 
 
 def _latest_tutor_message(state: dict) -> str:
@@ -72,6 +175,28 @@ async def start_session(req: StartSessionRequest):
     # D.6b-5: stash the client's local hour on state so rapport_node can
     # pass it to draft_rapport. None falls through to server-time.
     state["client_hour"] = req.client_hour if req.client_hour is not None else None
+
+    # Revisit pre-lock: when the frontend's "Revisit" button knows the
+    # exact subsection the user wants, skip the dean's free-text topic
+    # resolution entirely. Pre-fill state with the locked topic, then
+    # eagerly call dean._retrieve_on_topic_lock and _lock_anchors_call
+    # so the anchor question is ready before the first student message.
+    # On any failure we fall through to the normal flow — the user
+    # types and the dean resolves topic the usual way.
+    prelocked = (req.prelocked_topic or "").strip()
+    if prelocked:
+        try:
+            _apply_prelock(state, prelocked)
+        except Exception:
+            # Defensive: if prelock fails (bad path, retrieval error,
+            # anchor LLM failure), wipe the half-applied state and
+            # fall back. The user just gets a normal session.
+            state["topic_confirmed"] = False
+            state["locked_topic"] = None
+            state["topic_selection"] = ""
+            state["locked_question"] = ""
+            state["locked_answer"] = ""
+
     config = {"configurable": {"thread_id": thread_id}}
     state = graph.invoke(state, config=config)
     state.setdefault("debug", {}).setdefault("all_turn_traces", [])

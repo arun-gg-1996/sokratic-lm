@@ -18,6 +18,19 @@ class StartSessionRequest(BaseModel):
     # the user's tz. Falls back to server-time if omitted (legacy clients
     # / curl tests). Range-validated downstream.
     client_hour: int | None = None
+    # Pre-lock the session to a specific TOC subsection, skipping the
+    # dean's free-text topic-resolution flow. Set when the user clicks
+    # "Revisit" on a /mastery card or sessions log entry — we already
+    # know which subsection they want, so running topic resolution
+    # again risks mis-locking on a short query (the bug seen on 4/29
+    # where "Conduction System of the Heart" mis-resolved to "Aging
+    # and Muscle Tissue"). Format: "ChN|section|subsection" — same
+    # path the mastery store uses. Backend looks up the parts and
+    # pre-fills state["locked_topic"], state["topic_confirmed"]=True,
+    # then eagerly calls dean._retrieve_on_topic_lock and
+    # dean._lock_anchors_call so the anchor question is ready before
+    # the first student message.
+    prelocked_topic: str | None = None
 
 
 class StartSessionResponse(BaseModel):
