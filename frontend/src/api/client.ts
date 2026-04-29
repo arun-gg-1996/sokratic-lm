@@ -1,4 +1,5 @@
 import type {
+  MasteryDashboardResponse,
   MemoryDeleteResponse,
   MemoryListResponse,
   SessionStartResponse,
@@ -43,6 +44,16 @@ export async function forgetMemory(studentId: string): Promise<MemoryDeleteRespo
     { method: "DELETE" }
   );
   if (!res.ok) throw new Error("Failed to delete memory");
+  return res.json();
+}
+
+export async function getMastery(
+  studentId: string
+): Promise<MasteryDashboardResponse> {
+  const res = await fetch(
+    `${API_BASE}/api/mastery/${encodeURIComponent(studentId)}`
+  );
+  if (!res.ok) throw new Error("Failed to fetch mastery");
   return res.json();
 }
 

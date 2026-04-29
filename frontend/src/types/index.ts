@@ -66,3 +66,51 @@ export interface MemoryDeleteResponse {
   deleted: number;
   available: boolean;
 }
+
+// --- Mastery dashboard (D.3) ---
+
+export interface MasteryHeader {
+  touched: number;
+  mastered: number;
+  avg_mastery: number;
+}
+
+export interface MasteryConcept {
+  path: string;
+  chapter_num: number;
+  chapter_title: string;
+  section_title: string;
+  subsection_title: string;
+  mastery: number;
+  sessions: number;
+  last_seen: string;
+  last_outcome: string;
+}
+
+export interface MasteryChapterRow {
+  chapter_num: number;
+  chapter_title: string;
+  avg_mastery: number;
+  n_subsections_touched: number;
+  concepts: MasteryConcept[];
+}
+
+export interface MasterySessionEntry {
+  session_date: string;
+  chapter_num: number;
+  chapter_title: string;
+  section_title: string;
+  subsection_title: string;
+  subsection_path: string;
+  outcome: string;
+  mastery: number | null;
+  summary_text: string;
+}
+
+export interface MasteryDashboardResponse {
+  student_id: string;
+  available: boolean;
+  header: MasteryHeader;
+  chapters: MasteryChapterRow[];
+  sessions: MasterySessionEntry[];
+}

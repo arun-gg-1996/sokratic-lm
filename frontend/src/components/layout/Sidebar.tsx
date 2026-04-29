@@ -59,6 +59,9 @@ export function Sidebar() {
           <Link className="rounded-lg px-3 py-2 hover:bg-bg transition" to="/chat">
             Chats
           </Link>
+          <Link className="rounded-lg px-3 py-2 hover:bg-bg transition" to="/mastery">
+            My mastery
+          </Link>
         </nav>
 
         <div className="rounded-card border border-border bg-bg px-3 py-3 space-y-1 text-sm">
