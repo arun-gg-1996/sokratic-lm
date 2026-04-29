@@ -154,6 +154,13 @@ class TutorState(TypedDict):
     # Set per-session via the StartSessionRequest payload from the UI.
     memory_enabled: bool
 
+    # --- Client-local hour (D.6b-5) ---
+    # 0-23 from the frontend's `new Date().getHours()`, so the rapport
+    # greeting picks morning/afternoon/evening from the user's clock
+    # rather than the server's tz. None means the request didn't supply
+    # it (legacy callers / curl tests) — server-time falls through.
+    client_hour: Optional[int]
+
     # --- Multimodal ---
     is_multimodal: bool
     image_structures: list[str]     # structure names from Vision model
@@ -233,6 +240,7 @@ def initial_state(student_id: str, cfg) -> TutorState:
         exploration_max=int(getattr(getattr(cfg, "session", object()), "exploration_max", 3)),
         exploration_used=0,
         memory_enabled=True,
+        client_hour=None,
         is_multimodal=False,
         image_structures=[],
         debug={

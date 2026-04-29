@@ -69,6 +69,9 @@ async def start_session(req: StartSessionRequest):
     # by initial_state; we only override when the client passes False so
     # demo mode can show fresh-student behavior on demand.
     state["memory_enabled"] = bool(req.memory_enabled)
+    # D.6b-5: stash the client's local hour on state so rapport_node can
+    # pass it to draft_rapport. None falls through to server-time.
+    state["client_hour"] = req.client_hour if req.client_hour is not None else None
     config = {"configurable": {"thread_id": thread_id}}
     state = graph.invoke(state, config=config)
     state.setdefault("debug", {}).setdefault("all_turn_traces", [])

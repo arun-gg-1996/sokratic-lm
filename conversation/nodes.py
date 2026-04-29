@@ -140,6 +140,7 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
         weak_topics,
         state=state,
         past_session_memories=past_memories,
+        client_hour=state.get("client_hour"),
     )
 
     messages = list(state.get("messages", []))

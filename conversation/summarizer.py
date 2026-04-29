@@ -63,13 +63,41 @@ def maybe_summarize(messages: list[dict]) -> list[dict]:
     formatted_old_turns = "\n".join(formatted_parts)
 
     client = anthropic.Anthropic()
-    system = cfg.prompts.summarizer_system.format(old_turns=formatted_old_turns)
+    # D.6b-2: split the prompt into a stable instruction prefix +
+    # per-call old_turns block so the prefix is cache-eligible. Even
+    # though our current summarizer prompt is short (~50 tokens, below
+    # Anthropic's 1024-token cache floor), wiring it as a structured
+    # cached/uncached pair is the right shape: if the prompt grows
+    # (e.g., we add few-shot exemplars or extended pedagogical rules)
+    # caching kicks in automatically. Below-threshold prompts are
+    # transparently passed through uncached by the API.
+    template = cfg.prompts.summarizer_system
+    if "{old_turns}" in template:
+        prefix, suffix = template.split("{old_turns}", 1)
+    else:
+        # Defensive: very old configs may not have the placeholder.
+        # Treat the whole template as static and ignore the formatted
+        # turns (degraded but doesn't crash).
+        prefix, suffix = template, ""
+
+    system_blocks = [
+        {
+            "type": "text",
+            "text": prefix,
+            "cache_control": {"type": "ephemeral"},
+        },
+    ]
+    # The actual conversation gets its own block (per-call) plus any
+    # trailing template text (typically empty).
+    conversation_block_text = formatted_old_turns + (suffix or "")
+    system_blocks.append({"type": "text", "text": conversation_block_text})
 
     resp = client.messages.create(
         model=cfg.models.summarizer,
         max_tokens=300,
-        system=system,
+        system=system_blocks,
         messages=[{"role": "user", "content": "Summarize the conversation above."}],
+        extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"},
     )
     summary = resp.content[0].text
 

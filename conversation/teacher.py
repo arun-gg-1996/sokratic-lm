@@ -129,6 +129,7 @@ class TeacherAgent:
         weak_topics: list[dict],
         state: TutorState | None = None,
         past_session_memories: list[dict] | None = None,
+        client_hour: int | None = None,
     ) -> str:
         """
         Generate a personalized greeting for session start. Uses cfg.prompts.teacher_rapport.
@@ -144,6 +145,14 @@ class TeacherAgent:
                          language fact). When non-empty, the rapport
                          prompt may reference one prior topic. Empty / None
                          → fresh-session behavior.
+            client_hour: 0-23 hour from the user's local clock, sent by the
+                         frontend on session start (D.6b-5). Used to pick
+                         the morning/afternoon/evening greeting. Falls back
+                         to server-side datetime.now().hour if not provided
+                         (preserves backward compat for callers that don't
+                         pass it). Server-time fallback is wrong for
+                         deployments where the server isn't in the user's
+                         tz, hence the explicit client_hour parameter.
 
         Returns:
             str: Greeting message. If past_session_memories non-empty:
@@ -173,7 +182,14 @@ class TeacherAgent:
             if bullets:
                 past_str = "\n".join(bullets)
 
-        hour = datetime.now().hour
+        # Use client_hour when present (D.6b-5). Server fallback only fires
+        # when the call site forgot to pass it — the frontend's startSession
+        # always supplies it now.
+        hour = (
+            int(client_hour)
+            if client_hour is not None and 0 <= int(client_hour) <= 23
+            else datetime.now().hour
+        )
         if hour < 12:
             tod = "morning"
         elif hour < 17:
@@ -181,12 +197,13 @@ class TeacherAgent:
         else:
             tod = "evening"
 
-        # Resolve delta template, filling BOTH domain vars (via str.format)
-        # and the dynamic placeholders (past_session_memories, time_of_day).
-        # If teacher_rapport_delta is missing we fall back to the full
-        # teacher_rapport template so wrapper_delta still carries the
-        # populated placeholder text — never the raw "{past_session_memories}"
-        # literal, which is what was reaching the LLM before this fix.
+        # Resolve delta template — DOES NOT receive time_of_day. The TOD
+        # has been moved to the uncached turn_deltas block (D.6b-5) so the
+        # cached prefix stays stable across hour rollovers; otherwise every
+        # 60-minute boundary would invalidate the rapport cache. The
+        # wrapper_delta now references "{time_of_day}" as a literal label
+        # (escaped {{ }} in the YAML) and the LLM resolves the actual word
+        # from the runtime context block we inject as turn_deltas.
         delta_template = getattr(
             cfg.prompts,
             "teacher_rapport_delta",
@@ -194,14 +211,20 @@ class TeacherAgent:
         )
         wrapper_delta_filled = delta_template.format(
             past_session_memories=past_str,
-            time_of_day=tod,
             **_domain_prompt_vars(),
+        )
+        runtime_context = (
+            "Runtime context for this session:\n"
+            f"  time_of_day: {tod}\n"
+            "Use the corresponding 'Good morning' / 'Good afternoon' / "
+            "'Good evening' as the first words of your reply, exactly."
         )
         return self._call(
             user_msg="Start the session.",
             state=state,
             role_base=getattr(cfg.prompts, "teacher_base", ""),
             wrapper_delta=wrapper_delta_filled,
+            turn_deltas=runtime_context,
             wrapper_name="teacher.draft_rapport",
         )
 

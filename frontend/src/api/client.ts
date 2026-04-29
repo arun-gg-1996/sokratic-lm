@@ -21,10 +21,18 @@ export async function startSession(
   studentId: string,
   memoryEnabled: boolean = true
 ): Promise<SessionStartResponse> {
+  // D.6b-5: send the user's local hour so rapport's "Good morning/
+  // afternoon/evening" comes from their clock, not the server's tz.
+  // Cheap to compute, harmless if backend ignores it (older deploys).
+  const clientHour = new Date().getHours();
   const res = await fetch(`${API_BASE}/api/session/start`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ student_id: studentId, memory_enabled: memoryEnabled }),
+    body: JSON.stringify({
+      student_id: studentId,
+      memory_enabled: memoryEnabled,
+      client_hour: clientHour,
+    }),
   });
   if (!res.ok) throw new Error("Failed to start session");
   return res.json();

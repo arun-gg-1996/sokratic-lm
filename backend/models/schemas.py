@@ -12,6 +12,12 @@ class StartSessionRequest(BaseModel):
     # whether the student has prior mem0 entries. Used by the demo UI's
     # "Memory enabled" switch — defaults to True for the normal experience.
     memory_enabled: bool = True
+    # D.6b-5: client-local hour (0-23) so the rapport greeting picks
+    # morning/afternoon/evening from the USER's clock, not the server's.
+    # Required for any deployment where the FastAPI process isn't in
+    # the user's tz. Falls back to server-time if omitted (legacy clients
+    # / curl tests). Range-validated downstream.
+    client_hour: int | None = None
 
 
 class StartSessionResponse(BaseModel):

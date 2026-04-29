@@ -372,8 +372,11 @@ class Retriever:
     def _hyde_rewrite(self, query: str) -> str:
         """
         Ask a small LLM to rewrite the student's question as a 2-3 sentence
-        hypothetical textbook passage. Cached per-query to avoid duplicate cost
-        on anchor-lock + hint-plan calls within the same session.
+        hypothetical textbook passage. Cached two ways:
+          - process-local _HYDE_CACHE dict on identical query strings (deduplicates
+            anchor-lock + hint-plan calls within a session that hit the same query)
+          - Anthropic prompt cache on the static instructions (cache hits across
+            DIFFERENT queries that all share the same instruction prefix)
 
         Returns empty string on failure so callers can fall through to pure
         original-query retrieval.
@@ -391,11 +394,45 @@ class Retriever:
             if not prompt_tmpl:
                 return ""
             domain_short = getattr(getattr(cfg, "domain", object()), "short", "the subject")
-            prompt = prompt_tmpl.format(domain_short=domain_short, query=query)
+
+            # D.6b-3: split the prompt at the {query} placeholder so the
+            # instruction prefix (rules, examples, domain context) goes in
+            # a cache_control'd system block and only the per-query text
+            # is in the user message. Cache hits across different queries
+            # that share these instructions — exactly the cross-query
+            # caching we couldn't get with prompt-as-user-message.
+            #
+            # Below the Anthropic cache floor (~300 tokens here, floor is
+            # 1024 for Sonnet / 2048 for Haiku) the API still passes the
+            # block through uncached; the wiring is a no-op cost-wise
+            # but starts caching automatically if the prompt grows.
+            if "{query}" in prompt_tmpl:
+                prefix_tmpl, suffix_tmpl = prompt_tmpl.split("{query}", 1)
+            else:
+                prefix_tmpl, suffix_tmpl = prompt_tmpl, ""
+
+            system_text = prefix_tmpl.format(domain_short=domain_short).rstrip()
+            user_text = (
+                (suffix_tmpl.format(domain_short=domain_short).strip() + " " if suffix_tmpl else "")
+                + query
+            ).strip()
+            # If the suffix was just trailing punctuation/newlines after
+            # {query}, the user message ends up as just the query — fine.
+            if not user_text:
+                user_text = query
+
             resp = client.messages.create(
                 model=model,
                 max_tokens=220,
-                messages=[{"role": "user", "content": prompt}],
+                system=[
+                    {
+                        "type": "text",
+                        "text": system_text,
+                        "cache_control": {"type": "ephemeral"},
+                    }
+                ],
+                messages=[{"role": "user", "content": user_text}],
+                extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"},
             )
             text = (resp.content[0].text or "").strip() if resp.content else ""
             if text:
