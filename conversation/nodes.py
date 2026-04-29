@@ -498,29 +498,54 @@ def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
         "flushed": flushed,
     })
 
-    # D.3: per-concept knowledge tracing. Update the locked subsection's
-    # mastery score using the deterministic heuristic on
-    # (outcome, hints, turns). The store is the source of truth for the
-    # /mastery dashboard and feeds the topic suggester + rapport opener
-    # on the NEXT session start. Wrapped in try/except so a mastery
-    # failure never blocks session end.
+    # D.3: per-concept knowledge tracing via LLM-based scoring.
+    # Updates two signals per session for the locked subsection:
+    #   mastery     — point estimate (BKT-style P(L))
+    #   confidence  — coverage estimate (how thoroughly probed)
+    # See memory/mastery_store.py module docstring for the literature
+    # grounding (extends Corbett & Anderson 1995 BKT).
+    #
+    # No heuristic fallback by design: the LLM is the model. If the
+    # call fails after retries, this session's mastery simply doesn't
+    # update (logged in turn_trace) — degrades visibly rather than
+    # silently substituting a worse signal.
     mastery_status = "skipped"
     if student_id:
         try:
-            from memory.mastery_store import MasteryStore, score_session
+            from memory.mastery_store import MasteryStore, score_session_llm
+            from config import cfg as _cfg
+            import anthropic
             locked_path = (state.get("locked_topic") or {}).get("path", "") or ""
             if locked_path:
                 ms = MasteryStore()
-                score = score_session(state)
-                outcome = (
-                    "reached" if state.get("student_reached_answer")
-                    else "not_reached"
+                priors = ms.recent_rationales(student_id, locked_path, limit=3)
+                client = anthropic.Anthropic()
+                judgment = score_session_llm(
+                    state,
+                    prior_rationales=priors,
+                    client=client,
+                    model=_cfg.models.dean,
                 )
-                rec = ms.update(student_id, locked_path, score, outcome)
-                mastery_status = (
-                    f"updated mastery={rec.get('mastery')} "
-                    f"sessions={rec.get('sessions')}"
-                )
+                if judgment is None:
+                    mastery_status = "llm_scorer_failed_skipped_update"
+                else:
+                    outcome = (
+                        "reached" if state.get("student_reached_answer")
+                        else "not_reached"
+                    )
+                    rec = ms.update(
+                        student_id=student_id,
+                        subsection_path=locked_path,
+                        mastery_score=float(judgment["mastery"]),
+                        confidence_score=float(judgment["confidence"]),
+                        outcome=outcome,
+                        rationale=str(judgment.get("rationale", "")),
+                    )
+                    mastery_status = (
+                        f"updated mastery={rec.get('mastery')} "
+                        f"confidence={rec.get('confidence')} "
+                        f"sessions={rec.get('sessions')}"
+                    )
             else:
                 mastery_status = "skipped_no_locked_topic"
         except Exception as e:

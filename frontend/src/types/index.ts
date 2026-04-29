@@ -73,6 +73,7 @@ export interface MasteryHeader {
   touched: number;
   mastered: number;
   avg_mastery: number;
+  avg_confidence?: number;
 }
 
 export interface MasteryConcept {
@@ -82,9 +83,11 @@ export interface MasteryConcept {
   section_title: string;
   subsection_title: string;
   mastery: number;
+  confidence?: number;
   sessions: number;
   last_seen: string;
   last_outcome: string;
+  last_rationale?: string;
 }
 
 export interface MasteryChapterRow {

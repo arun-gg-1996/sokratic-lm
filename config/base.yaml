@@ -1152,3 +1152,80 @@ prompts:
 
     Conversation to summarize:
     {old_turns}
+
+  mastery_scorer_static: |
+    You are evaluating a tutoring session for the purpose of knowledge tracing.
+    Your job is to judge how much the student has demonstrated mastery of a
+    specific subsection of the textbook.
+
+    A subsection typically contains MULTIPLE concepts (e.g. "Conduction System
+    of the Heart" includes the SA node, AV node delay, bundle branches, and
+    Purkinje fibers). One tutoring session usually probes only ONE or TWO
+    of those concepts via the anchor question and follow-ups. Even a perfect
+    response demonstrates mastery of THAT specific concept, not the entire
+    subsection.
+
+    You output two numbers and a rationale:
+
+      mastery (0.0-1.0)
+        — How well-mastered does the student appear, considering BOTH the
+          quality of their reasoning in this session AND the fact that they
+          have only been probed on a slice of the subsection?
+        — Calibration anchors:
+            0.95: full subsection mastery demonstrated across many sessions
+            0.80: clear mastery of the concepts probed; likely mastered
+            0.50: emerging — the probed concepts are partially understood
+            0.25: weak — significant gaps even on what was probed
+            0.05: confused — fundamental misconceptions
+
+      confidence (0.0-1.0)
+        — How thoroughly did this session probe the subsection's full scope?
+        — Calibration anchors:
+            0.20: one anchor question on a single concept (typical 1st session)
+            0.50: the session probed 2-3 concepts within the subsection
+            0.80: comprehensive probe across most of the subsection's content
+            0.95: definitive mastery probe across nearly everything
+
+      rationale (1-2 sentences)
+        — Concrete reason for your scores. Reference what the student
+          actually did. This is saved with the score so a human can audit
+          your judgment later. Do NOT be vague.
+
+    Hard rules:
+      - Never produce mastery > 0.50 from a single 1-anchor session, even
+        if the student answered perfectly.
+      - Never produce confidence > 0.30 from a single session.
+      - On not_reached outcomes, mastery <= 0.40.
+      - On reached + 0 hints, mastery is at least 0.40 (some understanding
+        was demonstrated).
+
+    Return strict JSON only, no prose:
+    {
+      "mastery": 0.0,
+      "confidence": 0.0,
+      "rationale": ""
+    }
+
+  mastery_scorer_dynamic: |
+    Subsection being evaluated: {subsection_title}
+    Chapter: {chapter_title}
+
+    Session metrics:
+      outcome:    {outcome}
+      turns:      {turn_count}
+      hints used: {hint_level} of {max_hints}
+
+    Anchor question asked by tutor:
+      {locked_question}
+
+    Target answer the tutor was guiding toward:
+      {locked_answer}
+
+    Recent conversation transcript (most recent last):
+    {transcript}
+
+    Prior rationales from earlier sessions on THIS subsection (most recent
+    first; empty if this is the first session):
+    {prior_rationales}
+
+    Score this session.

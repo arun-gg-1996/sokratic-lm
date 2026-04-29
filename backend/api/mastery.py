@@ -41,8 +41,9 @@ router = APIRouter(prefix="/mastery", tags=["mastery"])
 
 class MasteryHeader(BaseModel):
     touched: int            # subsections with at least one session
-    mastered: int           # mastery >= 0.8
+    mastered: int           # mastery >= 0.80 AND confidence >= 0.60
     avg_mastery: float      # mean across touched, 0-1
+    avg_confidence: float = 0.0   # mean confidence across touched
 
 
 class MasteryConcept(BaseModel):
@@ -52,9 +53,11 @@ class MasteryConcept(BaseModel):
     section_title: str
     subsection_title: str
     mastery: float
+    confidence: float = 0.0
     sessions: int
     last_seen: str
     last_outcome: str
+    last_rationale: str = ""
 
 
 class MasteryChapterRow(BaseModel):
@@ -127,9 +130,11 @@ def _build_chapter_rows(concepts: dict) -> list[MasteryChapterRow]:
             section_title=section_title,
             subsection_title=subsection_title,
             mastery=float(rec.get("mastery", 0.0)),
+            confidence=float(rec.get("confidence", 0.0) or 0.0),
             sessions=int(rec.get("sessions", 0) or 0),
             last_seen=str(rec.get("last_seen", "") or ""),
             last_outcome=str(rec.get("last_outcome", "") or ""),
+            last_rationale=str(rec.get("last_rationale", "") or ""),
         ))
 
     rows: list[MasteryChapterRow] = []

@@ -31,8 +31,34 @@ import type {
 
 const REVISIT_KEY = "sokratic_revisit_topic";
 
+// "Mastered" requires BOTH a high mastery score AND enough evidence
+// (confidence). See memory/mastery_store.py docstring for the rationale
+// — extends classical BKT with a coverage signal so a 1-session
+// perfect answer doesn't prematurely badge a subsection as mastered.
+const MASTERED_THRESHOLD = 0.80;
+const CONFIDENCE_THRESHOLD = 0.60;
+const WEAK_THRESHOLD = 0.50;
+
 function pct(x: number): string {
   return `${Math.round(x * 100)}%`;
+}
+
+function confidenceLabel(c: number | undefined): string {
+  const v = c ?? 0;
+  if (v >= 0.6) return "high confidence";
+  if (v >= 0.3) return "medium confidence";
+  return "low confidence";
+}
+
+function isMastered(c: { mastery: number; confidence?: number }): boolean {
+  return (
+    c.mastery >= MASTERED_THRESHOLD &&
+    (c.confidence ?? 0) >= CONFIDENCE_THRESHOLD
+  );
+}
+
+function isWeak(c: { mastery: number }): boolean {
+  return c.mastery < WEAK_THRESHOLD;
 }
 
 function MasteryBar({
@@ -90,7 +116,7 @@ function SessionCard({
 }) {
   const reached = session.outcome === "reached";
   const hasMastery = typeof session.mastery === "number";
-  const showRevisit = hasMastery && (session.mastery as number) < 0.5;
+  const showRevisit = hasMastery && (session.mastery as number) < WEAK_THRESHOLD;
   const masteryLabel = hasMastery ? pct(session.mastery as number) : "—";
 
   return (
@@ -180,23 +206,23 @@ function ConceptRow({
   concept: MasteryConcept;
   onRevisit: (subsectionTitle: string) => void;
 }) {
-  const isMastered = concept.mastery >= 0.8;
-  const isWeak = concept.mastery < 0.5;
-  const dot = isMastered ? "•" : isWeak ? "•" : "•";
-  const dotClass = isMastered
+  const mastered = isMastered(concept);
+  const weak = isWeak(concept);
+  const dotClass = mastered
     ? "text-accent"
-    : isWeak
+    : weak
       ? "text-red-500"
       : "text-muted";
   return (
     <div className="px-4 py-2 flex items-center gap-3">
       <span className={`shrink-0 ${dotClass}`} aria-hidden>
-        {dot}
+        ●
       </span>
       <div className="flex-1 min-w-0">
         <div className="text-sm truncate">{concept.subsection_title}</div>
         <div className="text-xs text-muted">
           {concept.sessions} session{concept.sessions === 1 ? "" : "s"} ·
+          {" "}{confidenceLabel(concept.confidence)} ·
           last seen {concept.last_seen || "—"}
         </div>
       </div>
@@ -206,7 +232,7 @@ function ConceptRow({
       <div className="text-xs text-muted w-10 text-right shrink-0">
         {pct(concept.mastery)}
       </div>
-      {isWeak && (
+      {weak && (
         <button
           onClick={() => onRevisit(concept.subsection_title)}
           className="rounded-lg border border-border px-2 py-1 text-xs hover:border-accent transition shrink-0"
