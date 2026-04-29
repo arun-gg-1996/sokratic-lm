@@ -66,6 +66,7 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
     student_id = state.get("student_id", "") or ""
     memory_enabled = bool(state.get("memory_enabled", True))
     past_memories: list[dict] = []
+    weak_subsections: list[dict] = []
     if student_id and memory_enabled:
         try:
             recent_summaries = memory_manager.load(
@@ -89,9 +90,50 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
         # summaries) and trim to 6 total entries.
         past_memories = (open_threads[:3] + recent_summaries[:3])[:6]
 
-    # For new students, seed initial_suggestions from textbook structure
-    initial_suggestions: list[str] = []
-    if not weak_topics:
+        # D.3: pull the student's weakest subsections so the rapport
+        # opener can reference one *quantitatively* (not just "we worked
+        # on X last time" but "X is at 32% mastery, want to revisit?").
+        # Synthesize as additional bullets in past_session_memories so
+        # the existing prompt rules apply unchanged — the LLM can still
+        # only reference ONE item, no recap, no list.
+        try:
+            from memory.mastery_store import MasteryStore
+            ms = MasteryStore()
+            weak_subsections = ms.weak_subsections(
+                student_id, threshold=0.5, limit=2
+            )
+            for w in weak_subsections:
+                sub = w.get("subsection_title") or "?"
+                pct = int(round(float(w.get("mastery", 0.0)) * 100))
+                ch = w.get("chapter_num") or "?"
+                outcome = w.get("last_outcome") or ""
+                # Format as a "memory-shaped" dict so draft_rapport's
+                # existing field-resolution path treats it identically
+                # to a mem0 entry. The "Mastery cue:" prefix gives the
+                # LLM a hook to recognize it as a quantitative signal.
+                past_memories.append({
+                    "memory": (
+                        f"Mastery cue: {sub} (Ch{ch}) is at {pct}% mastery "
+                        f"(last outcome: {outcome or 'unknown'}). The "
+                        f"student would benefit from revisiting this "
+                        f"subsection."
+                    )
+                })
+        except Exception:
+            weak_subsections = []
+
+    # Initial suggestions: weak topics first for returning students,
+    # explore picks for fresh students. suggest_for_student gracefully
+    # falls back to plain suggest() when there's no mastery data.
+    if student_id and memory_enabled:
+        try:
+            from memory.mastery_store import MasteryStore
+            initial_suggestions = _topic_suggester.suggest_for_student(
+                MasteryStore(), student_id, n=6
+            )
+        except Exception:
+            initial_suggestions = _topic_suggester.suggest(n=6)
+    else:
         initial_suggestions = _topic_suggester.suggest(n=6)
 
     greeting = teacher.draft_rapport(

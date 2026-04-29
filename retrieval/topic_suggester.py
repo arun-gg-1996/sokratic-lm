@@ -100,3 +100,58 @@ class TopicSuggester:
         rng = random.Random(seed)
         sample = rng.sample(pool, min(n, len(pool)))
         return [t["path"] for t in sample]
+
+    def suggest_for_student(
+        self,
+        mastery_store,
+        student_id: str,
+        n: int = 6,
+        weak_threshold: float = 0.5,
+    ) -> list[str]:
+        """Mastery-aware topic suggestions for a returning student.
+
+        Returns up to `n` topic strings, half of them "revisit" picks
+        from the student's weakest subsections (mastery < threshold)
+        and the rest "explore" picks from the textbook structure.
+
+        For a fresh student (no mastery data yet), falls back to
+        suggest() — same behavior as before D.3.
+
+        Args:
+            mastery_store: a memory.mastery_store.MasteryStore instance
+            student_id:    validated student id
+            n:             total cards to return
+            weak_threshold: subsections under this mastery are "weak"
+
+        Returns:
+            list[str] — same shape as suggest() so callers don't need
+            to branch on returning vs fresh.
+        """
+        try:
+            n_weak_target = max(0, n // 2)
+            weak = mastery_store.weak_subsections(
+                student_id, threshold=weak_threshold, limit=n_weak_target
+            )
+        except Exception:
+            weak = []
+
+        # Format weak entries as path strings the dean's topic matcher
+        # can resolve back to the same TOC node. Subsection title alone
+        # is usually enough since the chunks retriever is good at
+        # matching short topic names to the right section. We append
+        # "(Ch{N})" so the user can tell the chapter at a glance from
+        # the card label without clicking through.
+        weak_strs: list[str] = []
+        seen_paths: set[str] = set()
+        for w in weak:
+            sub = w.get("subsection_title") or w.get("section_title") or ""
+            ch = w.get("chapter_num") or 0
+            if not sub:
+                continue
+            label = f"{sub} (Ch{ch})" if ch else sub
+            weak_strs.append(label)
+            seen_paths.add(w.get("path") or "")
+
+        n_explore = max(0, n - len(weak_strs))
+        explore = self.suggest(n=n_explore)
+        return weak_strs + explore
