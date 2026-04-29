@@ -73,6 +73,10 @@ export interface MemoryEntry {
   text: string;
   created_at: string | null;
   score: number | null;
+  // Structured metadata mem0 stored in the Qdrant payload. The drawer
+  // groups entries by metadata.session_date + metadata.topic_path.
+  // Empty object for legacy pre-metadata entries.
+  metadata?: Record<string, unknown>;
 }
 
 export interface MemoryListResponse {

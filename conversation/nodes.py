@@ -550,7 +550,14 @@ def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
             from memory.mastery_store import MasteryStore, score_session_llm
             from config import cfg as _cfg
             import anthropic
-            locked_path = (state.get("locked_topic") or {}).get("path", "") or ""
+            # Same sticky-snapshot fallback as MemoryManager._topic_metadata
+            # — state["locked_topic"] can end up None at this node even
+            # when a topic was locked earlier; debug.locked_topic_snapshot
+            # is the dean's write-once record that survives merges.
+            locked = state.get("locked_topic") or {}
+            if not locked:
+                locked = (state.get("debug") or {}).get("locked_topic_snapshot") or {}
+            locked_path = str(locked.get("path", "") or "")
             if locked_path:
                 fire_activity("Scoring concept mastery")
                 ms = MasteryStore()

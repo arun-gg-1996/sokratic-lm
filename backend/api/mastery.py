@@ -178,44 +178,75 @@ def _build_session_log(
     except Exception:
         raw = []
 
-    # Dedupe: mem0 atomizes one session_summary write into multiple
-    # facts, all sharing the same (session_date, subsection_path)
-    # metadata. The Sessions list wants ONE entry per actual session,
-    # not one per atomized fact. Group by (date, path) and keep the
-    # longest text fragment as the representative summary so the most
-    # informative line is what shows in the UI.
-    by_key: dict[tuple, MasterySessionEntry] = {}
+    # Dedupe: mem0 atomizes one session's NL writes into multiple
+    # category-tagged atoms, all sharing the same (date, topic_path)
+    # metadata. Group by that key. For the representative summary
+    # text we prefer category=session_summary atoms (the explicit
+    # "this is the session's summary" entries) over learning-style
+    # cues or other categories. Falls back to longest text in any
+    # category when no session_summary atom exists for the group.
+    grouped: dict[tuple, list[dict]] = {}
     for entry in (raw or []):
         if not isinstance(entry, dict):
             continue
         meta = entry.get("metadata") or {}
-        text = (entry.get("memory") or entry.get("text") or "")[:200]
-        path = str(meta.get("topic_path") or "")
         date = str(meta.get("session_date") or "")
+        path = str(meta.get("topic_path") or "")
+        # If both date and path are empty (legacy entries pre-metadata),
+        # bucket them together under ("", "") so they don't multiply
+        # into one row per atom — better one degraded-but-cohesive row
+        # than spam.
         key = (date, path)
+        grouped.setdefault(key, []).append(entry)
+
+    rows: list[MasterySessionEntry] = []
+    for (date, path), atoms in grouped.items():
+        # Pick representative atom + summary text. Preference order:
+        #   1. category=session_summary, longest text
+        #   2. any category, longest text
+        summary_atoms = [
+            a for a in atoms
+            if (a.get("metadata") or {}).get("category") == "session_summary"
+        ]
+        pool = summary_atoms or atoms
+        rep = max(
+            pool,
+            key=lambda a: len((a.get("memory") or a.get("text") or "")),
+        )
+        rep_meta = rep.get("metadata") or {}
+        text = (rep.get("memory") or rep.get("text") or "")[:200]
+
+        # Also harvest title fields from ANY atom in the group — some
+        # atoms may have empty subsection_title even when a sibling
+        # has the proper value (mem0 metadata is shared per write
+        # but mem0 sometimes drops fields on certain atomized facts).
+        # Find the first non-empty title across the group.
+        def _first_nonempty(field: str) -> str:
+            for a in atoms:
+                v = ((a.get("metadata") or {}).get(field) or "")
+                if str(v).strip():
+                    return str(v)
+            return ""
+
         rec = concepts.get(path) if isinstance(concepts, dict) else None
         mastery = (
             float(rec.get("mastery")) if isinstance(rec, dict) and "mastery" in rec
             else None
         )
-        candidate = MasterySessionEntry(
+        rows.append(MasterySessionEntry(
             session_date=date,
-            chapter_num=int(meta.get("chapter_num") or 0),
-            chapter_title=str(meta.get("chapter_title") or ""),
-            section_title=str(meta.get("section_title") or ""),
-            subsection_title=str(meta.get("subsection_title") or ""),
+            chapter_num=int(rep_meta.get("chapter_num") or 0),
+            chapter_title=_first_nonempty("chapter_title"),
+            section_title=_first_nonempty("section_title"),
+            subsection_title=_first_nonempty("subsection_title"),
             subsection_path=path,
-            outcome=str(meta.get("outcome") or ""),
+            outcome=str(rep_meta.get("outcome") or ""),
             mastery=mastery,
             summary_text=text,
-        )
-        prev = by_key.get(key)
-        # Keep the longer text fragment as more informative.
-        if prev is None or len(candidate.summary_text) > len(prev.summary_text):
-            by_key[key] = candidate
+        ))
 
     # Sort newest-first by session_date (ISO-8601 strings sort correctly).
-    rows = sorted(by_key.values(), key=lambda r: r.session_date, reverse=True)
+    rows.sort(key=lambda r: r.session_date, reverse=True)
     return rows[:limit]
 
 

@@ -45,6 +45,11 @@ class MemoryEntry(BaseModel):
     text: str
     created_at: str | None = None
     score: float | None = None
+    # Structured metadata payload (the same dict mem0 stores in the
+    # Qdrant entry's payload — see memory/memory_manager.py:_topic_metadata).
+    # Used by the frontend to GROUP entries by session and label them
+    # by category. Empty dict on legacy pre-metadata entries.
+    metadata: dict = {}
 
 
 class MemoryListResponse(BaseModel):
@@ -69,11 +74,13 @@ def _normalize_entry(raw: dict) -> MemoryEntry:
         or raw.get("text")
         or ""
     )
+    meta = raw.get("metadata") or {}
     return MemoryEntry(
         id=str(raw.get("id")) if raw.get("id") is not None else None,
         text=str(text),
         created_at=raw.get("created_at"),
         score=raw.get("score"),
+        metadata=meta if isinstance(meta, dict) else {},
     )
 
 

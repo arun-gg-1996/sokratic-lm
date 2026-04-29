@@ -227,8 +227,25 @@ class MemoryManager:
         was locked (early aborts, ambiguous sessions). Caller should still
         write the memory — useful for category=learning_style_cue which
         is meaningful even without a topic.
+
+        Sticky-snapshot fallback: in some session flows (notably the
+        clinical-pass close path), `state["locked_topic"]` ends up
+        None at memory_update_node time even though a topic WAS locked
+        earlier in the session — likely a partial-state-merge artifact
+        from how LangGraph routes through assessment_node ->
+        memory_update_node. When that happens we look at
+        `state["debug"]["locked_topic_snapshot"]`, the sticky record
+        the dean writes when topic-lock succeeds. This snapshot
+        survives any later state merges so it's the right fallback
+        for write-time metadata tagging.
         """
         locked = state.get("locked_topic") or {}
+        if not locked:
+            # Sticky fallback. Dean writes this at lock time and
+            # never overwrites — so even if state["locked_topic"]
+            # got blanked, the snapshot still has the data we need.
+            locked = (state.get("debug") or {}).get("locked_topic_snapshot") or {}
+
         path = str(locked.get("path", "") or "")
         chapter_num = 0
         m = re.match(r"Ch(\d+)\|", path)
