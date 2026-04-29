@@ -35,12 +35,27 @@ export function useWebSocket(threadId: string | null) {
           if (payload.content) appendStreamingToken(payload.content);
           return;
         }
-        if (payload.type === "message_complete") {
-          // Always clear the streaming buffer first — message_complete
-          // is authoritative; the buffered partials may have been from
-          // a streaming draft that was later revised by the dean's
-          // quality check (a rare but real path). Replace, don't merge.
+        if (payload.type === "stream_reset") {
+          // Dean's quality check rejected the streamed draft and
+          // substituted a revised one. Clear the now-stale buffer so
+          // the user sees a clean "thinking..." pause rather than
+          // an abrupt content swap when message_complete arrives.
           clearStreamingBuffer();
+          return;
+        }
+        if (payload.type === "message_complete") {
+          // Order matters: ADD the permanent tutor message FIRST,
+          // then clear the streaming buffer. The streaming bubble
+          // and the permanent bubble briefly co-exist for one
+          // render frame — visually identical content, so no
+          // user-visible duplicate — but neither is ever absent,
+          // which kills the "message disappears then reappears"
+          // flicker reported on first run.
+          //
+          // message_complete is authoritative — it carries the
+          // canonical final text (which may differ from the
+          // streamed partials if the dean's quality check rewrote
+          // the draft).
           const content = (payload.content ?? "").trim();
           const debugObj = (payload.debug ?? null) as Record<string, unknown> | null;
           const trace = Array.isArray(debugObj?.turn_trace)
@@ -56,6 +71,8 @@ export function useWebSocket(threadId: string | null) {
           if (phase) setSessionPhase(phase);
           setDebug(debugObj);
           setWaiting(false);
+          // Clear AFTER the permanent message is staged.
+          clearStreamingBuffer();
           return;
         }
         if (payload.type === "error") {

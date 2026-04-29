@@ -57,6 +57,18 @@ _stream_callback: contextvars.ContextVar[Optional[Callable[[str], None]]] = (
     contextvars.ContextVar("teacher_stream_callback", default=None)
 )
 
+# Companion to _stream_callback. The dean fires this when its quality
+# check rejects the streamed first draft and substitutes a revised
+# draft. The WS handler uses it to send a stream_reset event so the
+# frontend can clear the (now-stale) streaming buffer before the
+# final message_complete event arrives with the revised content.
+# Without this, the user sees content X stream in, then abruptly get
+# replaced by content Y in the final bubble — confusing and looks
+# like a UI bug.
+_stream_invalidate_callback: contextvars.ContextVar[Optional[Callable[[], None]]] = (
+    contextvars.ContextVar("teacher_stream_invalidate_callback", default=None)
+)
+
 
 def set_stream_callback(cb: Optional[Callable[[str], None]]) -> contextvars.Token:
     """Install a per-task streaming callback for draft_socratic. Returns
@@ -73,6 +85,37 @@ def set_stream_callback(cb: Optional[Callable[[str], None]]) -> contextvars.Toke
 
 def reset_stream_callback(token: contextvars.Token) -> None:
     _stream_callback.reset(token)
+
+
+def set_stream_invalidate_callback(
+    cb: Optional[Callable[[], None]]
+) -> contextvars.Token:
+    """Companion to set_stream_callback. The dean calls the resulting
+    callback when it discards a streamed draft in favor of a revised
+    one — the frontend can then clear its streaming buffer cleanly
+    instead of showing an abrupt content swap.
+    """
+    return _stream_invalidate_callback.set(cb)
+
+
+def reset_stream_invalidate_callback(token: contextvars.Token) -> None:
+    _stream_invalidate_callback.reset(token)
+
+
+def fire_stream_invalidate() -> None:
+    """Public hook for non-teacher modules (specifically dean.py). Fires
+    the contextvar callback if one is installed; no-op otherwise. Safe
+    to call from any thread — the underlying callback uses
+    loop.call_soon_threadsafe to enqueue."""
+    cb = _stream_invalidate_callback.get()
+    if cb is None:
+        return
+    try:
+        cb()
+    except Exception:
+        # Mirror set_stream_callback's swallow-all policy: a callback
+        # failure must not break the LLM call.
+        pass
 
 
 def _domain_prompt_vars() -> dict:

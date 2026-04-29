@@ -23,7 +23,13 @@ export interface ServerMessage {
   // message. Followed by a single "message_complete" with the full
   // aggregated content + final state — that event finalizes the
   // streaming buffer and refreshes pending_choice / debug.
-  type: "token" | "message_complete" | "error";
+  //
+  // "stream_reset" is fired when the dean's quality check rejects the
+  // streamed draft and substitutes a revised one. The frontend
+  // clears the streaming buffer immediately so the user sees a clean
+  // "thinking..." pause rather than content X being abruptly replaced
+  // by content Y when message_complete arrives.
+  type: "token" | "stream_reset" | "message_complete" | "error";
   content?: string;
   pending_choice?: PendingChoice | null;
   topic_confirmed?: boolean;

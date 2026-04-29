@@ -9,7 +9,12 @@ from fastapi.encoders import jsonable_encoder
 from backend.dependencies import get_graph, get_runtime_store
 from backend.models.schemas import ClientMessage
 from config import cfg
-from conversation.teacher import set_stream_callback, reset_stream_callback
+from conversation.teacher import (
+    reset_stream_callback,
+    reset_stream_invalidate_callback,
+    set_stream_callback,
+    set_stream_invalidate_callback,
+)
 
 router = APIRouter()
 
@@ -111,6 +116,9 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
             # only enqueues bytes; the WS write happens here in the
             # event loop.
             loop = asyncio.get_running_loop()
+            # Queue items: str = token delta to forward, None = stream
+            # finished sentinel, "" = stream invalidated (dean discarded
+            # the streamed draft and substituted; clear frontend buffer).
             token_queue: asyncio.Queue[str | None] = asyncio.Queue()
 
             def _on_token(text: str) -> None:
@@ -121,20 +129,36 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
                 except Exception:
                     pass
 
+            def _on_stream_invalidate() -> None:
+                # Sentinel: empty string. The drain task interprets this
+                # as "send a stream_reset event to the client". Distinct
+                # from None which ends the drain task.
+                try:
+                    loop.call_soon_threadsafe(token_queue.put_nowait, "")
+                except Exception:
+                    pass
+
             stream_token = set_stream_callback(_on_token)
+            invalidate_token = set_stream_invalidate_callback(_on_stream_invalidate)
 
             async def _drain_tokens() -> None:
-                """Forward each token to the WS as a partial event.
-                Stops when sentinel None arrives in the queue."""
+                """Forward each token to the WS. Stops on None sentinel.
+                Empty string is a stream-reset signal (dean discarded
+                the draft) — sent as its own event type."""
                 while True:
                     item = await token_queue.get()
                     if item is None:
                         return
                     try:
-                        await websocket.send_text(json.dumps({
-                            "type": "token",
-                            "content": item,
-                        }))
+                        if item == "":
+                            await websocket.send_text(json.dumps({
+                                "type": "stream_reset",
+                            }))
+                        else:
+                            await websocket.send_text(json.dumps({
+                                "type": "token",
+                                "content": item,
+                            }))
                     except Exception:
                         return
 
@@ -146,6 +170,7 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
                 )
             finally:
                 reset_stream_callback(stream_token)
+                reset_stream_invalidate_callback(invalidate_token)
                 # Sentinel ends the drain task. Always send it so the
                 # task can finish even if graph.invoke raised.
                 await token_queue.put(None)

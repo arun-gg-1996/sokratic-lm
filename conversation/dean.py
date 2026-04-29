@@ -1103,11 +1103,33 @@ class DeanAgent:
                         "debug": state["debug"],
                     }
 
-            # Topic locked to a TOC node. Rewrite the latest message to the
-            # canonical label so downstream retrieval/classification runs on
-            # semantic content rather than a number or shorthand.
+            # Topic locked to a TOC node.
+            #
+            # We only OVERWRITE the latest student message with the
+            # canonical TOC label when the message was a CARD PICK
+            # ("1", "first option", "the second one"). Card-pick
+            # responses are content-free shortcuts that downstream
+            # rendering needs translated to the actual topic name.
+            #
+            # For free-text topic queries ("what is the function of the
+            # SA node?") we KEEP the student's original phrasing in
+            # the messages list. Two reasons:
+            #   1) UX — the student's specific question stays visible
+            #      in the chat transcript, not blanked out into the
+            #      canonical label.
+            #   2) Pedagogy — the teacher's first Socratic draft sees
+            #      the actual question and can address it directly,
+            #      instead of generating a generic foundational
+            #      question for the whole subsection.
+            # Topic resolution metadata (topic_selection, locked_topic,
+            # debug.locked_topic_snapshot) still carries the canonical
+            # label for retrieval / classification calls — those don't
+            # need the rewrite.
             selected_label = picked_topic.label
-            state["messages"] = _replace_latest_student_message(messages, selected_label)
+            if intent == "card_pick":
+                state["messages"] = _replace_latest_student_message(
+                    messages, selected_label
+                )
             state["topic_confirmed"] = True
             state["topic_selection"] = selected_label
             state["locked_topic"] = {
@@ -1506,6 +1528,14 @@ class DeanAgent:
                     "wrapper": "dean.revised_teacher_draft_applied",
                     "result": "Applied Dean revised_teacher_draft (single-pass repair)",
                 })
+                # The streamed first draft is now stale — its content
+                # WILL differ from `approved_response`. Tell the WS
+                # handler to clear the frontend's streaming buffer so
+                # the user doesn't see content X stream in then get
+                # abruptly replaced by Y. (Best-effort; no-op when
+                # no callback is installed, e.g. eval harness.)
+                from conversation.teacher import fire_stream_invalidate
+                fire_stream_invalidate()
             else:
                 state["dean_critique"] = self._format_dean_critique(quality)
                 state["dean_retry_count"] = 1
@@ -1519,6 +1549,10 @@ class DeanAgent:
                     "tool_called": None,
                     "result": "Dean fallback used (no valid revised_teacher_draft)",
                 })
+                # Same reason as above — the streamed draft is being
+                # discarded in favor of the dean's fallback message.
+                from conversation.teacher import fire_stream_invalidate
+                fire_stream_invalidate()
 
         state["messages"].append({"role": "tutor", "content": approved_response, "phase": "tutoring"})
 
