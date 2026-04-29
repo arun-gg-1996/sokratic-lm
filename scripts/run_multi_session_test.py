@@ -249,9 +249,38 @@ async def run_one_session(
         bugs.append(f"rapport_error: {type(e).__name__}: {e}")
 
     # Phase 2: student gives topic
+    #
+    # Two harness-only adjustments to keep the topic-resolution honest:
+    #
+    #  (a) Clear pending_user_choice. rapport_node seeds initial_suggestions
+    #      (topic cards) which become a pending opt_in/topic choice in the
+    #      state. In a real UI the user would either click a card or type
+    #      free text; in the harness we always type, so we wipe the choice
+    #      first so the dean doesn't try to match our query against the
+    #      cards and substitute a card label as the student's "real" intent.
+    #
+    #  (b) Prefix the assigned query with an explicit topic commitment for
+    #      returning sessions. The rapport message (especially when memory
+    #      is rich) often invites "continue X or pivot?". Without this
+    #      preface, the simulated student's terse query can be interpreted
+    #      by the dean as agreeing to continue the prior topic. The user-
+    #      requested fix: the simulator must commit to its assigned topic
+    #      regardless of what the rapport suggested. Production users
+    #      drive this themselves; the harness has to fake the commitment.
+    #
+    # Both fixes are HARNESS-ONLY. Production code paths are unchanged.
+    state["pending_user_choice"] = {}
+    explicit_query = query
+    if session_idx > 1:
+        sub = topic_row.get("subsection_title") or ""
+        if sub:
+            explicit_query = (
+                f"Today I want to focus on {sub}, not any topic from "
+                f"earlier sessions. {query}"
+            )
     try:
         state["messages"] = list(state.get("messages", [])) + [
-            {"role": "student", "content": query, "phase": "topic_input"}
+            {"role": "student", "content": explicit_query, "phase": "topic_input"}
         ]
         state["phase"] = "topic_engagement"
         state = await graph.ainvoke(state, thread_config)

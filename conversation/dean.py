@@ -904,44 +904,118 @@ class DeanAgent:
             # we use it directly to identify the topic and only fall back to
             # the title matcher when the retriever cannot.
             if picked_topic is None:
-                query_for_match = normalized_topic or latest_student
+                # Prefer the RAW student message over the LLM-normalized
+                # topic for retrieval. Why: normalization is lossy — it
+                # collapses a sentence like "What are the structural and
+                # functional distinctions between superior and inferior
+                # venae cavae, and how do their tributary patterns differ?"
+                # to "systemic veins and venae cavae", which retrieves a
+                # smaller, differently-ranked chunk set (heart-anatomy-
+                # biased) than the full sentence does. The full message
+                # carries more keyword signal and lets the vote-based
+                # resolution converge on the correct TOC node.
+                #
+                # We still fall back to normalized_topic (a) when latest
+                # student message is empty/whitespace, and (b) for the
+                # fuzzy matcher below — short normalized strings are what
+                # rapidfuzz title-matching is tuned for.
+                latest_clean = (latest_student or "").strip()
+                query_for_match = latest_clean or normalized_topic
+                fuzzy_query = normalized_topic or latest_clean
                 semantic_top: TopicMatch | None = None
                 try:
                     sem_chunks = self.retriever.retrieve(query_for_match)
                 except Exception as _e:
                     sem_chunks = []
-                # Take the top primary chunk and lock to its (chapter,
-                # section, subsection) — that IS our topic in the TOC tree.
+                # Resolve topic by rank-weighted VOTE across top primaries
+                # rather than picking primaries[0]. Why: cross-encoder scores
+                # saturate at 1.000 in the high-relevance regime, so when 4
+                # out of 5 top primaries agree on (chapter, section,
+                # subsection) and 1 disagrees, the disagreeing one will
+                # often appear at rank 0 by sort-noise — and primaries[0]
+                # would pick the WRONG topic.
+                #
+                # Concrete failure observed (2026-04-29):
+                #   Query: "What are the structural and functional
+                #     distinctions between the superior and inferior venae
+                #     cavae, and how do their tributary patterns differ?"
+                #   primaries[0] = Ch19 Heart: Heart Defects     (score 1.0)
+                #   primaries[1..4] = Ch20 Overview of Systemic Veins (1.0)
+                #   → top-1 picks Heart Defects (wrong) but 4-of-5 vote
+                #     correctly resolves to Systemic Veins.
+                #
+                # Vote weighting: 1/(rank+1) so earlier results count more
+                # but a single rank-0 outlier can be overridden by 2-3
+                # consistent results at ranks 1-3.
                 primaries = [c for c in sem_chunks
                              if c.get("_window_role", "primary") == "primary"]
-                top_primary = primaries[0] if primaries else None
-                if top_primary and float(top_primary.get("score", 0.0)) >= float(
+                topic_gate = float(
                     getattr(cfg.retrieval, "dean_topic_gate_ce_threshold", 0.05)
-                ):
+                )
+                # Only consider primaries that pass the relevance gate.
+                # Most production queries hit saturation (score=1.0) so
+                # the gate filters out very weak retrievals (e.g. 1-word
+                # queries that match nothing well).
+                eligible = [
+                    (i, c) for i, c in enumerate(primaries[:5])
+                    if float(c.get("score", 0.0)) >= topic_gate
+                ]
+                if eligible:
+                    weights: dict[tuple, float] = {}
+                    rep: dict[tuple, dict] = {}  # representative chunk per path
+                    for rank, c in eligible:
+                        path_key = (
+                            c.get("chapter_num", 0),
+                            c.get("section_title", "") or "",
+                            c.get("subsection_title", "") or "",
+                        )
+                        weights[path_key] = weights.get(path_key, 0.0) + 1.0 / (rank + 1)
+                        # Keep first chunk seen for each path as the
+                        # representative — its metadata fills TopicMatch.
+                        if path_key not in rep:
+                            rep[path_key] = c
+                    best_path = max(weights, key=weights.get)
+                    chosen = rep[best_path]
                     semantic_top = TopicMatch(
-                        path=f"Ch{top_primary.get('chapter_num', 0)}|"
-                             f"{top_primary.get('section_title', '')}|"
-                             f"{top_primary.get('subsection_title', '')}",
-                        chapter=str(top_primary.get("chapter_title", "")),
-                        section=str(top_primary.get("section_title", "")),
-                        subsection=str(top_primary.get("subsection_title", "")),
+                        path=f"Ch{chosen.get('chapter_num', 0)}|"
+                             f"{chosen.get('section_title', '')}|"
+                             f"{chosen.get('subsection_title', '')}",
+                        chapter=str(chosen.get("chapter_title", "")),
+                        section=str(chosen.get("section_title", "")),
+                        subsection=str(chosen.get("subsection_title", "")),
                         difficulty="moderate",
                         chunk_count=0,
                         limited=False,
                         teachable=True,
-                        score=float(top_primary.get("score", 1.0)),
+                        score=float(chosen.get("score", 1.0)),
                     )
+                    state["debug"]["turn_trace"].append({
+                        "wrapper": "dean.topic_vote",
+                        "n_eligible": len(eligible),
+                        "winner_path": semantic_top.path,
+                        "winner_weight": round(weights[best_path], 3),
+                        "all_weights": {
+                            f"Ch{p[0]}|{p[1]}|{p[2]}": round(w, 3)
+                            for p, w in sorted(
+                                weights.items(), key=lambda x: -x[1]
+                            )[:5]
+                        },
+                    })
 
                 # Fallback: if the retriever couldn't resolve, run the legacy
                 # fuzzy-title matcher (with relaxed thresholds) so the
                 # rejection-with-alternatives path still works for ambiguous
                 # one-word queries like "joints" where retrieval has nothing
                 # specific to lock on.
+                # Fuzzy title matcher uses the (typically short) normalized
+                # topic if available — rapidfuzz works better against
+                # tight strings than full sentences.
                 matcher = get_topic_matcher()
-                result: MatchResult = matcher.match(query_for_match)
+                result: MatchResult = matcher.match(fuzzy_query)
                 state["debug"]["turn_trace"].append({
                     "wrapper": "dean.topic_match",
-                    "query": query_for_match,
+                    "retrieval_query": query_for_match[:200],
+                    "fuzzy_query": fuzzy_query[:200],
                     "tier": result.tier,
                     "top_score": result.top.score if result.top else 0.0,
                     "top_path": result.top.path if result.top else "",
@@ -995,7 +1069,10 @@ class DeanAgent:
                     # rendered deterministically.
                     refuse = self._prelock_refuse_call(
                         state,
-                        rejected_topic=query_for_match,
+                        # Show the user-facing short topic name in the
+                        # refuse copy, not the full sentence we used for
+                        # retrieval. fuzzy_query is the cleaner short form.
+                        rejected_topic=fuzzy_query,
                         failure_count=len(rejected_set),
                         refuse_reason=refuse_reason,
                     )
