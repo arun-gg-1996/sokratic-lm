@@ -451,11 +451,25 @@ def assessment_node(state: TutorState, dean, teacher) -> dict:
         clinical_pass = bool(eval_result.get("pass", False)) and state["clinical_confidence"] >= clinical_threshold
 
         if clinical_pass:
-            fire_activity("Wrapping up the session")
+            fire_activity(
+                f"Clinical reasoning verified ({int(state['clinical_confidence']*100)}% confidence)"
+            )
+            fire_activity("Generating closing summary")
             state["clinical_completed"] = True
             return _close_session_with_dean(state, dean, messages)
 
         if clinical_turn_count < clinical_max_turns:
+            # Verdict label so the user sees "we're continuing because the
+            # answer wasn't fully there yet" rather than going straight to
+            # follow-up with no signal of why.
+            student_state = (
+                state.get("clinical_state") or "incomplete"
+            )
+            remaining = clinical_max_turns - clinical_turn_count
+            fire_activity(
+                f"Reasoning {student_state} — asking a follow-up "
+                f"({remaining} turn{'s' if remaining != 1 else ''} remaining)"
+            )
             fire_activity("Drafting follow-up question")
             follow_up = str(eval_result.get("feedback_message", "") or "").strip()
             if not follow_up:
