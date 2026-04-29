@@ -7,6 +7,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from fastapi.encoders import jsonable_encoder
 
+from backend.api.users import known_student_id
 from backend.dependencies import get_graph, get_memory_manager, get_runtime_store
 from backend.models.schemas import (
     StartSessionRequest,
@@ -42,11 +43,28 @@ def _strip_internal(value: Any) -> Any:
 
 @router.post("/session/start", response_model=StartSessionResponse)
 async def start_session(req: StartSessionRequest):
-    thread_id = f"{req.student_id}_{uuid.uuid4().hex[:8]}"
+    # Defensive: reject empty / whitespace / unknown student_ids before
+    # they reach mem0 and create a dangling namespace. The frontend
+    # always sets student_id from listUsers().id, so a value here that
+    # isn't in USERS means a client bug or a tampered request — both
+    # worth a 400 rather than silently mingling memory under a bogus key.
+    sid = (req.student_id or "").strip()
+    if not sid:
+        raise HTTPException(status_code=400, detail="student_id required")
+    if not known_student_id(sid):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"unknown student_id: {sid!r}. Valid ids come from "
+                "GET /api/users."
+            ),
+        )
+
+    thread_id = f"{sid}_{uuid.uuid4().hex[:8]}"
     graph = get_graph()
     runtime = get_runtime_store()
 
-    state = initial_state(req.student_id, cfg)
+    state = initial_state(sid, cfg)
     # Apply per-session memory toggle from the request. Default True is set
     # by initial_state; we only override when the client passes False so
     # demo mode can show fresh-student behavior on demand.

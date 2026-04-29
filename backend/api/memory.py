@@ -33,6 +33,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
+from backend.api.users import known_student_id
 from backend.dependencies import get_memory_manager
 from memory.memory_manager import MemoryManager
 
@@ -90,25 +91,31 @@ async def list_memories(
     empty entries list rather than 5xx — the rest of the app still
     works, the panel just shows nothing.
     """
-    if not student_id or not student_id.strip():
+    sid = (student_id or "").strip()
+    if not sid:
         raise HTTPException(status_code=400, detail="student_id required")
+    if not known_student_id(sid):
+        raise HTTPException(
+            status_code=400,
+            detail=f"unknown student_id: {sid!r}",
+        )
 
     available = bool(mm.persistent.available)
     if not available:
         return MemoryListResponse(
-            student_id=student_id, available=False, count=0, entries=[]
+            student_id=sid, available=False, count=0, entries=[]
         )
 
     try:
         raw = mm.load(
-            student_id,
+            sid,
             query="topics covered, misconceptions, and outcomes from past sessions",
         )
     except Exception:
         raw = []
     entries = [_normalize_entry(r) for r in (raw or []) if isinstance(r, dict)]
     return MemoryListResponse(
-        student_id=student_id,
+        student_id=sid,
         available=True,
         count=len(entries),
         entries=entries,
@@ -130,16 +137,22 @@ async def forget_memories(
     the student had no history to wipe; -1 means mem0/Qdrant was
     unavailable and nothing happened.
     """
-    if not student_id or not student_id.strip():
+    sid = (student_id or "").strip()
+    if not sid:
         raise HTTPException(status_code=400, detail="student_id required")
+    if not known_student_id(sid):
+        raise HTTPException(
+            status_code=400,
+            detail=f"unknown student_id: {sid!r}",
+        )
 
     available = bool(mm.persistent.available)
     if not available:
         return MemoryDeleteResponse(
-            student_id=student_id, deleted=0, available=False
+            student_id=sid, deleted=0, available=False
         )
 
-    deleted = mm.forget(student_id)
+    deleted = mm.forget(sid)
     return MemoryDeleteResponse(
-        student_id=student_id, deleted=int(deleted), available=True
+        student_id=sid, deleted=int(deleted), available=True
     )
