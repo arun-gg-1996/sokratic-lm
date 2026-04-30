@@ -36,6 +36,13 @@ class StartSessionRequest(BaseModel):
 class StartSessionResponse(BaseModel):
     thread_id: str
     initial_message: str
+    # Set ONLY for pre-locked (revisit) sessions. When the topic was
+    # pre-locked via _apply_prelock, the backend builds the dean's
+    # topic-acknowledgement message inline so the user lands directly
+    # on "Got it — let's work on X. Question?" instead of having to
+    # send a kickstarter message. Frontend renders it as a second
+    # tutor turn right after the rapport greeting.
+    initial_topic_ack: str | None = None
     initial_debug: dict[str, Any] | None = None
 
 

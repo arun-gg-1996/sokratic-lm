@@ -110,10 +110,22 @@ def _apply_prelock(state: dict, path: str) -> None:
     anchors = dean._lock_anchors_call(state)
     state["locked_question"] = str(anchors.get("locked_question", "") or "").strip()
     state["locked_answer"] = str(anchors.get("locked_answer", "") or "").strip()
+    raw_aliases_pre = anchors.get("locked_answer_aliases", []) or []
+    state["locked_answer_aliases"] = (
+        [str(a) for a in raw_aliases_pre if isinstance(a, str) and str(a).strip()]
+        if isinstance(raw_aliases_pre, list) else []
+    )
+    # Two-tier (Change 2026-04-30): full_answer for grading layer.
+    state["full_answer"] = str(anchors.get("full_answer", "") or "").strip() or state["locked_answer"]
     if not state["locked_question"] or not state["locked_answer"]:
         raise ValueError(
             f"prelocked_topic {path!r} anchor lock returned empty question/answer"
         )
+    # Change 2 (2026-04-29): mark topic as just-locked so the FIRST
+    # dean_node call (after rapport's greeting) emits a deterministic
+    # ack message stating the question, instead of jumping into a
+    # paraphrased hint. The dean's ack-emit branch consumes this flag.
+    state["topic_just_locked"] = True
     state["debug"].setdefault("turn_trace", []).append({
         "wrapper": "session.prelock_applied",
         "path": path,
@@ -213,8 +225,53 @@ async def start_session(req: StartSessionRequest):
             }
         )
 
+    # Change 2 (2026-04-29): for prelocked sessions, build the dean's
+    # topic-acknowledgement message inline and send it back to the
+    # client as a second tutor message. This avoids the prior workaround
+    # of having the frontend auto-send "Let's begin..." just to trigger
+    # the dean → ack flow. We append the ack to state["messages"] AND
+    # return it as `initial_topic_ack` so the frontend can render it as
+    # a distinct second message. The flag is consumed here so the
+    # student's first real message goes through the normal teacher flow.
+    initial_topic_ack: str | None = None
+    if state.get("topic_just_locked", False):
+        try:
+            initial_topic_ack = dean._build_topic_ack_message(state)
+            if initial_topic_ack:
+                state["messages"].append({
+                    "role": "tutor",
+                    "content": initial_topic_ack,
+                    "phase": "tutoring",
+                })
+                state["topic_just_locked"] = False
+                state["debug"].setdefault("turn_trace", []).append({
+                    "wrapper": "session.topic_ack_inline",
+                    "result": "ack_emitted_during_bootstrap",
+                })
+        except Exception as e:
+            # Defensive: if ack-build fails for any reason, fall through
+            # to the legacy auto-send path. The state still has
+            # topic_just_locked=True so the next dean_node call will
+            # fire the ack on the student's first message.
+            state["debug"].setdefault("turn_trace", []).append({
+                "wrapper": "session.topic_ack_inline_failed",
+                "error": str(e)[:200],
+            })
+            initial_topic_ack = None
+
     runtime.set(thread_id, state)
     greeting = _latest_tutor_message(state)
+    # _latest_tutor_message returns the LAST tutor msg — for prelocked
+    # sessions where we just appended the ack, that'd be the ack and
+    # the rapport greeting would be lost from initial_message. Fix by
+    # walking back: greeting is the EARLIEST rapport message, ack is
+    # what we appended (if any).
+    if initial_topic_ack:
+        # Find the rapport greeting (the tutor message before the ack).
+        for _msg in state.get("messages", [])[:-1]:
+            if (_msg or {}).get("role") == "tutor":
+                greeting = str(_msg.get("content", "") or "")
+                break
     debug_payload = dict(state.get("debug", {}) or {})
     debug_payload["phase"] = state.get("phase")
     debug_payload["turn_count"] = int(state.get("turn_count", 0) or 0)
@@ -225,11 +282,29 @@ async def start_session(req: StartSessionRequest):
     debug_payload["max_hints"] = int(state.get("max_hints", 3) or 3)
     debug_payload["topic_confirmed"] = bool(state.get("topic_confirmed", False))
     debug_payload["topic_selection"] = str(state.get("topic_selection", "") or "")
+    # Send the full locked_topic dict so the sidebar can show chapter +
+    # section + subsection in the collapsible details (Phase 1, 2026-04-30).
+    debug_payload["locked_topic"] = state.get("locked_topic") or None
     debug_payload["locked_question"] = str(state.get("locked_question", "") or "")
     debug_payload["locked_answer"] = state.get("locked_answer", "")
     debug_payload["answer_locked"] = bool(str(state.get("locked_answer", "") or "").strip())
     debug_payload["domain"] = getattr(getattr(cfg, "domain", object()), "short", "")
-    return StartSessionResponse(thread_id=thread_id, initial_message=greeting, initial_debug=debug_payload)
+    # Change 4 / 5.1: surface counters for sidebar debug pills
+    debug_payload["help_abuse_count"] = int(state.get("help_abuse_count", 0) or 0)
+    debug_payload["help_abuse_threshold"] = int(getattr(cfg.dean, "help_abuse_threshold", 4))
+    debug_payload["off_topic_count"] = int(state.get("off_topic_count", 0) or 0)
+    debug_payload["off_topic_threshold"] = int(getattr(cfg.dean, "off_topic_threshold", 4))
+    debug_payload["total_low_effort_turns"] = int(state.get("total_low_effort_turns", 0) or 0)
+    debug_payload["total_off_topic_turns"] = int(state.get("total_off_topic_turns", 0) or 0)
+    debug_payload["clinical_low_effort_count"] = int(state.get("clinical_low_effort_count", 0) or 0)
+    debug_payload["clinical_off_topic_count"] = int(state.get("clinical_off_topic_count", 0) or 0)
+    debug_payload["clinical_strike_threshold"] = int(getattr(cfg.dean, "clinical_strike_threshold", 2))
+    return StartSessionResponse(
+        thread_id=thread_id,
+        initial_message=greeting,
+        initial_topic_ack=initial_topic_ack,
+        initial_debug=debug_payload,
+    )
 
 
 @router.get("/session/{thread_id}/state")

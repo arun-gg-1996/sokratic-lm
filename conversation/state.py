@@ -43,6 +43,22 @@ class TutorState(TypedDict):
     # Never shown to Teacher (except in draft_clinical during assessment phase).
     # Empty string means not yet locked.
     locked_answer: str
+    # ~5 alternate phrasings of locked_answer produced at lock time.
+    # Used by reached_answer_gate's Step A token-overlap check so a
+    # student saying "calf muscle pump" gets credit for "skeletal muscle
+    # pump". Never shown to Teacher. Empty list means not yet locked
+    # (or generation failed — gate falls back to LLM paraphrase check).
+    locked_answer_aliases: list[str]
+    # Two-tier anchor design (2026-04-30, post-18-convo eval review):
+    # `locked_answer` is the SHORT concept anchor (1-5 words, used by
+    # the reached_answer_gate token-overlap check). `full_answer` is the
+    # COMPLETE textbook answer — may be a list, may be a sentence — used
+    # by the mastery scorer + clinical assessment + end-of-session
+    # summary. Decoupling them solves the "what are the parts of a
+    # nephron?" problem where the gate needs a short anchor but the
+    # genuine answer is a 4-component list. When `full_answer` is empty,
+    # callers fall back to `locked_answer` for backward compatibility.
+    full_answer: str
 
     # --- Hint tracking ---
     hint_level: int                 # current level, starts at 0 (pre-lock)
@@ -122,15 +138,49 @@ class TutorState(TypedDict):
     # grading should treat such sessions as `ungraded`. Schema:
     # {path, chapter, section, subsection, difficulty, chunk_count, limited, score}
     locked_topic: Optional[dict]
+    # True for exactly one dean_node call: the turn when locked_topic +
+    # locked_question + locked_answer all become present for the first time.
+    # Consumed by dean_node's "topic acknowledgement" branch which emits a
+    # deterministic message announcing the topic and stating the locked
+    # question verbatim, BEFORE any Socratic hints fire. Set to False at
+    # turn-start in dean_node (or by the prelock helper). Without this
+    # flag, students never saw the actual question — only paraphrased
+    # hint #1 — which made the session feel directionless from turn one.
+    topic_just_locked: bool
     # UI deterministic-choice helper for card/button flows.
     pending_user_choice: dict
 
     # --- Help abuse tracking ---
     # Counts consecutive low-effort student turns.
     # Resets to 0 when student makes a real attempt (any non-low_effort state).
-    # When it reaches cfg.dean.help_abuse_threshold, hint_level advances anyway and counter resets.
+    # When it reaches cfg.dean.help_abuse_threshold, hint_level advances and counter resets.
     # Gated entirely in Python (dean.py) — not LLM logic.
     help_abuse_count: int
+    # --- Off-topic tracking (Change 4, 2026-04-30) ---
+    # Counts consecutive off-DOMAIN turns (category C — outside the textbook
+    # subject entirely; e.g. vaping, profanity, sexual content). Domain-
+    # tangential questions (category B — in-domain but off the locked
+    # topic) do NOT increment this counter; they're handled by
+    # exploration_judge / exploration_retrieval.
+    # Resets on ANY engaged turn. At cfg.dean.off_topic_threshold (default 4),
+    # the dean terminates the WHOLE session (sets core/clinical mastery_tier
+    # to "not_assessed", routes to memory_update with farewell narration).
+    off_topic_count: int
+    # --- Telemetry counters (non-resetting; read by mastery_scorer) ---
+    # Track session-wide patterns even when consecutive strikes don't
+    # accumulate (e.g. a student who interleaves stonewalls with genuine
+    # attempts). Mastery scorer's rationale references these to penalize
+    # session-wide stonewalling/drift even when no individual chain hit
+    # threshold.
+    total_low_effort_turns: int
+    total_off_topic_turns: int
+    # --- Clinical phase counters (Change 5.1, 2026-04-30) ---
+    # Mirror help_abuse_count / off_topic_count but for the clinical
+    # (assessment) phase. At cfg.dean.clinical_strike_threshold (default 2),
+    # the clinical phase ENDS (clinical_mastery_tier=not_assessed) but the
+    # session continues to memory_update — student keeps tutoring credit.
+    clinical_low_effort_count: int
+    clinical_off_topic_count: int
 
     # --- Topic-lock rejection tracking ---
     # TOC paths that failed the coverage gate in this session. Used by
@@ -204,6 +254,8 @@ def initial_state(student_id: str, cfg) -> TutorState:
         retrieved_chunks=[],
         locked_question="",
         locked_answer="",
+        locked_answer_aliases=[],
+        full_answer="",
         hint_level=0,
         max_hints=cfg.session.max_hints,
         turn_count=0,
@@ -234,8 +286,14 @@ def initial_state(student_id: str, cfg) -> TutorState:
         topic_question="",
         topic_selection="",
         locked_topic=None,
+        topic_just_locked=False,
         pending_user_choice={},
         help_abuse_count=0,
+        off_topic_count=0,
+        total_low_effort_turns=0,
+        total_off_topic_turns=0,
+        clinical_low_effort_count=0,
+        clinical_off_topic_count=0,
         rejected_topic_paths=[],
         exploration_max=int(getattr(getattr(cfg, "session", object()), "exploration_max", 3)),
         exploration_used=0,

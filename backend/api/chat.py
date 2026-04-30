@@ -212,10 +212,23 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
             debug_payload["max_hints"] = int(new_state.get("max_hints", 3) or 3)
             debug_payload["topic_confirmed"] = bool(new_state.get("topic_confirmed", False))
             debug_payload["topic_selection"] = str(new_state.get("topic_selection", "") or "")
+            # Send the full locked_topic dict so the sidebar can show
+            # chapter + section + subsection in the collapsible details.
+            debug_payload["locked_topic"] = new_state.get("locked_topic") or None
             debug_payload["locked_question"] = str(new_state.get("locked_question", "") or "")
             debug_payload["locked_answer"] = new_state.get("locked_answer", "")
             debug_payload["answer_locked"] = bool(str(new_state.get("locked_answer", "") or "").strip())
             debug_payload["domain"] = getattr(getattr(cfg, "domain", object()), "short", "")
+            # Change 4 / 5.1: surface counters for sidebar debug pills
+            debug_payload["help_abuse_count"] = int(new_state.get("help_abuse_count", 0) or 0)
+            debug_payload["help_abuse_threshold"] = int(getattr(cfg.dean, "help_abuse_threshold", 4))
+            debug_payload["off_topic_count"] = int(new_state.get("off_topic_count", 0) or 0)
+            debug_payload["off_topic_threshold"] = int(getattr(cfg.dean, "off_topic_threshold", 4))
+            debug_payload["total_low_effort_turns"] = int(new_state.get("total_low_effort_turns", 0) or 0)
+            debug_payload["total_off_topic_turns"] = int(new_state.get("total_off_topic_turns", 0) or 0)
+            debug_payload["clinical_low_effort_count"] = int(new_state.get("clinical_low_effort_count", 0) or 0)
+            debug_payload["clinical_off_topic_count"] = int(new_state.get("clinical_off_topic_count", 0) or 0)
+            debug_payload["clinical_strike_threshold"] = int(getattr(cfg.dean, "clinical_strike_threshold", 2))
 
             payload = {
                 "type": "message_complete",

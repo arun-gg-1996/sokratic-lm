@@ -40,7 +40,22 @@ def _load() -> dict:
     with open(domain_file, "r") as f:
         domain_cfg = yaml.safe_load(f) or {}
 
-    return _deep_merge(base, domain_cfg)
+    merged = _deep_merge(base, domain_cfg)
+
+    # Optional: load evaluation prompts from a sibling yaml so the
+    # quality scorer can read them via cfg.eval_prompts.<key>.
+    # This file is OPTIONAL — production runs without the eval scorer
+    # don't need it. If absent, cfg.eval_prompts is just an empty section.
+    eval_prompts_file = CONFIG_DIR / "eval_prompts.yaml"
+    if eval_prompts_file.exists():
+        with open(eval_prompts_file, "r") as f:
+            ep = yaml.safe_load(f) or {}
+        # The yaml's top-level key is `eval_prompts:` with the templates
+        # nested inside; flatten that one level so cfg.eval_prompts.<key>
+        # works directly.
+        merged["eval_prompts"] = ep.get("eval_prompts", ep) or {}
+
+    return merged
 
 
 _raw = _load()
@@ -71,6 +86,7 @@ class Config:
     paths      = _Section(_raw["paths"])
     qdrant     = _Section(_raw["qdrant"])
     prompts    = _Section(_raw["prompts"])
+    eval_prompts = _Section(_raw.get("eval_prompts", {}) or {})
     query_aliases = _raw.get("query_aliases", {}) or {}
     topic_index   = _Section(_raw.get("topic_index", {}) or {})
 

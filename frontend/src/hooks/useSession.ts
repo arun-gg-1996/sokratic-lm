@@ -81,25 +81,32 @@ export function useSession() {
           ? (initialDebug?.turn_trace as Array<Record<string, unknown>>)
           : [];
         if (session.initial_message) addTutorMessage(session.initial_message, "rapport", initialTrace, 0);
-        // After the bootstrap places the rapport message, queue an
-        // auto-send if the user clicked Revisit. Two cases:
-        //
-        //   prelocked path: topic + anchors are already set on the
-        //     server. We just need ANY first message to trigger the
-        //     dean's tutoring loop, which will fire the locked anchor
-        //     question via the teacher's first hint. Send a short
-        //     neutral prompt — the dean treats it as a low-effort
-        //     start and the teacher generates the first guided
-        //     question. We avoid sending the subsection title here
-        //     because with topic already locked the title is
-        //     redundant and produces an awkward transcript.
-        //
-        //   legacy REVISIT_KEY: free-text fallback. Send the
-        //     subsection title and let the dean resolve topic via
-        //     the usual path (vulnerable to mis-locking but kept for
-        //     backward compat with older session cards).
+        // Change 2 (2026-04-29): for prelocked sessions, the backend now
+        // builds the dean's deterministic topic-acknowledgement message
+        // inline and sends it back as `initial_topic_ack`. Render it as
+        // a second tutor turn — the user lands directly on "Got it —
+        // let's work on X. Question?" without us needing to fake a
+        // student message to trigger the dean.
+        if (session.initial_topic_ack && session.initial_topic_ack.trim()) {
+          addTutorMessage(session.initial_topic_ack.trim(), "tutoring", [], 0);
+        }
+        // Auto-send queue for the legacy free-text Revisit path only.
+        // Pre-locked sessions used to need a kickstarter ("Let's begin
+        // with the first question.") so the dean would fire — that's
+        // obsolete now that the ack message ships in the bootstrap
+        // response. We still support REVISIT_KEY (legacy fallback)
+        // where the click happened before path metadata was set; in
+        // that case we send the subsection title as free-text and let
+        // the dean resolve topic the usual way.
         try {
-          if (prelockedPath) {
+          if (prelockedPath && session.initial_topic_ack) {
+            // Prelocked + ack already shown — no auto-send needed.
+            // Student types their first answer attempt directly.
+          } else if (prelockedPath) {
+            // Defensive: prelock succeeded but the inline ack failed
+            // (server-side build error). Fall back to the old
+            // kickstarter so the dean's ack-emit branch fires on the
+            // student's first message.
             pendingRevisitRef.current = "Let's begin with the first question.";
           } else {
             const revisit = localStorage.getItem(REVISIT_KEY);

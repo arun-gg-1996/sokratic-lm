@@ -70,16 +70,21 @@ class MatchResult:
 # Score thresholds. Tuned for OT corpus — student free-text is usually short
 # (1-4 words), while TOC labels are 1-10 words; token_set_ratio is the right
 # primitive because it's invariant to extra/missing tokens.
+#
 # 2026-04-29: lowered STRONG_MIN 90 → 65 after end-to-end testing showed
-# the previous threshold was rejecting valid in-corpus topics by demanding
-# near-exact title overlap. token_set_ratio of natural student questions
-# against textbook titles ("what are the parts of a nephron?" vs
-# "Nephrons: The Functional Unit") commonly scores 65-85 — well below 90
-# but clearly the right topic. The chunks retriever already does proper
-# in-scope checking via embeddings + CE rerank downstream, so this gate
-# only needs to be permissive enough to identify the right TOC node.
-STRONG_MIN = 65
-STRONG_GAP = 5            # top must lead second by this much to auto-lock
+# the previous threshold was rejecting valid in-corpus topics.
+#
+# 2026-04-30 (post-18-convo qualitative review): bumped STRONG_MIN 65 → 78
+# and STRONG_GAP 5 → 10. The 18-convo batch surfaced ~5 cases where a
+# fuzzy match in the 65-78 range was conceptually WRONG (long bone →
+# muscle types; cardiac cycle → muscle twitch). The fuzzy matcher's
+# token_set_ratio on student questions against TOC titles can score in
+# this range when partial keyword overlap exists, but it doesn't capture
+# concept-level match. Stricter threshold pushes ambiguous cases to the
+# "borderline" tier where the dean presents cards — letting the student
+# disambiguate is much better than auto-locking on a mediocre match.
+STRONG_MIN = 78
+STRONG_GAP = 10           # top must lead second by this much to auto-lock
 BORDERLINE_MIN = 50       # below this, treat as no-match and refuse with alternatives
 MAX_CANDIDATES = 5
 

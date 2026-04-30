@@ -236,7 +236,14 @@ def score_session_llm(
     subsection = str(locked.get("subsection", "") or "")
     chapter = str(locked.get("chapter", "") or "")
     locked_q = str(state.get("locked_question", "") or "")
-    locked_a = str(state.get("locked_answer", "") or "")
+    # Two-tier (Change 2026-04-30): prefer full_answer (the complete
+    # textbook answer — may be a list/sentence) for grading. Fall back
+    # to locked_answer (the short concept anchor used by the gate) if
+    # full_answer wasn't set on this session.
+    locked_a = (
+        str(state.get("full_answer", "") or "").strip()
+        or str(state.get("locked_answer", "") or "")
+    )
     outcome = "reached" if state.get("student_reached_answer") else "not_reached"
     transcript = _format_transcript(state.get("messages") or [])
     prior = _format_prior_rationales(prior_rationales)
@@ -247,6 +254,17 @@ def score_session_llm(
         # Prompt config missing — surface this as a hard failure so it
         # gets noticed rather than silently downgrading.
         return None
+
+    # Change 4.7 (2026-04-30): pass session-wide telemetry counters so the
+    # scorer can see patterns across the whole session, not just the
+    # final state. Stonewalling and off-domain drift correctly lower
+    # mastery even when no individual chain hit threshold.
+    total_low_effort = int(state.get("total_low_effort_turns", 0) or 0)
+    total_off_topic = int(state.get("total_off_topic_turns", 0) or 0)
+    off_topic_terminated = bool(
+        state.get("core_mastery_tier") == "not_assessed"
+        and total_off_topic >= int(getattr(getattr(cfg, "dean", object()), "off_topic_threshold", 4))
+    )
 
     user_prompt = dynamic_template.format(
         subsection_title=subsection or "(unknown)",
@@ -259,6 +277,9 @@ def score_session_llm(
         locked_answer=locked_a or "(no target answer recorded)",
         transcript=transcript,
         prior_rationales=prior,
+        total_low_effort_turns=total_low_effort,
+        total_off_topic_turns=total_off_topic,
+        off_topic_terminated="yes" if off_topic_terminated else "no",
     )
 
     try:

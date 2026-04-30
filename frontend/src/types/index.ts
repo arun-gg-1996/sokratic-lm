@@ -59,6 +59,12 @@ export interface User {
 export interface SessionStartResponse {
   thread_id: string;
   initial_message: string;
+  // Set ONLY for pre-locked (revisit) sessions — the deterministic
+  // "Got it — let's work on X. Question?" message the backend builds
+  // inline. Frontend renders it as a second tutor turn right after
+  // the rapport greeting. Null/undefined for free-text sessions
+  // where the dean ack-emits during the normal turn loop instead.
+  initial_topic_ack?: string | null;
   initial_debug?: Record<string, unknown> | null;
 }
 

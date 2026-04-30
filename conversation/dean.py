@@ -313,6 +313,44 @@ def _normalize_text(text: str) -> str:
     return text
 
 
+# Stop words dropped when computing content-token overlap for the
+# reached-answer gate. Kept conservative: only true filler tokens that
+# don't carry meaning in answer phrases. We want "the skeletal muscle pump"
+# in a student message to match locked_answer="skeletal muscle pump",
+# but NOT match locked_answer="muscle" alone (single-token overlap is
+# usually too weak — handled by requiring the full content set).
+_OVERLAP_STOPWORDS = frozenset({
+    "a", "an", "the", "of", "is", "are", "and", "or", "to",
+    "in", "on", "at", "for", "by", "with", "from",
+})
+
+# Phrases that signal hedging / asking / denying rather than asserting.
+# When any appear, Step A (token overlap) is skipped and we fall through
+# to the LLM paraphrase check, which can read intent more reliably.
+# Examples this catches:
+#   "I don't know what skeletal muscle pump is" → tokens overlap but
+#       the assertion isn't there → fall to LLM, which says no.
+#   "Is it gravity?" → "gravity" doesn't overlap anyway, but if locked
+#       answer were "gravity" we'd correctly defer to LLM.
+_HEDGE_MARKERS = (
+    "i don't know", "i dont know", "i do not know",
+    "no idea", "not sure", "not certain",
+    "i'm lost", "im lost", "idk", "i forget", "no clue", "not really",
+    "i can't remember", "i cant remember", "can't remember",
+)
+
+
+def _content_tokens(s: str) -> list[str]:
+    """Lowercased, punct-stripped tokens of `s` minus filler stopwords."""
+    norm = _normalize_text(s)
+    return [t for t in norm.split() if t and t not in _OVERLAP_STOPWORDS]
+
+
+def _has_hedge(msg_lower_raw: str) -> bool:
+    """True if the message contains any hedge/denial marker."""
+    return any(h in msg_lower_raw for h in _HEDGE_MARKERS)
+
+
 def _sentence_count(text: str) -> int:
     parts = [p.strip() for p in re.split(r"[.!?]+", text or "") if p.strip()]
     return len(parts)
@@ -1165,6 +1203,13 @@ class DeanAgent:
                 "limited": picked_topic.limited,
             })
             topic_just_locked = True
+            # Persist the flag so the ack-emit branch (further down,
+            # right before teacher.draft_socratic) sees it and produces
+            # the deterministic "topic + question" message instead of a
+            # paraphrased hint. The flag is consumed (set False) at
+            # ack-emit time. Pre-locked sessions set this flag in
+            # backend/api/session.py:_apply_prelock instead.
+            state["topic_just_locked"] = True
 
         if topic_just_locked:
             _fire_activity_pre(f"Topic locked: {selected_label}")
@@ -1229,6 +1274,15 @@ class DeanAgent:
             anchors = self._lock_anchors_call(state)
             state["locked_question"] = str(anchors.get("locked_question", "") or "").strip()
             state["locked_answer"] = str(anchors.get("locked_answer", "") or "").strip()
+            # Aliases consumed by reached_answer_gate Step A (token-overlap).
+            # Sanitization already done inside _lock_anchors_call; just store.
+            raw_aliases_out = anchors.get("locked_answer_aliases", []) or []
+            state["locked_answer_aliases"] = (
+                [str(a) for a in raw_aliases_out if isinstance(a, str) and str(a).strip()]
+                if isinstance(raw_aliases_out, list) else []
+            )
+            # Two-tier (Change 2026-04-30): full_answer for grading layer.
+            state["full_answer"] = str(anchors.get("full_answer", "") or "").strip() or state["locked_answer"]
             if not state["locked_question"] or not state["locked_answer"]:
                 # Optional debug trace (toggleable via SOKRATIC_TOPIC_DEBUG env var).
                 import os as _os_dbg
@@ -1299,8 +1353,14 @@ class DeanAgent:
                     "rejected_topic_paths": rejected_list,
                     "debug": state["debug"],
                 }
-            if int(state.get("hint_level", 0)) <= 0:
-                state["hint_level"] = 1
+            # NOTE (2026-04-29 Change 2): we used to bump hint_level to 1
+            # here so the immediate teacher.draft_socratic call would
+            # render hint_plan[0]. With the new topic-acknowledgement flow,
+            # the lock turn emits a deterministic ack instead of a hint —
+            # so hint_level stays at 0 here. On the student's NEXT
+            # incorrect attempt, the increment logic moves 0 → 1 (a single
+            # step, see updated clamp below) and plan[0] fires as the
+            # first scaffold. Keeping the bump would have skipped plan[0].
             # Sticky snapshot of the successful lock for the grading guard.
             # state.locked_topic can be transiently cleared by later partial
             # updates (e.g. a retry path); the snapshot is write-once and
@@ -1328,7 +1388,13 @@ class DeanAgent:
             if not state.get("retrieved_chunks", []) and not state.get("locked_answer", ""):
                 self._retrieve_on_topic_lock(state)
 
-        if topic_just_locked:
+        # Bypass classification when the lock JUST happened — either in
+        # this run_turn (free-text path, LOCAL=True) or from a pre-lock
+        # helper that hasn't been consumed yet (state flag=True). Both
+        # signals mean "the student's latest message is a topic pick or
+        # kickstarter, not an answer attempt." Forcing student_state to
+        # 'question' keeps the hint counter from advancing on the ack turn.
+        if topic_just_locked or state.get("topic_just_locked", False):
             eval_result = {
                 "student_state": "question",
                 "student_reached_answer": False,
@@ -1372,13 +1438,69 @@ class DeanAgent:
 
         confidence_score = self._compute_student_confidence(state, eval_result)
         eval_result["confidence_score"] = confidence_score
-        reached_threshold = float(getattr(getattr(cfg, "thresholds", object()), "reached_answer_confidence", 0.72))
-        model_reached = bool(eval_result.get("student_reached_answer", False))
-        eval_result["student_reached_answer"] = (
-            model_reached
-            and confidence_score >= reached_threshold
-            and bool(state.get("locked_answer", ""))
-        )
+        # NOTE (2026-04-29 reached-gate refactor): the previous design
+        # gated student_reached_answer on (LLM-self-rated answer_confidence
+        # >= 0.72). That conflated step-correctness ("on the right track")
+        # with answer-reached ("stated the locked answer"), producing
+        # false positives — e.g. student says "gravity" while locked
+        # answer is "skeletal muscle pump", LLM returns 0.95, threshold
+        # flips reached=True, tutor fabricates "you've correctly identified
+        # the skeletal muscle pump."
+        #
+        # New gate: deterministic token-overlap (against locked_answer +
+        # aliases) with hedge-detection short-circuit, plus an LLM
+        # paraphrase fallback that must quote the student verbatim. The
+        # confidence_score number is kept on state for telemetry/mastery
+        # rolling-mean but no longer drives reached.
+        latest_student_msg = ""
+        for _msg in reversed(state.get("messages", []) or []):
+            if (_msg or {}).get("role") == "student":
+                latest_student_msg = str(_msg.get("content", "") or "")
+                break
+        # On the topic-just-locked turn, the latest student message is
+        # the topic selection (a card pick or "Let's begin"), not an
+        # answer attempt. Don't run the gate against it — the alias list
+        # might accidentally token-overlap with a card label or filler
+        # phrase and falsely flip reached. The ack-emit branch below
+        # will produce the question; the student's NEXT message is the
+        # first real attempt and the gate runs as normal then.
+        skip_gate_for_ack = bool(state.get("topic_just_locked", False))
+        # Phase 1 (2026-04-30): activity log surfacing for the reached-gate
+        # decision. Mirrors Claude's "tool call X, Y, Z" pattern — when
+        # the gate fires, show the student which step matched.
+        from conversation.teacher import fire_activity as _fa_gate
+        if latest_student_msg and state.get("locked_answer") and not skip_gate_for_ack:
+            _fa_gate("Checking if your message reached the answer")
+            gate_result = self.reached_answer_gate(state, latest_student_msg)
+            gp = gate_result.get("path", "unknown")
+            if gate_result.get("reached"):
+                if gp == "overlap":
+                    _fa_gate("Answer recognized (matched your wording)")
+                elif gp == "paraphrase":
+                    _fa_gate("Answer recognized (matched your paraphrase)")
+                else:
+                    _fa_gate("Answer recognized")
+            else:
+                # Don't surface "not reached" on every turn — too noisy.
+                # Only show it when the LLM explicitly judged + rejected
+                # (i.e. student said something that LOOKED like an answer).
+                if gp in {"llm_no_quote", "no_overlap_no_paraphrase"}:
+                    _fa_gate("Answer not yet reached, continuing")
+        elif skip_gate_for_ack:
+            gate_result = {
+                "reached": False,
+                "evidence": "",
+                "path": "skipped_topic_just_locked",
+            }
+        else:
+            # No student message yet (rapport phase, etc.) or no locked
+            # answer — gate cannot fire. Treat as not reached.
+            gate_result = {
+                "reached": False,
+                "evidence": "",
+                "path": "skipped_no_msg_or_lock",
+            }
+        eval_result["student_reached_answer"] = bool(gate_result.get("reached", False))
 
         # Apply eval results to state
         state["student_state"] = eval_result["student_state"]
@@ -1396,9 +1518,12 @@ class DeanAgent:
             "result": (
                 f"answer_conf={confidence_score:.3f}, "
                 f"mastery_conf={state['student_mastery_confidence']:.3f}, "
-                f"reached={state['student_reached_answer']}"
+                f"reached={state['student_reached_answer']} "
+                f"(gate_path={gate_result.get('path', 'unknown')})"
             ),
             "locked_answer": state.get("locked_answer", ""),
+            "gate_path": gate_result.get("path", "unknown"),
+            "gate_evidence": str(gate_result.get("evidence", ""))[:160],
         })
 
         hint_before = int(state.get("hint_level", 0))
@@ -1408,14 +1533,20 @@ class DeanAgent:
         # - allow max_hints + 1 to signal "hints exhausted" routing in after_dean
         if eval_result["student_state"] == "incorrect":
             current_hint = int(state.get("hint_level", 0))
-            if current_hint <= 0:
-                current_hint = 1
-            if current_hint >= state["max_hints"]:
+            if current_hint < 1:
+                # First incorrect after the topic-lock acknowledgement
+                # (Change 2): jump 0 → 1 so plan[0] fires as the first
+                # scaffold. Old code clamped to 1 then incremented to 2,
+                # which silently skipped plan[0] entirely.
+                next_hint = 1
+                hint_reason = "incorrect_first_post_ack"
+            elif current_hint >= state["max_hints"]:
                 next_hint = state["max_hints"] + 1
+                hint_reason = "incorrect_max_hints_exceeded"
             else:
                 next_hint = current_hint + 1
+                hint_reason = "incorrect_increment"
             state["hint_level"] = min(next_hint, state["max_hints"] + 1)
-            hint_reason = "incorrect_increment"
         hint_after = int(state.get("hint_level", 0))
         active_hint = ""
         hint_plan = state["debug"].get("hint_plan", []) if isinstance(state.get("debug"), dict) else []
@@ -1448,8 +1579,11 @@ class DeanAgent:
                 "confidence_samples": state["confidence_samples"],
                 "locked_question": state.get("locked_question", ""),
                 "locked_answer": state["locked_answer"],
+                "locked_answer_aliases": state.get("locked_answer_aliases", []),
+            "full_answer": state.get("full_answer", "") or state.get("locked_answer", ""),
                 "retrieved_chunks": state["retrieved_chunks"],
                 "topic_confirmed": state.get("topic_confirmed", False),
+                "topic_just_locked": bool(state.get("topic_just_locked", False)),
                 "topic_options": state.get("topic_options", []),
                 "topic_question": state.get("topic_question", ""),
                 "topic_selection": state.get("topic_selection", ""),
@@ -1469,34 +1603,139 @@ class DeanAgent:
                 "confidence_samples": state.get("confidence_samples", 0),
                 "locked_question": state.get("locked_question", ""),
                 "locked_answer": state["locked_answer"],
+                "locked_answer_aliases": state.get("locked_answer_aliases", []),
+            "full_answer": state.get("full_answer", "") or state.get("locked_answer", ""),
                 "retrieved_chunks": state["retrieved_chunks"],
                 "topic_confirmed": state.get("topic_confirmed", False),
+                "topic_just_locked": bool(state.get("topic_just_locked", False)),
                 "topic_options": state.get("topic_options", []),
                 "topic_question": state.get("topic_question", ""),
                 "topic_selection": state.get("topic_selection", ""),
                 "pending_user_choice": state.get("pending_user_choice", {}),
                 "help_abuse_count": state.get("help_abuse_count", 0),
+                "off_topic_count": state.get("off_topic_count", 0),
+                "total_low_effort_turns": state.get("total_low_effort_turns", 0),
+                "total_off_topic_turns": state.get("total_off_topic_turns", 0),
+                "clinical_low_effort_count": state.get("clinical_low_effort_count", 0),
+                "clinical_off_topic_count": state.get("clinical_off_topic_count", 0),
+                "core_mastery_tier": state.get("core_mastery_tier", "not_assessed"),
+                "clinical_mastery_tier": state.get("clinical_mastery_tier", "not_assessed"),
+                "mastery_tier": state.get("mastery_tier", "not_assessed"),
                 "dean_retry_count": 0,
                 "dean_critique": "",
                 "debug": state["debug"],
             }
 
-        # Help abuse gating (pure Python counter)
+        # ============================================================
+        # Change 4 (2026-04-30): unified counter system (deterministic
+        # state-machine counters, not semantic judgments).
+        #
+        # Two counters track conversation health:
+        #   - help_abuse_count: consecutive low_effort turns
+        #   - off_topic_count:  consecutive off-DOMAIN turns (category C)
+        #     — domain-tangential questions handled by exploration_judge
+        #       (category B) do NOT increment this counter
+        #
+        # Plus two non-resetting telemetry counters that the mastery
+        # scorer reads to assess session-wide patterns:
+        #   - total_low_effort_turns
+        #   - total_off_topic_turns
+        # ============================================================
+
+        # ----- help_abuse_count (low_effort) -----
         if state["student_state"] == "low_effort":
             state["help_abuse_count"] = state.get("help_abuse_count", 0) + 1
+            state["total_low_effort_turns"] = state.get("total_low_effort_turns", 0) + 1
         else:
+            # Reset on ANY engaged turn (correct/partial/incorrect/question/irrelevant).
+            # Note: irrelevant resets help_abuse but increments off_topic.
             state["help_abuse_count"] = 0
 
+        # ----- off_topic_count (irrelevant AND not domain-tangential) -----
+        # We need to know whether this turn's "irrelevant" is category B
+        # (domain-tangential — exploration_judge.needed=True) or category
+        # C (off-domain — no exploration). The exploration judge runs
+        # later in this method (line ~1620 area), but for the counter
+        # we can use a simpler heuristic up front: if the message
+        # contains overt off-domain markers (we'll defer to the LLM
+        # judge and run it now if state is irrelevant).
+        is_off_domain = False
+        if state["student_state"] == "irrelevant":
+            is_off_domain = self._is_off_domain_judgment(state)
+        if is_off_domain:
+            state["off_topic_count"] = state.get("off_topic_count", 0) + 1
+            state["total_off_topic_turns"] = state.get("total_off_topic_turns", 0) + 1
+        else:
+            state["off_topic_count"] = 0
+
+        # ----- Activity-log surfacing for strikes (UI debugging) -----
+        from conversation.teacher import fire_activity as _fa
+        if state["help_abuse_count"] > 0 and state["help_abuse_count"] < cfg.dean.help_abuse_threshold:
+            _fa(f"Help-abuse strike {state['help_abuse_count']}/{cfg.dean.help_abuse_threshold}")
+        if state["off_topic_count"] > 0 and state["off_topic_count"] < cfg.dean.off_topic_threshold:
+            _fa(f"Off-topic strike {state['off_topic_count']}/{cfg.dean.off_topic_threshold}")
+
+        # ----- Threshold actions -----
+        # help_abuse strike 4 → advance hint with LLM-narrated transition
         if state["help_abuse_count"] >= cfg.dean.help_abuse_threshold:
-            state["hint_level"] = min(state["hint_level"] + 1, state["max_hints"] + 1)
+            prev_hint = int(state.get("hint_level", 0))
+            new_hint = min(prev_hint + 1, state["max_hints"] + 1)
+            state["hint_level"] = new_hint
             state["help_abuse_count"] = 0
+            _fa(f"Help-abuse threshold reached: advancing hint {prev_hint} → {new_hint}")
             state["debug"]["turn_trace"].append({
-                "wrapper": "dean.hint_progress",
-                "hint_before": hint_after,
-                "hint_after": int(state.get("hint_level", 0)),
-                "hint_reason": "help_abuse_threshold",
-                "active_hint": active_hint,
+                "wrapper": "dean.help_abuse_advance_hint",
+                "result": (
+                    f"help_abuse_threshold ({cfg.dean.help_abuse_threshold}) reached; "
+                    f"advancing hint_level {prev_hint} → {new_hint} with narration brief"
+                ),
+                "hint_before": prev_hint,
+                "hint_after": new_hint,
+                "hint_reason": "help_abuse_threshold_advance",
             })
+            # Narration brief: the dean's pre-flight critique (fed to
+            # teacher.draft_socratic) tells the LLM to PHRASE the
+            # transition. Not hardcoded — the LLM picks the wording.
+            state["_dean_warning_brief_pending"] = (
+                f"The student has been unable to engage with hint level {prev_hint} "
+                f"(four consecutive low-effort responses). On this turn, naturally "
+                f"acknowledge the lack of progress and announce that you're moving "
+                f"to a more direct hint (level {new_hint}). Keep it brief, supportive, "
+                f"non-shaming. Then deliver the new hint."
+            )
+
+        # off_topic strike 4 → terminate WHOLE session
+        if state["off_topic_count"] >= cfg.dean.off_topic_threshold:
+            _fa("Off-topic threshold reached: ending session")
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean.off_topic_terminate",
+                "result": (
+                    f"off_topic_threshold ({cfg.dean.off_topic_threshold}) reached; "
+                    f"terminating session (clinical_mastery_tier=not_assessed, "
+                    f"core_mastery_tier=not_assessed)"
+                ),
+                "off_topic_count_at_terminate": state["off_topic_count"],
+            })
+            # Mark mastery tiers as not_assessed BEFORE routing to
+            # memory_update so the mastery scorer sees the right state.
+            state["core_mastery_tier"] = "not_assessed"
+            state["clinical_mastery_tier"] = "not_assessed"
+            state["mastery_tier"] = "not_assessed"
+            # Force route to memory_update by exhausting hints AND
+            # signaling that clinical should be skipped.
+            state["hint_level"] = state["max_hints"] + 1
+            state["assessment_turn"] = 3  # signals "done" so after_assessment skips clinical
+            state["off_topic_count"] = 0
+            state["_off_topic_terminated"] = True
+            # Narration brief: dean tells teacher to produce the farewell.
+            state["_dean_warning_brief_pending"] = (
+                "The student has gone off-domain four times in a row "
+                "(asking about subjects outside this textbook). On this "
+                "turn, produce a brief, polite farewell: acknowledge the "
+                "drift, suggest they come back when they want to focus on "
+                f"{getattr(getattr(cfg, 'domain', object()), 'short', 'the subject')}, "
+                "and end without asking another question. Do NOT teach further."
+            )
 
         from conversation.teacher import fire_activity
 
@@ -1518,62 +1757,109 @@ class DeanAgent:
         fire_activity("Considering related topics")
         self._exploration_retrieval_maybe(state)
 
-        # Teacher drafts one response.
-        # Provide Dean QC guidance preflight on first attempt so Teacher is
-        # aligned before generation, not only after a rejection.
-        state["dean_critique"] = self._teacher_preflight_brief(state)
-        fire_activity("Drafting response")
-        draft = teacher.draft_socratic(state)
-        fire_activity("Reviewing draft for accuracy")
-        quality = self._evaluate_tutoring_draft(state, draft)
-
-        if quality["pass"]:
-            approved_response = draft
+        # Change 2 (2026-04-29): topic-acknowledgement turn.
+        # When the topic just locked (this turn for free-text path, or via
+        # _apply_prelock for revisit path), emit a deterministic message
+        # that announces the topic location AND states the locked_question
+        # verbatim — instead of jumping straight into a paraphrased hint.
+        # No LLM, no QC loop, no hint-plan consumption. The student gets
+        # one full turn to attempt the actual question before any hints fire.
+        if state.get("topic_just_locked", False):
+            fire_activity("Showing the question")
+            approved_response = self._build_topic_ack_message(state)
+            state["topic_just_locked"] = False
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean.topic_ack_emitted",
+                "result": "ack_message_emitted_skipping_teacher_draft",
+                "locked_question": state.get("locked_question", ""),
+            })
         else:
-            revised = (quality.get("revised_teacher_draft") or "").strip()
-            revised_ok = False
-            if revised:
-                revised_det = self._deterministic_tutoring_check(state, revised)
-                state["debug"]["turn_trace"].append({
-                    "wrapper": "dean._deterministic_quality_check_revised",
-                    "result": "PASS" if revised_det["pass"] else f"FAIL: {revised_det['critique']}",
-                    "reason_codes": revised_det.get("reason_codes", []),
-                })
-                revised_ok = bool(revised_det["pass"])
+            # Teacher drafts one response.
+            # Provide Dean QC guidance preflight on first attempt so Teacher is
+            # aligned before generation, not only after a rejection.
+            state["dean_critique"] = self._teacher_preflight_brief(state)
+            fire_activity("Drafting response")
+            draft = teacher.draft_socratic(state)
+            fire_activity("Reviewing draft for accuracy")
+            quality = self._evaluate_tutoring_draft(state, draft)
 
-            if revised_ok:
-                approved_response = revised
-                state["debug"]["turn_trace"].append({
-                    "wrapper": "dean.revised_teacher_draft_applied",
-                    "result": "Applied Dean revised_teacher_draft (single-pass repair)",
-                })
-                # The streamed first draft is now stale — its content
-                # WILL differ from `approved_response`. Tell the WS
-                # handler to clear the frontend's streaming buffer so
-                # the user doesn't see content X stream in then get
-                # abruptly replaced by Y. (Best-effort; no-op when
-                # no callback is installed, e.g. eval harness.)
-                from conversation.teacher import fire_stream_invalidate
-                fire_stream_invalidate()
-                fire_activity("Refining response")
+            if quality["pass"]:
+                approved_response = draft
             else:
-                state["dean_critique"] = self._format_dean_critique(quality)
-                state["dean_retry_count"] = 1
-                self._log_intervention(
-                    state["student_id"], state["turn_count"], state["dean_critique"], draft
-                )
-                approved_response = self._dean_fallback(state)
-                state["debug"]["interventions"] += 1
-                state["debug"]["turn_trace"].append({
-                    "wrapper": "dean.fallback",
-                    "tool_called": None,
-                    "result": "Dean fallback used (no valid revised_teacher_draft)",
-                })
-                # Same reason as above — the streamed draft is being
-                # discarded in favor of the dean's fallback message.
-                from conversation.teacher import fire_stream_invalidate
-                fire_stream_invalidate()
-                fire_activity("Falling back to safe response")
+                revised = (quality.get("revised_teacher_draft") or "").strip()
+                revised_ok = False
+                if revised:
+                    revised_det = self._deterministic_tutoring_check(state, revised)
+                    state["debug"]["turn_trace"].append({
+                        "wrapper": "dean._deterministic_quality_check_revised",
+                        "result": "PASS" if revised_det["pass"] else f"FAIL: {revised_det['critique']}",
+                        "reason_codes": revised_det.get("reason_codes", []),
+                    })
+                    revised_ok = bool(revised_det["pass"])
+
+                if revised_ok:
+                    approved_response = revised
+                    state["debug"]["turn_trace"].append({
+                        "wrapper": "dean.revised_teacher_draft_applied",
+                        "result": "Applied Dean revised_teacher_draft (single-pass repair)",
+                    })
+                    # The streamed first draft is now stale — its content
+                    # WILL differ from `approved_response`. Tell the WS
+                    # handler to clear the frontend's streaming buffer so
+                    # the user doesn't see content X stream in then get
+                    # abruptly replaced by Y. (Best-effort; no-op when
+                    # no callback is installed, e.g. eval harness.)
+                    from conversation.teacher import fire_stream_invalidate
+                    fire_stream_invalidate()
+                    fire_activity("Refining response")
+                else:
+                    state["dean_critique"] = self._format_dean_critique(quality)
+                    state["dean_retry_count"] = 1
+                    self._log_intervention(
+                        state["student_id"], state["turn_count"], state["dean_critique"], draft
+                    )
+                    approved_response = self._dean_fallback(state)
+                    state["debug"]["interventions"] += 1
+                    state["debug"]["turn_trace"].append({
+                        "wrapper": "dean.fallback",
+                        "tool_called": None,
+                        "result": "Dean fallback used (no valid revised_teacher_draft)",
+                    })
+                    # Same reason as above — the streamed draft is being
+                    # discarded in favor of the dean's fallback message.
+                    from conversation.teacher import fire_stream_invalidate
+                    fire_stream_invalidate()
+                    fire_activity("Falling back to safe response")
+
+        # Change 6 (2026-04-30): hint indicator caption.
+        # Append "— Hint X of Y —" to the tutor message when we're in a
+        # tutoring turn that's actively rendering a hint (hint_level >= 1).
+        # Suppressed for the topic-ack turn (no hint consumed yet) and for
+        # the help-abuse cap turn (where the LLM narrates the transition
+        # itself; double-tagging would be redundant). Frontend can detect
+        # the marker and style as a small amber pill if desired.
+        try:
+            cur_hint = int(state.get("hint_level", 0))
+            max_hint = int(state.get("max_hints", 3) or 3)
+            # Skip the indicator on the topic-ack turn (handled separately
+            # via the topic_just_locked branch which doesn't run this code
+            # path) and when the cap-narration brief was just emitted (the
+            # narration already explains the transition).
+            cap_just_fired = bool(state.get("_dean_warning_brief_pending"))
+            should_tag = (
+                cur_hint >= 1
+                and cur_hint <= max_hint
+                and not cap_just_fired
+                and not state.get("topic_just_locked", False)
+            )
+            if should_tag:
+                if cur_hint == max_hint:
+                    suffix = f"\n\n_— Last hint ({cur_hint} of {max_hint}) — give it your best try. —_"
+                else:
+                    suffix = f"\n\n_— Hint {cur_hint} of {max_hint} —_"
+                approved_response = f"{approved_response}{suffix}"
+        except (TypeError, ValueError):
+            pass
 
         state["messages"].append({"role": "tutor", "content": approved_response, "phase": "tutoring"})
 
@@ -1596,13 +1882,28 @@ class DeanAgent:
             "confidence_samples": state["confidence_samples"],
             "locked_question": state.get("locked_question", ""),
             "locked_answer": state["locked_answer"],
+            "locked_answer_aliases": state.get("locked_answer_aliases", []),
+            "full_answer": state.get("full_answer", "") or state.get("locked_answer", ""),
             "retrieved_chunks": state["retrieved_chunks"],
             "topic_confirmed": state.get("topic_confirmed", False),
+            "topic_just_locked": bool(state.get("topic_just_locked", False)),
             "topic_options": state.get("topic_options", []),
             "topic_question": state.get("topic_question", ""),
             "topic_selection": state.get("topic_selection", ""),
             "pending_user_choice": state.get("pending_user_choice", {}),
             "help_abuse_count": state["help_abuse_count"],
+            # Change 4: persist new counters
+            "off_topic_count": state.get("off_topic_count", 0),
+            "total_low_effort_turns": state.get("total_low_effort_turns", 0),
+            "total_off_topic_turns": state.get("total_off_topic_turns", 0),
+            # Change 5.1: persist clinical counters too
+            "clinical_low_effort_count": state.get("clinical_low_effort_count", 0),
+            "clinical_off_topic_count": state.get("clinical_off_topic_count", 0),
+            # Change 4.5: mastery tiers may have been set to not_assessed
+            # by off-topic terminate; persist those.
+            "core_mastery_tier": state.get("core_mastery_tier", "not_assessed"),
+            "clinical_mastery_tier": state.get("clinical_mastery_tier", "not_assessed"),
+            "mastery_tier": state.get("mastery_tier", "not_assessed"),
             "dean_retry_count": 0,
             "dean_critique": "",
             "debug": state["debug"],
@@ -2024,9 +2325,58 @@ class DeanAgent:
         """
         Lock both question and answer anchors immediately after topic-lock retrieval.
         Returns a dict with: locked_question, locked_answer, rationale.
+
+        Change (2026-04-30, post-18-convo eval review): added lock-time
+        section filtering. The 18-convo run produced lock drift (e.g.
+        student asked about long bone structure, dean locked on "skeletal
+        cardiac and smooth muscle" because the matcher's chunks included
+        muscle attachment content). Filter retrieved chunks to ONLY those
+        whose subsection_title matches state.locked_topic.subsection
+        before passing to the lock LLM. This forces the lock to be
+        grounded in the actually-locked subsection, not whatever
+        adjacent content the chunker pulled in.
         """
         topic_selection = str(state.get("topic_selection", "") or "").strip()
-        chunks_str = _format_chunks(state.get("retrieved_chunks", []))
+
+        # Filter chunks to the locked subsection ONLY. If the filter
+        # leaves us with fewer than `min_chunks` (default 2), fall back
+        # to the unfiltered set so we don't fail to lock entirely.
+        all_chunks = state.get("retrieved_chunks", []) or []
+        locked_topic = state.get("locked_topic") or {}
+        target_subsection = str(locked_topic.get("subsection", "") or "").strip()
+        if target_subsection and all_chunks:
+            in_section = [
+                c for c in all_chunks
+                if str((c or {}).get("subsection_title") or "").strip() == target_subsection
+            ]
+            min_chunks_for_lock = 2
+            if len(in_section) >= min_chunks_for_lock:
+                section_chunks = in_section
+                state["debug"]["turn_trace"].append({
+                    "wrapper": "dean._lock_anchors_call.section_filter",
+                    "result": (
+                        f"filtered to {len(in_section)}/{len(all_chunks)} chunks "
+                        f"in subsection {target_subsection!r}"
+                    ),
+                    "in_section_count": len(in_section),
+                    "total_count": len(all_chunks),
+                })
+            else:
+                section_chunks = all_chunks
+                state["debug"]["turn_trace"].append({
+                    "wrapper": "dean._lock_anchors_call.section_filter",
+                    "result": (
+                        f"in-section count {len(in_section)} < min_chunks_for_lock "
+                        f"({min_chunks_for_lock}); falling back to unfiltered "
+                        f"{len(all_chunks)} chunks"
+                    ),
+                    "in_section_count": len(in_section),
+                    "total_count": len(all_chunks),
+                })
+        else:
+            section_chunks = all_chunks
+
+        chunks_str = _format_chunks(section_chunks)
         conversation_history = render_history(state.get("messages", []))
         wrapper_delta = (
             getattr(cfg.prompts, "dean_lock_anchors_delta", "")
@@ -2071,16 +2421,52 @@ class DeanAgent:
             return {
                 "locked_question": topic_selection if fallback_answer else "",
                 "locked_answer": fallback_answer,
+                "locked_answer_aliases": [],
+                "full_answer": fallback_answer,  # fallback: same as locked_answer
                 "rationale": "parse_failed",
             }
 
         locked_question = str(parsed.get("locked_question", "") or "").strip()
         locked_answer_raw = str(parsed.get("locked_answer", "") or "").strip()
+        # Two-tier (Change 2026-04-30): full_answer is the complete textbook
+        # answer (may be a list/sentence). Falls back to locked_answer if
+        # the lock prompt didn't produce it (older runs / minor LLM omissions).
+        full_answer_raw = str(parsed.get("full_answer", "") or "").strip()
+        # Cap full_answer at 400 chars to prevent runaway. If empty,
+        # fall back to locked_answer (preserves backward compat).
+        full_answer = full_answer_raw[:400] if full_answer_raw else ""
         locked_answer, sanitize_action = _sanitize_locked_answer(
             locked_answer_raw,
             state.get("retrieved_chunks", []),
             "",
         )
+        # Aliases: optional list of equivalent phrasings produced by the lock
+        # prompt. Used by reached_answer_gate's Step A token-overlap check
+        # so paraphrases get credit without needing the LLM fallback. We
+        # sanitize permissively — empty/duplicate aliases are dropped, the
+        # locked_answer itself is filtered out (it's checked separately),
+        # and we cap at 5 to keep prompts and overlap-loops bounded.
+        raw_aliases = parsed.get("locked_answer_aliases", []) or []
+        if isinstance(raw_aliases, str):  # tolerate single-string output
+            raw_aliases = [raw_aliases]
+        seen_lower: set[str] = set()
+        locked_answer_aliases: list[str] = []
+        locked_lower = locked_answer.lower().strip() if locked_answer else ""
+        for a in raw_aliases:
+            if not isinstance(a, str):
+                continue
+            a_clean = a.strip()
+            a_lower = a_clean.lower()
+            if not a_clean or a_lower == locked_lower or a_lower in seen_lower:
+                continue
+            # Hard cap on individual alias length: 50 chars (longer = LLM
+            # smuggled in a sentence, not a phrase).
+            if len(a_clean) > 50:
+                continue
+            seen_lower.add(a_lower)
+            locked_answer_aliases.append(a_clean)
+            if len(locked_answer_aliases) >= 5:
+                break
         # Optional debug trace (toggleable via SOKRATIC_TOPIC_DEBUG env var).
         import os as _os_dbg
         if _os_dbg.environ.get("SOKRATIC_TOPIC_DEBUG"):
@@ -2101,7 +2487,12 @@ class DeanAgent:
                 "dean._lock_anchors_repair_call",
                 model=self.model,
                 temperature=0,
-                max_tokens=140,
+                # Bumped from 140 to 240 (2026-04-29): the new schema with
+                # locked_answer_aliases + rationale wouldn't fit in 140 tokens,
+                # causing JSON to truncate mid-output. JSON parse then failed
+                # silently and locked_answer stayed empty even when the LLM
+                # had produced a perfectly-good answer term.
+                max_tokens=240,
                 system=_cached_system(
                     getattr(cfg.prompts, "dean_base", ""),
                     wrapper_delta,
@@ -2115,7 +2506,9 @@ class DeanAgent:
                         "Return strict JSON only. locked_question must be specific. "
                         "locked_answer must be 1-5 words, a SINGLE noun phrase (like "
                         "'axillary nerve' or 'quadrangular space'). NO lists, NO verbs, "
-                        "NO cord origins, NO supporting facts — only the target term."
+                        "NO cord origins, NO supporting facts — only the target term. "
+                        "Keep rationale to <=15 words and aliases to 4 short phrases so the "
+                        "JSON fits well within max_tokens."
                     ),
                 }],
             )
@@ -2149,9 +2542,47 @@ class DeanAgent:
                         str(parsed.get("rationale", "") or "").strip()
                         + " | repaired_once"
                     ).strip(" |")
+                    # Repair often produces cleaner aliases (the original
+                    # answer was wiped because it was a sentence; aliases
+                    # generated alongside that sentence tend to also be
+                    # paraphrases-of-a-sentence rather than term variants).
+                    # Prefer the repair's aliases when available.
+                    repair_aliases_raw = repair.get("locked_answer_aliases", []) or []
+                    if isinstance(repair_aliases_raw, str):
+                        repair_aliases_raw = [repair_aliases_raw]
+                    if isinstance(repair_aliases_raw, list) and repair_aliases_raw:
+                        seen_lower2: set[str] = set()
+                        rebuilt: list[str] = []
+                        locked_lower2 = locked_answer.lower().strip()
+                        for a in repair_aliases_raw:
+                            if not isinstance(a, str):
+                                continue
+                            ac = a.strip()
+                            al = ac.lower()
+                            if not ac or al == locked_lower2 or al in seen_lower2:
+                                continue
+                            if len(ac) > 50:
+                                continue
+                            seen_lower2.add(al)
+                            rebuilt.append(ac)
+                            if len(rebuilt) >= 5:
+                                break
+                        if rebuilt:
+                            locked_answer_aliases = rebuilt
+        # If the lock prompt didn't produce a full_answer, fall back to
+        # locked_answer for backward compat — but flag it so we know
+        # this session has a degraded full_answer.
+        if not full_answer:
+            full_answer = locked_answer
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean._lock_anchors_call.full_answer_fallback",
+                "result": "full_answer empty in LLM output; fell back to locked_answer",
+            })
         return {
             "locked_question": locked_question,
             "locked_answer": locked_answer,
+            "locked_answer_aliases": locked_answer_aliases,
+            "full_answer": full_answer,
             "rationale": str(parsed.get("rationale", "") or ""),
         }
 
@@ -2214,6 +2645,324 @@ class DeanAgent:
             "result": "disabled_strict_groundedness",
         })
         return ""
+
+    def _build_topic_ack_message(self, state: TutorState) -> str:
+        """
+        Build the deterministic topic-acknowledgement message that fires on
+        the first dean_node turn after a topic locks. Two-line format:
+
+            Got it — let's work on **{subsection}** from Chapter {N} → {section}.
+
+            {locked_question}
+
+        No LLM call. Robust to missing fields: degrades gracefully if any
+        path component is empty (uses what's available, omits the rest).
+        """
+        locked_topic = state.get("locked_topic") or {}
+        subsection = (
+            str(locked_topic.get("subsection") or "").strip()
+            or str(state.get("topic_selection") or "").strip()
+            or "this topic"
+        )
+        section = str(locked_topic.get("section") or "").strip()
+        path_str = str(locked_topic.get("path") or "")
+        # Path format: "Chapter N: ... > section > subsection". Extract N.
+        chapter_num = ""
+        m = re.match(r"\s*Chapter\s+(\d+)", path_str)
+        if m:
+            chapter_num = m.group(1)
+        else:
+            chapter_str = str(locked_topic.get("chapter") or "")
+            m2 = re.match(r"\s*(\d+)", chapter_str)
+            if m2:
+                chapter_num = m2.group(1)
+
+        # Build location clause defensively — only include parts we have.
+        if chapter_num and section:
+            location = f"from Chapter {chapter_num} → {section}"
+        elif section:
+            location = f"from {section}"
+        elif chapter_num:
+            location = f"from Chapter {chapter_num}"
+        else:
+            location = ""
+
+        header = f"Got it — let's work on **{subsection}**"
+        if location:
+            header = f"{header} {location}"
+        header = header + "."
+
+        locked_question = str(state.get("locked_question") or "").strip()
+        if not locked_question:
+            # Defensive fallback: extremely rare since dean_node only sets
+            # topic_just_locked=True after both anchors are populated. Still,
+            # better to ask SOMETHING than nothing.
+            locked_question = (
+                f"To get started: what do you already know about {subsection}?"
+            )
+
+        return f"{header}\n\n{locked_question}"
+
+    # ============================================================
+    # Change 4 (2026-04-30): off-domain detector + warning brief.
+    #
+    # The off-domain check is a fast deterministic keyword-based
+    # filter. It only activates when student_state is already
+    # "irrelevant" (i.e. dean's LLM classifier already decided the
+    # message is off-target). The keyword list covers the obvious
+    # off-domain categories (profanity, substance, sexual content,
+    # generic off-topic). If exploration_judge later decides the
+    # turn is actually domain-tangential (category B), the
+    # increment is a wasted strike but recovers on the next
+    # engaged turn.
+    #
+    # NOT moved to LLM-judge despite the audit philosophy because:
+    #   - exploration_judge runs later in the same turn and will
+    #     contradict if needed
+    #   - a fast keyword check on irrelevant-classified turns is
+    #     just a pre-filter; the cost of being wrong is one strike,
+    #     and counters reset on engagement
+    # ============================================================
+
+    _OFF_DOMAIN_REGEX = re.compile(
+        r"\b("
+        r"vape|vaping|smoke|smoking|weed|marijuana|alcohol|drunk|"
+        r"sex|sexual|porn|scissoring|gay|lesbian|bisexual|"
+        r"shit|fuck(?:er|ing)?|damn|bullshit|asshole|piss|"
+        r"politics|election|trump|biden|election|"
+        r"weather|sport|football|basketball|"
+        r"date|dating|girlfriend|boyfriend"
+        r")\b",
+        re.IGNORECASE,
+    )
+
+    def _is_off_domain_judgment(self, state: TutorState) -> bool:
+        """Fast deterministic check: is the latest student message off-DOMAIN
+        (category C) rather than domain-tangential (category B)?
+
+        Default to True when student_state == 'irrelevant' AND the message
+        contains an off-domain keyword. Otherwise False — the message
+        might be a legitimate domain question that just isn't on the
+        locked topic (let exploration_judge handle that).
+        """
+        latest_student_msg = ""
+        for _msg in reversed(state.get("messages", []) or []):
+            if (_msg or {}).get("role") == "student":
+                latest_student_msg = str(_msg.get("content", "") or "")
+                break
+        if not latest_student_msg:
+            return False
+        return bool(self._OFF_DOMAIN_REGEX.search(latest_student_msg))
+
+    def _build_strike_warning_brief(self, state: TutorState) -> str:
+        """Return a string to append to dean_critique on strike turns.
+        The TEACHER's prompt sees this and naturally weaves the warning
+        into the response. Empty string when no warning applies.
+
+        Strike 1: no warning (single low-effort can be just thinking)
+        Strike 2: gentle nudge
+        Strike 3: firmer warning + offer to switch
+        Strike 4: handled separately (advances hint OR terminates)
+        """
+        help_n = int(state.get("help_abuse_count", 0))
+        ot_n = int(state.get("off_topic_count", 0))
+
+        warnings = []
+        if help_n == 2:
+            warnings.append(
+                "STRIKE WARNING: This is the student's SECOND consecutive "
+                "low-effort response. After delivering your normal hint, "
+                "naturally and briefly remind them that 'even a partial guess "
+                "or a wrong answer helps me see your thinking.' Keep it "
+                "supportive, not shaming. Don't lecture."
+            )
+        elif help_n == 3:
+            warnings.append(
+                "STRIKE WARNING: This is the student's THIRD consecutive "
+                "low-effort response. After delivering your normal hint, "
+                "tell them they can switch topics or take a break if they're "
+                "stuck. Mention that on the next pass they'll get a more "
+                "direct hint automatically. Keep it brief, kind, and let "
+                "them stay in control."
+            )
+
+        if ot_n == 2:
+            warnings.append(
+                "OFF-TOPIC WARNING: This is the student's SECOND consecutive "
+                "off-domain message. Briefly acknowledge their question is "
+                "outside our anatomy/textbook scope, and refocus them on "
+                f"the locked topic ('{state.get('topic_selection', 'the current topic')}'). "
+                "Don't engage with the off-domain content."
+            )
+        elif ot_n == 3:
+            warnings.append(
+                "OFF-TOPIC WARNING: This is the student's THIRD consecutive "
+                "off-domain message. Tell them clearly that one more "
+                "off-domain question will end the session, and ask them "
+                "to focus on the locked topic. Brief, firm, polite."
+            )
+
+        return "\n\n".join(warnings)
+
+    def reached_answer_gate(self, state: TutorState, student_msg: str) -> dict:
+        """
+        Strict gate that decides whether the student has STATED the locked
+        answer in their most recent message. Replaces the old
+        confidence_score >= 0.72 threshold which conflated step-correctness
+        with answer-reach (the 'gravity counted as muscle pump' bug).
+
+        Two-step strategy:
+
+          Step A — deterministic token-overlap (free, fast):
+            If the message contains all content tokens of locked_answer or
+            any alias AND no hedge/denial marker is present, accept as
+            reached. Evidence is the matched candidate phrase.
+
+          Step B — LLM paraphrase fallback (~one cheap call):
+            Otherwise, ask the LLM whether the message paraphrases the
+            answer. The LLM must quote a verbatim substring of the student
+            message; quote-or-no-reach is enforced post-call so a
+            hallucinated quote forces reached=False.
+
+        Bias: reached=False on any ambiguity. False positives fabricate
+        confirmations the student didn't earn — much worse than running
+        one extra hint turn.
+
+        Returns: dict with keys
+          reached:  bool
+          evidence: str   (matched span or LLM quote, "" when not reached)
+          path:     str   (overlap | paraphrase | hedge_block |
+                          no_overlap_no_paraphrase | no_lock |
+                          llm_no_quote | llm_parse_fail | llm_error)
+        """
+        locked_answer = (state.get("locked_answer") or "").strip()
+        if not locked_answer:
+            return {"reached": False, "evidence": "", "path": "no_lock"}
+
+        aliases = list(state.get("locked_answer_aliases") or [])
+        msg_norm = _normalize_text(student_msg)
+        msg_norm_tokens = set(msg_norm.split()) if msg_norm else set()
+        msg_lower_raw = (student_msg or "").lower()
+
+        # ---- Step A: deterministic token overlap (skip on hedge) ----
+        if not _has_hedge(msg_lower_raw):
+            for cand in [locked_answer] + aliases:
+                cand_tokens = _content_tokens(cand)
+                if not cand_tokens:
+                    continue
+                # Require ALL content tokens of the candidate to appear
+                # in the message. Set membership (order-independent) is
+                # fine — paraphrases like "the muscle pump (skeletal)"
+                # should still match locked_answer="skeletal muscle pump".
+                if all(tok in msg_norm_tokens for tok in cand_tokens):
+                    return {
+                        "reached": True,
+                        "evidence": cand,
+                        "path": "overlap",
+                    }
+
+        # ---- Step B: LLM paraphrase fallback ----
+        return self._reached_check_llm(
+            state, student_msg, locked_answer, aliases, msg_norm
+        )
+
+    def _reached_check_llm(
+        self,
+        state: TutorState,
+        student_msg: str,
+        locked_answer: str,
+        aliases: list[str],
+        msg_norm: str,
+    ) -> dict:
+        """LLM step of reached_answer_gate. Quote-or-reject post-validation."""
+        # Last 8 messages = ~4 tutor/student exchanges. Enough context for
+        # the LLM to see what was being asked without prompt bloat.
+        recent_history = render_history(state.get("messages", [])[-8:])
+        aliases_str = ", ".join(aliases) if aliases else "(none)"
+
+        static_block = getattr(cfg.prompts, "dean_reached_check_static", "")
+        dynamic_template = getattr(cfg.prompts, "dean_reached_check_dynamic", "")
+        if not static_block or not dynamic_template:
+            # Defensive: prompts missing → don't try to fabricate a check.
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean.reached_answer_gate",
+                "result": "prompt_missing",
+            })
+            return {"reached": False, "evidence": "", "path": "prompt_missing"}
+
+        dynamic_prompt = dynamic_template.format(
+            locked_answer=locked_answer,
+            aliases=aliases_str,
+            recent_history=recent_history,
+            student_msg=student_msg,
+        )
+
+        try:
+            resp = _timed_create(
+                self.client, state, "dean.reached_answer_gate",
+                model=self.model,
+                temperature=0,
+                max_tokens=160,
+                system=_cached_system(
+                    getattr(cfg.prompts, "dean_base", ""),
+                    static_block,
+                    "",  # no chunks needed for this judgment
+                    recent_history,
+                    dynamic_prompt,
+                ),
+                messages=[{
+                    "role": "user",
+                    "content": "Decide and return strict JSON.",
+                }],
+            )
+        except Exception as exc:
+            # Any API hiccup → not reached. We'd rather extend a session
+            # than fabricate a confirmation.
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean.reached_answer_gate",
+                "result": "llm_error",
+                "error": str(exc)[:200],
+            })
+            return {"reached": False, "evidence": "", "path": "llm_error"}
+
+        text = (resp.content[0].text or "").strip()
+        parsed = _extract_json_object(text)
+        if parsed is None:
+            return {"reached": False, "evidence": "", "path": "llm_parse_fail"}
+
+        reached_claim = bool(parsed.get("reached", False))
+        evidence = str(parsed.get("evidence", "") or "").strip()
+
+        # Strict gate: if the LLM claims reached, it must quote a verbatim
+        # substring of the student message. Two checks (normalized first,
+        # then raw lowercase) so we accept legit quotes that just differ
+        # in punctuation/whitespace, but reject hallucinated quotes that
+        # don't appear at all.
+        if reached_claim:
+            ev_norm = _normalize_text(evidence)
+            quote_present = (
+                bool(ev_norm) and ev_norm in msg_norm
+            ) or (
+                bool(evidence) and evidence.lower() in (student_msg or "").lower()
+            )
+            if not quote_present:
+                state["debug"]["turn_trace"].append({
+                    "wrapper": "dean.reached_answer_gate",
+                    "result": "llm_no_quote",
+                    "claimed_evidence": evidence[:120],
+                })
+                return {
+                    "reached": False,
+                    "evidence": evidence,  # kept for telemetry
+                    "path": "llm_no_quote",
+                }
+
+        path = "paraphrase" if reached_claim else "no_overlap_no_paraphrase"
+        return {
+            "reached": reached_claim,
+            "evidence": evidence if reached_claim else "",
+            "path": path,
+        }
 
     def _setup_call(self, state: TutorState) -> dict:
         """
@@ -2372,12 +3121,20 @@ class DeanAgent:
         if _sentence_count(text) > 4:
             reason_codes.append("verbosity")
 
-        if any(prefix in lowered for prefix in _BANNED_FILLER_PREFIXES):
-            reason_codes.append("generic_filler")
-
-        # Prevent sycophantic over-affirmation when the student is not fully correct.
-        if student_state in {"incorrect", "partial_correct", "question", "low_effort"} and _has_strong_affirmation(text):
-            reason_codes.append("sycophancy_risk")
+        # NOTE (2026-04-30 audit cleanup): generic_filler and
+        # sycophancy_risk used to be detected here via brittle regex /
+        # keyword lists (`_BANNED_FILLER_PREFIXES`, `_has_strong_affirmation`).
+        # Both are semantic judgments better handled by the LLM
+        # quality-check call (`_quality_check_call`) which already
+        # evaluates these criteria with full context. Removing them from
+        # the deterministic pre-flight reduces false positives (legitimate
+        # affirmations like "right, exactly" got flagged) without losing
+        # safety — if the LLM detects them on the actual draft, it
+        # returns reason_codes and the dean retries.
+        # Keeping deterministic: missing_question, multi_question,
+        # reveal_risk, verbosity, question_repetition — these are
+        # structural signals (counts, exact-match leaks, similarity
+        # thresholds), not semantic judgments.
 
         prior_questions = _recent_tutor_questions(state.get("messages", []), limit=3)
         repetition_threshold = float(
@@ -2435,6 +3192,10 @@ class DeanAgent:
         """
         Non-LLM Dean guidance passed to Teacher before first draft each turn.
         This makes Teacher generation explicitly aware of Dean QC constraints.
+
+        Change 4: also weaves in any pending narration brief (hint-advance
+        narration on help_abuse=4, off-topic farewell on off_topic=4) and
+        any escalating strike warnings for strikes 1-3.
         """
         student_state = state.get("student_state") or "unknown"
         hint_level = int(state.get("hint_level", 0))
@@ -2443,7 +3204,8 @@ class DeanAgent:
         if isinstance(hint_plan, list) and hint_plan and hint_level >= 1:
             idx = min(max(hint_level - 1, 0), len(hint_plan) - 1)
             active_hint = str(hint_plan[idx] or "")
-        return (
+
+        base = (
             "reason_codes=['preflight']\n"
             "rewrite_instruction=Generate one concise Socratic reply that will pass Dean QC.\n"
             "critique=Preflight constraints: exactly one question mark, 2-4 sentences, "
@@ -2451,6 +3213,22 @@ class DeanAgent:
             "one concrete next reasoning step.\n"
             f"context=student_state:{student_state},hint_level:{hint_level},active_hint:{active_hint}"
         )
+
+        # Change 4: pending narration brief (set by counter threshold actions
+        # earlier in this turn). Highest priority — overrides normal critique.
+        pending = str(state.get("_dean_warning_brief_pending") or "").strip()
+        if pending:
+            base = base + "\n\n=== SPECIAL NARRATION BRIEF (override) ===\n" + pending
+            # Consume the brief so it doesn't fire again on retry.
+            state["_dean_warning_brief_pending"] = ""
+
+        # Change 4: escalating strike warnings (1-3). Lower priority than
+        # the override brief above but added when present.
+        strike_warning = self._build_strike_warning_brief(state)
+        if strike_warning:
+            base = base + "\n\n=== STRIKE WARNING ===\n" + strike_warning
+
+        return base
 
     def _quality_check_call(self, state: TutorState, teacher_draft: str, phase: str = "tutoring") -> dict:
         """

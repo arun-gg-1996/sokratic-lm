@@ -373,6 +373,11 @@ def assessment_node(state: TutorState, dean, teacher) -> dict:
         if intent == "no":
             # Student opted out: skip clinical and go straight to mastery summary.
             state["clinical_opt_in"] = False
+            # Change 5.1b: clinical_mastery_tier=not_assessed when student
+            # declines the optional clinical question. core_mastery_tier
+            # is set later by _close_session_with_dean / mastery scorer
+            # based on tutoring outcome.
+            state["clinical_mastery_tier"] = "not_assessed"
             return _close_session_with_dean(state, dean, messages)
 
         # Ambiguous — treat a long substantive reply as an implicit "yes" and
@@ -431,6 +436,51 @@ def assessment_node(state: TutorState, dean, teacher) -> dict:
         fire_activity("Evaluating your clinical reasoning")
         state["clinical_opt_in"] = True
         eval_result = dean._clinical_turn_call(state)
+
+        # ============================================================
+        # Change 5.1 (2026-04-30): clinical-phase counters.
+        #
+        # Symmetric with tutoring's help_abuse / off_topic but with
+        # threshold=2 (clinical only has 3 total turns). At strike 2,
+        # END THE CLINICAL PHASE ONLY (clinical_mastery_tier=not_assessed)
+        # but keep the session — the student earned tutoring credit.
+        # ============================================================
+        clinical_student_state = str(eval_result.get("student_state", "")).strip().lower()
+        clinical_threshold_strikes = int(getattr(cfg.dean, "clinical_strike_threshold", 2))
+
+        if clinical_student_state == "low_effort":
+            state["clinical_low_effort_count"] = state.get("clinical_low_effort_count", 0) + 1
+            state["total_low_effort_turns"] = state.get("total_low_effort_turns", 0) + 1
+        else:
+            state["clinical_low_effort_count"] = 0
+
+        if clinical_student_state in {"irrelevant", "off_topic"}:
+            state["clinical_off_topic_count"] = state.get("clinical_off_topic_count", 0) + 1
+            state["total_off_topic_turns"] = state.get("total_off_topic_turns", 0) + 1
+        else:
+            state["clinical_off_topic_count"] = 0
+
+        clinical_cap_triggered = (
+            state["clinical_low_effort_count"] >= clinical_threshold_strikes
+            or state["clinical_off_topic_count"] >= clinical_threshold_strikes
+        )
+        if clinical_cap_triggered:
+            fire_activity("Clinical phase capped: low engagement detected")
+            state["debug"].setdefault("turn_trace", []).append({
+                "wrapper": "assessment.clinical_cap",
+                "result": (
+                    f"clinical_strike_threshold ({clinical_threshold_strikes}) reached; "
+                    f"ending clinical phase only "
+                    f"(low_effort={state['clinical_low_effort_count']}, "
+                    f"off_topic={state['clinical_off_topic_count']}). "
+                    f"Tutoring progress preserved."
+                ),
+            })
+            # Keep core_mastery_tier as whatever tutoring earned (don't
+            # touch it). Mark clinical as not_assessed.
+            state["clinical_mastery_tier"] = "not_assessed"
+            state["clinical_completed"] = False
+            return _close_session_with_dean(state, dean, messages)
 
         clinical_turn_count = int(state.get("clinical_turn_count", 0)) + 1
         clinical_max_turns = int(state.get("clinical_max_turns", getattr(cfg.session, "clinical_max_turns", 3)))
@@ -498,6 +548,10 @@ def assessment_node(state: TutorState, dean, teacher) -> dict:
     else:
         # Reveal path (did not reach answer)
         state["clinical_opt_in"] = False
+        # Change 5.1b: clinical never happened, mark as not_assessed.
+        # core_mastery_tier is set later by _close_session_with_dean /
+        # mastery scorer based on the tutoring outcome.
+        state["clinical_mastery_tier"] = "not_assessed"
         return _close_session_with_dean(state, dean, messages)
 
 
