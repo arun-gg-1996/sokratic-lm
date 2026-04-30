@@ -495,6 +495,139 @@ rejections, without bringing in web search at all. CRAG+Perplexity is the
 
 ---
 
+### P1-E. Memory-recall intent + cleaner memory writes
+
+**Two coupled issues** surfaced from the local export
+`sokratic_arun_2026-04-30T19-13-44-883Z.json`. They're related and should
+ship together — neither fix is hard.
+
+#### Issue 1 — mem0 fact-extraction shreds our session summaries
+
+**What's happening.** In `memory/memory_manager.py` we write 5 structured
+multi-line mem0 entries per session (session_summary, misconceptions,
+open_thread, topics_covered, learning_style). Example from
+`_build_open_thread`:
+
+```python
+return (
+    f"[Open thread from session {ts}]\n"
+    f"Student was working on: {topic}\n"
+    f"Status: did not reach final answer in {turns} turns. "
+    f"Resume this topic in next session."
+)
+```
+
+mem0 doesn't store this verbatim — it runs an LLM fact-extraction pass that
+splits each multi-line entry into **atomic claims** before storing. So the
+above becomes separate stored memories like:
+
+- *"Did not reach final answer in 9 turns"*
+- *"Resume this topic in next session"*
+- *"Topics covered on 2026-04-30"*
+
+…all of which have lost the context they need to mean anything (*resume
+what topic?*). The rapport prompt's `Past session context` block then ends
+up looking like a bullet list of context-less fragments mixed with the
+actually-meaningful items.
+
+**Fix (~half a day).** Replace the multi-line structured entries with
+single-paragraph self-contained natural-language sentences where the topic
+name is baked into every claim. Example:
+
+```python
+return (
+    f"On {ts} the student worked on '{topic}' (Chapter {chapter}, "
+    f"{section}). They explored the anchor question '{locked_q}' "
+    f"but did not reach the answer in {turns} turns. Mastery is "
+    f"partial; resume this topic next session."
+)
+```
+
+After mem0 fact-extracts, each atomic claim still carries the topic name
+("did not reach the answer on Correlation Between Heart Rates and Cardiac
+Output in 9 turns"). Memory pool stays meaningful.
+
+**Files.** `memory/memory_manager.py` (5 `_build_*` methods) — straight
+prompt-style rewrite, no schema changes.
+
+#### Issue 2 — No `memory_query` intent in the dean's classifier
+
+**The flow that's missing.** Students will naturally reference past
+sessions: *"what did we cover last time?"*, *"continue from where we
+stopped"*, *"remember when we talked about X?"*, *"what was that thing
+about cardiac cycle phases?"*. None of these are anatomy questions and
+none are off-topic — they're **meta-conversation requests for prior
+session content**. Right now the dean classifier doesn't have a slot for
+this; it routes them into one of `incorrect`, `question`, or `low_effort`,
+all of which produce wrong behavior:
+
+- `incorrect` → tutor scaffolds an anatomy hint that's irrelevant
+- `question` → tutor restates the locked anchor question, ignoring the meta-request
+- `low_effort` → strike counter increments; eventually triggers a hint advance the student didn't earn
+
+**Fix (~1 day).** Three small changes that ship together:
+
+1. **Add `memory_query` to the `student_state` enum** in
+   `config/base.yaml` (`dean_setup_classify_static` prompt). Detection
+   patterns to add:
+   - "what did we cover last time/before/yesterday?"
+   - "remember when we talked about X?"
+   - "continue from where we stopped/left off"
+   - "what was that thing about Y?"
+   - "go back to the X session"
+   Make explicit in the prompt that this is **distinct from** `question`
+   (which is about the *current* topic) and **distinct from** `off_topic`
+   (off-domain content) and the new `deflection` state from P0-C.
+
+2. **Route `memory_query` to a new handler in `conversation/dean.py`** —
+   call it `handle_memory_recall(state)`. The handler:
+   - Pulls the last N session summaries from mem0 (filter to current
+     student_id, sort by timestamp).
+   - Reads `data/student_state/{student_id}.json` for per-concept mastery
+     (already has the structured per-topic outcomes).
+   - Composes a single Haiku call:
+     > "Student asked: '{student_msg}'. Here are the last N session
+     > summaries and mastery cues. Reply in 2–3 sentences with the
+     > specific topic, what was reached vs. not, and offer to resume or
+     > pick a new topic. Cite the date."
+   - Returns the response as a tutor message, **does not** increment hint
+     counters or strike counters, **does not** advance the topic-lock
+     state machine. It's a side-channel turn.
+
+3. **State-machine wiring.** `memory_query` happens *before* topic-lock
+   (the student is asking about the past, not engaging with the current
+   anchor) and *during* tutoring (the student might pause mid-session to
+   ask). So the handler runs at any phase ≥ rapport. After the handler
+   responds, the next student turn re-enters the normal classification
+   path — the memory-recall turn is "outside" the tutoring loop.
+
+**Why these two go together.** The cleaner memory writes (Issue 1) make
+the memory_query handler's output good. Without Issue 1's fix, the
+memory_query handler would surface the same noisy fragments back at the
+student, which is worse than the current "wrong intent" behavior.
+
+**Validation.** Add `T_memory_recall_*` test scenarios:
+- Mid-session: pre-locked topic, student asks "what did we cover last
+  time?" → expect a 2–3 sentence summary that names the prior topic +
+  outcome, no hint counter increment, normal flow resumes on next turn.
+- Pre-lock (rapport phase): student says "continue where we stopped" →
+  expect a one-shot lock to the prior open-thread topic + a tutoring
+  question (not a fresh card UI).
+
+**Files.** `config/base.yaml` (`dean_setup_classify_static`),
+`conversation/dean.py` (new `handle_memory_recall` + routing in the
+classifier dispatch), `conversation/state.py` (any new fields the
+handler needs, probably none), `evaluation/quality/penalties.py` (don't
+penalize `memory_query` turns as fabrication).
+
+**Acceptance.** Run a 3-session arc on a single student; in session 3,
+ask "what did we cover the first two sessions?" — the response should
+name both prior topics with their outcomes. The chat doesn't drift; the
+hint counter doesn't move; the next student utterance re-enters the
+normal dean flow cleanly.
+
+---
+
 ### P2. Scorer false-positive: `FABRICATION_AT_REACHED_FALSE` in clinical phase
 
 This is contributing 20 of v3's 47 critical penalties (and 32 of v2's 64).
