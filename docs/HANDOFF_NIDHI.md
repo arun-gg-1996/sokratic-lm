@@ -626,6 +626,60 @@ name both prior topics with their outcomes. The chat doesn't drift; the
 hint counter doesn't move; the next student utterance re-enters the
 normal dean flow cleanly.
 
+#### Issue 3 (same flow) — Rapport opener should reference the last 2–3 sessions, not just 1
+
+**Current behavior.** `config/base.yaml:teacher_rapport_static` has a hard
+cap *"at most ONE prior item; no recap, no list"*. Made sense when memory
+was noisy (Issue 1) but is too restrictive once the writes are clean — a
+returning student benefits from seeing a brief arc of recent work, not
+just a single name-drop.
+
+**The constraint.** "Subtly" — not a bullet list, not a recap. One sentence
+that weaves 2–3 topics into a continuity statement. The LLM picks the
+phrasing; reach status is implicit ("you've been working through" vs "you
+wrapped up"), not spelled out as success/failure.
+
+**Pattern to aim for** (LLM should produce, not literal templates):
+
+| Prior sessions | Rapport opener style |
+|---|---|
+| 0 | Fresh — no prior reference (current behavior preserved) |
+| 1 | *"Last time you were working through cardiac output…"* (current) |
+| 2 | *"We've spent the last two sessions on cardiovascular physiology — cardiac output, then SA node rhythm. Keep going or pivot?"* |
+| 3 | *"Over the last few sessions you've moved through cardiovascular: cardiac output → SA node → pulse pressure. Round it out or jump to a new system?"* |
+
+Cap at 3 sessions even if more are stored — beyond that the opener gets
+unwieldy.
+
+**Fix.**
+
+1. **`memory/memory_manager.py`** — when reading at session start, fetch
+   the last K=3 session-summary entries (sort by `ts` field embedded in
+   the memory string, descending). Pass them to the rapport node.
+2. **`conversation/nodes.py:rapport_node`** — instead of dumping all
+   mem0 hits into the prompt's `Past session context` block, structure
+   them as an explicit `recent_sessions: [{date, topic, outcome}]` list
+   so the LLM has clean fields, not a bullet salad.
+3. **`config/base.yaml:teacher_rapport_static`** — replace the *"at most
+   ONE prior item"* guardrail with:
+   > *"If `recent_sessions` is empty, treat as a fresh session. If it has
+   > 1 entry, briefly reference it as the offered starting point. If it
+   > has 2–3 entries, weave them into a single continuity sentence (e.g.,
+   > 'We've spent the last few sessions on X, then Y, then Z'). Never
+   > more than 3, never as a bullet list, never reveal past answers, never
+   > spell out reach success/failure."*
+
+**Validation.** Run a 4-session arc on a single student. Session 1 opener
+is the fresh template. Session 2 names session 1's topic. Session 3 weaves
+sessions 1+2. Session 4 weaves sessions 1+2+3 (caps at 3 even though 3
+prior sessions exist). Eyeball that none of them feel like recaps.
+
+**Why this ties to Issues 1 + 2.** Same memory-recall theme — clean
+writes (Issue 1) feed both the rapport opener (Issue 3) and the
+memory_query handler (Issue 2). All three change the same files
+(`memory_manager.py`, `nodes.py`/`dean.py`, `base.yaml`) so they're one
+coherent piece of work, ~2 days total.
+
 ---
 
 ### P2. Scorer false-positive: `FABRICATION_AT_REACHED_FALSE` in clinical phase
