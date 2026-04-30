@@ -16,6 +16,7 @@ env/
 # Environment variables
 .env
 .env.*
+!.env.example
 
 # Data — raw PDFs and large processed files (too big for git)
 data/raw/
