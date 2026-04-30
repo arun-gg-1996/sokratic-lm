@@ -105,6 +105,25 @@ End-to-end setup is six steps. Total time ~15 min, ~$0.10 in OpenAI
 embeddings if you choose to rebuild the Qdrant index instead of pulling a
 pre-built snapshot.
 
+### Prerequisites
+
+Install these before step 1:
+
+| Tool | Version | What for |
+|---|---|---|
+| Python | 3.10+ (3.11 is the lockfile target) | Backend, ingestion, eval |
+| Docker | Any recent (Desktop is fine) | Qdrant runs in a container via `scripts/qdrant_up.sh` |
+| Node.js + npm | Node 18+ (or pnpm) | Frontend dev server (Vite) |
+| Git | Any recent | Cloning + the eval batch JSON in commit history |
+
+Plus ~10 GB free disk for: Python venv (~3 GB), Qdrant snapshot + restored
+collection (~1 GB), processed corpus (~30 MB), `node_modules` (~500 MB),
+HuggingFace cache for the cross-encoder model (~500 MB on first retrieval
+call).
+
+OS: macOS or Linux work natively. Windows users should use WSL2 — the
+`qdrant_up.sh` helper expects a Unix shell.
+
 ### 1. Clone + Python environment
 
 ```bash
@@ -200,11 +219,11 @@ the snapshot isn't on HF yet or you've regenerated the chunks:
 .venv/bin/python scripts/reindex_chunks.py --collection sokratic_kb_chunks --fresh
 ```
 
-> **Heads-up:** `config/domains/ot.yaml` currently sets
-> `kb_collection: "sokratic_kb"` (the deprecated propositions collection).
-> If your runtime retrieval returns nothing after restore, change that line
-> to `kb_collection: "sokratic_kb_chunks"`. (Tracked as a punch-list item in
-> `docs/HANDOFF_NIDHI.md` — should be flipped before this handoff goes out.)
+> Both `config/domains/ot.yaml` and the fallback in `config/base.yaml` are
+> already set to `kb_collection: "sokratic_kb_chunks"` — the snapshot
+> restores into that collection name and the runtime queries it. If you
+> ever see "Could not read vector size for Qdrant collection 'sokratic_kb'",
+> the config got reverted somewhere; flip it back.
 
 ### 5. Run the backend (FastAPI + WebSocket)
 
@@ -225,6 +244,32 @@ npm run dev            # serves on http://localhost:5173
 
 The Vite dev server proxies API calls to `http://localhost:8000` by default.
 Override via `VITE_API_BASE` in `.env` if the backend is elsewhere.
+
+### Smoke test — verify the setup works
+
+Once the backend and frontend are both up, sanity-check with one of these:
+
+```bash
+# 1. Backend health
+curl http://localhost:8000/api/health
+# expect: {"status":"ok"}
+
+# 2. Qdrant collection populated and runtime points at it correctly
+.venv/bin/python -c "
+from retrieval.retriever import Retriever
+r = Retriever()
+print('collection:', r.collection)             # expect: sokratic_kb_chunks
+hits = r.retrieve('What is the rotator cuff?')
+print('retrieved:', len(hits), 'chunks')        # expect: ~7-16 hits
+"
+
+# 3. End-to-end via the UI: open http://localhost:5173 and ask
+#    "What does the axillary nerve supply?" — the dean should
+#    lock to a topic, ask a Socratic question, and surface a
+#    locked_topic in the sidebar.
+```
+
+If any of these fail, see "Open issues / known limitations" below.
 
 ---
 

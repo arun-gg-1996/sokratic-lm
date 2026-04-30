@@ -550,11 +550,16 @@ cd frontend && npm install && npm run dev          # frontend (separate terminal
 
 **Punch-list for Arun before this handoff is fully clean:**
 
-- [ ] **Re-publish the HF dataset for the chunks-only architecture.** The
-  current published tag (`v0-messy-metadata`) carries the deprecated
-  propositions-era files (`chunks_ot.jsonl`, `propositions_ot.jsonl`,
-  `bm25_ot.pkl`, `raw_*_ot.jsonl`). On 2026-04-30 `scripts/publish_corpus.py`
-  was rewritten to publish only the live chunks-only artifacts:
+- [x] **Re-publish the HF dataset for the chunks-only architecture.**
+  *(Completed 2026-04-30: tag `v1-chunks-only`, snapshot uploaded, `*_ot.*`
+  files pruned — see [`arun-ghontale/sokratic-anatomy-corpus`](https://huggingface.co/datasets/arun-ghontale/sokratic-anatomy-corpus).
+  Steps below preserved for the next re-publish.)*
+
+  Original plan: the previous published tag (`v0-messy-metadata`) carried
+  the deprecated propositions-era files (`chunks_ot.jsonl`,
+  `propositions_ot.jsonl`, `bm25_ot.pkl`, `raw_*_ot.jsonl`). On 2026-04-30
+  `scripts/publish_corpus.py` was rewritten to publish only the live
+  chunks-only artifacts:
 
   - `data/processed/chunks_openstax_anatomy.jsonl` (~11 MB)
   - `data/indexes/bm25_chunks_openstax_anatomy.pkl` (~17 MB)
@@ -585,16 +590,16 @@ cd frontend && npm install && npm run dev          # frontend (separate terminal
   automatically (it iterates the published manifest) and step 4 of the
   README simplifies to "Path A only".
 
-- [ ] **Flip the runtime collection name to chunks.** `config/domains/ot.yaml`
-  still has `kb_collection: "sokratic_kb"` (propositions). Change to
-  `kb_collection: "sokratic_kb_chunks"` so the runtime retriever queries the
-  chunks collection that the snapshot/reindex populates. Smoke-test a single
-  conversation after the flip — if `Retriever()` finds zero chunks for a
-  known anatomy query, the config didn't take effect.
+- [x] **Flip the runtime collection name to chunks.**
+  *(Completed 2026-04-30: `kb_collection: "sokratic_kb_chunks"` in both
+  `config/domains/ot.yaml` and `config/base.yaml`. Smoke-tested via
+  `Retriever()` — connects, returns 16 chunks for "What does the axillary
+  nerve supply?".)*
 
 - [ ] **Verify the clean-clone walkthrough.** Spin up a scratch directory,
   run the README §First-time setup steps verbatim, confirm the demo
   conversation works end-to-end. (Owner: Arun, before sending this doc.)
+  README's "Smoke test" subsection at end of §6 is the final gate.
 
 - [ ] **Confirm Nidhi has access** to: GitHub repo, HF dataset (currently
   public so token not required), Anthropic console (for API key).
