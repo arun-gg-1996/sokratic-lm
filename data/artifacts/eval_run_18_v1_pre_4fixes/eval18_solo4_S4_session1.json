@@ -1,0 +1,1124 @@
+{
+  "student_id": "eval18_solo4_S4",
+  "conv_id": "2c300261",
+  "profile_id": "S4",
+  "topic": "Explain the structure and motion of the elbow joint",
+  "session_index": 1,
+  "timestamp": "2026-04-30T02:53:04",
+  "turns_log": [
+    {
+      "turn": 0,
+      "phase": "rapport",
+      "role": "tutor",
+      "content": "Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?"
+    },
+    {
+      "turn": 0,
+      "phase": "topic_input",
+      "role": "student",
+      "content": "Explain the structure and motion of the elbow joint"
+    },
+    {
+      "turn": 0,
+      "phase": "topic_engagement",
+      "role": "tutor",
+      "content": "Got it \u2014 let's work on **Elbow Joint** from Anatomy of Selected Synovial Joints.\n\nWhat are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?"
+    },
+    {
+      "turn": 2,
+      "phase": "tutoring",
+      "role": "student",
+      "content": "I think the three joints are the humeroulnar, humeroradial, and proximal radioulnar joints, and I'm pretty sure the humeroulnar joint is the main hinge joint that does most of the flexion and extension. I'm feeling pretty confident about that one!"
+    },
+    {
+      "turn": 2,
+      "phase": "assessment",
+      "role": "tutor",
+      "content": "Excellent work identifying the humeroulnar joint. Would you like to apply this knowledge to a brief clinical scenario, or are you satisfied with your understanding at this point?",
+      "student_state": "correct",
+      "hint_level": 0,
+      "student_reached_answer": true
+    },
+    {
+      "turn": 3,
+      "phase": "assessment",
+      "role": "student",
+      "content": "I think I'm ready to try the clinical scenario, but honestly I'm a bit confused about something\u2014when we were talking about the nerve injuries earlier, I kept second-guessing myself on whether it was the median nerve or something else. I'm pretty sure it's the median nerve based on what we covered, but I'd feel more confident if we could work through an example where I could actually apply it to see if my understanding is solid."
+    },
+    {
+      "turn": 2,
+      "phase": "assessment",
+      "role": "tutor",
+      "content": "I hear you\u2014nerve injuries can be tricky to keep straight. Let's anchor this with a concrete example: a baseball pitcher tears his ulnar collateral ligament during a forceful throw. Which ligament is damaged, where does it attach, and why is the ulnar nerve at risk in this injury? This will help you see how ligament and nerve anatomy connect clinically.",
+      "student_state": "correct",
+      "hint_level": 0,
+      "student_reached_answer": true
+    },
+    {
+      "turn": 3,
+      "phase": "assessment",
+      "role": "student",
+      "content": "I think it's the obturator nerve, honestly\u2014that's what comes to mind when I think about nerve injuries around the elbow. But wait, I'm second-guessing myself now because I feel like the obturator nerve is more in the hip area, right? Can you help me figure out which nerve actually gets affected when the ulnar collateral ligament tears at the elbow?"
+    },
+    {
+      "turn": 2,
+      "phase": "assessment",
+      "role": "tutor",
+      "content": "What you got right: You correctly recognized that the obturator nerve is anatomically associated with the hip region, showing some spatial awareness of nerve distribution. What to correct next: The obturator nerve is not involved in elbow injuries. When the ulnar collateral ligament tears (as in Tommy John surgery), the **ulnar nerve**\u2014not the obturator nerve\u2014runs medial to the elbow and is at risk of injury or compression. The ulnar nerve travels in the ulnar groove posterior to the medial epicondyle, directly adjacent to where the ulnar collateral ligament attaches. You need to anchor nerve injuries to their specific anatomical pathways: ulnar nerve at the elbow, obturator nerve at the hip. Which anatomical structure do you think protects the ulnar nerve as it passes behind the medial epicondyle, and why might tearing the ligament compromise that protection?",
+      "student_state": "correct",
+      "hint_level": 0,
+      "student_reached_answer": true
+    },
+    {
+      "turn": 3,
+      "phase": "assessment",
+      "role": "student",
+      "content": "Oh yeah, you're right\u2014I was totally mixing that up. So the ulnar nerve is the one that runs behind the medial epicondyle in that groove, and when the ulnar collateral ligament tears, it loses that protective support and the nerve can get compressed or irritated. I think the groove itself and maybe the surrounding tissue help protect it, but once that ligament is damaged, the nerve basically loses its cushioning and is way more vulnerable to injury?"
+    },
+    {
+      "turn": 2,
+      "phase": "assessment",
+      "role": "tutor",
+      "content": "What you got right: You correctly identified that the ulnar nerve runs behind the medial epicondyle and that ligament damage compromises nerve protection, showing solid spatial reasoning and causal thinking. What to correct next: You've conflated the ulnar groove (a bony anatomical feature) with soft tissue cushioning. The ulnar groove is a bony channel in the medial epicondyle itself\u2014it doesn't disappear when the ligament tears. The real mechanism is that the ulnar collateral ligament provides dynamic stabilization and reduces abnormal valgus stress at the elbow; when torn, excessive valgus motion stretches and irritates the nerve directly, rather than simply removing 'cushioning.' Precision matters in clinical anatomy: the nerve is at risk from increased mechanical stress and stretch, not loss of padding. Can you explain how valgus stress (lateral bending force) at the elbow would mechanically affect a nerve that runs on the medial side?",
+      "student_state": "correct",
+      "hint_level": 0,
+      "student_reached_answer": true
+    },
+    {
+      "turn": 3,
+      "phase": "assessment",
+      "role": "student",
+      "content": "Oh, I see what you're saying now\u2014that makes a lot more sense. So when there's valgus stress, the elbow is bending outward on the lateral side, which would actually pull and stretch the ulnar nerve on the medial side because the nerve has to stretch to accommodate that increased opening motion, right? That's really different from just losing cushioning, and I can see how that direct mechanical stretching would irritate the nerve more than anything else would."
+    },
+    {
+      "turn": 2,
+      "phase": "memory_update",
+      "role": "tutor",
+      "content": "You showed strong foundational knowledge of elbow joint anatomy and made real progress in clinical reasoning during this session. Your identification of the three joints was immediate and confident, which is excellent. In the clinical scenario, you worked through a meaningful learning curve: you caught yourself on the obturator nerve error, then refined your understanding of how ligament tears actually injure nerves through mechanical stretch rather than simple loss of cushioning. That's genuine clinical thinking. Going forward, focus on distinguishing between bony anatomical structures (like the ulnar groove) and the dynamic mechanical forces that actually cause injury\u2014that precision will strengthen your clinical applications significantly.",
+      "student_state": "correct",
+      "hint_level": 0,
+      "student_reached_answer": true
+    }
+  ],
+  "outcome": {
+    "phase_final": "memory_update",
+    "reached_answer": true,
+    "locked_answer": "humeroulnar joint",
+    "hint_level_final": 0,
+    "turn_count": 2,
+    "assessment_turn": 3,
+    "student_state_final": "correct",
+    "core_mastery_tier": "proficient",
+    "clinical_mastery_tier": "developing",
+    "mastery_tier": "proficient",
+    "total_low_effort_turns": 0,
+    "total_off_topic_turns": 0
+  },
+  "debug_summary": {
+    "api_calls": 14,
+    "input_tokens": 26660,
+    "output_tokens": 2491,
+    "cost_usd": 0.11734499999999998,
+    "interventions": 0
+  },
+  "bugs_noted": [],
+  "final_state": {
+    "student_id": "eval18_solo4_S4",
+    "phase": "memory_update",
+    "messages": [
+      {
+        "role": "tutor",
+        "content": "Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?",
+        "phase": "rapport"
+      },
+      {
+        "role": "student",
+        "content": "Explain the structure and motion of the elbow joint"
+      },
+      {
+        "role": "tutor",
+        "content": "Got it \u2014 let's work on **Elbow Joint** from Anatomy of Selected Synovial Joints.\n\nWhat are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?",
+        "phase": "tutoring"
+      },
+      {
+        "role": "student",
+        "content": "I think the three joints are the humeroulnar, humeroradial, and proximal radioulnar joints, and I'm pretty sure the humeroulnar joint is the main hinge joint that does most of the flexion and extension. I'm feeling pretty confident about that one!"
+      },
+      {
+        "role": "tutor",
+        "content": "Excellent work identifying the humeroulnar joint. Would you like to apply this knowledge to a brief clinical scenario, or are you satisfied with your understanding at this point?",
+        "phase": "assessment"
+      },
+      {
+        "role": "student",
+        "content": "I think I'm ready to try the clinical scenario, but honestly I'm a bit confused about something\u2014when we were talking about the nerve injuries earlier, I kept second-guessing myself on whether it was the median nerve or something else. I'm pretty sure it's the median nerve based on what we covered, but I'd feel more confident if we could work through an example where I could actually apply it to see if my understanding is solid."
+      },
+      {
+        "role": "tutor",
+        "content": "I hear you\u2014nerve injuries can be tricky to keep straight. Let's anchor this with a concrete example: a baseball pitcher tears his ulnar collateral ligament during a forceful throw. Which ligament is damaged, where does it attach, and why is the ulnar nerve at risk in this injury? This will help you see how ligament and nerve anatomy connect clinically.",
+        "phase": "assessment"
+      },
+      {
+        "role": "student",
+        "content": "I think it's the obturator nerve, honestly\u2014that's what comes to mind when I think about nerve injuries around the elbow. But wait, I'm second-guessing myself now because I feel like the obturator nerve is more in the hip area, right? Can you help me figure out which nerve actually gets affected when the ulnar collateral ligament tears at the elbow?"
+      },
+      {
+        "role": "tutor",
+        "content": "What you got right: You correctly recognized that the obturator nerve is anatomically associated with the hip region, showing some spatial awareness of nerve distribution. What to correct next: The obturator nerve is not involved in elbow injuries. When the ulnar collateral ligament tears (as in Tommy John surgery), the **ulnar nerve**\u2014not the obturator nerve\u2014runs medial to the elbow and is at risk of injury or compression. The ulnar nerve travels in the ulnar groove posterior to the medial epicondyle, directly adjacent to where the ulnar collateral ligament attaches. You need to anchor nerve injuries to their specific anatomical pathways: ulnar nerve at the elbow, obturator nerve at the hip. Which anatomical structure do you think protects the ulnar nerve as it passes behind the medial epicondyle, and why might tearing the ligament compromise that protection?",
+        "phase": "assessment"
+      },
+      {
+        "role": "student",
+        "content": "Oh yeah, you're right\u2014I was totally mixing that up. So the ulnar nerve is the one that runs behind the medial epicondyle in that groove, and when the ulnar collateral ligament tears, it loses that protective support and the nerve can get compressed or irritated. I think the groove itself and maybe the surrounding tissue help protect it, but once that ligament is damaged, the nerve basically loses its cushioning and is way more vulnerable to injury?"
+      },
+      {
+        "role": "tutor",
+        "content": "What you got right: You correctly identified that the ulnar nerve runs behind the medial epicondyle and that ligament damage compromises nerve protection, showing solid spatial reasoning and causal thinking. What to correct next: You've conflated the ulnar groove (a bony anatomical feature) with soft tissue cushioning. The ulnar groove is a bony channel in the medial epicondyle itself\u2014it doesn't disappear when the ligament tears. The real mechanism is that the ulnar collateral ligament provides dynamic stabilization and reduces abnormal valgus stress at the elbow; when torn, excessive valgus motion stretches and irritates the nerve directly, rather than simply removing 'cushioning.' Precision matters in clinical anatomy: the nerve is at risk from increased mechanical stress and stretch, not loss of padding. Can you explain how valgus stress (lateral bending force) at the elbow would mechanically affect a nerve that runs on the medial side?",
+        "phase": "assessment"
+      },
+      {
+        "role": "student",
+        "content": "Oh, I see what you're saying now\u2014that makes a lot more sense. So when there's valgus stress, the elbow is bending outward on the lateral side, which would actually pull and stretch the ulnar nerve on the medial side because the nerve has to stretch to accommodate that increased opening motion, right? That's really different from just losing cushioning, and I can see how that direct mechanical stretching would irritate the nerve more than anything else would."
+      },
+      {
+        "role": "tutor",
+        "content": "You showed strong foundational knowledge of elbow joint anatomy and made real progress in clinical reasoning during this session. Your identification of the three joints was immediate and confident, which is excellent. In the clinical scenario, you worked through a meaningful learning curve: you caught yourself on the obturator nerve error, then refined your understanding of how ligament tears actually injure nerves through mechanical stretch rather than simple loss of cushioning. That's genuine clinical thinking. Going forward, focus on distinguishing between bony anatomical structures (like the ulnar groove) and the dynamic mechanical forces that actually cause injury\u2014that precision will strengthen your clinical applications significantly.",
+        "phase": "memory_update"
+      }
+    ],
+    "retrieved_chunks": [
+      {
+        "chunk_id": "a7b05b33-d75d-40ac-9a0d-9cd543f2b66d",
+        "text": "The elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.",
+        "score": 0.9999704360961914,
+        "chapter_num": 9,
+        "chapter_title": "Joints",
+        "section_title": "Anatomy of Selected Synovial Joints",
+        "subsection_title": "Elbow Joint",
+        "page": 352,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "primary",
+        "_primary_chunk_id": "a7b05b33-d75d-40ac-9a0d-9cd543f2b66d"
+      },
+      {
+        "chunk_id": "bd0e7878-a531-4abf-85eb-36ca4bc4d13d",
+        "text": "The elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.",
+        "chapter_num": 9,
+        "chapter_title": "Joints",
+        "section_title": "Anatomy of Selected Synovial Joints",
+        "subsection_title": "Elbow Joint",
+        "page": 352,
+        "element_type": "paragraph_overlap",
+        "image_filename": "",
+        "_window_role": "neighbor_next",
+        "_primary_chunk_id": "a7b05b33-d75d-40ac-9a0d-9cd543f2b66d"
+      },
+      {
+        "chunk_id": "1e61cc1f-9d58-4071-bcc4-75db17827b40",
+        "text": "On the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.",
+        "chapter_num": 9,
+        "chapter_title": "Joints",
+        "section_title": "Anatomy of Selected Synovial Joints",
+        "subsection_title": "Elbow Joint",
+        "page": 352,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "neighbor_next",
+        "_primary_chunk_id": "a7b05b33-d75d-40ac-9a0d-9cd543f2b66d"
+      },
+      {
+        "chunk_id": "99ef7b7f-99b0-4ddf-a161-da1e6da7b158",
+        "text": "The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension. On the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.",
+        "score": 0.9503733515739441,
+        "chapter_num": 9,
+        "chapter_title": "Joints",
+        "section_title": "Anatomy of Selected Synovial Joints",
+        "subsection_title": "Elbow Joint",
+        "page": 352,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "primary",
+        "_primary_chunk_id": "99ef7b7f-99b0-4ddf-a161-da1e6da7b158"
+      },
+      {
+        "chunk_id": "4f43a74a-1b68-4d3b-984e-151e8dd4eb5b",
+        "text": "The annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.",
+        "chapter_num": 9,
+        "chapter_title": "Joints",
+        "section_title": "Anatomy of Selected Synovial Joints",
+        "subsection_title": "Elbow Joint",
+        "page": 352,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "neighbor_next",
+        "_primary_chunk_id": "99ef7b7f-99b0-4ddf-a161-da1e6da7b158"
+      },
+      {
+        "chunk_id": "5d42ccf1-fd3c-4415-9c07-d7a60cfd3286",
+        "text": "The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament. The annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.",
+        "chapter_num": 9,
+        "chapter_title": "Joints",
+        "section_title": "Anatomy of Selected Synovial Joints",
+        "subsection_title": "Elbow Joint",
+        "page": 352,
+        "element_type": "paragraph_overlap",
+        "image_filename": "",
+        "_window_role": "neighbor_next",
+        "_primary_chunk_id": "99ef7b7f-99b0-4ddf-a161-da1e6da7b158"
+      }
+    ],
+    "locked_question": "What are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?",
+    "locked_answer": "humeroulnar joint",
+    "locked_answer_aliases": [
+      "articulation between trochlea and trochlear notch",
+      "humerus-ulna joint",
+      "primary elbow hinge",
+      "trochlea-trochlear notch articulation"
+    ],
+    "locked_topic": null,
+    "topic_confirmed": true,
+    "topic_selection": "Elbow Joint",
+    "topic_just_locked": false,
+    "hint_level": 0,
+    "max_hints": 3,
+    "max_turns": 25,
+    "turn_count": 2,
+    "student_state": "correct",
+    "student_reached_answer": true,
+    "student_answer_confidence": 0.95,
+    "student_mastery_confidence": 0.475,
+    "confidence_samples": 2,
+    "help_abuse_count": 0,
+    "off_topic_count": 0,
+    "total_low_effort_turns": 0,
+    "total_off_topic_turns": 0,
+    "clinical_low_effort_count": 0,
+    "clinical_off_topic_count": 0,
+    "assessment_turn": 3,
+    "clinical_state": "correct",
+    "clinical_confidence": 0.95,
+    "core_mastery_tier": "proficient",
+    "clinical_mastery_tier": "developing",
+    "mastery_tier": "proficient",
+    "grading_rationale": "Student demonstrated solid core anatomy knowledge, correctly identifying the three elbow joints and the humeroulnar joint as the primary hinge joint on first attempt with high confidence. Clinical reasoning showed significant growth trajectory\u2014moving from incorrect nerve identification (obturator) through partial understanding to correct mechanistic explanation of valgus stress and ulnar nerve stretch\u2014but required substantial tutor scaffolding and still conflated anatomical structures (groove vs. soft tissue protection) before reaching precision.",
+    "session_memory_summary": "Student confidently identified elbow joint anatomy (humeroulnar, humeroradial, proximal radioulnar joints; humeroulnar as primary hinge). Demonstrated developing clinical reasoning: initially confused ulnar nerve with obturator nerve (hip anatomy), but self-corrected and progressed to understanding valgus stress mechanism and nerve stretch injury. Required explicit correction on conflating bony grooves with soft tissue protection, but successfully integrated mechanistic reasoning by session end. Strength in spatial reasoning and willingness to revise; needs continued precision in distinguishing anatomical structures from biomechanical forces.",
+    "weak_topics": [],
+    "rejected_topic_paths": [],
+    "exploration_max": 3,
+    "exploration_used": 0,
+    "debug": {
+      "api_calls": 14,
+      "input_tokens": 26660,
+      "output_tokens": 2491,
+      "cost_usd": 0.11734499999999998,
+      "interventions": 0,
+      "retrieval_calls": 1,
+      "coverage_gap_events": 0,
+      "grounded_turns": 1,
+      "ungrounded_turns": 1,
+      "invariant_violations": [
+        {
+          "turn": 2,
+          "kind": "ungrounded_tutoring_turn",
+          "has_locked_topic": false,
+          "chunk_count": 6
+        }
+      ],
+      "current_node": "memory_update_node",
+      "last_routing": "assessment_node (student_reached_answer)",
+      "turn_trace": [
+        {
+          "wrapper": "dean._setup_call",
+          "decision_effect": "classification_only",
+          "input_hash": "189fc6ce31883972",
+          "elapsed_s": 1.81,
+          "in_tok": 2178,
+          "out_tok": 135,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.00856,
+          "s_per_tok": 0.0134,
+          "cached_est_tokens": 1619,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": true,
+              "est_tokens": 1619
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 207
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 287
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean supervising one Socratic tutoring turn.\nTools are already handled in Python. Do NOT request tools.\nThis is an evaluation setting: classify strictly based on evidence in the student's latest message.\n\nSTRICT LOW_EFFORT RULES (highest priority):\n  The student must be GENUINELY ATTEMPTING the locked_question.\n  low_effort when: bare denial (\"no\", \"idk\", \"i don't know\"), demand\n  to be told (\"just tell me\"), frustration (\"if i wanted to read...\"),\n  empty deflection (<5 words, no domain content), profanity, or\n  dismissal. Off-topic + frustration \u2192 low_effort.\n  irrelevant: genuinely off-topic question on a different subject.\n\nOTHER:\n  question: genuine specific clarifying question about human anatomy,\n    with engagement. Rhetorical/frustrated questions \u2192 low_effort.\n  incorrect: genuine attempt but wrong.\n  partial_correct: answers an INTERMEDIATE scaffold the tutor asked,\n    but NOT the locked answer. (e.g. \"stroke volume goes lower\" when\n    locked_answer is \"skeletal muscle pump\" \u2192 partial_correct.)\n  correct: student STATES the locked_answer or a clear paraphrase.\n    Getting an intermediate scaffold right is partial_correct, NOT correct.\n    Only the LOCKED answer being stated counts as correct.\n\nstudent_reached_answer: ALWAYS set to false. Python's\n  reached_answer_gate computes the authoritative reached signal.\n\nconfidence_score:\n  - 0.85-1.00: explicit, accurate, certain\n  - 0.65-0.84: mostly correct, mild ambiguity\n  - 0.40-0.64: partial / uncertain\n  - 0.00-0.39: incorrect, irrelevant, low-effort\n\nhint_level: leave unchanged (Python increments for incorrect).\nlocked_answer is already set; do not propose a new one.\n\nReturn one JSON object only (no markdown):\n{{\n  \"student_state\": \"correct|partial_correct|incorrect|question|irrelevant|low_effort\",\n  \"student_reached_answer\": false,\n  \"confidence_score\": 0.0,\n  \"hint_level\": 1,\n  \"search_needed\": false,\n  \"critique\": \"\"\n}}\n\n\n[1] (p.352, score=1.00) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n===\n\n[2] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n===\n\n[3] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nOn the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n===\n\n[4] (p.352, score=0.95) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension. On the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n===\n\n[5] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\n===\n\n[6] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament. The annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint\nTutor: Got it \u2014 let's work on **Elbow Joint** from Anatomy of Selected Synovial Joints.\n\nWhat are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?\nStudent: I think the three joints are the humeroulnar, humeroradial, and proximal radioulnar joints, and I'm pretty sure the humeroulnar joint is the main hinge joint that does most of the flexion and extension. I'm feeling pretty confident about that one!\n\n---\n\nCurrent state:\n- locked_question: What are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?\n- locked_answer: humeroulnar joint\n- hint_level: 0\n- turn_count: 1\n\nRecent conversation history:\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint\nTutor: Got it \u2014 let's work on **Elbow Joint** from Anatomy of Selected Synovial Joints.\n\nWhat are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?\nStudent: I think the three joints are the humeroulnar, humeroradial, and proximal radioulnar joints, and I'm pretty sure the humeroulnar joint is the main hinge joint that does most of the flexion and extension. I'm feeling pretty confident about that one!\nClassify the student's MOST RECENT message. Prior history is context only.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Classify this turn and return JSON."
+            }
+          ],
+          "response_text": "```json\n{\n  \"student_state\": \"correct\",\n  \"student_reached_answer\": false,\n  \"confidence_score\": 0.95,\n  \"hint_level\": 0,\n  \"search_needed\": false,\n  \"critique\": \"Student correctly identified all three joints (humeroulnar, humeroradial, proximal radioulnar) and accurately named the humeroulnar joint as the primary hinge joint responsible for flexion and extension. The response demonstrates solid anatomical understanding with appropriate confidence. The answer directly matches the locked_answer requirement.\"\n}\n```",
+          "tool_calls_made": [],
+          "result": "student_state=correct, hint=0",
+          "locked_answer_final": "humeroulnar joint"
+        },
+        {
+          "wrapper": "dean.sanitize_locked_answer",
+          "candidate": "humeroulnar joint",
+          "action": "kept",
+          "final": "humeroulnar joint"
+        },
+        {
+          "wrapper": "dean.confidence_score",
+          "result": "answer_conf=0.950, mastery_conf=0.475, reached=True (gate_path=overlap)",
+          "locked_answer": "humeroulnar joint",
+          "gate_path": "overlap",
+          "gate_evidence": "humeroulnar joint"
+        },
+        {
+          "wrapper": "dean.hint_progress",
+          "hint_before": 0,
+          "hint_after": 0,
+          "hint_reason": "unchanged",
+          "active_hint": ""
+        },
+        {
+          "wrapper": "teacher.draft_clinical_opt_in",
+          "decision_effect": null,
+          "input_hash": "7eea2a0348dda05a",
+          "elapsed_s": 1.04,
+          "in_tok": 203,
+          "out_tok": 38,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.00118,
+          "s_per_tok": 0.0272,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 183
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 16
+            }
+          ],
+          "system_prompt": "You are\na Socratic tutor in human anatomy working with a student.\nThis is an evaluated learning session.\nGlobal rules for all teacher wrappers:\n- Keep language academically focused and concise.\n- Do not reveal final answers unless wrapper-specific instructions explicitly allow it.\n- Follow wrapper output contracts exactly.\n- If strict JSON is requested by the wrapper, return strict JSON only.\n- Avoid generic motivational filler; prioritize targeted reasoning prompts.\n\n\na anatomy tutor.\nThe student has reached the core answer.\nAsk whether they want to do an optional clinical application challenge.\n\nRules:\n- Keep to 2 sentences max.\n- Do not restate the answer.\n- End with exactly one question that offers a clear yes/no choice.\n\n\n---\n\nCorrect answer already reached (do not restate): humeroulnar joint\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Ask if the student wants the optional clinical question."
+            }
+          ],
+          "response_text": "Excellent work identifying the humeroulnar joint. Would you like to apply this knowledge to a brief clinical scenario, or are you satisfied with your understanding at this point?",
+          "tool_calls_made": []
+        },
+        {
+          "wrapper": "assessment.opt_in_implicit_yes",
+          "result": "long reply treated as yes"
+        },
+        {
+          "wrapper": "teacher.draft_clinical",
+          "decision_effect": null,
+          "input_hash": "6ef3e03490714ed4",
+          "elapsed_s": 1.78,
+          "in_tok": 1212,
+          "out_tok": 71,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.0047,
+          "s_per_tok": 0.0251,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1210
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 30
+            }
+          ],
+          "system_prompt": "You are\na Socratic tutor in human anatomy working with a student.\nThis is an evaluated learning session.\nGlobal rules for all teacher wrappers:\n- Keep language academically focused and concise.\n- Do not reveal final answers unless wrapper-specific instructions explicitly allow it.\n- Follow wrapper output contracts exactly.\n- If strict JSON is requested by the wrapper, return strict JSON only.\n- Avoid generic motivational filler; prioritize targeted reasoning prompts.\n\n\na Socratic tutor writing a human anatomy application question.\n\nRules:\n- Briefly acknowledge progress without restating the answer.\n- Ask exactly one question tied to exam findings, function, or intervention planning.\n- Keep output to 2-3 sentences.\n- End with exactly one question.\n- Avoid generic filler and avoid answer reveal.\n\n\nRelevant textbook propositions:\n[1] Anatomy of Selected Synovial Joints > Elbow Joint\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n[2] Anatomy of Selected Synovial Joints > Elbow Joint\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n[3] Anatomy of Selected Synovial Joints > Elbow Joint\nOn the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n[4] Anatomy of Selected Synovial Joints > Elbow Joint\nThe articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension. On the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n[5] Anatomy of Selected Synovial Joints > Elbow Joint\nThe annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\n[6] Anatomy of Selected Synovial Joints > Elbow Joint\nThe lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament. The annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\n\n---\n\nReached answer (never restate directly): humeroulnar joint\nDean critique from prior failed draft (empty on first pass): \n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Ask a clinical application question."
+            }
+          ],
+          "response_text": "Good\u2014you've identified the primary articulation responsible for elbow flexion and extension. Now consider a patient presenting with elbow instability during forceful throwing motions: which ligamentous structure and its anatomical attachment would be the primary target for surgical reconstruction, and what specific type of motion or force would have compromised it?",
+          "tool_calls_made": []
+        },
+        {
+          "wrapper": "dean._quality_check_call",
+          "decision_effect": "qc_fail",
+          "input_hash": "c817f3bff505ba9f",
+          "elapsed_s": 3.76,
+          "in_tok": 2240,
+          "out_tok": 253,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.01052,
+          "s_per_tok": 0.0149,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1339
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 364
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 614
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean reviewing an assessment-phase message.\nGoal: ensure clinical application relevance and concise clarity.\n\nPass criteria:\n- Relevant to clinical application context.\n- Clear and concise (2-4 sentences for questions, 3-5 for summaries).\n- No unsafe factual contradiction with provided textbook context.\n\nResponse requirements:\n- Return a single valid JSON object only (no markdown, no backticks, no prose).\n- Include revised_teacher_draft only when pass=false.\n\nRespond with JSON only:\n{{\n  \"pass\": true/false,\n  \"critique\": \"short explanation if fail, empty if pass\",\n  \"reason_codes\": [\"irrelevance\"|\"verbosity\"|\"factual_risk\"|\"other\"],\n  \"rewrite_instruction\": \"one concrete instruction for the next draft\",\n  \"revised_teacher_draft\": \"full revised assessment response, empty when pass=true\"\n}}\n\n\n[1] (p.352, score=1.00) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n===\n\n[2] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n===\n\n[3] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nOn the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n===\n\n[4] (p.352, score=0.95) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension. On the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n===\n\n[5] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\n===\n\n[6] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament. The annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint\nTutor: Got it \u2014 let's work on **Elbow Joint** from Anatomy of Selected Synovial Joints.\n\nWhat are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?\nStudent: I think the three joints are the humeroulnar, humeroradial, and proximal radioulnar joints, and I'm pretty sure the humeroulnar joint is the main hinge joint that does most of the flexion and extension. I'm feeling pretty confident about that one!\nTutor: Excellent work identifying the humeroulnar joint. Would you like to apply this knowledge to a brief clinical scenario, or are you satisfied with your understanding at this point?\nStudent: I think I'm ready to try the clinical scenario, but honestly I'm a bit confused about something\u2014when we were talking about the nerve injuries earlier, I kept second-guessing myself on whether it was the median nerve or something else. I'm pretty sure it's the median nerve based on what we covered, but I'd feel more confident if we could work through an example where I could actually apply it to see if my understanding is solid.\n\n---\n\nPhase: assessment\nCorrect answer: humeroulnar joint\nStudent's last message: I think I'm ready to try the clinical scenario, but honestly I'm a bit confused about something\u2014when we were talking about the nerve injuries earlier, I kept second-guessing myself on whether it was the median nerve or something else. I'm pretty sure it's the median nerve based on what we covered, but I'd feel more confident if we could work through an example where I could actually apply it to see if my understanding is solid.\nDraft: Good\u2014you've identified the primary articulation responsible for elbow flexion and extension. Now consider a patient presenting with elbow instability during forceful throwing motions: which ligamentous structure and its anatomical attachment would be the primary target for surgical reconstruction, and what specific type of motion or force would have compromised it?\nRecent conversation history:\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint\nTutor: Got it \u2014 let's work on **Elbow Joint** from Anatomy of Selected Synovial Joints.\n\nWhat are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?\nStudent: I think the three joints are the humeroulnar, humeroradial, and proximal radioulnar joints, and I'm pretty sure the humeroulnar joint is the main hinge joint that does most of the flexion and extension. I'm feeling pretty confident about that one!\nTutor: Excellent work identifying the humeroulnar joint. Would you like to apply this knowledge to a brief clinical scenario, or are you satisfied with your understanding at this point?\nStudent: I think I'm ready to try the clinical scenario, but honestly I'm a bit confused about something\u2014when we were talking about the nerve injuries earlier, I kept second-guessing myself on whether it was the median nerve or something else. I'm pretty sure it's the median nerve based on what we covered, but I'd feel more confident if we could work through an example where I could actually apply it to see if my understanding is solid.\nEvaluate ONLY the Teacher's most recent draft against the student's most recent message.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Evaluate this Teacher draft."
+            }
+          ],
+          "response_text": "```json\n{\n  \"pass\": false,\n  \"critique\": \"Draft ignores student's explicit concern about nerve injuries and requests a clinical example to build confidence. Instead, it pivots to ligamentous injury without addressing the student's stated confusion or pedagogical need. The scenario is clinically relevant but misaligned with the student's immediate learning priority.\",\n  \"reason_codes\": [\"irrelevance\"],\n  \"rewrite_instruction\": \"Acknowledge the student's nerve injury confusion first, then offer a focused clinical scenario that integrates both ligamentous AND nerve injury context (e.g., ulnar collateral ligament injury with potential ulnar nerve involvement in throwing athletes), so the student can apply understanding to their stated gap.\",\n  \"revised_teacher_draft\": \"I hear you\u2014nerve injuries can be tricky to keep straight. Let's anchor this with a concrete example: a baseball pitcher tears his ulnar collateral ligament during a forceful throw. Which ligament is damaged, where does it attach, and why is the ulnar nerve at risk in this injury? This will help you see how ligament and nerve anatomy connect clinically.\"\n}\n```",
+          "tool_calls_made": [],
+          "result": "FAIL: Draft ignores student's explicit concern about nerve injuries and requests a clinical example to build confidence. Instead, it pivots to ligamentous injury without addressing the student's stated confusion or pedagogical need. The scenario is clinically relevant but misaligned with the student's immediate learning priority.",
+          "reason_codes": [
+            "irrelevance"
+          ],
+          "rewrite_instruction": "Acknowledge the student's nerve injury confusion first, then offer a focused clinical scenario that integrates both ligamentous AND nerve injury context (e.g., ulnar collateral ligament injury with potential ulnar nerve involvement in throwing athletes), so the student can apply understanding to their stated gap.",
+          "parse_ok": true,
+          "revised_teacher_draft": "I hear you\u2014nerve injuries can be tricky to keep straight. Let's anchor this with a concrete example: a baseball pitcher tears his ulnar collateral ligament during a forceful throw. Which ligament is damaged, where does it attach, and why is the ulnar nerve at risk in this injury? This will help you see how ligament and nerve anatomy connect clinically."
+        },
+        {
+          "wrapper": "dean._clinical_turn_call",
+          "decision_effect": null,
+          "input_hash": "bbd9add28d042033",
+          "elapsed_s": 3.11,
+          "in_tok": 2622,
+          "out_tok": 242,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.0115,
+          "s_per_tok": 0.0129,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1386
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 544
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 773
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean evaluating a student's clinical application response.\nThis is an evaluation setting: be strict and specific.\n\nClassify the latest response as exactly one:\n- correct\n- partial_correct\n- incorrect\n\nScoring guidance:\n- correct: accurate conclusion + mechanism/reasoning link + no key contradiction\n- partial_correct: right direction but missing distinction, mechanism, or precision\n- incorrect: wrong reasoning, wrong conclusion, or unsafe contradiction\n\nReturn strict JSON only:\n{{\n  \"student_state\": \"correct|partial_correct|incorrect\",\n  \"confidence_score\": 0.0,\n  \"pass\": true/false,\n  \"feedback_message\": \"empty when pass=true; otherwise 3-4 sentences with: What you got right, What to correct next, and one follow-up question\"\n}}\n\nConstraints for feedback_message (when pass=false):\n- Must include the literal labels:\n  \"What you got right:\" and \"What to correct next:\"\n- Must end with exactly one question.\n- Keep grounded in exam findings, function, or intervention planning.\n\n\n[1] (p.352, score=1.00) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n===\n\n[2] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n===\n\n[3] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nOn the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n===\n\n[4] (p.352, score=0.95) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension. On the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n===\n\n[5] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\n===\n\n[6] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament. The annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint\nTutor: Got it \u2014 let's work on **Elbow Joint** from Anatomy of Selected Synovial Joints.\n\nWhat are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?\nStudent: I think the three joints are the humeroulnar, humeroradial, and proximal radioulnar joints, and I'm pretty sure the humeroulnar joint is the main hinge joint that does most of the flexion and extension. I'm feeling pretty confident about that one!\nTutor: Excellent work identifying the humeroulnar joint. Would you like to apply this knowledge to a brief clinical scenario, or are you satisfied with your understanding at this point?\nStudent: I think I'm ready to try the clinical scenario, but honestly I'm a bit confused about something\u2014when we were talking about the nerve injuries earlier, I kept second-guessing myself on whether it was the median nerve or something else. I'm pretty sure it's the median nerve based on what we covered, but I'd feel more confident if we could work through an example where I could actually apply it to see if my understanding is solid.\nTutor: I hear you\u2014nerve injuries can be tricky to keep straight. Let's anchor this with a concrete example: a baseball pitcher tears his ulnar collateral ligament during a forceful throw. Which ligament is damaged, where does it attach, and why is the ulnar nerve at risk in this injury? This will help you see how ligament and nerve anatomy connect clinically.\nStudent: I think it's the obturator nerve, honestly\u2014that's what comes to mind when I think about nerve injuries around the elbow. But wait, I'm second-guessing myself now because I feel like the obturator nerve is more in the hip area, right? Can you help me figure out which nerve actually gets affected when the ulnar collateral ligament tears at the elbow?\n\n---\n\nLocked answer: humeroulnar joint\nClinical turn: 1/3\nTutor question: I hear you\u2014nerve injuries can be tricky to keep straight. Let's anchor this with a concrete example: a baseball pitcher tears his ulnar collateral ligament during a forceful throw. Which ligament is damaged, where does it attach, and why is the ulnar nerve at risk in this injury? This will help you see how ligament and nerve anatomy connect clinically.\nStudent response: I think it's the obturator nerve, honestly\u2014that's what comes to mind when I think about nerve injuries around the elbow. But wait, I'm second-guessing myself now because I feel like the obturator nerve is more in the hip area, right? Can you help me figure out which nerve actually gets affected when the ulnar collateral ligament tears at the elbow?\n\nConversation history:\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint\nTutor: Got it \u2014 let's work on **Elbow Joint** from Anatomy of Selected Synovial Joints.\n\nWhat are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?\nStudent: I think the three joints are the humeroulnar, humeroradial, and proximal radioulnar joints, and I'm pretty sure the humeroulnar joint is the main hinge joint that does most of the flexion and extension. I'm feeling pretty confident about that one!\nTutor: Excellent work identifying the humeroulnar joint. Would you like to apply this knowledge to a brief clinical scenario, or are you satisfied with your understanding at this point?\nStudent: I think I'm ready to try the clinical scenario, but honestly I'm a bit confused about something\u2014when we were talking about the nerve injuries earlier, I kept second-guessing myself on whether it was the median nerve or something else. I'm pretty sure it's the median nerve based on what we covered, but I'd feel more confident if we could work through an example where I could actually apply it to see if my understanding is solid.\nTutor: I hear you\u2014nerve injuries can be tricky to keep straight. Let's anchor this with a concrete example: a baseball pitcher tears his ulnar collateral ligament during a forceful throw. Which ligament is damaged, where does it attach, and why is the ulnar nerve at risk in this injury? This will help you see how ligament and nerve anatomy connect clinically.\nStudent: I think it's the obturator nerve, honestly\u2014that's what comes to mind when I think about nerve injuries around the elbow. But wait, I'm second-guessing myself now because I feel like the obturator nerve is more in the hip area, right? Can you help me figure out which nerve actually gets affected when the ulnar collateral ligament tears at the elbow?\nEvaluate the student's most recent response. Prior exchanges are context for coaching continuity.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Evaluate this clinical response and return JSON."
+            }
+          ],
+          "response_text": "```json\n{\n  \"student_state\": \"incorrect\",\n  \"confidence_score\": 0.15,\n  \"pass\": false,\n  \"feedback_message\": \"What you got right: You correctly recognized that the obturator nerve is anatomically associated with the hip region, showing some spatial awareness of nerve distribution. What to correct next: The obturator nerve is not involved in elbow injuries. When the ulnar collateral ligament tears (as in Tommy John surgery), the **ulnar nerve**\u2014not the obturator nerve\u2014runs medial to the elbow and is at risk of injury or compression. The ulnar nerve travels in the ulnar groove posterior to the medial epicondyle, directly adjacent to where the ulnar collateral ligament attaches. You need to anchor nerve injuries to their specific anatomical pathways: ulnar nerve at the elbow, obturator nerve at the hip. Which anatomical structure do you think protects the ulnar nerve as it passes behind the medial epicondyle, and why might tearing the ligament compromise that protection?\"\n}\n```",
+          "tool_calls_made": []
+        },
+        {
+          "wrapper": "dean._clinical_turn_call",
+          "decision_effect": null,
+          "input_hash": "fed01b09a87cd1c4",
+          "elapsed_s": 3.63,
+          "in_tok": 3352,
+          "out_tok": 257,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.01391,
+          "s_per_tok": 0.0141,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1386
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 880
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 1263
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean evaluating a student's clinical application response.\nThis is an evaluation setting: be strict and specific.\n\nClassify the latest response as exactly one:\n- correct\n- partial_correct\n- incorrect\n\nScoring guidance:\n- correct: accurate conclusion + mechanism/reasoning link + no key contradiction\n- partial_correct: right direction but missing distinction, mechanism, or precision\n- incorrect: wrong reasoning, wrong conclusion, or unsafe contradiction\n\nReturn strict JSON only:\n{{\n  \"student_state\": \"correct|partial_correct|incorrect\",\n  \"confidence_score\": 0.0,\n  \"pass\": true/false,\n  \"feedback_message\": \"empty when pass=true; otherwise 3-4 sentences with: What you got right, What to correct next, and one follow-up question\"\n}}\n\nConstraints for feedback_message (when pass=false):\n- Must include the literal labels:\n  \"What you got right:\" and \"What to correct next:\"\n- Must end with exactly one question.\n- Keep grounded in exam findings, function, or intervention planning.\n\n\n[1] (p.352, score=1.00) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n===\n\n[2] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n===\n\n[3] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nOn the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n===\n\n[4] (p.352, score=0.95) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension. On the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n===\n\n[5] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\n===\n\n[6] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament. The annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint\nTutor: Got it \u2014 let's work on **Elbow Joint** from Anatomy of Selected Synovial Joints.\n\nWhat are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?\nStudent: I think the three joints are the humeroulnar, humeroradial, and proximal radioulnar joints, and I'm pretty sure the humeroulnar joint is the main hinge joint that does most of the flexion and extension. I'm feeling pretty confident about that one!\nTutor: Excellent work identifying the humeroulnar joint. Would you like to apply this knowledge to a brief clinical scenario, or are you satisfied with your understanding at this point?\nStudent: I think I'm ready to try the clinical scenario, but honestly I'm a bit confused about something\u2014when we were talking about the nerve injuries earlier, I kept second-guessing myself on whether it was the median nerve or something else. I'm pretty sure it's the median nerve based on what we covered, but I'd feel more confident if we could work through an example where I could actually apply it to see if my understanding is solid.\nTutor: I hear you\u2014nerve injuries can be tricky to keep straight. Let's anchor this with a concrete example: a baseball pitcher tears his ulnar collateral ligament during a forceful throw. Which ligament is damaged, where does it attach, and why is the ulnar nerve at risk in this injury? This will help you see how ligament and nerve anatomy connect clinically.\nStudent: I think it's the obturator nerve, honestly\u2014that's what comes to mind when I think about nerve injuries around the elbow. But wait, I'm second-guessing myself now because I feel like the obturator nerve is more in the hip area, right? Can you help me figure out which nerve actually gets affected when the ulnar collateral ligament tears at the elbow?\nTutor: What you got right: You correctly recognized that the obturator nerve is anatomically associated with the hip region, showing some spatial awareness of nerve distribution. What to correct next: The obturator nerve is not involved in elbow injuries. When the ulnar collateral ligament tears (as in Tommy John surgery), the **ulnar nerve**\u2014not the obturator nerve\u2014runs medial to the elbow and is at risk of injury or compression. The ulnar nerve travels in the ulnar groove posterior to the medial epicondyle, directly adjacent to where the ulnar collateral ligament attaches. You need to anchor nerve injuries to their specific anatomical pathways: ulnar nerve at the elbow, obturator nerve at the hip. Which anatomical structure do you think protects the ulnar nerve as it passes behind the medial epicondyle, and why might tearing the ligament compromise that protection?\nStudent: Oh yeah, you're right\u2014I was totally mixing that up. So the ulnar nerve is the one that runs behind the medial epicondyle in that groove, and when the ulnar collateral ligament tears, it loses that protective support and the nerve can get compressed or irritated. I think the groove itself and maybe the surrounding tissue help protect it, but once that ligament is damaged, the nerve basically loses its cushioning and is way more vulnerable to injury?\n\n---\n\nLocked answer: humeroulnar joint\nClinical turn: 2/3\nTutor question: What you got right: You correctly recognized that the obturator nerve is anatomically associated with the hip region, showing some spatial awareness of nerve distribution. What to correct next: The obturator nerve is not involved in elbow injuries. When the ulnar collateral ligament tears (as in Tommy John surgery), the **ulnar nerve**\u2014not the obturator nerve\u2014runs medial to the elbow and is at risk of injury or compression. The ulnar nerve travels in the ulnar groove posterior to the medial epicondyle, directly adjacent to where the ulnar collateral ligament attaches. You need to anchor nerve injuries to their specific anatomical pathways: ulnar nerve at the elbow, obturator nerve at the hip. Which anatomical structure do you think protects the ulnar nerve as it passes behind the medial epicondyle, and why might tearing the ligament compromise that protection?\nStudent response: Oh yeah, you're right\u2014I was totally mixing that up. So the ulnar nerve is the one that runs behind the medial epicondyle in that groove, and when the ulnar collateral ligament tears, it loses that protective support and the nerve can get compressed or irritated. I think the groove itself and maybe the surrounding tissue help protect it, but once that ligament is damaged, the nerve basically loses its cushioning and is way more vulnerable to injury?\n\nConversation history:\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint\nTutor: Got it \u2014 let's work on **Elbow Joint** from Anatomy of Selected Synovial Joints.\n\nWhat are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?\nStudent: I think the three joints are the humeroulnar, humeroradial, and proximal radioulnar joints, and I'm pretty sure the humeroulnar joint is the main hinge joint that does most of the flexion and extension. I'm feeling pretty confident about that one!\nTutor: Excellent work identifying the humeroulnar joint. Would you like to apply this knowledge to a brief clinical scenario, or are you satisfied with your understanding at this point?\nStudent: I think I'm ready to try the clinical scenario, but honestly I'm a bit confused about something\u2014when we were talking about the nerve injuries earlier, I kept second-guessing myself on whether it was the median nerve or something else. I'm pretty sure it's the median nerve based on what we covered, but I'd feel more confident if we could work through an example where I could actually apply it to see if my understanding is solid.\nTutor: I hear you\u2014nerve injuries can be tricky to keep straight. Let's anchor this with a concrete example: a baseball pitcher tears his ulnar collateral ligament during a forceful throw. Which ligament is damaged, where does it attach, and why is the ulnar nerve at risk in this injury? This will help you see how ligament and nerve anatomy connect clinically.\nStudent: I think it's the obturator nerve, honestly\u2014that's what comes to mind when I think about nerve injuries around the elbow. But wait, I'm second-guessing myself now because I feel like the obturator nerve is more in the hip area, right? Can you help me figure out which nerve actually gets affected when the ulnar collateral ligament tears at the elbow?\nTutor: What you got right: You correctly recognized that the obturator nerve is anatomically associated with the hip region, showing some spatial awareness of nerve distribution. What to correct next: The obturator nerve is not involved in elbow injuries. When the ulnar collateral ligament tears (as in Tommy John surgery), the **ulnar nerve**\u2014not the obturator nerve\u2014runs medial to the elbow and is at risk of injury or compression. The ulnar nerve travels in the ulnar groove posterior to the medial epicondyle, directly adjacent to where the ulnar collateral ligament attaches. You need to anchor nerve injuries to their specific anatomical pathways: ulnar nerve at the elbow, obturator nerve at the hip. Which anatomical structure do you think protects the ulnar nerve as it passes behind the medial epicondyle, and why might tearing the ligament compromise that protection?\nStudent: Oh yeah, you're right\u2014I was totally mixing that up. So the ulnar nerve is the one that runs behind the medial epicondyle in that groove, and when the ulnar collateral ligament tears, it loses that protective support and the nerve can get compressed or irritated. I think the groove itself and maybe the surrounding tissue help protect it, but once that ligament is damaged, the nerve basically loses its cushioning and is way more vulnerable to injury?\nEvaluate the student's most recent response. Prior exchanges are context for coaching continuity.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Evaluate this clinical response and return JSON."
+            }
+          ],
+          "response_text": "```json\n{\n  \"student_state\": \"partial_correct\",\n  \"confidence_score\": 0.72,\n  \"pass\": false,\n  \"feedback_message\": \"What you got right: You correctly identified that the ulnar nerve runs behind the medial epicondyle and that ligament damage compromises nerve protection, showing solid spatial reasoning and causal thinking. What to correct next: You've conflated the ulnar groove (a bony anatomical feature) with soft tissue cushioning. The ulnar groove is a bony channel in the medial epicondyle itself\u2014it doesn't disappear when the ligament tears. The real mechanism is that the ulnar collateral ligament provides dynamic stabilization and reduces abnormal valgus stress at the elbow; when torn, excessive valgus motion stretches and irritates the nerve directly, rather than simply removing 'cushioning.' Precision matters in clinical anatomy: the nerve is at risk from increased mechanical stress and stretch, not loss of padding. Can you explain how valgus stress (lateral bending force) at the elbow would mechanically affect a nerve that runs on the medial side?\"\n}\n```",
+          "tool_calls_made": []
+        },
+        {
+          "wrapper": "dean._clinical_turn_call",
+          "decision_effect": null,
+          "input_hash": "6e178f0469002546",
+          "elapsed_s": 3.69,
+          "in_tok": 3997,
+          "out_tok": 288,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.01631,
+          "s_per_tok": 0.0128,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1386
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 1238
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 1644
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean evaluating a student's clinical application response.\nThis is an evaluation setting: be strict and specific.\n\nClassify the latest response as exactly one:\n- correct\n- partial_correct\n- incorrect\n\nScoring guidance:\n- correct: accurate conclusion + mechanism/reasoning link + no key contradiction\n- partial_correct: right direction but missing distinction, mechanism, or precision\n- incorrect: wrong reasoning, wrong conclusion, or unsafe contradiction\n\nReturn strict JSON only:\n{{\n  \"student_state\": \"correct|partial_correct|incorrect\",\n  \"confidence_score\": 0.0,\n  \"pass\": true/false,\n  \"feedback_message\": \"empty when pass=true; otherwise 3-4 sentences with: What you got right, What to correct next, and one follow-up question\"\n}}\n\nConstraints for feedback_message (when pass=false):\n- Must include the literal labels:\n  \"What you got right:\" and \"What to correct next:\"\n- Must end with exactly one question.\n- Keep grounded in exam findings, function, or intervention planning.\n\n\n[1] (p.352, score=1.00) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n===\n\n[2] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n===\n\n[3] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nOn the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n===\n\n[4] (p.352, score=0.95) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension. On the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n===\n\n[5] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\n===\n\n[6] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament. The annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint\nTutor: Got it \u2014 let's work on **Elbow Joint** from Anatomy of Selected Synovial Joints.\n\nWhat are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?\nStudent: I think the three joints are the humeroulnar, humeroradial, and proximal radioulnar joints, and I'm pretty sure the humeroulnar joint is the main hinge joint that does most of the flexion and extension. I'm feeling pretty confident about that one!\nTutor: Excellent work identifying the humeroulnar joint. Would you like to apply this knowledge to a brief clinical scenario, or are you satisfied with your understanding at this point?\nStudent: I think I'm ready to try the clinical scenario, but honestly I'm a bit confused about something\u2014when we were talking about the nerve injuries earlier, I kept second-guessing myself on whether it was the median nerve or something else. I'm pretty sure it's the median nerve based on what we covered, but I'd feel more confident if we could work through an example where I could actually apply it to see if my understanding is solid.\nTutor: I hear you\u2014nerve injuries can be tricky to keep straight. Let's anchor this with a concrete example: a baseball pitcher tears his ulnar collateral ligament during a forceful throw. Which ligament is damaged, where does it attach, and why is the ulnar nerve at risk in this injury? This will help you see how ligament and nerve anatomy connect clinically.\nStudent: I think it's the obturator nerve, honestly\u2014that's what comes to mind when I think about nerve injuries around the elbow. But wait, I'm second-guessing myself now because I feel like the obturator nerve is more in the hip area, right? Can you help me figure out which nerve actually gets affected when the ulnar collateral ligament tears at the elbow?\nTutor: What you got right: You correctly recognized that the obturator nerve is anatomically associated with the hip region, showing some spatial awareness of nerve distribution. What to correct next: The obturator nerve is not involved in elbow injuries. When the ulnar collateral ligament tears (as in Tommy John surgery), the **ulnar nerve**\u2014not the obturator nerve\u2014runs medial to the elbow and is at risk of injury or compression. The ulnar nerve travels in the ulnar groove posterior to the medial epicondyle, directly adjacent to where the ulnar collateral ligament attaches. You need to anchor nerve injuries to their specific anatomical pathways: ulnar nerve at the elbow, obturator nerve at the hip. Which anatomical structure do you think protects the ulnar nerve as it passes behind the medial epicondyle, and why might tearing the ligament compromise that protection?\nStudent: Oh yeah, you're right\u2014I was totally mixing that up. So the ulnar nerve is the one that runs behind the medial epicondyle in that groove, and when the ulnar collateral ligament tears, it loses that protective support and the nerve can get compressed or irritated. I think the groove itself and maybe the surrounding tissue help protect it, but once that ligament is damaged, the nerve basically loses its cushioning and is way more vulnerable to injury?\nTutor: What you got right: You correctly identified that the ulnar nerve runs behind the medial epicondyle and that ligament damage compromises nerve protection, showing solid spatial reasoning and causal thinking. What to correct next: You've conflated the ulnar groove (a bony anatomical feature) with soft tissue cushioning. The ulnar groove is a bony channel in the medial epicondyle itself\u2014it doesn't disappear when the ligament tears. The real mechanism is that the ulnar collateral ligament provides dynamic stabilization and reduces abnormal valgus stress at the elbow; when torn, excessive valgus motion stretches and irritates the nerve directly, rather than simply removing 'cushioning.' Precision matters in clinical anatomy: the nerve is at risk from increased mechanical stress and stretch, not loss of padding. Can you explain how valgus stress (lateral bending force) at the elbow would mechanically affect a nerve that runs on the medial side?\nStudent: Oh, I see what you're saying now\u2014that makes a lot more sense. So when there's valgus stress, the elbow is bending outward on the lateral side, which would actually pull and stretch the ulnar nerve on the medial side because the nerve has to stretch to accommodate that increased opening motion, right? That's really different from just losing cushioning, and I can see how that direct mechanical stretching would irritate the nerve more than anything else would.\n\n---\n\nLocked answer: humeroulnar joint\nClinical turn: 3/3\nTutor question: What you got right: You correctly identified that the ulnar nerve runs behind the medial epicondyle and that ligament damage compromises nerve protection, showing solid spatial reasoning and causal thinking. What to correct next: You've conflated the ulnar groove (a bony anatomical feature) with soft tissue cushioning. The ulnar groove is a bony channel in the medial epicondyle itself\u2014it doesn't disappear when the ligament tears. The real mechanism is that the ulnar collateral ligament provides dynamic stabilization and reduces abnormal valgus stress at the elbow; when torn, excessive valgus motion stretches and irritates the nerve directly, rather than simply removing 'cushioning.' Precision matters in clinical anatomy: the nerve is at risk from increased mechanical stress and stretch, not loss of padding. Can you explain how valgus stress (lateral bending force) at the elbow would mechanically affect a nerve that runs on the medial side?\nStudent response: Oh, I see what you're saying now\u2014that makes a lot more sense. So when there's valgus stress, the elbow is bending outward on the lateral side, which would actually pull and stretch the ulnar nerve on the medial side because the nerve has to stretch to accommodate that increased opening motion, right? That's really different from just losing cushioning, and I can see how that direct mechanical stretching would irritate the nerve more than anything else would.\n\nConversation history:\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint\nTutor: Got it \u2014 let's work on **Elbow Joint** from Anatomy of Selected Synovial Joints.\n\nWhat are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?\nStudent: I think the three joints are the humeroulnar, humeroradial, and proximal radioulnar joints, and I'm pretty sure the humeroulnar joint is the main hinge joint that does most of the flexion and extension. I'm feeling pretty confident about that one!\nTutor: Excellent work identifying the humeroulnar joint. Would you like to apply this knowledge to a brief clinical scenario, or are you satisfied with your understanding at this point?\nStudent: I think I'm ready to try the clinical scenario, but honestly I'm a bit confused about something\u2014when we were talking about the nerve injuries earlier, I kept second-guessing myself on whether it was the median nerve or something else. I'm pretty sure it's the median nerve based on what we covered, but I'd feel more confident if we could work through an example where I could actually apply it to see if my understanding is solid.\nTutor: I hear you\u2014nerve injuries can be tricky to keep straight. Let's anchor this with a concrete example: a baseball pitcher tears his ulnar collateral ligament during a forceful throw. Which ligament is damaged, where does it attach, and why is the ulnar nerve at risk in this injury? This will help you see how ligament and nerve anatomy connect clinically.\nStudent: I think it's the obturator nerve, honestly\u2014that's what comes to mind when I think about nerve injuries around the elbow. But wait, I'm second-guessing myself now because I feel like the obturator nerve is more in the hip area, right? Can you help me figure out which nerve actually gets affected when the ulnar collateral ligament tears at the elbow?\nTutor: What you got right: You correctly recognized that the obturator nerve is anatomically associated with the hip region, showing some spatial awareness of nerve distribution. What to correct next: The obturator nerve is not involved in elbow injuries. When the ulnar collateral ligament tears (as in Tommy John surgery), the **ulnar nerve**\u2014not the obturator nerve\u2014runs medial to the elbow and is at risk of injury or compression. The ulnar nerve travels in the ulnar groove posterior to the medial epicondyle, directly adjacent to where the ulnar collateral ligament attaches. You need to anchor nerve injuries to their specific anatomical pathways: ulnar nerve at the elbow, obturator nerve at the hip. Which anatomical structure do you think protects the ulnar nerve as it passes behind the medial epicondyle, and why might tearing the ligament compromise that protection?\nStudent: Oh yeah, you're right\u2014I was totally mixing that up. So the ulnar nerve is the one that runs behind the medial epicondyle in that groove, and when the ulnar collateral ligament tears, it loses that protective support and the nerve can get compressed or irritated. I think the groove itself and maybe the surrounding tissue help protect it, but once that ligament is damaged, the nerve basically loses its cushioning and is way more vulnerable to injury?\nTutor: What you got right: You correctly identified that the ulnar nerve runs behind the medial epicondyle and that ligament damage compromises nerve protection, showing solid spatial reasoning and causal thinking. What to correct next: You've conflated the ulnar groove (a bony anatomical feature) with soft tissue cushioning. The ulnar groove is a bony channel in the medial epicondyle itself\u2014it doesn't disappear when the ligament tears. The real mechanism is that the ulnar collateral ligament provides dynamic stabilization and reduces abnormal valgus stress at the elbow; when torn, excessive valgus motion stretches and irritates the nerve directly, rather than simply removing 'cushioning.' Precision matters in clinical anatomy: the nerve is at risk from increased mechanical stress and stretch, not loss of padding. Can you explain how valgus stress (lateral bending force) at the elbow would mechanically affect a nerve that runs on the medial side?\nStudent: Oh, I see what you're saying now\u2014that makes a lot more sense. So when there's valgus stress, the elbow is bending outward on the lateral side, which would actually pull and stretch the ulnar nerve on the medial side because the nerve has to stretch to accommodate that increased opening motion, right? That's really different from just losing cushioning, and I can see how that direct mechanical stretching would irritate the nerve more than anything else would.\nEvaluate the student's most recent response. Prior exchanges are context for coaching continuity.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Evaluate this clinical response and return JSON."
+            }
+          ],
+          "response_text": "```json\n{\n  \"student_state\": \"correct\",\n  \"confidence_score\": 0.95,\n  \"pass\": true,\n  \"feedback_message\": \"\"\n}\n```\n\n**Rationale:**\n\nThe student's latest response demonstrates:\n\n1. **Accurate conclusion**: Valgus stress causes the elbow to open laterally, which mechanically stretches the ulnar nerve on the medial side.\n\n2. **Sound mechanism/reasoning**: The student correctly links the biomechanical consequence (lateral opening/valgus motion) to the anatomical consequence (medial-side nerve stretch), showing clear spatial reasoning and causal understanding.\n\n3. **No key contradiction**: The response directly addresses the tutor's corrective feedback about mechanical stretch vs. cushioning loss, and the student explicitly acknowledges the distinction (\"That's really different from just losing cushioning\").\n\n4. **Clinical precision**: The student now understands that ulnar collateral ligament tears compromise dynamic stabilization, leading to abnormal valgus stress that stretches the nerve\u2014the correct mechanism for ulnar nerve injury in Tommy John surgery.\n\nThis represents mastery of the concept at the level expected in this tutoring context. The student has integrated the correction, demonstrated spatial reasoning, and applied it to explain a clinically relevant mechanism.",
+          "tool_calls_made": []
+        },
+        {
+          "wrapper": "dean._close_session_call",
+          "decision_effect": "session_close_evaluated",
+          "input_hash": "f505049f5998cbff",
+          "elapsed_s": 5.84,
+          "in_tok": 3851,
+          "out_tok": 434,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.01806,
+          "s_per_tok": 0.0134,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1419
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 1238
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 1380
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean closing out a tutoring session.\nThis is an evaluated learning session: report performance honestly and specifically.\n\nReturn strict JSON only:\n{{\n  \"core_mastery_tier\": \"strong|proficient|developing|needs_review|not_assessed|ungraded\",\n  \"clinical_mastery_tier\": \"strong|proficient|developing|needs_review|not_assessed|ungraded\",\n  \"mastery_tier\": \"strong|proficient|developing|needs_review|not_assessed|ungraded\",\n  \"grading_rationale\": \"1-2 sentence diagnosis of performance\",\n  \"student_facing_message\": \"final message shown to student\",\n  \"memory_summary\": \"3-5 sentence memory summary for long-term storage\"\n}}\n\nGrading rubric:\n- Use both core and clinical application performance.\n- Consider whether the student reached the answer, hint usage, confidence trajectory,\n  and clinical application quality (if attempted).\n- Favor transferable reasoning over rote memorization.\n- Keep tiers conservative when certainty is low.\n- student_facing_message must honestly reflect demonstrated performance.\n  If the student struggled, state that kindly but clearly; do not paper over gaps with generic praise.\n\n\n[1] (p.352, score=1.00) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n===\n\n[2] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n===\n\n[3] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nOn the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n===\n\n[4] (p.352, score=0.95) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension. On the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n===\n\n[5] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\n===\n\n[6] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament. The annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint\nTutor: Got it \u2014 let's work on **Elbow Joint** from Anatomy of Selected Synovial Joints.\n\nWhat are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?\nStudent: I think the three joints are the humeroulnar, humeroradial, and proximal radioulnar joints, and I'm pretty sure the humeroulnar joint is the main hinge joint that does most of the flexion and extension. I'm feeling pretty confident about that one!\nTutor: Excellent work identifying the humeroulnar joint. Would you like to apply this knowledge to a brief clinical scenario, or are you satisfied with your understanding at this point?\nStudent: I think I'm ready to try the clinical scenario, but honestly I'm a bit confused about something\u2014when we were talking about the nerve injuries earlier, I kept second-guessing myself on whether it was the median nerve or something else. I'm pretty sure it's the median nerve based on what we covered, but I'd feel more confident if we could work through an example where I could actually apply it to see if my understanding is solid.\nTutor: I hear you\u2014nerve injuries can be tricky to keep straight. Let's anchor this with a concrete example: a baseball pitcher tears his ulnar collateral ligament during a forceful throw. Which ligament is damaged, where does it attach, and why is the ulnar nerve at risk in this injury? This will help you see how ligament and nerve anatomy connect clinically.\nStudent: I think it's the obturator nerve, honestly\u2014that's what comes to mind when I think about nerve injuries around the elbow. But wait, I'm second-guessing myself now because I feel like the obturator nerve is more in the hip area, right? Can you help me figure out which nerve actually gets affected when the ulnar collateral ligament tears at the elbow?\nTutor: What you got right: You correctly recognized that the obturator nerve is anatomically associated with the hip region, showing some spatial awareness of nerve distribution. What to correct next: The obturator nerve is not involved in elbow injuries. When the ulnar collateral ligament tears (as in Tommy John surgery), the **ulnar nerve**\u2014not the obturator nerve\u2014runs medial to the elbow and is at risk of injury or compression. The ulnar nerve travels in the ulnar groove posterior to the medial epicondyle, directly adjacent to where the ulnar collateral ligament attaches. You need to anchor nerve injuries to their specific anatomical pathways: ulnar nerve at the elbow, obturator nerve at the hip. Which anatomical structure do you think protects the ulnar nerve as it passes behind the medial epicondyle, and why might tearing the ligament compromise that protection?\nStudent: Oh yeah, you're right\u2014I was totally mixing that up. So the ulnar nerve is the one that runs behind the medial epicondyle in that groove, and when the ulnar collateral ligament tears, it loses that protective support and the nerve can get compressed or irritated. I think the groove itself and maybe the surrounding tissue help protect it, but once that ligament is damaged, the nerve basically loses its cushioning and is way more vulnerable to injury?\nTutor: What you got right: You correctly identified that the ulnar nerve runs behind the medial epicondyle and that ligament damage compromises nerve protection, showing solid spatial reasoning and causal thinking. What to correct next: You've conflated the ulnar groove (a bony anatomical feature) with soft tissue cushioning. The ulnar groove is a bony channel in the medial epicondyle itself\u2014it doesn't disappear when the ligament tears. The real mechanism is that the ulnar collateral ligament provides dynamic stabilization and reduces abnormal valgus stress at the elbow; when torn, excessive valgus motion stretches and irritates the nerve directly, rather than simply removing 'cushioning.' Precision matters in clinical anatomy: the nerve is at risk from increased mechanical stress and stretch, not loss of padding. Can you explain how valgus stress (lateral bending force) at the elbow would mechanically affect a nerve that runs on the medial side?\nStudent: Oh, I see what you're saying now\u2014that makes a lot more sense. So when there's valgus stress, the elbow is bending outward on the lateral side, which would actually pull and stretch the ulnar nerve on the medial side because the nerve has to stretch to accommodate that increased opening motion, right? That's really different from just losing cushioning, and I can see how that direct mechanical stretching would irritate the nerve more than anything else would.\n\n---\n\nSession outcome: reached_answer\nCorrect answer: humeroulnar joint\nTopic selection: Elbow Joint\nStudent reached answer: True\nFinal hint level: 0/3\nStudent answer confidence: 0.95\nStudent mastery confidence: 0.475\nClinical opted in: True\nClinical completed: True\nClinical turns used: 3/3\nClinical history: [{\"turn\": 1, \"state\": \"incorrect\", \"confidence\": 0.15, \"pass\": false}, {\"turn\": 2, \"state\": \"partial_correct\", \"confidence\": 0.72, \"pass\": false}, {\"turn\": 3, \"state\": \"correct\", \"confidence\": 0.95, \"pass\": true}]\nExisting weak topics: []\n\nConversation history:\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint\nTutor: Got it \u2014 let's work on **Elbow Joint** from Anatomy of Selected Synovial Joints.\n\nWhat are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?\nStudent: I think the three joints are the humeroulnar, humeroradial, and proximal radioulnar joints, and I'm pretty sure the humeroulnar joint is the main hinge joint that does most of the flexion and extension. I'm feeling pretty confident about that one!\nTutor: Excellent work identifying the humeroulnar joint. Would you like to apply this knowledge to a brief clinical scenario, or are you satisfied with your understanding at this point?\nStudent: I think I'm ready to try the clinical scenario, but honestly I'm a bit confused about something\u2014when we were talking about the nerve injuries earlier, I kept second-guessing myself on whether it was the median nerve or something else. I'm pretty sure it's the median nerve based on what we covered, but I'd feel more confident if we could work through an example where I could actually apply it to see if my understanding is solid.\nTutor: I hear you\u2014nerve injuries can be tricky to keep straight. Let's anchor this with a concrete example: a baseball pitcher tears his ulnar collateral ligament during a forceful throw. Which ligament is damaged, where does it attach, and why is the ulnar nerve at risk in this injury? This will help you see how ligament and nerve anatomy connect clinically.\nStudent: I think it's the obturator nerve, honestly\u2014that's what comes to mind when I think about nerve injuries around the elbow. But wait, I'm second-guessing myself now because I feel like the obturator nerve is more in the hip area, right? Can you help me figure out which nerve actually gets affected when the ulnar collateral ligament tears at the elbow?\nTutor: What you got right: You correctly recognized that the obturator nerve is anatomically associated with the hip region, showing some spatial awareness of nerve distribution. What to correct next: The obturator nerve is not involved in elbow injuries. When the ulnar collateral ligament tears (as in Tommy John surgery), the **ulnar nerve**\u2014not the obturator nerve\u2014runs medial to the elbow and is at risk of injury or compression. The ulnar nerve travels in the ulnar groove posterior to the medial epicondyle, directly adjacent to where the ulnar collateral ligament attaches. You need to anchor nerve injuries to their specific anatomical pathways: ulnar nerve at the elbow, obturator nerve at the hip. Which anatomical structure do you think protects the ulnar nerve as it passes behind the medial epicondyle, and why might tearing the ligament compromise that protection?\nStudent: Oh yeah, you're right\u2014I was totally mixing that up. So the ulnar nerve is the one that runs behind the medial epicondyle in that groove, and when the ulnar collateral ligament tears, it loses that protective support and the nerve can get compressed or irritated. I think the groove itself and maybe the surrounding tissue help protect it, but once that ligament is damaged, the nerve basically loses its cushioning and is way more vulnerable to injury?\nTutor: What you got right: You correctly identified that the ulnar nerve runs behind the medial epicondyle and that ligament damage compromises nerve protection, showing solid spatial reasoning and causal thinking. What to correct next: You've conflated the ulnar groove (a bony anatomical feature) with soft tissue cushioning. The ulnar groove is a bony channel in the medial epicondyle itself\u2014it doesn't disappear when the ligament tears. The real mechanism is that the ulnar collateral ligament provides dynamic stabilization and reduces abnormal valgus stress at the elbow; when torn, excessive valgus motion stretches and irritates the nerve directly, rather than simply removing 'cushioning.' Precision matters in clinical anatomy: the nerve is at risk from increased mechanical stress and stretch, not loss of padding. Can you explain how valgus stress (lateral bending force) at the elbow would mechanically affect a nerve that runs on the medial side?\nStudent: Oh, I see what you're saying now\u2014that makes a lot more sense. So when there's valgus stress, the elbow is bending outward on the lateral side, which would actually pull and stretch the ulnar nerve on the medial side because the nerve has to stretch to accommodate that increased opening motion, right? That's really different from just losing cushioning, and I can see how that direct mechanical stretching would irritate the nerve more than anything else would.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Return strict JSON only."
+            }
+          ],
+          "response_text": "```json\n{\n  \"core_mastery_tier\": \"proficient\",\n  \"clinical_mastery_tier\": \"developing\",\n  \"mastery_tier\": \"proficient\",\n  \"grading_rationale\": \"Student demonstrated solid core anatomy knowledge, correctly identifying the three elbow joints and the humeroulnar joint as the primary hinge joint on first attempt with high confidence. Clinical reasoning showed significant growth trajectory\u2014moving from incorrect nerve identification (obturator) through partial understanding to correct mechanistic explanation of valgus stress and ulnar nerve stretch\u2014but required substantial tutor scaffolding and still conflated anatomical structures (groove vs. soft tissue protection) before reaching precision.\",\n  \"student_facing_message\": \"You showed strong foundational knowledge of elbow joint anatomy and made real progress in clinical reasoning during this session. Your identification of the three joints was immediate and confident, which is excellent. In the clinical scenario, you worked through a meaningful learning curve: you caught yourself on the obturator nerve error, then refined your understanding of how ligament tears actually injure nerves through mechanical stretch rather than simple loss of cushioning. That's genuine clinical thinking. Going forward, focus on distinguishing between bony anatomical structures (like the ulnar groove) and the dynamic mechanical forces that actually cause injury\u2014that precision will strengthen your clinical applications significantly.\",\n  \"memory_summary\": \"Student confidently identified elbow joint anatomy (humeroulnar, humeroradial, proximal radioulnar joints; humeroulnar as primary hinge). Demonstrated developing clinical reasoning: initially confused ulnar nerve with obturator nerve (hip anatomy), but self-corrected and progressed to understanding valgus stress mechanism and nerve stretch injury. Required explicit correction on conflating bony grooves with soft tissue protection, but successfully integrated mechanistic reasoning by session end. Strength in spatial reasoning and willingness to revise; needs continued precision in distinguishing anatomical structures from biomechanical forces.\"\n}\n```",
+          "tool_calls_made": [],
+          "result": "close_session_json_ok"
+        },
+        {
+          "wrapper": "memory_manager.flush",
+          "result": "wrote_3_of_3",
+          "flushed": true
+        },
+        {
+          "wrapper": "mastery_store.update",
+          "result": "updated mastery=0.45 confidence=0.25 sessions=1"
+        }
+      ],
+      "all_turn_traces": [
+        {
+          "turn": 0,
+          "phase": "tutoring",
+          "trace": [
+            {
+              "wrapper": "teacher.draft_rapport",
+              "decision_effect": null,
+              "input_hash": "02af03ec34d58415",
+              "elapsed_s": 2.25,
+              "in_tok": 439,
+              "out_tok": 62,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00225,
+              "s_per_tok": 0.0363,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 413
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 43
+                }
+              ],
+              "system_prompt": "You are\na Socratic tutor in human anatomy working with a student.\nThis is an evaluated learning session.\nGlobal rules for all teacher wrappers:\n- Keep language academically focused and concise.\n- Do not reveal final answers unless wrapper-specific instructions explicitly allow it.\n- Follow wrapper output contracts exactly.\n- If strict JSON is requested by the wrapper, return strict JSON only.\n- Avoid generic motivational filler; prioritize targeted reasoning prompts.\n\n\na Socratic human anatomy tutor opening a new session with a student.\nWrite a brief, natural opener (2-3 sentences max). Vary your tone.\nFirst words must be exactly the \"Good {time_of_day}\" greeting provided\nin the runtime context block below (e.g., \"Good morning\").\nDo NOT start with \"Hello\" or \"Welcome\". Do NOT use generic tutor clich\u00e9s.\nKeep it relevant and concrete for a student audience (coursework, exams, conceptual understanding).\nAssume a classroom/learning context by default.\nEnd with exactly one question asking what human anatomy topic the student wants to tackle today.\n\nPast session context (extracted from prior sessions \u2014 may be empty):\nNo previous history \u2014 new student.\n\nIf \"Past session context\" is empty / \"No previous history\": treat as a\nfresh session, do NOT mention prior struggles, weak topics, or invent\nhistorical difficulties.\n\nIf \"Past session context\" contains real prior data: you MAY briefly\nreference ONE specific past topic or open thread when offering a\nstarting point (\"...last time you were working through X \u2014 pick that\nup or start fresh?\"). At most ONE prior item; no recap, no list, no\nlearning-style summary; do NOT reveal past answers.\n\n\n---\n\nRuntime context for this session:\n  time_of_day: morning\nUse the corresponding 'Good morning' / 'Good afternoon' / 'Good evening' as the first words of your reply, exactly.",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Start the session."
+                }
+              ],
+              "response_text": "Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?",
+              "tool_calls_made": []
+            }
+          ]
+        },
+        {
+          "turn": 1,
+          "phase": "tutoring",
+          "trace": [
+            {
+              "wrapper": "dean._prelock_intent_call",
+              "decision_effect": null,
+              "input_hash": "72e5df88984e73df",
+              "elapsed_s": 1.14,
+              "in_tok": 1266,
+              "out_tok": 101,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00531,
+              "s_per_tok": 0.0113,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 1028
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 92
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 139
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean handling the topic-selection phase of a tutoring session in human anatomy.\nThe student has not yet locked to a specific topic. Your job is to read their latest\nmessage, classify what they want, and write the tutor's next utterance in your own\nvoice (no templates, no canned strings).\n\nClassify the student's latest message as exactly one intent:\n  topic_query       \u2014 names or describes a human anatomy topic they want to learn.\n                      INCLUDES: questions, statements/assertions, leading claims,\n                      hedged or anxious phrasings, and one-word noun phrases \u2014 as\n                      long as a human anatomy topic is present in the message.\n  card_pick         \u2014 references one of the card options (number, label, close paraphrase)\n  greeting          \u2014 \"hi\", \"hello\", starting the session\n  distress          \u2014 emotional venting or frustration (\"ugh\", \"i'm stressed\", \"this is hard\", expletive)\n  off_topic         \u2014 unrelated to human anatomy (small talk, jokes, non-sequiturs)\n  ambiguous         \u2014 too short or too generic to route (single pronoun, empty, filler)\n\nFor topic_query and card_pick, extract `normalized_topic` \u2014 the cleanest topic name\nsuitable for retrieval (strip hedges, numbering, affirmations). For card_pick, set it\nto the referenced option's text (not a number). For other intents, leave it empty.\n\nCRITICAL: students phrase topic queries in many shapes. Treat ALL of these as\ntopic_query and extract the topic noun phrase even when the student is hedging,\nasserting, or just naming a single noun:\n\n  Student: \"What is the deltoid muscle?\"\n  \u2192 intent=topic_query, normalized_topic=\"deltoid muscle\"\n\n  Student: \"Reflexes are basically just instant nerve reactions, right?\"\n  \u2192 intent=topic_query, normalized_topic=\"reflexes\"  (statement IS a topic_query;\n    the leading assertion doesn't disqualify it. Still topic = reflexes.)\n\n  Student: \"I'm not sure I really understand chemical digestion \u2014 could we go through it?\"\n  \u2192 intent=topic_query, normalized_topic=\"chemical digestion\"  (hedging doesn't\n    disqualify; topic is clearly named.)\n\n  Student: \"elbow joint\"\n  \u2192 intent=topic_query, normalized_topic=\"elbow joint\"  (one-word/short-phrase\n    topics are valid; do NOT classify as ambiguous if a domain noun is present.)\n\n  Student: \"umm so... like, what's that thing in the kidney that filters blood?\"\n  \u2192 intent=topic_query, normalized_topic=\"kidney filtration\"  (vague but\n    clearly anatomy; extract the best topic phrase.)\n\n  Student: \"ugh i'm so confused\"\n  \u2192 intent=distress, normalized_topic=\"\"\n\n  Student: \"what should I make for dinner\"\n  \u2192 intent=off_topic, normalized_topic=\"\"\n\nRule of thumb: if you can identify ANY human anatomy noun phrase in the message\nthat the student seems interested in learning about, classify as topic_query and\nextract that phrase as normalized_topic. Reserve ambiguous ONLY for truly empty\nor pronoun-only messages.\n\nFor non-topic intents (greeting, distress, off_topic, ambiguous) write `tutor_reply` \u2014\na short, warm, contextual reply that acknowledges what the student actually said and\ninvites them to name a specific topic. Match the student's emotional register. Do NOT\nrepeat their words back inside quotes. Do NOT use a template phrase. 1-3 sentences.\nIf cards are currently on screen, gently remind the student they can pick one. When\nthe intent is topic_query or card_pick, leave `tutor_reply` as an empty string \u2014 the\nrouting layer will handle it.\n\nNever ask multiple questions. Never reveal answers. Never produce headers or lists.\n\nReturn strict JSON only:\n{{\n  \"intent\": \"topic_query|card_pick|greeting|distress|off_topic|ambiguous\",\n  \"normalized_topic\": \"\",\n  \"tutor_reply\": \"\",\n  \"rationale\": \"\"\n}}\n\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint\n\n---\n\nCard options currently on screen (empty list means no cards shown this turn):\n[]\n\nRecent conversation history:\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint\n\nClassify ONLY the student's most recent message. Prior history is context.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Student's latest message: 'Explain the structure and motion of the elbow joint'\nReturn strict JSON only."
+                }
+              ],
+              "response_text": "```json\n{\n  \"intent\": \"topic_query\",\n  \"normalized_topic\": \"elbow joint structure and motion\",\n  \"tutor_reply\": \"\",\n  \"rationale\": \"Student names a clear human anatomy topic (elbow joint) and expresses interest in learning about its structure and motion. This is a direct topic_query. No tutor_reply needed; routing layer will handle topic lock and card generation.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.prelock_intent",
+              "intent": "topic_query",
+              "normalized_topic": "elbow joint structure and motion",
+              "rationale": "Student names a clear human anatomy topic (elbow joint) and expresses interest in learning about its structure and motion. This is a direct topic_query. No tutor_reply needed; routing layer will handle topic lock and card generation."
+            },
+            {
+              "wrapper": "dean.topic_vote",
+              "n_eligible": 2,
+              "winner_path": "Ch9|Anatomy of Selected Synovial Joints|Elbow Joint",
+              "winner_weight": 1.0,
+              "all_weights": {
+                "Ch9|Anatomy of Selected Synovial Joints|Elbow Joint": 1.0,
+                "Ch4|Types of Tissues|Tissue Membranes": 0.5
+              }
+            },
+            {
+              "wrapper": "dean.topic_match",
+              "retrieval_query": "Explain the structure and motion of the elbow joint",
+              "fuzzy_query": "elbow joint structure and motion",
+              "tier": "borderline",
+              "top_score": 101.0,
+              "top_path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Elbow Joint",
+              "semantic_resolved": true,
+              "semantic_path": "Ch9|Anatomy of Selected Synovial Joints|Elbow Joint"
+            },
+            {
+              "wrapper": "dean.topic_locked",
+              "topic_path": "Ch9|Anatomy of Selected Synovial Joints|Elbow Joint",
+              "label": "Elbow Joint",
+              "chunk_count": 0,
+              "limited": false
+            },
+            {
+              "wrapper": "dean.python_retrieval",
+              "result": "6 chunks returned | query=Elbow Joint",
+              "retrieval": {
+                "query": "Elbow Joint",
+                "top_chunks": [
+                  {
+                    "rank": 1,
+                    "score": 0.9999704360961914,
+                    "section_title": "Anatomy of Selected Synovial Joints",
+                    "subsection_title": "Elbow Joint",
+                    "chunk_id": "a7b05b33-d75d-40ac-9a0d-9cd543f2b66d",
+                    "text_preview": "The elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal "
+                  },
+                  {
+                    "rank": 2,
+                    "score": 0.0,
+                    "section_title": "Anatomy of Selected Synovial Joints",
+                    "subsection_title": "Elbow Joint",
+                    "chunk_id": "bd0e7878-a531-4abf-85eb-36ca4bc4d13d",
+                    "text_preview": "The elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal "
+                  },
+                  {
+                    "rank": 3,
+                    "score": 0.0,
+                    "section_title": "Anatomy of Selected Synovial Joints",
+                    "subsection_title": "Elbow Joint",
+                    "chunk_id": "1e61cc1f-9d58-4071-bcc4-75db17827b40",
+                    "text_preview": "On the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which r"
+                  },
+                  {
+                    "rank": 4,
+                    "score": 0.9503733515739441,
+                    "section_title": "Anatomy of Selected Synovial Joints",
+                    "subsection_title": "Elbow Joint",
+                    "chunk_id": "99ef7b7f-99b0-4ddf-a161-da1e6da7b158",
+                    "text_preview": "The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension. On the medial sid"
+                  },
+                  {
+                    "rank": 5,
+                    "score": 0.0,
+                    "section_title": "Anatomy of Selected Synovial Joints",
+                    "subsection_title": "Elbow Joint",
+                    "chunk_id": "4f43a74a-1b68-4d3b-984e-151e8dd4eb5b",
+                    "text_preview": "The annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the"
+                  },
+                  {
+                    "rank": 6,
+                    "score": 0.0,
+                    "section_title": "Anatomy of Selected Synovial Joints",
+                    "subsection_title": "Elbow Joint",
+                    "chunk_id": "5d42ccf1-fd3c-4415-9c07-d7a60cfd3286",
+                    "text_preview": "The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament. The annular ligament encircles the head of t"
+                  }
+                ],
+                "total_chunks_returned": 6
+              },
+              "retrieval_calls": 1,
+              "retrieval_schema_keys": [
+                "_primary_chunk_id",
+                "_window_role",
+                "chapter_num",
+                "chapter_title",
+                "chunk_id",
+                "element_type",
+                "image_filename",
+                "page",
+                "score",
+                "section_title",
+                "subsection_title",
+                "text"
+              ]
+            },
+            {
+              "wrapper": "dean._lock_anchors_call",
+              "decision_effect": null,
+              "input_hash": "57066a6be7c624b3",
+              "elapsed_s": 2.05,
+              "in_tok": 2815,
+              "out_tok": 163,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.01089,
+              "s_per_tok": 0.0125,
+              "cached_est_tokens": 1509,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": true,
+                  "est_tokens": 1509
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 92
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 1168
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean establishing pedagogical anchors for a new Socratic tutoring session.\nThe student has just selected a specific topic.\nRetrieval has fired and returned textbook excerpts.\n\nYour job: extract THREE anchors that guide the session.\n\n1) locked_question: a specific, answerable question for this session.\n2) locked_answer: the target answer term/concept the student must reach.\n3) locked_answer_aliases: 4-5 alternate phrasings the student might use\n   (synonyms, abbreviations, common shorthand). Do NOT include\n   locked_answer itself. Return [] if locked_answer is empty.\n\nStrict rules:\n- locked_answer must be a SHORT term or noun phrase: typically 2-5 words,\n  hard max 10 words. Examples: \"Purkinje fibers\", \"sinoatrial node\",\n  \"skeletal muscle pump\", \"ATP synthase\".\n- locked_answer must NOT be a sentence or clause. No verbs, no commas\n  separating multiple ideas. If you find yourself writing \"X does Y to\n  Z\", you've gone too far \u2014 pick the X (the structure or term itself).\n- locked_answer must be grounded in the retrieved chunks.\n- DO NOT use parametric / training-data knowledge: if the chunks do not\n  contain a clear answer to the topic question, return empty anchors.\n- If signal is insufficient, return empty anchors with rationale.\n- rationale must be brief (max 25 words).\n\nReturn strict JSON only:\n{{\n  \"locked_question\": \"string\",\n  \"locked_answer\": \"string\",\n  \"locked_answer_aliases\": [\"alias1\", \"alias2\", \"alias3\", \"alias4\"],\n  \"rationale\": \"string\"\n}}\n\n\n[1] (p.352, score=1.00) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n===\n\n[2] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n===\n\n[3] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nOn the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n===\n\n[4] (p.352, score=0.95) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension. On the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n===\n\n[5] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\n===\n\n[6] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament. The annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint\n\n---\n\nStudent selected topic: Elbow Joint\nConversation history:\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint\n\nRetrieved propositions:\n[1] (p.352, score=1.00) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n===\n\n[2] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n===\n\n[3] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nOn the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n===\n\n[4] (p.352, score=0.95) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension. On the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n===\n\n[5] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\n===\n\n[6] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament. The annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\nLock anchors and return strict JSON only.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Lock anchors and return strict JSON."
+                }
+              ],
+              "response_text": "```json\n{\n  \"locked_question\": \"What are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?\",\n  \"locked_answer\": \"humeroulnar joint\",\n  \"locked_answer_aliases\": [\n    \"articulation between trochlea and trochlear notch\",\n    \"humerus-ulna joint\",\n    \"primary elbow hinge\",\n    \"trochlea-trochlear notch articulation\"\n  ],\n  \"rationale\": \"Chunks clearly identify the humeroulnar joint as the uniaxial hinge joint forming the elbow, with specific bony articulation details.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.sanitize_locked_answer",
+              "candidate": "humeroulnar joint",
+              "action": "kept",
+              "final": "humeroulnar joint"
+            },
+            {
+              "wrapper": "dean.anchors_locked",
+              "locked_question": "What are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?",
+              "locked_answer": "humeroulnar joint",
+              "rationale": "Chunks clearly identify the humeroulnar joint as the uniaxial hinge joint forming the elbow, with specific bony articulation details."
+            },
+            {
+              "wrapper": "dean._hint_plan_call",
+              "decision_effect": null,
+              "input_hash": "826f23bed6ad5b8c",
+              "elapsed_s": 3.03,
+              "in_tok": 1236,
+              "out_tok": 220,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00701,
+              "s_per_tok": 0.0138,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 1138
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 92
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\n[1] (p.352, score=1.00) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n===\n\n[2] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe elbow joint is a uniaxial hinge joint formed by the humeroulnar joint, the articulation between the trochlea of the humerus and the trochlear notch of the ulna. Also associated with the elbow are the humeroradial joint and the proximal radioulnar joint. All three of these joints are enclosed within a single articular capsule. The articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension.\n\n===\n\n[3] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nOn the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n===\n\n[4] (p.352, score=0.95) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe articular capsule of the elbow is thin on its anterior and posterior aspects, but is thickened along its outside margins by strong intrinsic ligaments. These ligaments prevent side-to-side movements and hyperextension. On the medial side is the triangular ulnar collateral ligament. This arises from the medial epicondyle of the humerus and attaches to the medial side of the proximal ulna. The strongest part of this ligament is the anterior portion, which resists hyperextension of the elbow. The ulnar collateral ligament may be injured by frequent, forceful extensions of the forearm, as is seen in baseball pitchers. Reconstructive surgical repair of this ligament is referred to as Tommy John surgery, named for the former major league pitcher who was the first person to have this treatment. The lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament.\n\n===\n\n[5] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\n===\n\n[6] (p.352) Joints > Anatomy of Selected Synovial Joints > Elbow Joint\n---\nThe lateral side of the elbow is supported by the radial collateral ligament. This arises from the lateral epicondyle of the humerus and then blends into the lateral side of the annular ligament. The annular ligament encircles the head of the radius. This ligament supports the head of the radius as it articulates with the radial notch of the ulna at the proximal radioulnar joint. This is a pivot joint that allows for rotation of the radius during supination and pronation of the forearm.\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Return strict JSON only."
+                }
+              ],
+              "response_text": "```json\n{\n  \"evaluation\": {\n    \"session_type\": \"tutoring_quality_assessment\",\n    \"context\": \"Dean supervision - initial tutoring interaction\",\n    \"student_request\": \"Explain the structure and motion of the elbow joint\",\n    \"tutor_approach\": \"open-ended explanation request\",\n    \"assessment\": {\n      \"pedagogical_concern\": \"CRITICAL\",\n      \"issue\": \"Tutor accepted broad explanation request without diagnostic questioning\",\n      \"severity\": \"high\",\n      \"rationale\": \"Student asked for explanation; tutor should first assess baseline knowledge before delivering content. This prevents misconceptions from being reinforced and ensures instruction targets actual gaps.\"\n    },\n    \"required_tutor_action\": {\n      \"immediate\": \"Pause explanation delivery\",\n      \"diagnostic_step\": \"Ask targeted questions to establish:\",\n      \"questions\": [\n        \"What do you already know about how the elbow bends and straightens?\",",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.hint_plan_initialized",
+              "result": "0 hints initialized",
+              "hints": []
+            },
+            {
+              "wrapper": "dean.topic_lock_guard",
+              "result": "bypassed_setup_classification_on_topic_selection"
+            },
+            {
+              "wrapper": "dean.sanitize_locked_answer",
+              "candidate": "humeroulnar joint",
+              "action": "kept",
+              "final": "humeroulnar joint"
+            },
+            {
+              "wrapper": "dean.confidence_score",
+              "result": "answer_conf=0.000, mastery_conf=0.000, reached=False (gate_path=skipped_topic_just_locked)",
+              "locked_answer": "humeroulnar joint",
+              "gate_path": "skipped_topic_just_locked",
+              "gate_evidence": ""
+            },
+            {
+              "wrapper": "dean.hint_progress",
+              "hint_before": 0,
+              "hint_after": 0,
+              "hint_reason": "unchanged",
+              "active_hint": ""
+            },
+            {
+              "wrapper": "dean.complexity_classifier",
+              "decision_effect": null,
+              "input_hash": "ef8b00a782051aa6",
+              "elapsed_s": 1.2,
+              "in_tok": 636,
+              "out_tok": 78,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00308,
+              "s_per_tok": 0.0153,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 494
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean of a Socratic human anatomy tutoring system. Classify\nthe complexity of the student's most recent message into ONE of three\ntiers (Adaptive-RAG, Jeong 2024). The tier drives downstream retrieval\nstrategy.\n\nTiers:\n  simple\n    \u2014 Direct factual or definitional question on the locked topic.\n    \u2014 Answerable from a single retrieval pass.\n    \u2014 Examples:\n        \"What is the SA node?\"\n        \"Where is the brachial plexus located?\"\n        \"Define synaptic cleft.\"\n\n  tangential\n    \u2014 Curiosity drift outside the locked topic but still within the\n      domain. Worth a one-shot un-section-filtered retrieval to\n      surface the related concept without losing the locked topic.\n    \u2014 Examples (when locked on Cardiac Conduction):\n        \"Wait, how does this connect to blood pressure?\"\n        \"I read about heart attacks \u2014 is that the same as arrhythmia?\"\n\n  complex\n    \u2014 Multi-step reasoning question, comparison across topics, or\n      synthesis spanning multiple subsections. May benefit from\n      multi-hop retrieval (D.4 \u2014 currently treated as `simple`).\n    \u2014 Examples:\n        \"How does the autonomic nervous system regulate cardiac\n         output during exercise?\"\n        \"Compare and contrast skeletal vs cardiac muscle tissue at\n         the cellular and functional levels.\"\n\nOutput a 1-sentence rationale citing the specific aspect of the\nstudent's message that drove the classification. Do not classify\nbased on locked topic alone \u2014 the message content is what matters.\n\nReturn strict JSON only, no prose:\n{\n  \"tier\": \"simple|tangential|complex\",\n  \"rationale\": \"\"\n}\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Locked topic (subsection): Elbow Joint\nLocked anchor question: What are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?\n\nRecent conversation history (most recent last):\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint\n\nStudent's latest message:\nExplain the structure and motion of the elbow joint\n\nClassify.\n"
+                }
+              ],
+              "response_text": "```json\n{\n  \"tier\": \"simple\",\n  \"rationale\": \"The student is asking for a direct descriptive overview of elbow joint anatomy and kinematics, which aligns with the locked anchor question and can be answered in a single retrieval pass covering the three joints, capsule, and primary hinge function.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.complexity_classifier",
+              "tier": "simple",
+              "rationale": "The student is asking for a direct descriptive overview of elbow joint anatomy and kinematics, which aligns with the locked anchor question and can be answered in a single retrieval pass covering the "
+            },
+            {
+              "wrapper": "dean._exploration_judge",
+              "decision_effect": null,
+              "input_hash": "5fa83e3b01d3a04c",
+              "elapsed_s": 1.63,
+              "in_tok": 613,
+              "out_tok": 149,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00407,
+              "s_per_tok": 0.011,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 397
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 92
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 161
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean in the middle of a Socratic tutoring session. A topic is\nlocked and Teacher is about to respond. Your job is to decide whether the\nstudent's latest message is asking about something OUTSIDE the locked\ntopic \u2014 a tangential concept, a clarifying prerequisite, a connection to\nanother body system, etc. \u2014 that would genuinely benefit from fetching\nextra textbook context beyond the locked section.\n\nReturn `exploration_needed: true` ONLY when ALL of these hold:\n  - The student is asking about a human anatomy concept that is NOT the\n    locked topic or a direct sub-question of it.\n  - The tangential concept has a clear short query string (3-8 words) that\n    a textbook search could retrieve.\n  - Answering it would help the student make progress on the locked topic,\n    not just scratch curiosity unrelated to the session.\n\nIf the student is answering the locked question (correct/partial/incorrect),\nasking a question strictly about the locked topic, or venting/off-topic, set\n`exploration_needed: false`. When in doubt, say false \u2014 Teacher already has\nthe locked section's context.\n\nReturn strict JSON only:\n{{\n  \"exploration_needed\": false,\n  \"exploration_query\": \"\",\n  \"rationale\": \"\"\n}}\n\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint\n\n---\n\nLocked topic: Elbow Joint\nLocked question (Teacher is guiding toward this): What are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?\n\nRecent conversation history:\nTutor: Good morning. I'm here to help you work through human anatomy concepts with targeted questions\u2014the kind that build real understanding rather than just memorizing labels. Since this is our first session together, I'm starting fresh with you.\n\nWhat human anatomy topic would you like to focus on today?\nStudent: Explain the structure and motion of the elbow joint\n\nDecide based ONLY on the student's most recent message.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Judge and return strict JSON only."
+                }
+              ],
+              "response_text": "```json\n{\n  \"exploration_needed\": false,\n  \"exploration_query\": \"\",\n  \"rationale\": \"The student's request to 'explain the structure and motion of the elbow joint' is directly aligned with the locked topic (Elbow Joint) and the guiding question about the three joints and primary hinge joint. This is not a tangential concept or prerequisite clarification\u2014it is the core topic itself. The Teacher already has the locked section's context and can guide the student toward understanding the three joints (humeroulnar, humeroradial, proximal radioulnar) and their motions without needing additional textbook exploration.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.exploration_judge",
+              "result": "skip",
+              "needed": false,
+              "query": "",
+              "rationale": "The student's request to 'explain the structure and motion of the elbow joint' is directly aligned with the locked topic (Elbow Joint) and the guiding question about the three joints and primary hinge joint. This is not a tangential concept or prerequisite clarification\u2014it is the core topic itself. The Teacher already has the locked section's context and can guide the student toward understanding the three joints (humeroulnar, humeroradial, proximal radioulnar) and their motions without needing additional textbook exploration."
+            },
+            {
+              "wrapper": "dean.topic_ack_emitted",
+              "result": "ack_message_emitted_skipping_teacher_draft",
+              "locked_question": "What are the three joints enclosed within the elbow's articular capsule, and which one is the primary hinge joint?"
+            }
+          ]
+        }
+      ],
+      "hint_progress": [
+        {
+          "turn": 0,
+          "student_state": "question",
+          "hint_before": 0,
+          "hint_after": 0,
+          "reason": "unchanged",
+          "active_hint": ""
+        },
+        {
+          "turn": 1,
+          "student_state": "correct",
+          "hint_before": 0,
+          "hint_after": 0,
+          "reason": "unchanged",
+          "active_hint": ""
+        }
+      ],
+      "hint_plan": [],
+      "locked_topic_snapshot": {
+        "path": "Ch9|Anatomy of Selected Synovial Joints|Elbow Joint",
+        "chapter": "Joints",
+        "section": "Anatomy of Selected Synovial Joints",
+        "subsection": "Elbow Joint",
+        "difficulty": "moderate",
+        "chunk_count": 0,
+        "limited": false,
+        "score": 0.9953358769416809
+      },
+      "complexity_tier": "simple",
+      "_dedupe_results": {
+        "dean._clinical_turn_call": {
+          "fingerprint": "6e178f0469002546",
+          "result": {
+            "student_state": "correct",
+            "confidence_score": 0.95,
+            "pass": true,
+            "feedback_message": ""
+          }
+        },
+        "dean._close_session_call": {
+          "fingerprint": "f505049f5998cbff",
+          "result": {
+            "core_mastery_tier": "proficient",
+            "clinical_mastery_tier": "developing",
+            "mastery_tier": "proficient",
+            "grading_rationale": "Student demonstrated solid core anatomy knowledge, correctly identifying the three elbow joints and the humeroulnar joint as the primary hinge joint on first attempt with high confidence. Clinical reasoning showed significant growth trajectory\u2014moving from incorrect nerve identification (obturator) through partial understanding to correct mechanistic explanation of valgus stress and ulnar nerve stretch\u2014but required substantial tutor scaffolding and still conflated anatomical structures (groove vs. soft tissue protection) before reaching precision.",
+            "student_facing_message": "You showed strong foundational knowledge of elbow joint anatomy and made real progress in clinical reasoning during this session. Your identification of the three joints was immediate and confident, which is excellent. In the clinical scenario, you worked through a meaningful learning curve: you caught yourself on the obturator nerve error, then refined your understanding of how ligament tears actually injure nerves through mechanical stretch rather than simple loss of cushioning. That's genuine clinical thinking. Going forward, focus on distinguishing between bony anatomical structures (like the ulnar groove) and the dynamic mechanical forces that actually cause injury\u2014that precision will strengthen your clinical applications significantly.",
+            "memory_summary": "Student confidently identified elbow joint anatomy (humeroulnar, humeroradial, proximal radioulnar joints; humeroulnar as primary hinge). Demonstrated developing clinical reasoning: initially confused ulnar nerve with obturator nerve (hip anatomy), but self-corrected and progressed to understanding valgus stress mechanism and nerve stretch injury. Required explicit correction on conflating bony grooves with soft tissue protection, but successfully integrated mechanistic reasoning by session end. Strength in spatial reasoning and willingness to revise; needs continued precision in distinguishing anatomical structures from biomechanical forces.",
+            "fallback_used": false
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,437 @@
+{
+  "session_id": "3ce28450",
+  "test_id": null,
+  "description": "",
+  "scored_at": "2026-04-30T07:02:58+00:00",
+  "primary": {
+    "EULER": {
+      "question_present": 1.0,
+      "relevance": 1.0,
+      "helpful": 0.7461538461538461,
+      "no_reveal": 0.7692307692307693,
+      "passes_all_thresholds": false,
+      "n_turns_scored": 13
+    },
+    "RAGAS": {
+      "context_precision": 0.4,
+      "context_recall": 1.0,
+      "context_relevancy": 0.39,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "answer_correctness": 1.0,
+      "passes_all_thresholds": false
+    }
+  },
+  "secondary": {
+    "TLQ": {
+      "score": 0.834,
+      "threshold": 0.8,
+      "passes": true,
+      "sub": {
+        "match_top_score": 0.623,
+        "vote_consensus": 0.546,
+        "coverage_gate_pass": 1.0,
+        "anchor_extraction_success": 1.0,
+        "repair_clean": 1.0
+      }
+    },
+    "RRQ": {
+      "score": 0.827,
+      "threshold": 0.75,
+      "passes": true,
+      "sub": {
+        "chunk_count_adequacy": 1.0,
+        "mean_top3_score": 0.999,
+        "section_match_rate": 1.0,
+        "retrieval_calls_efficiency": 1.0,
+        "coverage_gap_frequency": 1.0,
+        "ragas_context_precision": 0.4,
+        "ragas_context_relevancy": 0.39
+      }
+    },
+    "AQ": {
+      "score": 0.85,
+      "threshold": 0.85,
+      "passes": true,
+      "sub": {
+        "groundedness": 1.0,
+        "answer_brevity": 0.5,
+        "answer_is_noun_phrase": 1.0,
+        "aliases_count_adequacy": 1.0,
+        "question_specificity": 0.95,
+        "aliases_diversity_semantic": 0.65
+      }
+    },
+    "TRQ": {
+      "score": 0.622,
+      "threshold": 0.75,
+      "passes": false,
+      "sub": {
+        "qc_pass_rate": 0.083,
+        "revised_draft_rate": 0.154,
+        "intervention_rate": 1.0,
+        "reason_codes_clean_rate": 0.154,
+        "euler_question_present": 1.0,
+        "euler_relevance": 1.0,
+        "euler_helpful": 0.746,
+        "euler_no_reveal": 0.769,
+        "repetition_score": 0.692
+      }
+    },
+    "RGC": {
+      "score": 0.667,
+      "threshold": 0.95,
+      "passes": false,
+      "sub": {
+        "no_false_positives": 0.0,
+        "no_false_negatives": 1.0,
+        "evidence_quote_validity": 1.0,
+        "path_distribution": {
+          "skipped_topic_just_locked": 1,
+          "no_overlap_no_paraphrase": 12,
+          "overlap": 1
+        },
+        "confusion_matrix": {
+          "tp": 0,
+          "fp": 1,
+          "tn": 13,
+          "fn": 0
+        }
+      }
+    },
+    "PP": {
+      "score": 0.912,
+      "threshold": 0.6,
+      "passes": true,
+      "sub": {
+        "hint_progression_monotonic": 1.0,
+        "hint_utilization": 1.0,
+        "student_engagement_rate": 1.0,
+        "state_trajectory_score": 0.648
+      }
+    },
+    "ARC": {
+      "score": 1.0,
+      "threshold": 0.7,
+      "passes": true,
+      "sub": {
+        "step_vs_reach_disambiguation_det": 1.0,
+        "intermediate_credit_avoidance_det": 1.0,
+        "mastery_attribution_grounding": 1.0,
+        "step_vs_reach_disambiguation_llm": 1.0,
+        "intermediate_credit_avoidance_llm": 1.0,
+        "off_topic_drift_score": 1.0,
+        "mastery_attribution_evidence": [],
+        "n_intermediate_turns": 0,
+        "n_fabrication_turns": 3
+      }
+    },
+    "CC": {
+      "score": 0.75,
+      "threshold": 1.0,
+      "passes": false,
+      "sub": {
+        "phase_transitions_legal": 1.0,
+        "topic_stability": 1.0,
+        "anchor_stability": 1.0,
+        "invariant_score": 0.0,
+        "invariant_violations_count": 13
+      }
+    },
+    "CE": {
+      "score": 0.291,
+      "threshold": 0.5,
+      "passes": false,
+      "sub": {
+        "cost_score": 0.582,
+        "cache_hit_rate": 0.0,
+        "cost_per_useful_turn": 0.08350260000000001
+      }
+    },
+    "MSC": {
+      "score": 1.0,
+      "threshold": 0.7,
+      "passes": true,
+      "sub": {
+        "confidence_appropriateness": null,
+        "ewma_movement_score": 1.0,
+        "rationale_grounding_llm": 1.0
+      }
+    }
+  },
+  "penalties": [
+    {
+      "code": "LEAK_DETECTED",
+      "severity": "critical",
+      "evidence": "turn 3: no_reveal=0.0 \u2014 You're right that myelin creates gaps for jumping. Now let's think about efficiency differently: if one oligodendrocyte wraps multiple segments versus many separate cells each wrapping one segment, wh",
+      "turn_id": 3,
+      "source": "llm"
+    },
+    {
+      "code": "LEAK_DETECTED",
+      "severity": "critical",
+      "evidence": "turn 11: no_reveal=0.0 \u2014 Yes\u2014saltatory conduction is exactly that jumping pattern. You've reasoned through the entire mechanism: myelin creates gaps, passive current spreads between them, and regeneration happens only at node",
+      "turn_id": 11,
+      "source": "llm"
+    },
+    {
+      "code": "LEAK_DETECTED",
+      "severity": "critical",
+      "evidence": "turn 13: no_reveal=0.0 \u2014 You've correctly linked branching capacity to wrapping limits. The cell's name literally means 'cell of a few branches'\u2014oligo- means few, and -cyte means cell. Using that etymology, what would you cal",
+      "turn_id": 13,
+      "source": "llm"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=2 chunk_count=20",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=3 chunk_count=20",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=4 chunk_count=20",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=5 chunk_count=20",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=6 chunk_count=20",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=7 chunk_count=20",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=8 chunk_count=20",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=9 chunk_count=20",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=10 chunk_count=20",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=11 chunk_count=20",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=12 chunk_count=20",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=13 chunk_count=20",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=14 chunk_count=20",
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 2: 'You've identified' \u2014 You've identified the key mechanism\u2014myelin insulation does enable saltatory conduction. Rather than focus on the cell's name, let's ground this in function: if ",
+      "turn_id": 2,
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 9: 'You've correctly identified' \u2014 You've correctly identified that farther gaps slow conduction. Now reverse that logic: if gaps were spaced as close together as possible, how would that maximiz",
+      "turn_id": 9,
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 14: 'You've correctly identified' \u2014 You've correctly identified the oligodendrocyte as the myelinating cell in the CNS. Would you like to tackle a brief clinical scenario that applies this concept",
+      "turn_id": 14,
+      "source": "det"
+    }
+  ],
+  "verdict": "failed_critical_penalty",
+  "raw_signals": {
+    "turn_count": 14,
+    "max_turns": 25,
+    "final_phase": "assessment",
+    "final_hint_level": 0,
+    "max_hints": 3,
+    "final_student_reached_answer": true,
+    "interventions": 0,
+    "coverage_gap_events": 0,
+    "retrieval_calls": 1,
+    "cost_usd": 1.0855338,
+    "api_calls": 82,
+    "input_tokens": 220926,
+    "output_tokens": 11747,
+    "n_tutoring_turns": 13,
+    "n_intermediate_turns": 0,
+    "n_fabrication_turns": 3
+  },
+  "deterministic_signals": {
+    "intermediate_turns": [],
+    "fabrication_turns": [
+      {
+        "turn_id": 2,
+        "evidence": "You've identified",
+        "tutor_msg": "You've identified the key mechanism\u2014myelin insulation does enable saltatory conduction. Rather than focus on the cell's name, let's ground this in function: if one glial cell wraps multiple axon segme"
+      },
+      {
+        "turn_id": 9,
+        "evidence": "You've correctly identified",
+        "tutor_msg": "You've correctly identified that farther gaps slow conduction. Now reverse that logic: if gaps were spaced as close together as possible, how would that maximize the speed advantage of saltatory condu"
+      },
+      {
+        "turn_id": 14,
+        "evidence": "You've correctly identified",
+        "tutor_msg": "You've correctly identified the oligodendrocyte as the myelinating cell in the CNS. Would you like to tackle a brief clinical scenario that applies this concept, or would you prefer to move on?"
+      }
+    ],
+    "off_topic_turns": [],
+    "det_tlq_match_top_score": 0.6229032258064516,
+    "det_tlq_vote_consensus": 0.5455537370430987,
+    "det_tlq_coverage_gate_pass": 1.0,
+    "det_tlq_anchor_extraction_success": 1.0,
+    "det_tlq_repair_clean": 1.0,
+    "det_tlq_repair_invoked": false,
+    "det_rrq_chunk_count_adequacy": 1.0,
+    "det_rrq_mean_top3_score": 0.9994463920593262,
+    "det_rrq_section_match_rate": 1.0,
+    "det_rrq_retrieval_calls_efficiency": 1.0,
+    "det_rrq_coverage_gap_frequency": 1.0,
+    "det_rrq_chunk_count": 20,
+    "det_rrq_retrieval_calls": 1,
+    "det_aq_answer_brevity": 0.5,
+    "det_aq_answer_is_noun_phrase": 1.0,
+    "det_aq_aliases_count_adequacy": 1.0,
+    "det_aq_aliases_count": 4,
+    "det_aq_groundedness": 1.0,
+    "det_aq_sanitize_action": "kept",
+    "det_aq_locked_answer_word_count": 1,
+    "det_trq_qc_pass_rate": 0.08333333333333333,
+    "det_trq_revised_draft_rate": 0.15384615384615385,
+    "det_trq_intervention_rate": 1.0,
+    "det_trq_reason_codes_clean_rate": 0.15384615384615385,
+    "det_trq_n_tutoring_turns": 13,
+    "det_rgc_false_positive_rate": 1.0,
+    "det_rgc_false_negative_rate": 0.0,
+    "det_rgc_evidence_quote_validity": 1.0,
+    "det_rgc_path_distribution": {
+      "skipped_topic_just_locked": 1,
+      "no_overlap_no_paraphrase": 12,
+      "overlap": 1
+    },
+    "det_rgc_n_decisions": 14,
+    "det_rgc_tp": 0,
+    "det_rgc_fp": 1,
+    "det_rgc_tn": 13,
+    "det_rgc_fn": 0,
+    "det_pp_hint_progression_monotonic": 1.0,
+    "det_pp_hint_utilization": 1.0,
+    "det_pp_student_engagement_rate": 1.0,
+    "det_pp_state_trajectory_score": 0.6483516483516484,
+    "det_arc_step_vs_reach_disambiguation": 1.0,
+    "det_arc_intermediate_credit_avoidance": 1.0,
+    "det_arc_n_intermediate_turns": 0,
+    "det_arc_n_fabrication_turns": 3,
+    "det_cc_phase_transitions_legal": 1.0,
+    "det_cc_topic_stability": 1.0,
+    "det_cc_anchor_stability": 1.0,
+    "det_cc_invariant_violations_count": 13,
+    "det_cc_invariant_score": 0.0,
+    "det_ce_cost_per_useful_turn": 0.08350260000000001,
+    "det_ce_cost_score": 0.582487,
+    "det_ce_cache_hit_rate": 0.0,
+    "det_ce_mean_turn_latency": null,
+    "det_ce_latency_score": null,
+    "det_msc_confidence_appropriateness": null,
+    "det_msc_ewma_movement_score": 1.0,
+    "det_msc_has_mastery": false
+  },
+  "llm_telemetry": [
+    {
+      "label": "per_turn",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 11.148,
+      "in_tok": 6475,
+      "out_tok": 1934,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"turns\": [\n    {\n      \"turn_id\": 1,\n      \"question_present\": 1.0,\n      \"relevance\": 1.0,\n      \"helpful\": 0.5,\n      \"no_reveal\": 1.0,\n      \"faithfulness\": 1.0,\n      \"answer_relevancy..."
+    },
+    {
+      "label": "retrieval",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 4.133,
+      "in_tok": 1456,
+      "out_tok": 600,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"per_chunk\": [\n    {\n      \"id\": 0,\n      \"relevance\": 1.0,\n      \"rationale\": \"Directly identifies the glial cell type that insulates axons in the CNS.\"\n    },\n    {\n      \"id\": 1,\n      ..."
+    },
+    {
+      "label": "synthesis",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 2.594,
+      "in_tok": 5053,
+      "out_tok": 162,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"mastery_attribution_grounding\": 1.0,\n  \"mastery_attribution_evidence\": [],\n  \"step_vs_reach_disambiguation\": 1.0,\n  \"intermediate_credit_avoidance\": 1.0,\n  \"off_topic_drift_score\": 1.0,\n ..."
+    },
+    {
+      "label": "anchor",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 1.108,
+      "in_tok": 535,
+      "out_tok": 121,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"question_specificity\": 0.95,\n  \"question_specificity_rationale\": \"Question is specific, well-scoped, and directly answerable with one correct cell type.\",\n  \"aliases_diversity_semantic\": ..."
+    }
+  ],
+  "anchors_inspected": {
+    "locked_question": "What is the glial cell type that insulates axons in the CNS and enables faster nerve impulse conduction?",
+    "locked_answer": "oligodendrocyte",
+    "locked_answer_aliases": [
+      "oligo",
+      "oligodendrocytes",
+      "myelin-forming cell of CNS",
+      "CNS myelinating glial cell"
+    ],
+    "locked_topic": {}
+  },
+  "expectations": null
+}

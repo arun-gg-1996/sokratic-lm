@@ -1,0 +1,341 @@
+{
+  "session_id": "64f42d61",
+  "test_id": null,
+  "description": "",
+  "scored_at": "2026-04-30T07:53:13+00:00",
+  "primary": {
+    "EULER": {
+      "question_present": 1.0,
+      "relevance": 0.7,
+      "helpful": 0.625,
+      "no_reveal": 0.75,
+      "passes_all_thresholds": false,
+      "n_turns_scored": 4
+    },
+    "RAGAS": {
+      "context_precision": 0.6,
+      "context_recall": 1.0,
+      "context_relevancy": 0.48,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8250000000000001,
+      "answer_correctness": 0.0,
+      "passes_all_thresholds": false
+    }
+  },
+  "secondary": {
+    "TLQ": {
+      "score": 0.896,
+      "threshold": 0.8,
+      "passes": true,
+      "sub": {
+        "match_top_score": 1.0,
+        "vote_consensus": 0.48,
+        "coverage_gate_pass": 1.0,
+        "anchor_extraction_success": 1.0,
+        "repair_clean": 1.0
+      }
+    },
+    "RRQ": {
+      "score": 0.868,
+      "threshold": 0.75,
+      "passes": true,
+      "sub": {
+        "chunk_count_adequacy": 1.0,
+        "mean_top3_score": 0.999,
+        "section_match_rate": 1.0,
+        "retrieval_calls_efficiency": 1.0,
+        "coverage_gap_frequency": 1.0,
+        "ragas_context_precision": 0.6,
+        "ragas_context_relevancy": 0.48
+      }
+    },
+    "AQ": {
+      "score": 0.808,
+      "threshold": 0.85,
+      "passes": false,
+      "sub": {
+        "groundedness": 1.0,
+        "answer_brevity": 0.7,
+        "answer_is_noun_phrase": 1.0,
+        "aliases_count_adequacy": 0.75,
+        "question_specificity": 0.85,
+        "aliases_diversity_semantic": 0.55
+      }
+    },
+    "TRQ": {
+      "score": 0.683,
+      "threshold": 0.75,
+      "passes": false,
+      "sub": {
+        "qc_pass_rate": 0.5,
+        "revised_draft_rate": 0.75,
+        "intervention_rate": 0.25,
+        "reason_codes_clean_rate": 0.75,
+        "euler_question_present": 1.0,
+        "euler_relevance": 0.7,
+        "euler_helpful": 0.625,
+        "euler_no_reveal": 0.75,
+        "repetition_score": 0.825
+      }
+    },
+    "RGC": {
+      "score": 1.0,
+      "threshold": 0.95,
+      "passes": true,
+      "sub": {
+        "no_false_positives": 1.0,
+        "no_false_negatives": 1.0,
+        "evidence_quote_validity": 1.0,
+        "path_distribution": {
+          "skipped_topic_just_locked": 1,
+          "no_overlap_no_paraphrase": 3
+        },
+        "confusion_matrix": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 4,
+          "fn": 0
+        }
+      }
+    },
+    "PP": {
+      "score": 0.688,
+      "threshold": 0.6,
+      "passes": true,
+      "sub": {
+        "hint_progression_monotonic": 1.0,
+        "hint_utilization": 1.0,
+        "student_engagement_rate": 0.25,
+        "state_trajectory_score": 0.5
+      }
+    },
+    "ARC": {
+      "score": 0.75,
+      "threshold": 0.7,
+      "passes": true,
+      "sub": {
+        "step_vs_reach_disambiguation_det": 1.0,
+        "intermediate_credit_avoidance_det": 1.0,
+        "mastery_attribution_grounding": 0.0,
+        "step_vs_reach_disambiguation_llm": 1.0,
+        "intermediate_credit_avoidance_llm": 0.5,
+        "off_topic_drift_score": 1.0,
+        "mastery_attribution_evidence": [
+          "Claim: 'you've identified the key insight' and 'something has to happen first' \u2014 student said 'something has to happen first' at turn 4, but tutor then immediately supplied the interpretation ('That 'something' is the setup phase where calcium and proteins align') without student generating this insight themselves.",
+          "Claim: student 'thought through the signal arriving and calcium being released' \u2014 no evidence in student messages; tutor supplied this framing at turn 3.",
+          "Claim: student 'connected the pieces' (from rapport intro) \u2014 student never articulated any connection; tutor asserted this without student demonstration."
+        ],
+        "n_intermediate_turns": 0,
+        "n_fabrication_turns": 1
+      }
+    },
+    "CC": {
+      "score": 0.75,
+      "threshold": 1.0,
+      "passes": false,
+      "sub": {
+        "phase_transitions_legal": 1.0,
+        "topic_stability": 1.0,
+        "anchor_stability": 1.0,
+        "invariant_score": 0.0,
+        "invariant_violations_count": 14
+      }
+    },
+    "CE": {
+      "score": 0.0,
+      "threshold": 0.5,
+      "passes": false,
+      "sub": {
+        "cost_score": 0.0,
+        "cache_hit_rate": 0.0,
+        "cost_per_useful_turn": 0.20006280000000004
+      }
+    },
+    "MSC": {
+      "score": 0.25,
+      "threshold": 0.7,
+      "passes": false,
+      "sub": {
+        "confidence_appropriateness": null,
+        "ewma_movement_score": 0.5,
+        "rationale_grounding_llm": 0.0
+      }
+    }
+  },
+  "penalties": [
+    {
+      "code": "LEAK_DETECTED",
+      "severity": "critical",
+      "evidence": "turn 2: no_reveal=0.0 \u2014 That phase is called the **contraction phase**\u2014when sarcomeres shorten and produce peak tension. Now that you have all three phases, can you explain why the latent period must come before contraction ",
+      "turn_id": 2,
+      "source": "llm"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "14 invariant violation(s) on this session (kinds: ungrounded_tutoring_turn); first: kind=ungrounded_tutoring_turn turn=2",
+      "raw_count": 14,
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 4: 'you've identified' \u2014 Exactly\u2014you've identified the key insight. That 'something' is the setup phase where calcium and proteins align before shortening can occur. Once that positioni",
+      "turn_id": 4,
+      "source": "det"
+    },
+    {
+      "code": "MASTERY_OVERCLAIM",
+      "severity": "major",
+      "evidence": "LLM-flagged mastery overclaim in session-end summary",
+      "source": "llm"
+    },
+    {
+      "code": "HELP_ABUSE_RESPONDED_WITH_ANSWER",
+      "severity": "major",
+      "evidence": "LLM-flagged: tutor revealed/paraphrased locked_answer in response to help-abuse pattern",
+      "source": "llm"
+    }
+  ],
+  "verdict": "failed_critical_penalty",
+  "raw_signals": {
+    "turn_count": 15,
+    "max_turns": 25,
+    "final_phase": "tutoring",
+    "final_hint_level": 3,
+    "max_hints": 3,
+    "final_student_reached_answer": false,
+    "interventions": 3,
+    "coverage_gap_events": 0,
+    "retrieval_calls": 1,
+    "cost_usd": 0.8002512000000002,
+    "api_calls": 92,
+    "input_tokens": 166874,
+    "output_tokens": 11537,
+    "n_tutoring_turns": 4,
+    "n_intermediate_turns": 0,
+    "n_fabrication_turns": 1
+  },
+  "deterministic_signals": {
+    "intermediate_turns": [],
+    "fabrication_turns": [
+      {
+        "turn_id": 4,
+        "evidence": "you've identified",
+        "tutor_msg": "Exactly\u2014you've identified the key insight. That 'something' is the setup phase where calcium and proteins align before shortening can occur. Once that positioning is complete, the muscle can then acti"
+      }
+    ],
+    "off_topic_turns": [],
+    "det_tlq_match_top_score": 1.0,
+    "det_tlq_vote_consensus": 0.48007681228996635,
+    "det_tlq_coverage_gate_pass": 1.0,
+    "det_tlq_anchor_extraction_success": 1.0,
+    "det_tlq_repair_clean": 1.0,
+    "det_tlq_repair_invoked": false,
+    "det_rrq_chunk_count_adequacy": 1.0,
+    "det_rrq_mean_top3_score": 0.9986265897750854,
+    "det_rrq_section_match_rate": 1.0,
+    "det_rrq_retrieval_calls_efficiency": 1.0,
+    "det_rrq_coverage_gap_frequency": 1.0,
+    "det_rrq_chunk_count": 31,
+    "det_rrq_retrieval_calls": 1,
+    "det_aq_answer_brevity": 0.7,
+    "det_aq_answer_is_noun_phrase": 1.0,
+    "det_aq_aliases_count_adequacy": 0.75,
+    "det_aq_aliases_count": 3,
+    "det_aq_groundedness": 1.0,
+    "det_aq_sanitize_action": "kept",
+    "det_aq_locked_answer_word_count": 6,
+    "det_trq_qc_pass_rate": 0.5,
+    "det_trq_revised_draft_rate": 0.75,
+    "det_trq_intervention_rate": 0.25,
+    "det_trq_reason_codes_clean_rate": 0.75,
+    "det_trq_n_tutoring_turns": 4,
+    "det_rgc_false_positive_rate": 0.0,
+    "det_rgc_false_negative_rate": 0.0,
+    "det_rgc_evidence_quote_validity": 1.0,
+    "det_rgc_path_distribution": {
+      "skipped_topic_just_locked": 1,
+      "no_overlap_no_paraphrase": 3
+    },
+    "det_rgc_n_decisions": 4,
+    "det_rgc_tp": 0,
+    "det_rgc_fp": 0,
+    "det_rgc_tn": 4,
+    "det_rgc_fn": 0,
+    "det_pp_hint_progression_monotonic": 1.0,
+    "det_pp_hint_utilization": 1.0,
+    "det_pp_student_engagement_rate": 0.25,
+    "det_pp_state_trajectory_score": 0.5,
+    "det_arc_step_vs_reach_disambiguation": 1.0,
+    "det_arc_intermediate_credit_avoidance": 1.0,
+    "det_arc_n_intermediate_turns": 0,
+    "det_arc_n_fabrication_turns": 1,
+    "det_cc_phase_transitions_legal": 1.0,
+    "det_cc_topic_stability": 1.0,
+    "det_cc_anchor_stability": 1.0,
+    "det_cc_invariant_violations_count": 14,
+    "det_cc_invariant_score": 0.0,
+    "det_ce_cost_per_useful_turn": 0.20006280000000004,
+    "det_ce_cost_score": 0.0,
+    "det_ce_cache_hit_rate": 0.0,
+    "det_ce_mean_turn_latency": null,
+    "det_ce_latency_score": null,
+    "det_msc_confidence_appropriateness": null,
+    "det_msc_ewma_movement_score": 0.5,
+    "det_msc_has_mastery": false
+  },
+  "llm_telemetry": [
+    {
+      "label": "per_turn",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 4.89,
+      "in_tok": 3374,
+      "out_tok": 633,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"turns\": [\n    {\n      \"turn_id\": 1,\n      \"question_present\": 1.0,\n      \"relevance\": 0.5,\n      \"helpful\": 0.5,\n      \"no_reveal\": 1.0,\n      \"faithfulness\": 1.0,\n      \"answer_relevancy..."
+    },
+    {
+      "label": "retrieval",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 5.081,
+      "in_tok": 1609,
+      "out_tok": 601,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"per_chunk\": [\n    {\n      \"id\": 0,\n      \"relevance\": 0.3,\n      \"rationale\": \"Defines a twitch but does not identify its three phases.\"\n    },\n    {\n      \"id\": 1,\n      \"relevance\": 0.0..."
+    },
+    {
+      "label": "synthesis",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 10.274,
+      "in_tok": 2193,
+      "out_tok": 940,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"mastery_attribution_grounding\": 0.0,\n  \"mastery_attribution_evidence\": [\n    \"Claim: 'you've identified the key insight' and 'something has to happen first' \u2014 student said 'something has ..."
+    },
+    {
+      "label": "anchor",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 1.616,
+      "in_tok": 530,
+      "out_tok": 172,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"question_specificity\": 0.85,\n  \"question_specificity_rationale\": \"Question is specific and answerable, asking for three defined physiological phases. Scope is appropriately narrow and tec..."
+    }
+  ],
+  "anchors_inspected": {
+    "locked_question": "What are the three phases that occur during a single muscle twitch?",
+    "locked_answer": "latent period contraction phase relaxation phase",
+    "locked_answer_aliases": [
+      "latent, contraction, relaxation",
+      "lag phase, active shortening, recovery phase",
+      "delay phase, shortening phase, tension decrease"
+    ],
+    "locked_topic": {}
+  },
+  "expectations": null
+}

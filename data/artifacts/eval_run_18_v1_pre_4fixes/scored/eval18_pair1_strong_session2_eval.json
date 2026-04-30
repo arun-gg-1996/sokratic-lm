@@ -1,0 +1,330 @@
+{
+  "session_id": "185bd985",
+  "test_id": null,
+  "description": "",
+  "scored_at": "2026-04-30T07:02:13+00:00",
+  "primary": {
+    "EULER": {
+      "question_present": 1.0,
+      "relevance": 1.0,
+      "helpful": 0.5,
+      "no_reveal": 1.0,
+      "passes_all_thresholds": false,
+      "n_turns_scored": 1
+    },
+    "RAGAS": {
+      "context_precision": 0.2,
+      "context_recall": 1.0,
+      "context_relevancy": 0.22000000000000003,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "answer_correctness": 1.0,
+      "passes_all_thresholds": false
+    }
+  },
+  "secondary": {
+    "TLQ": {
+      "score": 0.849,
+      "threshold": 0.8,
+      "passes": true,
+      "sub": {
+        "match_top_score": 0.7,
+        "vote_consensus": 0.546,
+        "coverage_gate_pass": 1.0,
+        "anchor_extraction_success": 1.0,
+        "repair_clean": 1.0
+      }
+    },
+    "RRQ": {
+      "score": 0.753,
+      "threshold": 0.75,
+      "passes": true,
+      "sub": {
+        "chunk_count_adequacy": 1.0,
+        "mean_top3_score": 0.849,
+        "section_match_rate": 1.0,
+        "retrieval_calls_efficiency": 1.0,
+        "coverage_gap_frequency": 1.0,
+        "ragas_context_precision": 0.2,
+        "ragas_context_relevancy": 0.22
+      }
+    },
+    "AQ": {
+      "score": 0.892,
+      "threshold": 0.85,
+      "passes": true,
+      "sub": {
+        "groundedness": 1.0,
+        "answer_brevity": 1.0,
+        "answer_is_noun_phrase": 1.0,
+        "aliases_count_adequacy": 1.0,
+        "question_specificity": 0.95,
+        "aliases_diversity_semantic": 0.4
+      }
+    },
+    "TRQ": {
+      "score": 0.944,
+      "threshold": 0.75,
+      "passes": true,
+      "sub": {
+        "qc_pass_rate": 1.0,
+        "revised_draft_rate": 1.0,
+        "intervention_rate": 1.0,
+        "reason_codes_clean_rate": 1.0,
+        "euler_question_present": 1.0,
+        "euler_relevance": 1.0,
+        "euler_helpful": 0.5,
+        "euler_no_reveal": 1.0,
+        "repetition_score": 1.0
+      }
+    },
+    "RGC": {
+      "score": 0.333,
+      "threshold": 0.95,
+      "passes": false,
+      "sub": {
+        "no_false_positives": 0.0,
+        "no_false_negatives": 0.0,
+        "evidence_quote_validity": 1.0,
+        "path_distribution": {
+          "skipped_topic_just_locked": 1,
+          "overlap": 1
+        },
+        "confusion_matrix": {
+          "tp": 0,
+          "fp": 1,
+          "tn": 0,
+          "fn": 1
+        }
+      }
+    },
+    "PP": {
+      "score": 0.875,
+      "threshold": 0.6,
+      "passes": true,
+      "sub": {
+        "hint_progression_monotonic": 1.0,
+        "hint_utilization": 1.0,
+        "student_engagement_rate": 1.0,
+        "state_trajectory_score": 0.5
+      }
+    },
+    "ARC": {
+      "score": 1.0,
+      "threshold": 0.7,
+      "passes": true,
+      "sub": {
+        "step_vs_reach_disambiguation_det": 1.0,
+        "intermediate_credit_avoidance_det": 1.0,
+        "mastery_attribution_grounding": 1.0,
+        "step_vs_reach_disambiguation_llm": 1.0,
+        "intermediate_credit_avoidance_llm": 1.0,
+        "off_topic_drift_score": 1.0,
+        "mastery_attribution_evidence": [],
+        "n_intermediate_turns": 0,
+        "n_fabrication_turns": 2
+      }
+    },
+    "CC": {
+      "score": 0.875,
+      "threshold": 1.0,
+      "passes": false,
+      "sub": {
+        "phase_transitions_legal": 1.0,
+        "topic_stability": 1.0,
+        "anchor_stability": 1.0,
+        "invariant_score": 0.5,
+        "invariant_violations_count": 1
+      }
+    },
+    "CE": {
+      "score": 0.014,
+      "threshold": 0.5,
+      "passes": false,
+      "sub": {
+        "cost_score": 0.028,
+        "cache_hit_rate": 0.0,
+        "cost_per_useful_turn": 0.194385
+      }
+    },
+    "MSC": {
+      "score": 1.0,
+      "threshold": 0.7,
+      "passes": true,
+      "sub": {
+        "confidence_appropriateness": null,
+        "ewma_movement_score": 1.0,
+        "rationale_grounding_llm": 1.0
+      }
+    }
+  },
+  "penalties": [
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=2 chunk_count=14",
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 4: 'correctly identified' \u2014 What you got right: You correctly identified the SA node as the failing structure and accurately recalled that the AV node would take over at 40\u201360 bpm if the S",
+      "turn_id": 4,
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 5: 'You correctly recognized' \u2014 What you got right: You correctly recognized that 38 bpm falls below the AV node's escape range and logically deduced that a lower-tier pacemaker must be active",
+      "turn_id": 5,
+      "source": "det"
+    }
+  ],
+  "verdict": "failed_critical_penalty",
+  "raw_signals": {
+    "turn_count": 2,
+    "max_turns": 25,
+    "final_phase": "memory_update",
+    "final_hint_level": 0,
+    "max_hints": 3,
+    "final_student_reached_answer": true,
+    "interventions": 0,
+    "coverage_gap_events": 0,
+    "retrieval_calls": 1,
+    "cost_usd": 0.194385,
+    "api_calls": 14,
+    "input_tokens": 50365,
+    "output_tokens": 2886,
+    "n_tutoring_turns": 1,
+    "n_intermediate_turns": 0,
+    "n_fabrication_turns": 2
+  },
+  "deterministic_signals": {
+    "intermediate_turns": [],
+    "fabrication_turns": [
+      {
+        "turn_id": 4,
+        "evidence": "correctly identified",
+        "tutor_msg": "What you got right: You correctly identified the SA node as the failing structure and accurately recalled that the AV node would take over at 40\u201360 bpm if the SA node were completely blocked. Your rea"
+      },
+      {
+        "turn_id": 5,
+        "evidence": "You correctly recognized",
+        "tutor_msg": "What you got right: You correctly recognized that 38 bpm falls below the AV node's escape range and logically deduced that a lower-tier pacemaker must be active. Your hierarchical reasoning about intr"
+      }
+    ],
+    "off_topic_turns": [],
+    "det_tlq_match_top_score": 0.7,
+    "det_tlq_vote_consensus": 0.5455537370430987,
+    "det_tlq_coverage_gate_pass": 1.0,
+    "det_tlq_anchor_extraction_success": 1.0,
+    "det_tlq_repair_clean": 1.0,
+    "det_tlq_repair_invoked": false,
+    "det_rrq_chunk_count_adequacy": 1.0,
+    "det_rrq_mean_top3_score": 0.8492048184076945,
+    "det_rrq_section_match_rate": 1.0,
+    "det_rrq_retrieval_calls_efficiency": 1.0,
+    "det_rrq_coverage_gap_frequency": 1.0,
+    "det_rrq_chunk_count": 14,
+    "det_rrq_retrieval_calls": 1,
+    "det_aq_answer_brevity": 1.0,
+    "det_aq_answer_is_noun_phrase": 1.0,
+    "det_aq_aliases_count_adequacy": 1.0,
+    "det_aq_aliases_count": 4,
+    "det_aq_groundedness": 1.0,
+    "det_aq_sanitize_action": "kept",
+    "det_aq_locked_answer_word_count": 2,
+    "det_trq_qc_pass_rate": 1.0,
+    "det_trq_revised_draft_rate": 1.0,
+    "det_trq_intervention_rate": 1.0,
+    "det_trq_reason_codes_clean_rate": 1.0,
+    "det_trq_n_tutoring_turns": 1,
+    "det_rgc_false_positive_rate": 1.0,
+    "det_rgc_false_negative_rate": 1.0,
+    "det_rgc_evidence_quote_validity": 1.0,
+    "det_rgc_path_distribution": {
+      "skipped_topic_just_locked": 1,
+      "overlap": 1
+    },
+    "det_rgc_n_decisions": 2,
+    "det_rgc_tp": 0,
+    "det_rgc_fp": 1,
+    "det_rgc_tn": 0,
+    "det_rgc_fn": 1,
+    "det_pp_hint_progression_monotonic": 1.0,
+    "det_pp_hint_utilization": 1.0,
+    "det_pp_student_engagement_rate": 1.0,
+    "det_pp_state_trajectory_score": 0.5,
+    "det_arc_step_vs_reach_disambiguation": 1.0,
+    "det_arc_intermediate_credit_avoidance": 1.0,
+    "det_arc_n_intermediate_turns": 0,
+    "det_arc_n_fabrication_turns": 2,
+    "det_cc_phase_transitions_legal": 1.0,
+    "det_cc_topic_stability": 1.0,
+    "det_cc_anchor_stability": 1.0,
+    "det_cc_invariant_violations_count": 1,
+    "det_cc_invariant_score": 0.5,
+    "det_ce_cost_per_useful_turn": 0.194385,
+    "det_ce_cost_score": 0.028075000000000072,
+    "det_ce_cache_hit_rate": 0.0,
+    "det_ce_mean_turn_latency": null,
+    "det_ce_latency_score": null,
+    "det_msc_confidence_appropriateness": null,
+    "det_msc_ewma_movement_score": 1.0,
+    "det_msc_has_mastery": false
+  },
+  "llm_telemetry": [
+    {
+      "label": "per_turn",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 2.318,
+      "in_tok": 2681,
+      "out_tok": 179,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"turns\": [\n    {\n      \"turn_id\": 1,\n      \"question_present\": 1.0,\n      \"relevance\": 1.0,\n      \"helpful\": 0.5,\n      \"no_reveal\": 1.0,\n      \"faithfulness\": 1.0,\n      \"answer_relevancy..."
+    },
+    {
+      "label": "retrieval",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 4.551,
+      "in_tok": 1602,
+      "out_tok": 651,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"per_chunk\": [\n    {\n      \"id\": 0,\n      \"relevance\": 0.7,\n      \"rationale\": \"Describes the principle that the cell with higher inherent rate sets the pace, foundational to understanding..."
+    },
+    {
+      "label": "synthesis",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 2.749,
+      "in_tok": 3713,
+      "out_tok": 183,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"mastery_attribution_grounding\": 1.0,\n  \"mastery_attribution_evidence\": [],\n  \"step_vs_reach_disambiguation\": 1.0,\n  \"intermediate_credit_avoidance\": 1.0,\n  \"off_topic_drift_score\": 1.0,\n ..."
+    },
+    {
+      "label": "anchor",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 1.425,
+      "in_tok": 529,
+      "out_tok": 113,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"question_specificity\": 0.95,\n  \"question_specificity_rationale\": \"Question is highly specific, anatomically precise, and asks for a single identifiable cardiac structure with clear functi..."
+    }
+  ],
+  "anchors_inspected": {
+    "locked_question": "What structure in the heart has the highest inherent rate of depolarization and serves as the pacemaker to establish normal cardiac rhythm?",
+    "locked_answer": "sinoatrial node",
+    "locked_answer_aliases": [
+      "SA node",
+      "pacemaker of the heart",
+      "sinus node",
+      "pacemaker"
+    ],
+    "locked_topic": {}
+  },
+  "expectations": null
+}

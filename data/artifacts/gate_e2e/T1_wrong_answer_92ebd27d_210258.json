@@ -1,0 +1,44 @@
+{
+  "name": "T1_wrong_answer",
+  "conv_id": "92ebd27d",
+  "description": "Wrong-but-plausible answer (AV node) must not fire reached.",
+  "expectations": {
+    "reached": false,
+    "no_fabrication_keywords": [
+      "you've identified",
+      "you have identified",
+      "correctly identified",
+      "you've reached",
+      "great job, the answer is"
+    ]
+  },
+  "outcomes": {
+    "prelock_error": "prelock 'Chapter 19: The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart' produced empty anchors (q='What is the role of Purkinje fibers in the conduction system of the heart, and how do they ensure efficient ventricular contraction?' a='')",
+    "final_reached": null,
+    "fabrication_hits_in_last_tutor": [],
+    "last_tutor_message": "",
+    "phase_final": null,
+    "locked_answer": null,
+    "locked_answer_aliases": null,
+    "locked_question": null,
+    "turn_count": 0,
+    "hint_level_final": 0,
+    "student_state_final": null
+  },
+  "gate_traces": [],
+  "result": {
+    "overall_pass": false,
+    "reached_pass": false,
+    "fabrication_pass": false
+  },
+  "notes": [
+    "prelock failed: prelock 'Chapter 19: The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart' produced empty anchors (q='What is the role of Purkinje fibers in the conduction system of the heart, and how do they ensure efficient ventricular contraction?' a='')"
+  ],
+  "log": [],
+  "debug_summary": {
+    "cost_usd": 0.0,
+    "api_calls": 0,
+    "input_tokens": 0,
+    "output_tokens": 0
+  }
+}

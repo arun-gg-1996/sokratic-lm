@@ -1,0 +1,115 @@
+{
+  "name": "T1_wrong_answer",
+  "conv_id": "1ffddc07",
+  "description": "Wrong-but-plausible answer (AV node) must not fire reached.",
+  "expectations": {
+    "reached": false,
+    "no_fabrication_keywords": [
+      "you've identified",
+      "you have identified",
+      "correctly identified",
+      "you've reached",
+      "great job, the answer is"
+    ]
+  },
+  "outcomes": {
+    "final_reached": false,
+    "fabrication_hits_in_last_tutor": [],
+    "last_tutor_message": "We've tried several angles now, and I want to be direct: a few haven't lined up with our textbook materials. The AV node is exactly the right structure to focus on\u2014let me show you some well-covered topics below that will help you understand how electrical impulses are delayed and then conducted through the ventricles.\n\n  1. Intervertebral Discs and Ligaments of the Vertebral Column\n  2. Roles of Electrolytes\n  3. Hip Bone",
+    "phase_final": "tutoring",
+    "locked_answer": "",
+    "locked_answer_aliases": [],
+    "locked_question": "",
+    "turn_count": 0,
+    "hint_level_final": 0,
+    "student_state_final": "question"
+  },
+  "gate_traces": [],
+  "result": {
+    "reached_pass": true,
+    "fabrication_pass": true,
+    "overall_pass": true
+  },
+  "notes": [
+    "option_hint 'conduction system' matched no option \u2014 fell back to first"
+  ],
+  "log": [
+    {
+      "step": "rapport_greeting",
+      "tutor": "Good evening. Anatomy builds on precision\u2014structure and function are inseparable, so we'll work through concepts carefully rather than memorizing in isolation. What human anatomy topic are you focusing on today?"
+    },
+    {
+      "step": "topic_input",
+      "student": "Conduction System of the Heart"
+    },
+    {
+      "step": "after_topic_input",
+      "tutor": "The conduction system is broad\u2014let me show you some focused subtopics where we can build real understanding of how electrical impulses flow and coordinate each heartbeat.\n\n  1. DNA Replication\n  2. Compensation Mechanisms\n  3. High Altitude Effects",
+      "topic_confirmed": false,
+      "options": [
+        "DNA Replication",
+        "Compensation Mechanisms",
+        "High Altitude Effects"
+      ],
+      "locked_answer": "",
+      "locked_answer_aliases": [],
+      "locked_question": ""
+    },
+    {
+      "step": "option_pick",
+      "student": "DNA Replication"
+    },
+    {
+      "step": "after_option_pick",
+      "tutor": "I notice a couple of topics haven't lined up with our textbook coverage yet. Let's pivot to something with solid material\u2014try one of the options below, or if you'd like to explore cardiac electrophysiology more directly, ask about the SA node, AV node, or bundle branches instead.\n\n  1. Skin Disorder",
+      "locked_answer": "",
+      "locked_answer_aliases": [],
+      "locked_question": ""
+    },
+    {
+      "step": "tutoring_turn_1_student",
+      "student": "I think it has to do with electrical signals in the heart"
+    },
+    {
+      "step": "tutoring_turn_1_after_invoke",
+      "tutor": "I hear you\u2014electrical signaling is absolutely central to how the heart works. That specific angle hasn't come through in our materials, but let me offer some focused entry points below that will get you into the electrophysiology you're after. You can also try asking directly about the SA node, AV node, or the bundle branches\u2014those are well-covered and will show you exactly how the electrical impu",
+      "student_state": "question",
+      "student_reached_answer": false,
+      "student_answer_confidence": 0.0,
+      "phase": "tutoring",
+      "hint_level": 0
+    },
+    {
+      "step": "tutoring_turn_2_student",
+      "student": "Maybe the electrical impulses start somewhere specific?"
+    },
+    {
+      "step": "tutoring_turn_2_after_invoke",
+      "tutor": "Let's pick a topic with stronger coverage:\n\n  1. Sperm Transport\n  2. Acids and Bases\n  3. Bones of the Brain Case",
+      "student_state": "question",
+      "student_reached_answer": false,
+      "student_answer_confidence": 0.0,
+      "phase": "tutoring",
+      "hint_level": 0
+    },
+    {
+      "step": "tutoring_turn_3_student",
+      "student": "AV node"
+    },
+    {
+      "step": "tutoring_turn_3_after_invoke",
+      "tutor": "We've tried several angles now, and I want to be direct: a few haven't lined up with our textbook materials. The AV node is exactly the right structure to focus on\u2014let me show you some well-covered topics below that will help you understand how electrical impulses are delayed and then conducted through the ventricles.\n\n  1. Intervertebral Discs and Ligaments of the Vertebral Column\n  2. Roles of E",
+      "student_state": "question",
+      "student_reached_answer": false,
+      "student_answer_confidence": 0.0,
+      "phase": "tutoring",
+      "hint_level": 0
+    }
+  ],
+  "debug_summary": {
+    "api_calls": 13,
+    "input_tokens": 17832,
+    "output_tokens": 2068,
+    "cost_usd": 0.08451600000000001
+  }
+}

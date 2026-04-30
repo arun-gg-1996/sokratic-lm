@@ -1,0 +1,1108 @@
+{
+  "student_id": "eval18_triple2_exploratory",
+  "conv_id": "4ddcd0a3",
+  "profile_id": "S6",
+  "topic": "What enzymes break down proteins in the stomach?",
+  "session_index": 2,
+  "timestamp": "2026-04-30T03:44:07",
+  "turns_log": [
+    {
+      "turn": 0,
+      "phase": "rapport",
+      "role": "tutor",
+      "content": "Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?"
+    },
+    {
+      "turn": 0,
+      "phase": "topic_input",
+      "role": "student",
+      "content": "What enzymes break down proteins in the stomach?"
+    },
+    {
+      "turn": 0,
+      "phase": "topic_engagement",
+      "role": "tutor",
+      "content": "Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?"
+    },
+    {
+      "turn": 2,
+      "phase": "tutoring",
+      "role": "student",
+      "content": "I think it might be pepsin? But honestly I'm not totally sure \u2014 we covered this pretty quickly in class and I might be mixing it up with something else."
+    },
+    {
+      "turn": 2,
+      "phase": "assessment",
+      "role": "tutor",
+      "content": "You've correctly identified pepsin as the gastric protease. Would you like to tackle an optional clinical scenario involving peptic ulcer disease and this enzyme, or would you prefer to move on?",
+      "student_state": "correct",
+      "hint_level": 0,
+      "student_reached_answer": true
+    },
+    {
+      "turn": 3,
+      "phase": "assessment",
+      "role": "student",
+      "content": "Yeah, I think I'd rather skip the clinical scenario for now and move on\u2014I want to make sure I'm solid on the basics first before jumping into something more complicated."
+    },
+    {
+      "turn": 2,
+      "phase": "assessment",
+      "role": "tutor",
+      "content": "Excellent\u2014you've got pepsin down. Let's solidify the basics: pepsin works best in an acidic environment. Why do you think the stomach produces HCl alongside pepsin? What role does the acid play in protein digestion?",
+      "student_state": "correct",
+      "hint_level": 0,
+      "student_reached_answer": true
+    },
+    {
+      "turn": 3,
+      "phase": "assessment",
+      "role": "student",
+      "content": "Um, I think the acid maybe helps pepsin work better? Like, it creates the right environment for it or something? I'm not totally sure though\u2014does the HCl actually break down the proteins itself, or does it just help pepsin do its thing?"
+    },
+    {
+      "turn": 2,
+      "phase": "assessment",
+      "role": "tutor",
+      "content": "What you got right: You correctly identified that HCl creates an environment that helps pepsin function\u2014that's the key insight. What to correct next: You need to distinguish between pepsin's two roles and HCl's dual function. HCl does two things: (1) it denatures proteins (unfolds them), making them accessible to pepsin, AND (2) it maintains the pH (1.5\u20133.5) that pepsin requires to be catalytically active. Pepsin alone cannot denature proteins\u2014that's the acid's job. So HCl is not just a helper; it's an active participant in breaking down protein structure. Can you explain what 'denature' means and why unfolding a protein makes it easier for pepsin to cut it into smaller pieces?",
+      "student_state": "correct",
+      "hint_level": 0,
+      "student_reached_answer": true
+    },
+    {
+      "turn": 3,
+      "phase": "assessment",
+      "role": "student",
+      "content": "Um, so denature means like... unfolding the protein structure, right? So when HCl unfolds the proteins, it makes them more stretched out and exposed, which I guess makes it easier for pepsin to actually access the bonds it needs to cut? I'm not totally sure if I'm explaining that right, but that would make sense why you'd need both\u2014the acid does the unfolding part and then pepsin can actually do its job."
+    },
+    {
+      "turn": 2,
+      "phase": "assessment",
+      "role": "tutor",
+      "content": "What you got right: You correctly defined denaturation as unfolding protein structure and accurately linked it to increased accessibility for pepsin\u2014that's the core mechanism. What to correct next: You need to be more precise about *which bonds* pepsin cuts. Pepsin cleaves peptide bonds (the covalent links between amino acids), not the non-covalent interactions that HCl disrupts during denaturation. Denaturation exposes these peptide bonds by unfolding the 3D structure, but the two processes are chemically distinct. Also, avoid hedging language like 'I guess' and 'I'm not totally sure'\u2014commit to the mechanism once you've identified it correctly. How would you explain the difference between breaking the bonds that hold a protein's shape (denaturation) and breaking the bonds that link amino acids together (proteolysis)?",
+      "student_state": "correct",
+      "hint_level": 0,
+      "student_reached_answer": true
+    },
+    {
+      "turn": 3,
+      "phase": "assessment",
+      "role": "student",
+      "content": "Oh okay, I think I get it now\u2014so denaturation unfolds the protein by breaking the hydrogen bonds and other weak interactions that give it its 3D shape, which exposes the peptide bonds. Then pepsin actually cuts those peptide bonds themselves to break apart the amino acid chain. So they're two separate steps in the process, not the same thing."
+    },
+    {
+      "turn": 2,
+      "phase": "memory_update",
+      "role": "tutor",
+      "content": "You've built a solid grasp of gastric protein digestion. You correctly identified pepsin, understood HCl's dual role in denaturation and pH maintenance, and clearly distinguished between breaking non-covalent interactions (denaturation) and covalent peptide bonds (proteolysis). Your final explanation was precise and mechanistically sound. Moving forward: commit to your reasoning once you've worked through it\u2014you don't need to hedge with 'I guess' when your logic is correct. You're ready to apply this to more complex scenarios like enzyme regulation or clinical conditions affecting gastric digestion.",
+      "student_state": "correct",
+      "hint_level": 0,
+      "student_reached_answer": true
+    }
+  ],
+  "outcome": {
+    "phase_final": "memory_update",
+    "reached_answer": true,
+    "locked_answer": "pepsin",
+    "hint_level_final": 0,
+    "turn_count": 2,
+    "assessment_turn": 3,
+    "student_state_final": "correct",
+    "core_mastery_tier": "proficient",
+    "clinical_mastery_tier": "proficient",
+    "mastery_tier": "proficient",
+    "total_low_effort_turns": 0,
+    "total_off_topic_turns": 0
+  },
+  "debug_summary": {
+    "api_calls": 14,
+    "input_tokens": 23024,
+    "output_tokens": 2359,
+    "cost_usd": 0.104457,
+    "interventions": 0
+  },
+  "bugs_noted": [],
+  "final_state": {
+    "student_id": "eval18_triple2_exploratory",
+    "phase": "memory_update",
+    "messages": [
+      {
+        "role": "tutor",
+        "content": "Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?",
+        "phase": "rapport"
+      },
+      {
+        "role": "student",
+        "content": "What enzymes break down proteins in the stomach?"
+      },
+      {
+        "role": "tutor",
+        "content": "Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?",
+        "phase": "tutoring"
+      },
+      {
+        "role": "student",
+        "content": "I think it might be pepsin? But honestly I'm not totally sure \u2014 we covered this pretty quickly in class and I might be mixing it up with something else."
+      },
+      {
+        "role": "tutor",
+        "content": "You've correctly identified pepsin as the gastric protease. Would you like to tackle an optional clinical scenario involving peptic ulcer disease and this enzyme, or would you prefer to move on?",
+        "phase": "assessment"
+      },
+      {
+        "role": "student",
+        "content": "Yeah, I think I'd rather skip the clinical scenario for now and move on\u2014I want to make sure I'm solid on the basics first before jumping into something more complicated."
+      },
+      {
+        "role": "tutor",
+        "content": "Excellent\u2014you've got pepsin down. Let's solidify the basics: pepsin works best in an acidic environment. Why do you think the stomach produces HCl alongside pepsin? What role does the acid play in protein digestion?",
+        "phase": "assessment"
+      },
+      {
+        "role": "student",
+        "content": "Um, I think the acid maybe helps pepsin work better? Like, it creates the right environment for it or something? I'm not totally sure though\u2014does the HCl actually break down the proteins itself, or does it just help pepsin do its thing?"
+      },
+      {
+        "role": "tutor",
+        "content": "What you got right: You correctly identified that HCl creates an environment that helps pepsin function\u2014that's the key insight. What to correct next: You need to distinguish between pepsin's two roles and HCl's dual function. HCl does two things: (1) it denatures proteins (unfolds them), making them accessible to pepsin, AND (2) it maintains the pH (1.5\u20133.5) that pepsin requires to be catalytically active. Pepsin alone cannot denature proteins\u2014that's the acid's job. So HCl is not just a helper; it's an active participant in breaking down protein structure. Can you explain what 'denature' means and why unfolding a protein makes it easier for pepsin to cut it into smaller pieces?",
+        "phase": "assessment"
+      },
+      {
+        "role": "student",
+        "content": "Um, so denature means like... unfolding the protein structure, right? So when HCl unfolds the proteins, it makes them more stretched out and exposed, which I guess makes it easier for pepsin to actually access the bonds it needs to cut? I'm not totally sure if I'm explaining that right, but that would make sense why you'd need both\u2014the acid does the unfolding part and then pepsin can actually do its job."
+      },
+      {
+        "role": "tutor",
+        "content": "What you got right: You correctly defined denaturation as unfolding protein structure and accurately linked it to increased accessibility for pepsin\u2014that's the core mechanism. What to correct next: You need to be more precise about *which bonds* pepsin cuts. Pepsin cleaves peptide bonds (the covalent links between amino acids), not the non-covalent interactions that HCl disrupts during denaturation. Denaturation exposes these peptide bonds by unfolding the 3D structure, but the two processes are chemically distinct. Also, avoid hedging language like 'I guess' and 'I'm not totally sure'\u2014commit to the mechanism once you've identified it correctly. How would you explain the difference between breaking the bonds that hold a protein's shape (denaturation) and breaking the bonds that link amino acids together (proteolysis)?",
+        "phase": "assessment"
+      },
+      {
+        "role": "student",
+        "content": "Oh okay, I think I get it now\u2014so denaturation unfolds the protein by breaking the hydrogen bonds and other weak interactions that give it its 3D shape, which exposes the peptide bonds. Then pepsin actually cuts those peptide bonds themselves to break apart the amino acid chain. So they're two separate steps in the process, not the same thing."
+      },
+      {
+        "role": "tutor",
+        "content": "You've built a solid grasp of gastric protein digestion. You correctly identified pepsin, understood HCl's dual role in denaturation and pH maintenance, and clearly distinguished between breaking non-covalent interactions (denaturation) and covalent peptide bonds (proteolysis). Your final explanation was precise and mechanistically sound. Moving forward: commit to your reasoning once you've worked through it\u2014you don't need to hedge with 'I guess' when your logic is correct. You're ready to apply this to more complex scenarios like enzyme regulation or clinical conditions affecting gastric digestion.",
+        "phase": "memory_update"
+      }
+    ],
+    "retrieved_chunks": [
+      {
+        "chunk_id": "f84d00ff-1b8b-4ed2-b10f-e7c71b7ee5d3",
+        "text": "There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.",
+        "chapter_num": 24,
+        "chapter_title": "Metabolism and Nutrition",
+        "section_title": "Protein Metabolism",
+        "subsection_title": "",
+        "page": 1097,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "neighbor_prev",
+        "_primary_chunk_id": "21605519-144a-48ef-89a1-745f88f6c2ba"
+      },
+      {
+        "chunk_id": "0a6d94bd-f6f3-4b1a-8653-bb5566a7ecec",
+        "text": "Context from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.",
+        "chapter_num": 24,
+        "chapter_title": "Metabolism and Nutrition",
+        "section_title": "Protein Metabolism",
+        "subsection_title": "",
+        "page": 1097,
+        "element_type": "paragraph_overlap",
+        "image_filename": "",
+        "_window_role": "neighbor_prev",
+        "_primary_chunk_id": "21605519-144a-48ef-89a1-745f88f6c2ba"
+      },
+      {
+        "chunk_id": "21605519-144a-48ef-89a1-745f88f6c2ba",
+        "text": "Proteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.",
+        "score": 0.9999991655349731,
+        "chapter_num": 24,
+        "chapter_title": "Metabolism and Nutrition",
+        "section_title": "Protein Metabolism",
+        "subsection_title": "",
+        "page": 1097,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "primary",
+        "_primary_chunk_id": "21605519-144a-48ef-89a1-745f88f6c2ba"
+      },
+      {
+        "chunk_id": "69f325ae-0600-4f7e-8751-80570b4b6a82",
+        "text": "Context from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.",
+        "chapter_num": 24,
+        "chapter_title": "Metabolism and Nutrition",
+        "section_title": "Protein Metabolism",
+        "subsection_title": "",
+        "page": 1097,
+        "element_type": "paragraph_overlap",
+        "image_filename": "",
+        "_window_role": "neighbor_next",
+        "_primary_chunk_id": "21605519-144a-48ef-89a1-745f88f6c2ba"
+      },
+      {
+        "chunk_id": "9082f2ee-b1b9-4ed4-a5a4-a712148a6441",
+        "text": "When protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.",
+        "chapter_num": 24,
+        "chapter_title": "Metabolism and Nutrition",
+        "section_title": "Protein Metabolism",
+        "subsection_title": "",
+        "page": 1097,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "neighbor_next",
+        "_primary_chunk_id": "21605519-144a-48ef-89a1-745f88f6c2ba"
+      }
+    ],
+    "locked_question": "What enzyme breaks down proteins in the stomach?",
+    "locked_answer": "pepsin",
+    "locked_answer_aliases": [
+      "gastric protease",
+      "stomach protease",
+      "gastric enzyme",
+      "peptic enzyme"
+    ],
+    "full_answer": "pepsin",
+    "locked_topic": null,
+    "topic_confirmed": true,
+    "topic_selection": "Protein Metabolism",
+    "topic_just_locked": false,
+    "hint_level": 0,
+    "max_hints": 3,
+    "max_turns": 25,
+    "turn_count": 2,
+    "student_state": "correct",
+    "student_reached_answer": true,
+    "student_answer_confidence": 0.92,
+    "student_mastery_confidence": 0.46,
+    "confidence_samples": 2,
+    "help_abuse_count": 0,
+    "off_topic_count": 0,
+    "total_low_effort_turns": 0,
+    "total_off_topic_turns": 0,
+    "clinical_low_effort_count": 0,
+    "clinical_off_topic_count": 0,
+    "assessment_turn": 3,
+    "clinical_state": "correct",
+    "clinical_confidence": 0.95,
+    "core_mastery_tier": "proficient",
+    "clinical_mastery_tier": "proficient",
+    "mastery_tier": "proficient",
+    "grading_rationale": "Student demonstrated solid foundational understanding of pepsin's role and successfully integrated the dual mechanisms of HCl (denaturation + pH maintenance) and pepsin (peptide bond cleavage). Progressed from initial uncertainty to precise mechanistic reasoning, though confidence trajectory showed initial hesitation that improved with structured feedback.",
+    "session_memory_summary": "Student mastered gastric protein digestion mechanisms: correctly identified pepsin as the primary gastric protease and explained HCl's dual function (protein denaturation via weak bond disruption + pH optimization for pepsin activity). Demonstrated ability to distinguish between denaturation (non-covalent interactions) and proteolysis (peptide bond cleavage). Initially showed low confidence (0.46 mastery confidence) but reached high answer confidence (0.92) and completed clinical scenario successfully on third attempt. Recommend reinforcing commitment to reasoning and exploring downstream protein digestion in the small intestine (trypsin, chymotrypsin, enterokinase cascade).",
+    "weak_topics": [],
+    "rejected_topic_paths": [],
+    "exploration_max": 3,
+    "exploration_used": 0,
+    "debug": {
+      "api_calls": 14,
+      "input_tokens": 23024,
+      "output_tokens": 2359,
+      "cost_usd": 0.104457,
+      "interventions": 0,
+      "retrieval_calls": 1,
+      "coverage_gap_events": 0,
+      "grounded_turns": 1,
+      "ungrounded_turns": 1,
+      "invariant_violations": [
+        {
+          "turn": 2,
+          "kind": "ungrounded_tutoring_turn",
+          "has_locked_topic": false,
+          "chunk_count": 5
+        }
+      ],
+      "current_node": "memory_update_node",
+      "last_routing": "assessment_node (student_reached_answer)",
+      "turn_trace": [
+        {
+          "wrapper": "dean._setup_call",
+          "decision_effect": "classification_only",
+          "input_hash": "c6df84594ecdb99a",
+          "elapsed_s": 2.78,
+          "in_tok": 1906,
+          "out_tok": 160,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.00812,
+          "s_per_tok": 0.0174,
+          "cached_est_tokens": 1532,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": true,
+              "est_tokens": 1532
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 145
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 206
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean supervising one Socratic tutoring turn.\nTools are already handled in Python. Do NOT request tools.\nThis is an evaluation setting: classify strictly based on evidence in the student's latest message.\n\nSTRICT LOW_EFFORT RULES (highest priority):\n  The student must be GENUINELY ATTEMPTING the locked_question.\n  low_effort when: bare denial (\"no\", \"idk\", \"i don't know\"), demand\n  to be told (\"just tell me\"), frustration (\"if i wanted to read...\"),\n  empty deflection (<5 words, no domain content), profanity, or\n  dismissal. Off-topic + frustration \u2192 low_effort.\n  irrelevant: genuinely off-topic question on a different subject.\n\nOTHER:\n  question: genuine specific clarifying question about human anatomy,\n    with engagement. Rhetorical/frustrated questions \u2192 low_effort.\n  incorrect: genuine attempt but wrong.\n  partial_correct: answers an INTERMEDIATE scaffold the tutor asked,\n    but NOT the locked answer. (e.g. \"stroke volume goes lower\" when\n    locked_answer is \"skeletal muscle pump\" \u2192 partial_correct.)\n  correct: student STATES the locked_answer or a clear paraphrase.\n    Getting an intermediate scaffold right is partial_correct, NOT correct.\n    Only the LOCKED answer being stated counts as correct.\n\nstudent_reached_answer: ALWAYS set to false. Python's\n  reached_answer_gate computes the authoritative reached signal.\n\nconfidence_score:\n  - 0.85-1.00: explicit, accurate, certain\n  - 0.65-0.84: mostly correct, mild ambiguity\n  - 0.40-0.64: partial / uncertain\n  - 0.00-0.39: incorrect, irrelevant, low-effort\n\nhint_level: leave unchanged (Python increments for incorrect).\nlocked_answer is already set; do not propose a new one.\n\nReturn one JSON object only (no markdown):\n{{\n  \"student_state\": \"correct|partial_correct|incorrect|question|irrelevant|low_effort\",\n  \"student_reached_answer\": false,\n  \"confidence_score\": 0.0,\n  \"hint_level\": 1,\n  \"search_needed\": false,\n  \"critique\": \"\"\n}}\n\n\n[1] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[2] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[3] (p.1097, score=1.00) Metabolism and Nutrition > Protein Metabolism\n---\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[4] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[5] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it might be pepsin? But honestly I'm not totally sure \u2014 we covered this pretty quickly in class and I might be mixing it up with something else.\n\n---\n\nCurrent state:\n- locked_question: What enzyme breaks down proteins in the stomach?\n- locked_answer: pepsin\n- hint_level: 0\n- turn_count: 1\n\nRecent conversation history:\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it might be pepsin? But honestly I'm not totally sure \u2014 we covered this pretty quickly in class and I might be mixing it up with something else.\nClassify the student's MOST RECENT message. Prior history is context only.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Classify this turn and return JSON."
+            }
+          ],
+          "response_text": "```json\n{\n  \"student_state\": \"correct\",\n  \"student_reached_answer\": false,\n  \"confidence_score\": 0.92,\n  \"hint_level\": 0,\n  \"search_needed\": false,\n  \"critique\": \"Student correctly identifies pepsin as the enzyme that breaks down proteins in the stomach. The answer matches the locked_answer exactly. The student's hedging language ('I think it might be', 'not totally sure') reflects appropriate epistemic humility rather than lack of knowledge\u2014they have arrived at the correct answer and demonstrated genuine engagement with the material by acknowledging uncertainty while still committing to the right response. This is a strong, confident answer.\"\n}\n```",
+          "tool_calls_made": [],
+          "result": "student_state=correct, hint=0",
+          "locked_answer_final": "pepsin"
+        },
+        {
+          "wrapper": "dean.sanitize_locked_answer",
+          "candidate": "pepsin",
+          "action": "kept",
+          "final": "pepsin"
+        },
+        {
+          "wrapper": "dean.confidence_score",
+          "result": "answer_conf=0.920, mastery_conf=0.460, reached=True (gate_path=overlap)",
+          "locked_answer": "pepsin",
+          "gate_path": "overlap",
+          "gate_evidence": "pepsin"
+        },
+        {
+          "wrapper": "dean.hint_progress",
+          "hint_before": 0,
+          "hint_after": 0,
+          "hint_reason": "unchanged",
+          "active_hint": ""
+        },
+        {
+          "wrapper": "teacher.draft_clinical_opt_in",
+          "decision_effect": null,
+          "input_hash": "22b5e9705820c176",
+          "elapsed_s": 1.07,
+          "in_tok": 200,
+          "out_tok": 43,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.00125,
+          "s_per_tok": 0.0248,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 183
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 14
+            }
+          ],
+          "system_prompt": "You are\na Socratic tutor in human anatomy working with a student.\nThis is an evaluated learning session.\nGlobal rules for all teacher wrappers:\n- Keep language academically focused and concise.\n- Do not reveal final answers unless wrapper-specific instructions explicitly allow it.\n- Follow wrapper output contracts exactly.\n- If strict JSON is requested by the wrapper, return strict JSON only.\n- Avoid generic motivational filler; prioritize targeted reasoning prompts.\n\n\na anatomy tutor.\nThe student has reached the core answer.\nAsk whether they want to do an optional clinical application challenge.\n\nRules:\n- Keep to 2 sentences max.\n- Do not restate the answer.\n- End with exactly one question that offers a clear yes/no choice.\n\n\n---\n\nCorrect answer already reached (do not restate): pepsin\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Ask if the student wants the optional clinical question."
+            }
+          ],
+          "response_text": "You've correctly identified pepsin as the gastric protease. Would you like to tackle an optional clinical scenario involving peptic ulcer disease and this enzyme, or would you prefer to move on?",
+          "tool_calls_made": []
+        },
+        {
+          "wrapper": "teacher.draft_clinical",
+          "decision_effect": null,
+          "input_hash": "456f93d4280cf0bc",
+          "elapsed_s": 1.46,
+          "in_tok": 1079,
+          "out_tok": 68,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.00426,
+          "s_per_tok": 0.0214,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1109
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 27
+            }
+          ],
+          "system_prompt": "You are\na Socratic tutor in human anatomy working with a student.\nThis is an evaluated learning session.\nGlobal rules for all teacher wrappers:\n- Keep language academically focused and concise.\n- Do not reveal final answers unless wrapper-specific instructions explicitly allow it.\n- Follow wrapper output contracts exactly.\n- If strict JSON is requested by the wrapper, return strict JSON only.\n- Avoid generic motivational filler; prioritize targeted reasoning prompts.\n\n\na Socratic tutor writing a human anatomy application question.\n\nRules:\n- Briefly acknowledge progress without restating the answer.\n- Ask exactly one question tied to exam findings, function, or intervention planning.\n- Keep output to 2-3 sentences.\n- End with exactly one question.\n- Avoid generic filler and avoid answer reveal.\n\n\nRelevant textbook propositions:\n[1] Protein Metabolism\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n[2] Protein Metabolism\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n[3] Protein Metabolism\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n[4] Protein Metabolism\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n[5] Protein Metabolism\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\n\n---\n\nReached answer (never restate directly): pepsin\nDean critique from prior failed draft (empty on first pass): \n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Ask a clinical application question."
+            }
+          ],
+          "response_text": "Good\u2014you've identified pepsin as the initial enzyme in gastric protein digestion. Now consider a patient presenting with severe gastritis who has reduced HCl production in the stomach. How would this physiological change affect both the denaturation of dietary proteins and the catalytic efficiency of pepsin in this patient?",
+          "tool_calls_made": []
+        },
+        {
+          "wrapper": "dean._quality_check_call",
+          "decision_effect": "qc_fail",
+          "input_hash": "2fbeb71620f459f4",
+          "elapsed_s": 3.07,
+          "in_tok": 1827,
+          "out_tok": 219,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.00877,
+          "s_per_tok": 0.014,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1253
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 240
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 412
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean reviewing an assessment-phase message.\nGoal: ensure clinical application relevance and concise clarity.\n\nPass criteria:\n- Relevant to clinical application context.\n- Clear and concise (2-4 sentences for questions, 3-5 for summaries).\n- No unsafe factual contradiction with provided textbook context.\n\nResponse requirements:\n- Return a single valid JSON object only (no markdown, no backticks, no prose).\n- Include revised_teacher_draft only when pass=false.\n\nRespond with JSON only:\n{{\n  \"pass\": true/false,\n  \"critique\": \"short explanation if fail, empty if pass\",\n  \"reason_codes\": [\"irrelevance\"|\"verbosity\"|\"factual_risk\"|\"other\"],\n  \"rewrite_instruction\": \"one concrete instruction for the next draft\",\n  \"revised_teacher_draft\": \"full revised assessment response, empty when pass=true\"\n}}\n\n\n[1] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[2] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[3] (p.1097, score=1.00) Metabolism and Nutrition > Protein Metabolism\n---\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[4] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[5] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it might be pepsin? But honestly I'm not totally sure \u2014 we covered this pretty quickly in class and I might be mixing it up with something else.\nTutor: You've correctly identified pepsin as the gastric protease. Would you like to tackle an optional clinical scenario involving peptic ulcer disease and this enzyme, or would you prefer to move on?\nStudent: Yeah, I think I'd rather skip the clinical scenario for now and move on\u2014I want to make sure I'm solid on the basics first before jumping into something more complicated.\n\n---\n\nPhase: assessment\nCorrect answer: pepsin\nStudent's last message: Yeah, I think I'd rather skip the clinical scenario for now and move on\u2014I want to make sure I'm solid on the basics first before jumping into something more complicated.\nDraft: Good\u2014you've identified pepsin as the initial enzyme in gastric protein digestion. Now consider a patient presenting with severe gastritis who has reduced HCl production in the stomach. How would this physiological change affect both the denaturation of dietary proteins and the catalytic efficiency of pepsin in this patient?\nRecent conversation history:\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it might be pepsin? But honestly I'm not totally sure \u2014 we covered this pretty quickly in class and I might be mixing it up with something else.\nTutor: You've correctly identified pepsin as the gastric protease. Would you like to tackle an optional clinical scenario involving peptic ulcer disease and this enzyme, or would you prefer to move on?\nStudent: Yeah, I think I'd rather skip the clinical scenario for now and move on\u2014I want to make sure I'm solid on the basics first before jumping into something more complicated.\nEvaluate ONLY the Teacher's most recent draft against the student's most recent message.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Evaluate this Teacher draft."
+            }
+          ],
+          "response_text": "```json\n{\n  \"pass\": false,\n  \"critique\": \"The draft directly contradicts the student's explicit request to skip clinical scenarios and focus on basics first. The student stated they want to be 'solid on the basics' before tackling complexity, yet the tutor immediately presents a pathological scenario (gastritis with reduced HCl) requiring synthesis of multiple physiological effects. This violates student agency and learning preference.\",\n  \"reason_codes\": [\"irrelevance\"],\n  \"rewrite_instruction\": \"Acknowledge the student's preference. Ask a straightforward conceptual question about pepsin's role or the stomach's acidic environment\u2014something that consolidates basic understanding without clinical complexity.\",\n  \"revised_teacher_draft\": \"Excellent\u2014you've got pepsin down. Let's solidify the basics: pepsin works best in an acidic environment. Why do you think the stomach produces HCl alongside pepsin? What role does the acid play in protein digestion?\"\n}\n```",
+          "tool_calls_made": [],
+          "result": "FAIL: The draft directly contradicts the student's explicit request to skip clinical scenarios and focus on basics first. The student stated they want to be 'solid on the basics' before tackling complexity, yet the tutor immediately presents a pathological scenario (gastritis with reduced HCl) requiring synthesis of multiple physiological effects. This violates student agency and learning preference.",
+          "reason_codes": [
+            "irrelevance"
+          ],
+          "rewrite_instruction": "Acknowledge the student's preference. Ask a straightforward conceptual question about pepsin's role or the stomach's acidic environment\u2014something that consolidates basic understanding without clinical complexity.",
+          "parse_ok": true,
+          "revised_teacher_draft": "Excellent\u2014you've got pepsin down. Let's solidify the basics: pepsin works best in an acidic environment. Why do you think the stomach produces HCl alongside pepsin? What role does the acid play in protein digestion?"
+        },
+        {
+          "wrapper": "dean.revised_teacher_draft_applied",
+          "result": "Applied Dean revised_teacher_draft for clinical question"
+        },
+        {
+          "wrapper": "dean._clinical_turn_call",
+          "decision_effect": null,
+          "input_hash": "b0d105da48229d33",
+          "elapsed_s": 3.19,
+          "in_tok": 2102,
+          "out_tok": 221,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.00962,
+          "s_per_tok": 0.0144,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1299
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 357
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 520
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean evaluating a student's clinical application response.\nThis is an evaluation setting: be strict and specific.\n\nClassify the latest response as exactly one:\n- correct\n- partial_correct\n- incorrect\n\nScoring guidance:\n- correct: accurate conclusion + mechanism/reasoning link + no key contradiction\n- partial_correct: right direction but missing distinction, mechanism, or precision\n- incorrect: wrong reasoning, wrong conclusion, or unsafe contradiction\n\nReturn strict JSON only:\n{{\n  \"student_state\": \"correct|partial_correct|incorrect\",\n  \"confidence_score\": 0.0,\n  \"pass\": true/false,\n  \"feedback_message\": \"empty when pass=true; otherwise 3-4 sentences with: What you got right, What to correct next, and one follow-up question\"\n}}\n\nConstraints for feedback_message (when pass=false):\n- Must include the literal labels:\n  \"What you got right:\" and \"What to correct next:\"\n- Must end with exactly one question.\n- Keep grounded in exam findings, function, or intervention planning.\n\n\n[1] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[2] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[3] (p.1097, score=1.00) Metabolism and Nutrition > Protein Metabolism\n---\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[4] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[5] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it might be pepsin? But honestly I'm not totally sure \u2014 we covered this pretty quickly in class and I might be mixing it up with something else.\nTutor: You've correctly identified pepsin as the gastric protease. Would you like to tackle an optional clinical scenario involving peptic ulcer disease and this enzyme, or would you prefer to move on?\nStudent: Yeah, I think I'd rather skip the clinical scenario for now and move on\u2014I want to make sure I'm solid on the basics first before jumping into something more complicated.\nTutor: Excellent\u2014you've got pepsin down. Let's solidify the basics: pepsin works best in an acidic environment. Why do you think the stomach produces HCl alongside pepsin? What role does the acid play in protein digestion?\nStudent: Um, I think the acid maybe helps pepsin work better? Like, it creates the right environment for it or something? I'm not totally sure though\u2014does the HCl actually break down the proteins itself, or does it just help pepsin do its thing?\n\n---\n\nLocked answer: pepsin\nClinical turn: 1/3\nTutor question: Excellent\u2014you've got pepsin down. Let's solidify the basics: pepsin works best in an acidic environment. Why do you think the stomach produces HCl alongside pepsin? What role does the acid play in protein digestion?\nStudent response: Um, I think the acid maybe helps pepsin work better? Like, it creates the right environment for it or something? I'm not totally sure though\u2014does the HCl actually break down the proteins itself, or does it just help pepsin do its thing?\n\nConversation history:\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it might be pepsin? But honestly I'm not totally sure \u2014 we covered this pretty quickly in class and I might be mixing it up with something else.\nTutor: You've correctly identified pepsin as the gastric protease. Would you like to tackle an optional clinical scenario involving peptic ulcer disease and this enzyme, or would you prefer to move on?\nStudent: Yeah, I think I'd rather skip the clinical scenario for now and move on\u2014I want to make sure I'm solid on the basics first before jumping into something more complicated.\nTutor: Excellent\u2014you've got pepsin down. Let's solidify the basics: pepsin works best in an acidic environment. Why do you think the stomach produces HCl alongside pepsin? What role does the acid play in protein digestion?\nStudent: Um, I think the acid maybe helps pepsin work better? Like, it creates the right environment for it or something? I'm not totally sure though\u2014does the HCl actually break down the proteins itself, or does it just help pepsin do its thing?\nEvaluate the student's most recent response. Prior exchanges are context for coaching continuity.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Evaluate this clinical response and return JSON."
+            }
+          ],
+          "response_text": "```json\n{\n  \"student_state\": \"partial_correct\",\n  \"confidence_score\": 0.72,\n  \"pass\": false,\n  \"feedback_message\": \"What you got right: You correctly identified that HCl creates an environment that helps pepsin function\u2014that's the key insight. What to correct next: You need to distinguish between pepsin's two roles and HCl's dual function. HCl does two things: (1) it denatures proteins (unfolds them), making them accessible to pepsin, AND (2) it maintains the pH (1.5\u20133.5) that pepsin requires to be catalytically active. Pepsin alone cannot denature proteins\u2014that's the acid's job. So HCl is not just a helper; it's an active participant in breaking down protein structure. Can you explain what 'denature' means and why unfolding a protein makes it easier for pepsin to cut it into smaller pieces?\"\n}\n```",
+          "tool_calls_made": []
+        },
+        {
+          "wrapper": "dean._clinical_turn_call",
+          "decision_effect": null,
+          "input_hash": "89ec9d97fa113fe9",
+          "elapsed_s": 3.11,
+          "in_tok": 2812,
+          "out_tok": 239,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.01202,
+          "s_per_tok": 0.013,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1299
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 635
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 958
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean evaluating a student's clinical application response.\nThis is an evaluation setting: be strict and specific.\n\nClassify the latest response as exactly one:\n- correct\n- partial_correct\n- incorrect\n\nScoring guidance:\n- correct: accurate conclusion + mechanism/reasoning link + no key contradiction\n- partial_correct: right direction but missing distinction, mechanism, or precision\n- incorrect: wrong reasoning, wrong conclusion, or unsafe contradiction\n\nReturn strict JSON only:\n{{\n  \"student_state\": \"correct|partial_correct|incorrect\",\n  \"confidence_score\": 0.0,\n  \"pass\": true/false,\n  \"feedback_message\": \"empty when pass=true; otherwise 3-4 sentences with: What you got right, What to correct next, and one follow-up question\"\n}}\n\nConstraints for feedback_message (when pass=false):\n- Must include the literal labels:\n  \"What you got right:\" and \"What to correct next:\"\n- Must end with exactly one question.\n- Keep grounded in exam findings, function, or intervention planning.\n\n\n[1] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[2] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[3] (p.1097, score=1.00) Metabolism and Nutrition > Protein Metabolism\n---\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[4] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[5] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it might be pepsin? But honestly I'm not totally sure \u2014 we covered this pretty quickly in class and I might be mixing it up with something else.\nTutor: You've correctly identified pepsin as the gastric protease. Would you like to tackle an optional clinical scenario involving peptic ulcer disease and this enzyme, or would you prefer to move on?\nStudent: Yeah, I think I'd rather skip the clinical scenario for now and move on\u2014I want to make sure I'm solid on the basics first before jumping into something more complicated.\nTutor: Excellent\u2014you've got pepsin down. Let's solidify the basics: pepsin works best in an acidic environment. Why do you think the stomach produces HCl alongside pepsin? What role does the acid play in protein digestion?\nStudent: Um, I think the acid maybe helps pepsin work better? Like, it creates the right environment for it or something? I'm not totally sure though\u2014does the HCl actually break down the proteins itself, or does it just help pepsin do its thing?\nTutor: What you got right: You correctly identified that HCl creates an environment that helps pepsin function\u2014that's the key insight. What to correct next: You need to distinguish between pepsin's two roles and HCl's dual function. HCl does two things: (1) it denatures proteins (unfolds them), making them accessible to pepsin, AND (2) it maintains the pH (1.5\u20133.5) that pepsin requires to be catalytically active. Pepsin alone cannot denature proteins\u2014that's the acid's job. So HCl is not just a helper; it's an active participant in breaking down protein structure. Can you explain what 'denature' means and why unfolding a protein makes it easier for pepsin to cut it into smaller pieces?\nStudent: Um, so denature means like... unfolding the protein structure, right? So when HCl unfolds the proteins, it makes them more stretched out and exposed, which I guess makes it easier for pepsin to actually access the bonds it needs to cut? I'm not totally sure if I'm explaining that right, but that would make sense why you'd need both\u2014the acid does the unfolding part and then pepsin can actually do its job.\n\n---\n\nLocked answer: pepsin\nClinical turn: 2/3\nTutor question: What you got right: You correctly identified that HCl creates an environment that helps pepsin function\u2014that's the key insight. What to correct next: You need to distinguish between pepsin's two roles and HCl's dual function. HCl does two things: (1) it denatures proteins (unfolds them), making them accessible to pepsin, AND (2) it maintains the pH (1.5\u20133.5) that pepsin requires to be catalytically active. Pepsin alone cannot denature proteins\u2014that's the acid's job. So HCl is not just a helper; it's an active participant in breaking down protein structure. Can you explain what 'denature' means and why unfolding a protein makes it easier for pepsin to cut it into smaller pieces?\nStudent response: Um, so denature means like... unfolding the protein structure, right? So when HCl unfolds the proteins, it makes them more stretched out and exposed, which I guess makes it easier for pepsin to actually access the bonds it needs to cut? I'm not totally sure if I'm explaining that right, but that would make sense why you'd need both\u2014the acid does the unfolding part and then pepsin can actually do its job.\n\nConversation history:\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it might be pepsin? But honestly I'm not totally sure \u2014 we covered this pretty quickly in class and I might be mixing it up with something else.\nTutor: You've correctly identified pepsin as the gastric protease. Would you like to tackle an optional clinical scenario involving peptic ulcer disease and this enzyme, or would you prefer to move on?\nStudent: Yeah, I think I'd rather skip the clinical scenario for now and move on\u2014I want to make sure I'm solid on the basics first before jumping into something more complicated.\nTutor: Excellent\u2014you've got pepsin down. Let's solidify the basics: pepsin works best in an acidic environment. Why do you think the stomach produces HCl alongside pepsin? What role does the acid play in protein digestion?\nStudent: Um, I think the acid maybe helps pepsin work better? Like, it creates the right environment for it or something? I'm not totally sure though\u2014does the HCl actually break down the proteins itself, or does it just help pepsin do its thing?\nTutor: What you got right: You correctly identified that HCl creates an environment that helps pepsin function\u2014that's the key insight. What to correct next: You need to distinguish between pepsin's two roles and HCl's dual function. HCl does two things: (1) it denatures proteins (unfolds them), making them accessible to pepsin, AND (2) it maintains the pH (1.5\u20133.5) that pepsin requires to be catalytically active. Pepsin alone cannot denature proteins\u2014that's the acid's job. So HCl is not just a helper; it's an active participant in breaking down protein structure. Can you explain what 'denature' means and why unfolding a protein makes it easier for pepsin to cut it into smaller pieces?\nStudent: Um, so denature means like... unfolding the protein structure, right? So when HCl unfolds the proteins, it makes them more stretched out and exposed, which I guess makes it easier for pepsin to actually access the bonds it needs to cut? I'm not totally sure if I'm explaining that right, but that would make sense why you'd need both\u2014the acid does the unfolding part and then pepsin can actually do its job.\nEvaluate the student's most recent response. Prior exchanges are context for coaching continuity.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Evaluate this clinical response and return JSON."
+            }
+          ],
+          "response_text": "```json\n{\n  \"student_state\": \"partial_correct\",\n  \"confidence_score\": 0.78,\n  \"pass\": false,\n  \"feedback_message\": \"What you got right: You correctly defined denaturation as unfolding protein structure and accurately linked it to increased accessibility for pepsin\u2014that's the core mechanism. What to correct next: You need to be more precise about *which bonds* pepsin cuts. Pepsin cleaves peptide bonds (the covalent links between amino acids), not the non-covalent interactions that HCl disrupts during denaturation. Denaturation exposes these peptide bonds by unfolding the 3D structure, but the two processes are chemically distinct. Also, avoid hedging language like 'I guess' and 'I'm not totally sure'\u2014commit to the mechanism once you've identified it correctly. How would you explain the difference between breaking the bonds that hold a protein's shape (denaturation) and breaking the bonds that link amino acids together (proteolysis)?\"\n}\n```",
+          "tool_calls_made": []
+        },
+        {
+          "wrapper": "dean._clinical_turn_call",
+          "decision_effect": null,
+          "input_hash": "c44d37c2a5a35514",
+          "elapsed_s": 3.72,
+          "in_tok": 3356,
+          "out_tok": 301,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.01458,
+          "s_per_tok": 0.0123,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1299
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 933
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 1276
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean evaluating a student's clinical application response.\nThis is an evaluation setting: be strict and specific.\n\nClassify the latest response as exactly one:\n- correct\n- partial_correct\n- incorrect\n\nScoring guidance:\n- correct: accurate conclusion + mechanism/reasoning link + no key contradiction\n- partial_correct: right direction but missing distinction, mechanism, or precision\n- incorrect: wrong reasoning, wrong conclusion, or unsafe contradiction\n\nReturn strict JSON only:\n{{\n  \"student_state\": \"correct|partial_correct|incorrect\",\n  \"confidence_score\": 0.0,\n  \"pass\": true/false,\n  \"feedback_message\": \"empty when pass=true; otherwise 3-4 sentences with: What you got right, What to correct next, and one follow-up question\"\n}}\n\nConstraints for feedback_message (when pass=false):\n- Must include the literal labels:\n  \"What you got right:\" and \"What to correct next:\"\n- Must end with exactly one question.\n- Keep grounded in exam findings, function, or intervention planning.\n\n\n[1] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[2] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[3] (p.1097, score=1.00) Metabolism and Nutrition > Protein Metabolism\n---\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[4] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[5] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it might be pepsin? But honestly I'm not totally sure \u2014 we covered this pretty quickly in class and I might be mixing it up with something else.\nTutor: You've correctly identified pepsin as the gastric protease. Would you like to tackle an optional clinical scenario involving peptic ulcer disease and this enzyme, or would you prefer to move on?\nStudent: Yeah, I think I'd rather skip the clinical scenario for now and move on\u2014I want to make sure I'm solid on the basics first before jumping into something more complicated.\nTutor: Excellent\u2014you've got pepsin down. Let's solidify the basics: pepsin works best in an acidic environment. Why do you think the stomach produces HCl alongside pepsin? What role does the acid play in protein digestion?\nStudent: Um, I think the acid maybe helps pepsin work better? Like, it creates the right environment for it or something? I'm not totally sure though\u2014does the HCl actually break down the proteins itself, or does it just help pepsin do its thing?\nTutor: What you got right: You correctly identified that HCl creates an environment that helps pepsin function\u2014that's the key insight. What to correct next: You need to distinguish between pepsin's two roles and HCl's dual function. HCl does two things: (1) it denatures proteins (unfolds them), making them accessible to pepsin, AND (2) it maintains the pH (1.5\u20133.5) that pepsin requires to be catalytically active. Pepsin alone cannot denature proteins\u2014that's the acid's job. So HCl is not just a helper; it's an active participant in breaking down protein structure. Can you explain what 'denature' means and why unfolding a protein makes it easier for pepsin to cut it into smaller pieces?\nStudent: Um, so denature means like... unfolding the protein structure, right? So when HCl unfolds the proteins, it makes them more stretched out and exposed, which I guess makes it easier for pepsin to actually access the bonds it needs to cut? I'm not totally sure if I'm explaining that right, but that would make sense why you'd need both\u2014the acid does the unfolding part and then pepsin can actually do its job.\nTutor: What you got right: You correctly defined denaturation as unfolding protein structure and accurately linked it to increased accessibility for pepsin\u2014that's the core mechanism. What to correct next: You need to be more precise about *which bonds* pepsin cuts. Pepsin cleaves peptide bonds (the covalent links between amino acids), not the non-covalent interactions that HCl disrupts during denaturation. Denaturation exposes these peptide bonds by unfolding the 3D structure, but the two processes are chemically distinct. Also, avoid hedging language like 'I guess' and 'I'm not totally sure'\u2014commit to the mechanism once you've identified it correctly. How would you explain the difference between breaking the bonds that hold a protein's shape (denaturation) and breaking the bonds that link amino acids together (proteolysis)?\nStudent: Oh okay, I think I get it now\u2014so denaturation unfolds the protein by breaking the hydrogen bonds and other weak interactions that give it its 3D shape, which exposes the peptide bonds. Then pepsin actually cuts those peptide bonds themselves to break apart the amino acid chain. So they're two separate steps in the process, not the same thing.\n\n---\n\nLocked answer: pepsin\nClinical turn: 3/3\nTutor question: What you got right: You correctly defined denaturation as unfolding protein structure and accurately linked it to increased accessibility for pepsin\u2014that's the core mechanism. What to correct next: You need to be more precise about *which bonds* pepsin cuts. Pepsin cleaves peptide bonds (the covalent links between amino acids), not the non-covalent interactions that HCl disrupts during denaturation. Denaturation exposes these peptide bonds by unfolding the 3D structure, but the two processes are chemically distinct. Also, avoid hedging language like 'I guess' and 'I'm not totally sure'\u2014commit to the mechanism once you've identified it correctly. How would you explain the difference between breaking the bonds that hold a protein's shape (denaturation) and breaking the bonds that link amino acids together (proteolysis)?\nStudent response: Oh okay, I think I get it now\u2014so denaturation unfolds the protein by breaking the hydrogen bonds and other weak interactions that give it its 3D shape, which exposes the peptide bonds. Then pepsin actually cuts those peptide bonds themselves to break apart the amino acid chain. So they're two separate steps in the process, not the same thing.\n\nConversation history:\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it might be pepsin? But honestly I'm not totally sure \u2014 we covered this pretty quickly in class and I might be mixing it up with something else.\nTutor: You've correctly identified pepsin as the gastric protease. Would you like to tackle an optional clinical scenario involving peptic ulcer disease and this enzyme, or would you prefer to move on?\nStudent: Yeah, I think I'd rather skip the clinical scenario for now and move on\u2014I want to make sure I'm solid on the basics first before jumping into something more complicated.\nTutor: Excellent\u2014you've got pepsin down. Let's solidify the basics: pepsin works best in an acidic environment. Why do you think the stomach produces HCl alongside pepsin? What role does the acid play in protein digestion?\nStudent: Um, I think the acid maybe helps pepsin work better? Like, it creates the right environment for it or something? I'm not totally sure though\u2014does the HCl actually break down the proteins itself, or does it just help pepsin do its thing?\nTutor: What you got right: You correctly identified that HCl creates an environment that helps pepsin function\u2014that's the key insight. What to correct next: You need to distinguish between pepsin's two roles and HCl's dual function. HCl does two things: (1) it denatures proteins (unfolds them), making them accessible to pepsin, AND (2) it maintains the pH (1.5\u20133.5) that pepsin requires to be catalytically active. Pepsin alone cannot denature proteins\u2014that's the acid's job. So HCl is not just a helper; it's an active participant in breaking down protein structure. Can you explain what 'denature' means and why unfolding a protein makes it easier for pepsin to cut it into smaller pieces?\nStudent: Um, so denature means like... unfolding the protein structure, right? So when HCl unfolds the proteins, it makes them more stretched out and exposed, which I guess makes it easier for pepsin to actually access the bonds it needs to cut? I'm not totally sure if I'm explaining that right, but that would make sense why you'd need both\u2014the acid does the unfolding part and then pepsin can actually do its job.\nTutor: What you got right: You correctly defined denaturation as unfolding protein structure and accurately linked it to increased accessibility for pepsin\u2014that's the core mechanism. What to correct next: You need to be more precise about *which bonds* pepsin cuts. Pepsin cleaves peptide bonds (the covalent links between amino acids), not the non-covalent interactions that HCl disrupts during denaturation. Denaturation exposes these peptide bonds by unfolding the 3D structure, but the two processes are chemically distinct. Also, avoid hedging language like 'I guess' and 'I'm not totally sure'\u2014commit to the mechanism once you've identified it correctly. How would you explain the difference between breaking the bonds that hold a protein's shape (denaturation) and breaking the bonds that link amino acids together (proteolysis)?\nStudent: Oh okay, I think I get it now\u2014so denaturation unfolds the protein by breaking the hydrogen bonds and other weak interactions that give it its 3D shape, which exposes the peptide bonds. Then pepsin actually cuts those peptide bonds themselves to break apart the amino acid chain. So they're two separate steps in the process, not the same thing.\nEvaluate the student's most recent response. Prior exchanges are context for coaching continuity.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Evaluate this clinical response and return JSON."
+            }
+          ],
+          "response_text": "```json\n{\n  \"student_state\": \"correct\",\n  \"confidence_score\": 0.95,\n  \"pass\": true,\n  \"feedback_message\": \"\"\n}\n```\n\n**Rationale:**\n\nThe student's response demonstrates:\n\n1. **Accurate conclusion**: Correctly identifies denaturation and proteolysis as two distinct sequential steps.\n\n2. **Precise mechanism linking**:\n   - Denaturation: breaks hydrogen bonds and weak non-covalent interactions \u2192 unfolds 3D structure\n   - Proteolysis: pepsin cleaves peptide bonds \u2192 breaks amino acid chain\n   - Clear causal chain: unfolding exposes peptide bonds \u2192 pepsin can access and cut them\n\n3. **No key contradictions**: The response aligns with the tutor's prior correction and the source material (p.1097), which specifies that HCl denatures proteins and pepsin cuts them into smaller polypeptides and amino acids.\n\n4. **Improved precision**: The student moved from hedging language (\"I guess,\" \"I'm not totally sure\") to committed, confident articulation of the mechanism.\n\nThis response meets the standard for **correct** in an evaluation setting: the student has integrated the distinction between bond types, explained the sequential relationship, and demonstrated understanding of why both HCl and pepsin are necessary.",
+          "tool_calls_made": []
+        },
+        {
+          "wrapper": "dean._close_session_call",
+          "decision_effect": "session_close_evaluated",
+          "input_hash": "50222672f4662cf0",
+          "elapsed_s": 4.83,
+          "in_tok": 3254,
+          "out_tok": 415,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.01599,
+          "s_per_tok": 0.0116,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1332
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 933
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 1075
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean closing out a tutoring session.\nThis is an evaluated learning session: report performance honestly and specifically.\n\nReturn strict JSON only:\n{{\n  \"core_mastery_tier\": \"strong|proficient|developing|needs_review|not_assessed|ungraded\",\n  \"clinical_mastery_tier\": \"strong|proficient|developing|needs_review|not_assessed|ungraded\",\n  \"mastery_tier\": \"strong|proficient|developing|needs_review|not_assessed|ungraded\",\n  \"grading_rationale\": \"1-2 sentence diagnosis of performance\",\n  \"student_facing_message\": \"final message shown to student\",\n  \"memory_summary\": \"3-5 sentence memory summary for long-term storage\"\n}}\n\nGrading rubric:\n- Use both core and clinical application performance.\n- Consider whether the student reached the answer, hint usage, confidence trajectory,\n  and clinical application quality (if attempted).\n- Favor transferable reasoning over rote memorization.\n- Keep tiers conservative when certainty is low.\n- student_facing_message must honestly reflect demonstrated performance.\n  If the student struggled, state that kindly but clearly; do not paper over gaps with generic praise.\n\n\n[1] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[2] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[3] (p.1097, score=1.00) Metabolism and Nutrition > Protein Metabolism\n---\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[4] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[5] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it might be pepsin? But honestly I'm not totally sure \u2014 we covered this pretty quickly in class and I might be mixing it up with something else.\nTutor: You've correctly identified pepsin as the gastric protease. Would you like to tackle an optional clinical scenario involving peptic ulcer disease and this enzyme, or would you prefer to move on?\nStudent: Yeah, I think I'd rather skip the clinical scenario for now and move on\u2014I want to make sure I'm solid on the basics first before jumping into something more complicated.\nTutor: Excellent\u2014you've got pepsin down. Let's solidify the basics: pepsin works best in an acidic environment. Why do you think the stomach produces HCl alongside pepsin? What role does the acid play in protein digestion?\nStudent: Um, I think the acid maybe helps pepsin work better? Like, it creates the right environment for it or something? I'm not totally sure though\u2014does the HCl actually break down the proteins itself, or does it just help pepsin do its thing?\nTutor: What you got right: You correctly identified that HCl creates an environment that helps pepsin function\u2014that's the key insight. What to correct next: You need to distinguish between pepsin's two roles and HCl's dual function. HCl does two things: (1) it denatures proteins (unfolds them), making them accessible to pepsin, AND (2) it maintains the pH (1.5\u20133.5) that pepsin requires to be catalytically active. Pepsin alone cannot denature proteins\u2014that's the acid's job. So HCl is not just a helper; it's an active participant in breaking down protein structure. Can you explain what 'denature' means and why unfolding a protein makes it easier for pepsin to cut it into smaller pieces?\nStudent: Um, so denature means like... unfolding the protein structure, right? So when HCl unfolds the proteins, it makes them more stretched out and exposed, which I guess makes it easier for pepsin to actually access the bonds it needs to cut? I'm not totally sure if I'm explaining that right, but that would make sense why you'd need both\u2014the acid does the unfolding part and then pepsin can actually do its job.\nTutor: What you got right: You correctly defined denaturation as unfolding protein structure and accurately linked it to increased accessibility for pepsin\u2014that's the core mechanism. What to correct next: You need to be more precise about *which bonds* pepsin cuts. Pepsin cleaves peptide bonds (the covalent links between amino acids), not the non-covalent interactions that HCl disrupts during denaturation. Denaturation exposes these peptide bonds by unfolding the 3D structure, but the two processes are chemically distinct. Also, avoid hedging language like 'I guess' and 'I'm not totally sure'\u2014commit to the mechanism once you've identified it correctly. How would you explain the difference between breaking the bonds that hold a protein's shape (denaturation) and breaking the bonds that link amino acids together (proteolysis)?\nStudent: Oh okay, I think I get it now\u2014so denaturation unfolds the protein by breaking the hydrogen bonds and other weak interactions that give it its 3D shape, which exposes the peptide bonds. Then pepsin actually cuts those peptide bonds themselves to break apart the amino acid chain. So they're two separate steps in the process, not the same thing.\n\n---\n\nSession outcome: reached_answer\nCorrect answer: pepsin\nTopic selection: Protein Metabolism\nStudent reached answer: True\nFinal hint level: 0/3\nStudent answer confidence: 0.92\nStudent mastery confidence: 0.46\nClinical opted in: True\nClinical completed: True\nClinical turns used: 3/3\nClinical history: [{\"turn\": 1, \"state\": \"partial_correct\", \"confidence\": 0.72, \"pass\": false}, {\"turn\": 2, \"state\": \"partial_correct\", \"confidence\": 0.78, \"pass\": false}, {\"turn\": 3, \"state\": \"correct\", \"confidence\": 0.95, \"pass\": true}]\nExisting weak topics: []\n\nConversation history:\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it might be pepsin? But honestly I'm not totally sure \u2014 we covered this pretty quickly in class and I might be mixing it up with something else.\nTutor: You've correctly identified pepsin as the gastric protease. Would you like to tackle an optional clinical scenario involving peptic ulcer disease and this enzyme, or would you prefer to move on?\nStudent: Yeah, I think I'd rather skip the clinical scenario for now and move on\u2014I want to make sure I'm solid on the basics first before jumping into something more complicated.\nTutor: Excellent\u2014you've got pepsin down. Let's solidify the basics: pepsin works best in an acidic environment. Why do you think the stomach produces HCl alongside pepsin? What role does the acid play in protein digestion?\nStudent: Um, I think the acid maybe helps pepsin work better? Like, it creates the right environment for it or something? I'm not totally sure though\u2014does the HCl actually break down the proteins itself, or does it just help pepsin do its thing?\nTutor: What you got right: You correctly identified that HCl creates an environment that helps pepsin function\u2014that's the key insight. What to correct next: You need to distinguish between pepsin's two roles and HCl's dual function. HCl does two things: (1) it denatures proteins (unfolds them), making them accessible to pepsin, AND (2) it maintains the pH (1.5\u20133.5) that pepsin requires to be catalytically active. Pepsin alone cannot denature proteins\u2014that's the acid's job. So HCl is not just a helper; it's an active participant in breaking down protein structure. Can you explain what 'denature' means and why unfolding a protein makes it easier for pepsin to cut it into smaller pieces?\nStudent: Um, so denature means like... unfolding the protein structure, right? So when HCl unfolds the proteins, it makes them more stretched out and exposed, which I guess makes it easier for pepsin to actually access the bonds it needs to cut? I'm not totally sure if I'm explaining that right, but that would make sense why you'd need both\u2014the acid does the unfolding part and then pepsin can actually do its job.\nTutor: What you got right: You correctly defined denaturation as unfolding protein structure and accurately linked it to increased accessibility for pepsin\u2014that's the core mechanism. What to correct next: You need to be more precise about *which bonds* pepsin cuts. Pepsin cleaves peptide bonds (the covalent links between amino acids), not the non-covalent interactions that HCl disrupts during denaturation. Denaturation exposes these peptide bonds by unfolding the 3D structure, but the two processes are chemically distinct. Also, avoid hedging language like 'I guess' and 'I'm not totally sure'\u2014commit to the mechanism once you've identified it correctly. How would you explain the difference between breaking the bonds that hold a protein's shape (denaturation) and breaking the bonds that link amino acids together (proteolysis)?\nStudent: Oh okay, I think I get it now\u2014so denaturation unfolds the protein by breaking the hydrogen bonds and other weak interactions that give it its 3D shape, which exposes the peptide bonds. Then pepsin actually cuts those peptide bonds themselves to break apart the amino acid chain. So they're two separate steps in the process, not the same thing.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Return strict JSON only."
+            }
+          ],
+          "response_text": "```json\n{\n  \"core_mastery_tier\": \"proficient\",\n  \"clinical_mastery_tier\": \"proficient\",\n  \"mastery_tier\": \"proficient\",\n  \"grading_rationale\": \"Student demonstrated solid foundational understanding of pepsin's role and successfully integrated the dual mechanisms of HCl (denaturation + pH maintenance) and pepsin (peptide bond cleavage). Progressed from initial uncertainty to precise mechanistic reasoning, though confidence trajectory showed initial hesitation that improved with structured feedback.\",\n  \"student_facing_message\": \"You've built a solid grasp of gastric protein digestion. You correctly identified pepsin, understood HCl's dual role in denaturation and pH maintenance, and clearly distinguished between breaking non-covalent interactions (denaturation) and covalent peptide bonds (proteolysis). Your final explanation was precise and mechanistically sound. Moving forward: commit to your reasoning once you've worked through it\u2014you don't need to hedge with 'I guess' when your logic is correct. You're ready to apply this to more complex scenarios like enzyme regulation or clinical conditions affecting gastric digestion.\",\n  \"memory_summary\": \"Student mastered gastric protein digestion mechanisms: correctly identified pepsin as the primary gastric protease and explained HCl's dual function (protein denaturation via weak bond disruption + pH optimization for pepsin activity). Demonstrated ability to distinguish between denaturation (non-covalent interactions) and proteolysis (peptide bond cleavage). Initially showed low confidence (0.46 mastery confidence) but reached high answer confidence (0.92) and completed clinical scenario successfully on third attempt. Recommend reinforcing commitment to reasoning and exploring downstream protein digestion in the small intestine (trypsin, chymotrypsin, enterokinase cascade).\"\n}\n```",
+          "tool_calls_made": [],
+          "result": "close_session_json_ok"
+        },
+        {
+          "wrapper": "memory_manager.flush",
+          "result": "wrote_3_of_3",
+          "flushed": true
+        },
+        {
+          "wrapper": "mastery_store.update",
+          "result": "updated mastery=0.48 confidence=0.25 sessions=1"
+        }
+      ],
+      "all_turn_traces": [
+        {
+          "turn": 0,
+          "phase": "tutoring",
+          "trace": [
+            {
+              "wrapper": "teacher.draft_rapport",
+              "decision_effect": null,
+              "input_hash": "02af03ec34d58415",
+              "elapsed_s": 1.11,
+              "in_tok": 439,
+              "out_tok": 51,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00208,
+              "s_per_tok": 0.0217,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 413
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 43
+                }
+              ],
+              "system_prompt": "You are\na Socratic tutor in human anatomy working with a student.\nThis is an evaluated learning session.\nGlobal rules for all teacher wrappers:\n- Keep language academically focused and concise.\n- Do not reveal final answers unless wrapper-specific instructions explicitly allow it.\n- Follow wrapper output contracts exactly.\n- If strict JSON is requested by the wrapper, return strict JSON only.\n- Avoid generic motivational filler; prioritize targeted reasoning prompts.\n\n\na Socratic human anatomy tutor opening a new session with a student.\nWrite a brief, natural opener (2-3 sentences max). Vary your tone.\nFirst words must be exactly the \"Good {time_of_day}\" greeting provided\nin the runtime context block below (e.g., \"Good morning\").\nDo NOT start with \"Hello\" or \"Welcome\". Do NOT use generic tutor clich\u00e9s.\nKeep it relevant and concrete for a student audience (coursework, exams, conceptual understanding).\nAssume a classroom/learning context by default.\nEnd with exactly one question asking what human anatomy topic the student wants to tackle today.\n\nPast session context (extracted from prior sessions \u2014 may be empty):\nNo previous history \u2014 new student.\n\nIf \"Past session context\" is empty / \"No previous history\": treat as a\nfresh session, do NOT mention prior struggles, weak topics, or invent\nhistorical difficulties.\n\nIf \"Past session context\" contains real prior data: you MAY briefly\nreference ONE specific past topic or open thread when offering a\nstarting point (\"...last time you were working through X \u2014 pick that\nup or start fresh?\"). At most ONE prior item; no recap, no list, no\nlearning-style summary; do NOT reveal past answers.\n\n\n---\n\nRuntime context for this session:\n  time_of_day: morning\nUse the corresponding 'Good morning' / 'Good afternoon' / 'Good evening' as the first words of your reply, exactly.",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Start the session."
+                }
+              ],
+              "response_text": "Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?",
+              "tool_calls_made": []
+            }
+          ]
+        },
+        {
+          "turn": 1,
+          "phase": "tutoring",
+          "trace": [
+            {
+              "wrapper": "dean._prelock_intent_call",
+              "decision_effect": null,
+              "input_hash": "848e9d46edc8fef2",
+              "elapsed_s": 1.85,
+              "in_tok": 1241,
+              "out_tok": 127,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00563,
+              "s_per_tok": 0.0145,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 1028
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 72
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 119
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean handling the topic-selection phase of a tutoring session in human anatomy.\nThe student has not yet locked to a specific topic. Your job is to read their latest\nmessage, classify what they want, and write the tutor's next utterance in your own\nvoice (no templates, no canned strings).\n\nClassify the student's latest message as exactly one intent:\n  topic_query       \u2014 names or describes a human anatomy topic they want to learn.\n                      INCLUDES: questions, statements/assertions, leading claims,\n                      hedged or anxious phrasings, and one-word noun phrases \u2014 as\n                      long as a human anatomy topic is present in the message.\n  card_pick         \u2014 references one of the card options (number, label, close paraphrase)\n  greeting          \u2014 \"hi\", \"hello\", starting the session\n  distress          \u2014 emotional venting or frustration (\"ugh\", \"i'm stressed\", \"this is hard\", expletive)\n  off_topic         \u2014 unrelated to human anatomy (small talk, jokes, non-sequiturs)\n  ambiguous         \u2014 too short or too generic to route (single pronoun, empty, filler)\n\nFor topic_query and card_pick, extract `normalized_topic` \u2014 the cleanest topic name\nsuitable for retrieval (strip hedges, numbering, affirmations). For card_pick, set it\nto the referenced option's text (not a number). For other intents, leave it empty.\n\nCRITICAL: students phrase topic queries in many shapes. Treat ALL of these as\ntopic_query and extract the topic noun phrase even when the student is hedging,\nasserting, or just naming a single noun:\n\n  Student: \"What is the deltoid muscle?\"\n  \u2192 intent=topic_query, normalized_topic=\"deltoid muscle\"\n\n  Student: \"Reflexes are basically just instant nerve reactions, right?\"\n  \u2192 intent=topic_query, normalized_topic=\"reflexes\"  (statement IS a topic_query;\n    the leading assertion doesn't disqualify it. Still topic = reflexes.)\n\n  Student: \"I'm not sure I really understand chemical digestion \u2014 could we go through it?\"\n  \u2192 intent=topic_query, normalized_topic=\"chemical digestion\"  (hedging doesn't\n    disqualify; topic is clearly named.)\n\n  Student: \"elbow joint\"\n  \u2192 intent=topic_query, normalized_topic=\"elbow joint\"  (one-word/short-phrase\n    topics are valid; do NOT classify as ambiguous if a domain noun is present.)\n\n  Student: \"umm so... like, what's that thing in the kidney that filters blood?\"\n  \u2192 intent=topic_query, normalized_topic=\"kidney filtration\"  (vague but\n    clearly anatomy; extract the best topic phrase.)\n\n  Student: \"ugh i'm so confused\"\n  \u2192 intent=distress, normalized_topic=\"\"\n\n  Student: \"what should I make for dinner\"\n  \u2192 intent=off_topic, normalized_topic=\"\"\n\nRule of thumb: if you can identify ANY human anatomy noun phrase in the message\nthat the student seems interested in learning about, classify as topic_query and\nextract that phrase as normalized_topic. Reserve ambiguous ONLY for truly empty\nor pronoun-only messages.\n\nFor non-topic intents (greeting, distress, off_topic, ambiguous) write `tutor_reply` \u2014\na short, warm, contextual reply that acknowledges what the student actually said and\ninvites them to name a specific topic. Match the student's emotional register. Do NOT\nrepeat their words back inside quotes. Do NOT use a template phrase. 1-3 sentences.\nIf cards are currently on screen, gently remind the student they can pick one. When\nthe intent is topic_query or card_pick, leave `tutor_reply` as an empty string \u2014 the\nrouting layer will handle it.\n\nNever ask multiple questions. Never reveal answers. Never produce headers or lists.\n\nReturn strict JSON only:\n{{\n  \"intent\": \"topic_query|card_pick|greeting|distress|off_topic|ambiguous\",\n  \"normalized_topic\": \"\",\n  \"tutor_reply\": \"\",\n  \"rationale\": \"\"\n}}\n\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?\n\n---\n\nCard options currently on screen (empty list means no cards shown this turn):\n[]\n\nRecent conversation history:\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?\n\nClassify ONLY the student's most recent message. Prior history is context.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Student's latest message: 'What enzymes break down proteins in the stomach?'\nReturn strict JSON only."
+                }
+              ],
+              "response_text": "```json\n{\n  \"intent\": \"topic_query\",\n  \"normalized_topic\": \"protein digestion in the stomach\",\n  \"tutor_reply\": \"\",\n  \"rationale\": \"The student has named a specific human anatomy topic: enzymes involved in protein breakdown in the stomach. This is a clear topic_query. The question format and specificity make the intent unambiguous. normalized_topic captures the core concept (protein digestion/breakdown in the stomach context). tutor_reply is empty because routing will handle topic_query intents.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.prelock_intent",
+              "intent": "topic_query",
+              "normalized_topic": "protein digestion in the stomach",
+              "rationale": "The student has named a specific human anatomy topic: enzymes involved in protein breakdown in the stomach. This is a clear topic_query. The question format and specificity make the intent unambiguous. normalized_topic captures the core concept (protein digestion/breakdown in the stomach context). tutor_reply is empty because routing will handle topic_query intents."
+            },
+            {
+              "wrapper": "dean.topic_vote",
+              "n_eligible": 4,
+              "winner_path": "Ch24|Protein Metabolism|",
+              "winner_weight": 1.0,
+              "all_weights": {
+                "Ch24|Protein Metabolism|": 1.0,
+                "Ch23|The Stomach|": 0.5,
+                "Ch3|The Cytoplasm and Cellular Organelles|Organelles of the Endomembrane System": 0.333,
+                "Ch3|The Cell Membrane|Membrane Proteins": 0.25
+              }
+            },
+            {
+              "wrapper": "dean.topic_match",
+              "retrieval_query": "What enzymes break down proteins in the stomach?",
+              "fuzzy_query": "protein digestion in the stomach",
+              "tier": "borderline",
+              "top_score": 100.0,
+              "top_path": "Chapter 23: The Digestive System > The Stomach > Digestive Functions of the Stomach",
+              "semantic_resolved": true,
+              "semantic_path": "Ch24|Protein Metabolism|"
+            },
+            {
+              "wrapper": "dean.topic_locked",
+              "topic_path": "Ch24|Protein Metabolism|",
+              "label": "Protein Metabolism",
+              "chunk_count": 0,
+              "limited": false
+            },
+            {
+              "wrapper": "dean.python_retrieval",
+              "result": "5 chunks returned | query=Protein Metabolism. What enzymes break down proteins in the stomach?",
+              "retrieval": {
+                "query": "Protein Metabolism. What enzymes break down proteins in the stomach?",
+                "top_chunks": [
+                  {
+                    "rank": 1,
+                    "score": 0.0,
+                    "section_title": "Protein Metabolism",
+                    "subsection_title": "",
+                    "chunk_id": "f84d00ff-1b8b-4ed2-b10f-e7c71b7ee5d3",
+                    "text_preview": "There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair."
+                  },
+                  {
+                    "rank": 2,
+                    "score": 0.0,
+                    "section_title": "Protein Metabolism",
+                    "subsection_title": "",
+                    "chunk_id": "0a6d94bd-f6f3-4b1a-8653-bb5566a7ecec",
+                    "text_preview": "Context from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones ("
+                  },
+                  {
+                    "rank": 3,
+                    "score": 0.9999991655349731,
+                    "section_title": "Protein Metabolism",
+                    "subsection_title": "",
+                    "chunk_id": "21605519-144a-48ef-89a1-745f88f6c2ba",
+                    "text_preview": "Proteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize p"
+                  },
+                  {
+                    "rank": 4,
+                    "score": 0.0,
+                    "section_title": "Protein Metabolism",
+                    "subsection_title": "",
+                    "chunk_id": "69f325ae-0600-4f7e-8751-80570b4b6a82",
+                    "text_preview": "Context from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these "
+                  },
+                  {
+                    "rank": 5,
+                    "score": 0.0,
+                    "section_title": "Protein Metabolism",
+                    "subsection_title": "",
+                    "chunk_id": "9082f2ee-b1b9-4ed4-a5a4-a712148a6441",
+                    "text_preview": "When protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts prot"
+                  }
+                ],
+                "total_chunks_returned": 5
+              },
+              "retrieval_calls": 1,
+              "retrieval_schema_keys": [
+                "_primary_chunk_id",
+                "_window_role",
+                "chapter_num",
+                "chapter_title",
+                "chunk_id",
+                "element_type",
+                "image_filename",
+                "page",
+                "section_title",
+                "subsection_title",
+                "text"
+              ]
+            },
+            {
+              "wrapper": "dean._lock_anchors_call",
+              "decision_effect": null,
+              "input_hash": "1b3270c049082146",
+              "elapsed_s": 1.38,
+              "in_tok": 2535,
+              "out_tok": 118,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00937,
+              "s_per_tok": 0.0117,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 1422
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 72
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 1063
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean establishing pedagogical anchors for a new Socratic tutoring session.\nThe student has just selected a specific topic.\nRetrieval has fired and returned textbook excerpts.\n\nYour job: extract THREE anchors that guide the session.\n\n1) locked_question: a specific, answerable question for this session.\n2) locked_answer: the target answer term/concept the student must reach.\n3) locked_answer_aliases: 4-5 alternate phrasings the student might use\n   (synonyms, abbreviations, common shorthand). Do NOT include\n   locked_answer itself. Return [] if locked_answer is empty.\n\nStrict rules:\n- locked_answer must be a SHORT term or noun phrase: typically 2-5 words,\n  hard max 10 words. Examples: \"Purkinje fibers\", \"sinoatrial node\",\n  \"skeletal muscle pump\", \"ATP synthase\".\n- locked_answer must NOT be a sentence or clause. No verbs, no commas\n  separating multiple ideas. If you find yourself writing \"X does Y to\n  Z\", you've gone too far \u2014 pick the X (the structure or term itself).\n- locked_answer must be grounded in the retrieved chunks.\n- DO NOT use parametric / training-data knowledge: if the chunks do not\n  contain a clear answer to the topic question, return empty anchors.\n- If signal is insufficient, return empty anchors with rationale.\n- rationale must be brief (max 25 words).\n\nReturn strict JSON only:\n{{\n  \"locked_question\": \"string\",\n  \"locked_answer\": \"string\",\n  \"locked_answer_aliases\": [\"alias1\", \"alias2\", \"alias3\", \"alias4\"],\n  \"rationale\": \"string\"\n}}\n\n\n[1] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[2] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[3] (p.1097, score=1.00) Metabolism and Nutrition > Protein Metabolism\n---\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[4] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[5] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?\n\n---\n\nStudent selected topic: Protein Metabolism\nConversation history:\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?\n\nRetrieved propositions:\n[1] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[2] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[3] (p.1097, score=1.00) Metabolism and Nutrition > Protein Metabolism\n---\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[4] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[5] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\nLock anchors and return strict JSON only.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Lock anchors and return strict JSON."
+                }
+              ],
+              "response_text": "```json\n{\n  \"locked_question\": \"What enzyme breaks down proteins in the stomach?\",\n  \"locked_answer\": \"pepsin\",\n  \"locked_answer_aliases\": [\n    \"gastric protease\",\n    \"stomach protease\",\n    \"gastric enzyme\",\n    \"peptic enzyme\"\n  ],\n  \"rationale\": \"Chunk [5] explicitly states pepsin is the enzyme that cuts proteins into smaller polypeptides in the stomach alongside HCl.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.sanitize_locked_answer",
+              "candidate": "pepsin",
+              "action": "kept",
+              "final": "pepsin"
+            },
+            {
+              "wrapper": "dean._lock_anchors_call.full_answer_fallback",
+              "result": "full_answer empty in LLM output; fell back to locked_answer"
+            },
+            {
+              "wrapper": "dean.anchors_locked",
+              "locked_question": "What enzyme breaks down proteins in the stomach?",
+              "locked_answer": "pepsin",
+              "rationale": "Chunk [5] explicitly states pepsin is the enzyme that cuts proteins into smaller polypeptides in the stomach alongside HCl."
+            },
+            {
+              "wrapper": "dean._hint_plan_call",
+              "decision_effect": null,
+              "input_hash": "a2dfeff5ea08de89",
+              "elapsed_s": 2.36,
+              "in_tok": 1096,
+              "out_tok": 220,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00659,
+              "s_per_tok": 0.0107,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 1051
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 72
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\n[1] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[2] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[3] (p.1097, score=1.00) Metabolism and Nutrition > Protein Metabolism\n---\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[4] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[5] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Return strict JSON only."
+                }
+              ],
+              "response_text": "```json\n{\n  \"evaluation\": {\n    \"student_question\": \"What enzymes break down proteins in the stomach?\",\n    \"accuracy_assessment\": \"INCOMPLETE/PARTIALLY INCORRECT\",\n    \"correct_answer\": \"Pepsin is the primary enzyme that breaks down proteins in the stomach. Hydrochloric acid (HCl) denatures proteins, and pepsin cuts proteins into smaller polypeptides and amino acids.\",\n    \"common_student_errors_to_watch_for\": [\n      \"Naming trypsin, chymotrypsin, or elastase as stomach enzymes (these are pancreatic enzymes active in the small intestine)\",\n      \"Omitting the role of HCl in denaturing proteins\",\n      \"Confusing stomach digestion with small intestine digestion\"\n    ],\n    \"tutor_response_quality\": \"NEEDS IMPROVEMENT\",\n    \"tutor_feedback\": {\n      \"issue\": \"",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.hint_plan_initialized",
+              "result": "0 hints initialized",
+              "hints": []
+            },
+            {
+              "wrapper": "dean.topic_lock_guard",
+              "result": "bypassed_setup_classification_on_topic_selection"
+            },
+            {
+              "wrapper": "dean.sanitize_locked_answer",
+              "candidate": "pepsin",
+              "action": "kept",
+              "final": "pepsin"
+            },
+            {
+              "wrapper": "dean.confidence_score",
+              "result": "answer_conf=0.000, mastery_conf=0.000, reached=False (gate_path=skipped_topic_just_locked)",
+              "locked_answer": "pepsin",
+              "gate_path": "skipped_topic_just_locked",
+              "gate_evidence": ""
+            },
+            {
+              "wrapper": "dean.hint_progress",
+              "hint_before": 0,
+              "hint_after": 0,
+              "hint_reason": "unchanged",
+              "active_hint": ""
+            },
+            {
+              "wrapper": "dean.complexity_classifier",
+              "decision_effect": null,
+              "input_hash": "b6fcf8e4fd190034",
+              "elapsed_s": 1.31,
+              "in_tok": 605,
+              "out_tok": 69,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00285,
+              "s_per_tok": 0.019,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 494
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean of a Socratic human anatomy tutoring system. Classify\nthe complexity of the student's most recent message into ONE of three\ntiers (Adaptive-RAG, Jeong 2024). The tier drives downstream retrieval\nstrategy.\n\nTiers:\n  simple\n    \u2014 Direct factual or definitional question on the locked topic.\n    \u2014 Answerable from a single retrieval pass.\n    \u2014 Examples:\n        \"What is the SA node?\"\n        \"Where is the brachial plexus located?\"\n        \"Define synaptic cleft.\"\n\n  tangential\n    \u2014 Curiosity drift outside the locked topic but still within the\n      domain. Worth a one-shot un-section-filtered retrieval to\n      surface the related concept without losing the locked topic.\n    \u2014 Examples (when locked on Cardiac Conduction):\n        \"Wait, how does this connect to blood pressure?\"\n        \"I read about heart attacks \u2014 is that the same as arrhythmia?\"\n\n  complex\n    \u2014 Multi-step reasoning question, comparison across topics, or\n      synthesis spanning multiple subsections. May benefit from\n      multi-hop retrieval (D.4 \u2014 currently treated as `simple`).\n    \u2014 Examples:\n        \"How does the autonomic nervous system regulate cardiac\n         output during exercise?\"\n        \"Compare and contrast skeletal vs cardiac muscle tissue at\n         the cellular and functional levels.\"\n\nOutput a 1-sentence rationale citing the specific aspect of the\nstudent's message that drove the classification. Do not classify\nbased on locked topic alone \u2014 the message content is what matters.\n\nReturn strict JSON only, no prose:\n{\n  \"tier\": \"simple|tangential|complex\",\n  \"rationale\": \"\"\n}\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Locked topic (subsection): (none)\nLocked anchor question: What enzyme breaks down proteins in the stomach?\n\nRecent conversation history (most recent last):\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?\n\nStudent's latest message:\nWhat enzymes break down proteins in the stomach?\n\nClassify.\n"
+                }
+              ],
+              "response_text": "```json\n{\n  \"tier\": \"simple\",\n  \"rationale\": \"Direct factual question asking for identification of a specific enzyme (pepsin) involved in protein digestion in the stomach; answerable in a single retrieval pass without multi-step reasoning or cross-topic synthesis.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.complexity_classifier",
+              "tier": "simple",
+              "rationale": "Direct factual question asking for identification of a specific enzyme (pepsin) involved in protein digestion in the stomach; answerable in a single retrieval pass without multi-step reasoning or cros"
+            },
+            {
+              "wrapper": "dean._exploration_judge",
+              "decision_effect": null,
+              "input_hash": "553cfdfb51d043ab",
+              "elapsed_s": 1.57,
+              "in_tok": 572,
+              "out_tok": 108,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00334,
+              "s_per_tok": 0.0146,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 397
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 72
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 127
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean in the middle of a Socratic tutoring session. A topic is\nlocked and Teacher is about to respond. Your job is to decide whether the\nstudent's latest message is asking about something OUTSIDE the locked\ntopic \u2014 a tangential concept, a clarifying prerequisite, a connection to\nanother body system, etc. \u2014 that would genuinely benefit from fetching\nextra textbook context beyond the locked section.\n\nReturn `exploration_needed: true` ONLY when ALL of these hold:\n  - The student is asking about a human anatomy concept that is NOT the\n    locked topic or a direct sub-question of it.\n  - The tangential concept has a clear short query string (3-8 words) that\n    a textbook search could retrieve.\n  - Answering it would help the student make progress on the locked topic,\n    not just scratch curiosity unrelated to the session.\n\nIf the student is answering the locked question (correct/partial/incorrect),\nasking a question strictly about the locked topic, or venting/off-topic, set\n`exploration_needed: false`. When in doubt, say false \u2014 Teacher already has\nthe locked section's context.\n\nReturn strict JSON only:\n{{\n  \"exploration_needed\": false,\n  \"exploration_query\": \"\",\n  \"rationale\": \"\"\n}}\n\n\n---\n\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?\n\n---\n\nLocked topic: Protein Metabolism\nLocked question (Teacher is guiding toward this): What enzyme breaks down proteins in the stomach?\n\nRecent conversation history:\nTutor: Good morning. I'm here to help you work through human anatomy concepts\u2014whether that's clarifying how a system functions, preparing for an exam, or working through a tricky diagram. What topic would you like to focus on today?\nStudent: What enzymes break down proteins in the stomach?\n\nDecide based ONLY on the student's most recent message.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Judge and return strict JSON only."
+                }
+              ],
+              "response_text": "```json\n{\n  \"exploration_needed\": false,\n  \"exploration_query\": \"\",\n  \"rationale\": \"The student's question directly addresses the locked topic (Protein Metabolism) and is asking the exact question the Teacher is guiding toward (enzyme that breaks down proteins in the stomach). This is not tangential\u2014it is the core locked question itself. No external textbook context is needed; Teacher has the locked section on protein metabolism and can answer this directly.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.exploration_judge",
+              "result": "skip",
+              "needed": false,
+              "query": "",
+              "rationale": "The student's question directly addresses the locked topic (Protein Metabolism) and is asking the exact question the Teacher is guiding toward (enzyme that breaks down proteins in the stomach). This is not tangential\u2014it is the core locked question itself. No external textbook context is needed; Teacher has the locked section on protein metabolism and can answer this directly."
+            },
+            {
+              "wrapper": "dean.topic_ack_emitted",
+              "result": "ack_message_emitted_skipping_teacher_draft",
+              "locked_question": "What enzyme breaks down proteins in the stomach?"
+            }
+          ]
+        }
+      ],
+      "hint_progress": [
+        {
+          "turn": 0,
+          "student_state": "question",
+          "hint_before": 0,
+          "hint_after": 0,
+          "reason": "unchanged",
+          "active_hint": ""
+        },
+        {
+          "turn": 1,
+          "student_state": "correct",
+          "hint_before": 0,
+          "hint_after": 0,
+          "reason": "unchanged",
+          "active_hint": ""
+        }
+      ],
+      "hint_plan": [],
+      "locked_topic_snapshot": {
+        "path": "Ch24|Protein Metabolism|",
+        "chapter": "Metabolism and Nutrition",
+        "section": "Protein Metabolism",
+        "subsection": "",
+        "difficulty": "moderate",
+        "chunk_count": 0,
+        "limited": false,
+        "score": 0.9996641874313354
+      },
+      "complexity_tier": "simple",
+      "_dedupe_results": {
+        "dean._clinical_turn_call": {
+          "fingerprint": "c44d37c2a5a35514",
+          "result": {
+            "student_state": "correct",
+            "confidence_score": 0.95,
+            "pass": true,
+            "feedback_message": ""
+          }
+        },
+        "dean._close_session_call": {
+          "fingerprint": "50222672f4662cf0",
+          "result": {
+            "core_mastery_tier": "proficient",
+            "clinical_mastery_tier": "proficient",
+            "mastery_tier": "proficient",
+            "grading_rationale": "Student demonstrated solid foundational understanding of pepsin's role and successfully integrated the dual mechanisms of HCl (denaturation + pH maintenance) and pepsin (peptide bond cleavage). Progressed from initial uncertainty to precise mechanistic reasoning, though confidence trajectory showed initial hesitation that improved with structured feedback.",
+            "student_facing_message": "You've built a solid grasp of gastric protein digestion. You correctly identified pepsin, understood HCl's dual role in denaturation and pH maintenance, and clearly distinguished between breaking non-covalent interactions (denaturation) and covalent peptide bonds (proteolysis). Your final explanation was precise and mechanistically sound. Moving forward: commit to your reasoning once you've worked through it\u2014you don't need to hedge with 'I guess' when your logic is correct. You're ready to apply this to more complex scenarios like enzyme regulation or clinical conditions affecting gastric digestion.",
+            "memory_summary": "Student mastered gastric protein digestion mechanisms: correctly identified pepsin as the primary gastric protease and explained HCl's dual function (protein denaturation via weak bond disruption + pH optimization for pepsin activity). Demonstrated ability to distinguish between denaturation (non-covalent interactions) and proteolysis (peptide bond cleavage). Initially showed low confidence (0.46 mastery confidence) but reached high answer confidence (0.92) and completed clinical scenario successfully on third attempt. Recommend reinforcing commitment to reasoning and exploring downstream protein digestion in the small intestine (trypsin, chymotrypsin, enterokinase cascade).",
+            "fallback_used": false
+          }
+        }
+      }
+    }
+  }
+}

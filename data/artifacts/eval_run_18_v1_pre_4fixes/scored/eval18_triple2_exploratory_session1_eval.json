@@ -1,0 +1,342 @@
+{
+  "session_id": "801a6468",
+  "test_id": null,
+  "description": "",
+  "scored_at": "2026-04-30T07:07:06+00:00",
+  "primary": {
+    "EULER": {
+      "question_present": 1.0,
+      "relevance": 1.0,
+      "helpful": 0.5,
+      "no_reveal": 1.0,
+      "passes_all_thresholds": false,
+      "n_turns_scored": 1
+    },
+    "RAGAS": {
+      "context_precision": 0.4,
+      "context_recall": 1.0,
+      "context_relevancy": 0.3,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "answer_correctness": 1.0,
+      "passes_all_thresholds": false
+    }
+  },
+  "secondary": {
+    "TLQ": {
+      "score": 1.0,
+      "threshold": 0.8,
+      "passes": true,
+      "sub": {
+        "match_top_score": 1.0,
+        "vote_consensus": 1.0,
+        "coverage_gate_pass": 1.0,
+        "anchor_extraction_success": 1.0,
+        "repair_clean": 1.0
+      }
+    },
+    "RRQ": {
+      "score": 0.814,
+      "threshold": 0.75,
+      "passes": true,
+      "sub": {
+        "chunk_count_adequacy": 1.0,
+        "mean_top3_score": 0.998,
+        "section_match_rate": 1.0,
+        "retrieval_calls_efficiency": 1.0,
+        "coverage_gap_frequency": 1.0,
+        "ragas_context_precision": 0.4,
+        "ragas_context_relevancy": 0.3
+      }
+    },
+    "AQ": {
+      "score": 0.758,
+      "threshold": 0.85,
+      "passes": false,
+      "sub": {
+        "groundedness": 1.0,
+        "answer_brevity": 0.5,
+        "answer_is_noun_phrase": 1.0,
+        "aliases_count_adequacy": 1.0,
+        "question_specificity": 0.75,
+        "aliases_diversity_semantic": 0.3
+      }
+    },
+    "TRQ": {
+      "score": 0.944,
+      "threshold": 0.75,
+      "passes": true,
+      "sub": {
+        "qc_pass_rate": 1.0,
+        "revised_draft_rate": 1.0,
+        "intervention_rate": 1.0,
+        "reason_codes_clean_rate": 1.0,
+        "euler_question_present": 1.0,
+        "euler_relevance": 1.0,
+        "euler_helpful": 0.5,
+        "euler_no_reveal": 1.0,
+        "repetition_score": 1.0
+      }
+    },
+    "RGC": {
+      "score": 1.0,
+      "threshold": 0.95,
+      "passes": true,
+      "sub": {
+        "no_false_positives": 1.0,
+        "no_false_negatives": 1.0,
+        "evidence_quote_validity": 1.0,
+        "path_distribution": {
+          "skipped_topic_just_locked": 1,
+          "overlap": 1
+        },
+        "confusion_matrix": {
+          "tp": 1,
+          "fp": 0,
+          "tn": 1,
+          "fn": 0
+        }
+      }
+    },
+    "PP": {
+      "score": 0.875,
+      "threshold": 0.6,
+      "passes": true,
+      "sub": {
+        "hint_progression_monotonic": 1.0,
+        "hint_utilization": 1.0,
+        "student_engagement_rate": 1.0,
+        "state_trajectory_score": 0.5
+      }
+    },
+    "ARC": {
+      "score": 1.0,
+      "threshold": 0.7,
+      "passes": true,
+      "sub": {
+        "step_vs_reach_disambiguation_det": 1.0,
+        "intermediate_credit_avoidance_det": 1.0,
+        "mastery_attribution_grounding": 1.0,
+        "step_vs_reach_disambiguation_llm": 1.0,
+        "intermediate_credit_avoidance_llm": 1.0,
+        "off_topic_drift_score": 1.0,
+        "mastery_attribution_evidence": [],
+        "n_intermediate_turns": 0,
+        "n_fabrication_turns": 3
+      }
+    },
+    "CC": {
+      "score": 0.875,
+      "threshold": 1.0,
+      "passes": false,
+      "sub": {
+        "phase_transitions_legal": 1.0,
+        "topic_stability": 1.0,
+        "anchor_stability": 1.0,
+        "invariant_score": 0.5,
+        "invariant_violations_count": 1
+      }
+    },
+    "CE": {
+      "score": 0.15,
+      "threshold": 0.5,
+      "passes": false,
+      "sub": {
+        "cost_score": 0.299,
+        "cache_hit_rate": 0.0,
+        "cost_per_useful_turn": 0.140181
+      }
+    },
+    "MSC": {
+      "score": 1.0,
+      "threshold": 0.7,
+      "passes": true,
+      "sub": {
+        "confidence_appropriateness": null,
+        "ewma_movement_score": 1.0,
+        "rationale_grounding_llm": 1.0
+      }
+    }
+  },
+  "penalties": [
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=2 chunk_count=10",
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 2: 'You've correctly identified' \u2014 You've correctly identified saliva as the secretion that lubricates food and initiates chemical digestion. Would you like to explore a clinical scenario involvi",
+      "turn_id": 2,
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 4: 'correctly identified' \u2014 What you got right: You correctly identified that reduced saliva leads to larger food particles and recognized that larger bolus size affects downstream digesti",
+      "turn_id": 4,
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 5: 'correctly identified' \u2014 What you got right: You correctly identified that reduced salivary lubrication makes the bolus drier and harder to form cohesively, and you appropriately linked",
+      "turn_id": 5,
+      "source": "det"
+    }
+  ],
+  "verdict": "failed_critical_penalty",
+  "raw_signals": {
+    "turn_count": 2,
+    "max_turns": 25,
+    "final_phase": "memory_update",
+    "final_hint_level": 0,
+    "max_hints": 3,
+    "final_student_reached_answer": true,
+    "interventions": 0,
+    "coverage_gap_events": 0,
+    "retrieval_calls": 1,
+    "cost_usd": 0.140181,
+    "api_calls": 14,
+    "input_tokens": 33672,
+    "output_tokens": 2611,
+    "n_tutoring_turns": 1,
+    "n_intermediate_turns": 0,
+    "n_fabrication_turns": 3
+  },
+  "deterministic_signals": {
+    "intermediate_turns": [],
+    "fabrication_turns": [
+      {
+        "turn_id": 2,
+        "evidence": "You've correctly identified",
+        "tutor_msg": "You've correctly identified saliva as the secretion that lubricates food and initiates chemical digestion. Would you like to explore a clinical scenario involving salivary dysfunction?"
+      },
+      {
+        "turn_id": 4,
+        "evidence": "correctly identified",
+        "tutor_msg": "What you got right: You correctly identified that reduced saliva leads to larger food particles and recognized that larger bolus size affects downstream digestion. You also appropriately linked partic"
+      },
+      {
+        "turn_id": 5,
+        "evidence": "correctly identified",
+        "tutor_msg": "What you got right: You correctly identified that reduced salivary lubrication makes the bolus drier and harder to form cohesively, and you appropriately linked this to difficulty with swallowing and "
+      }
+    ],
+    "off_topic_turns": [],
+    "det_tlq_match_top_score": 1.0,
+    "det_tlq_vote_consensus": 1.0,
+    "det_tlq_coverage_gate_pass": 1.0,
+    "det_tlq_anchor_extraction_success": 1.0,
+    "det_tlq_repair_clean": 1.0,
+    "det_tlq_repair_invoked": false,
+    "det_rrq_chunk_count_adequacy": 1.0,
+    "det_rrq_mean_top3_score": 0.9979593753814697,
+    "det_rrq_section_match_rate": 1.0,
+    "det_rrq_retrieval_calls_efficiency": 1.0,
+    "det_rrq_coverage_gap_frequency": 1.0,
+    "det_rrq_chunk_count": 10,
+    "det_rrq_retrieval_calls": 1,
+    "det_aq_answer_brevity": 0.5,
+    "det_aq_answer_is_noun_phrase": 1.0,
+    "det_aq_aliases_count_adequacy": 1.0,
+    "det_aq_aliases_count": 4,
+    "det_aq_groundedness": 1.0,
+    "det_aq_sanitize_action": "kept",
+    "det_aq_locked_answer_word_count": 1,
+    "det_trq_qc_pass_rate": 1.0,
+    "det_trq_revised_draft_rate": 1.0,
+    "det_trq_intervention_rate": 1.0,
+    "det_trq_reason_codes_clean_rate": 1.0,
+    "det_trq_n_tutoring_turns": 1,
+    "det_rgc_false_positive_rate": 0.0,
+    "det_rgc_false_negative_rate": 0.0,
+    "det_rgc_evidence_quote_validity": 1.0,
+    "det_rgc_path_distribution": {
+      "skipped_topic_just_locked": 1,
+      "overlap": 1
+    },
+    "det_rgc_n_decisions": 2,
+    "det_rgc_tp": 1,
+    "det_rgc_fp": 0,
+    "det_rgc_tn": 1,
+    "det_rgc_fn": 0,
+    "det_pp_hint_progression_monotonic": 1.0,
+    "det_pp_hint_utilization": 1.0,
+    "det_pp_student_engagement_rate": 1.0,
+    "det_pp_state_trajectory_score": 0.5,
+    "det_arc_step_vs_reach_disambiguation": 1.0,
+    "det_arc_intermediate_credit_avoidance": 1.0,
+    "det_arc_n_intermediate_turns": 0,
+    "det_arc_n_fabrication_turns": 3,
+    "det_cc_phase_transitions_legal": 1.0,
+    "det_cc_topic_stability": 1.0,
+    "det_cc_anchor_stability": 1.0,
+    "det_cc_invariant_violations_count": 1,
+    "det_cc_invariant_score": 0.5,
+    "det_ce_cost_per_useful_turn": 0.140181,
+    "det_ce_cost_score": 0.299095,
+    "det_ce_cache_hit_rate": 0.0,
+    "det_ce_mean_turn_latency": null,
+    "det_ce_latency_score": null,
+    "det_msc_confidence_appropriateness": null,
+    "det_msc_ewma_movement_score": 1.0,
+    "det_msc_has_mastery": false
+  },
+  "llm_telemetry": [
+    {
+      "label": "per_turn",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 2.292,
+      "in_tok": 2560,
+      "out_tok": 174,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"turns\": [\n    {\n      \"turn_id\": 1,\n      \"question_present\": 1.0,\n      \"relevance\": 1.0,\n      \"helpful\": 0.5,\n      \"no_reveal\": 1.0,\n      \"faithfulness\": 1.0,\n      \"answer_relevancy..."
+    },
+    {
+      "label": "retrieval",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 4.322,
+      "in_tok": 1456,
+      "out_tok": 581,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"per_chunk\": [\n    {\n      \"id\": 0,\n      \"relevance\": 0.0,\n      \"rationale\": \"Discusses nutrient absorption, not carbohydrate digestion initiation.\"\n    },\n    {\n      \"id\": 1,\n      \"re..."
+    },
+    {
+      "label": "synthesis",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 11.996,
+      "in_tok": 3239,
+      "out_tok": 1130,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"mastery_attribution_grounding\": 1.0,\n  \"mastery_attribution_evidence\": [],\n  \"step_vs_reach_disambiguation\": 1.0,\n  \"intermediate_credit_avoidance\": 1.0,\n  \"off_topic_drift_score\": 1.0,\n ..."
+    },
+    {
+      "label": "anchor",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 1.976,
+      "in_tok": 522,
+      "out_tok": 132,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"question_specificity\": 0.75,\n  \"question_specificity_rationale\": \"Question is specific and answerable, though it asks two related sub-questions (location and enzyme name).\",\n  \"aliases_di..."
+    }
+  ],
+  "anchors_inspected": {
+    "locked_question": "Where does chemical digestion of carbohydrates begin, and what enzyme initiates this process?",
+    "locked_answer": "saliva",
+    "locked_answer_aliases": [
+      "salivary enzymes",
+      "salivary secretions",
+      "enzymes in the mouth",
+      "mouth secretions"
+    ],
+    "locked_topic": {}
+  },
+  "expectations": null
+}

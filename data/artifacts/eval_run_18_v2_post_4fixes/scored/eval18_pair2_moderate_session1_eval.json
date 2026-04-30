@@ -1,0 +1,352 @@
+{
+  "session_id": "d125ec5a",
+  "test_id": null,
+  "description": "",
+  "scored_at": "2026-04-30T07:52:33+00:00",
+  "primary": {
+    "EULER": {
+      "question_present": 1.0,
+      "relevance": 1.0,
+      "helpful": 0.9375,
+      "no_reveal": 0.875,
+      "passes_all_thresholds": false,
+      "n_turns_scored": 8
+    },
+    "RAGAS": {
+      "context_precision": 0.1,
+      "context_recall": 0.3,
+      "context_relevancy": 0.28,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "answer_correctness": 1.0,
+      "passes_all_thresholds": false
+    }
+  },
+  "secondary": {
+    "TLQ": {
+      "score": 0.865,
+      "threshold": 0.8,
+      "passes": true,
+      "sub": {
+        "match_top_score": 0.889,
+        "vote_consensus": 0.438,
+        "coverage_gate_pass": 1.0,
+        "anchor_extraction_success": 1.0,
+        "repair_clean": 1.0
+      }
+    },
+    "RRQ": {
+      "score": 0.769,
+      "threshold": 0.75,
+      "passes": true,
+      "sub": {
+        "chunk_count_adequacy": 1.0,
+        "mean_top3_score": 1.0,
+        "section_match_rate": 1.0,
+        "retrieval_calls_efficiency": 1.0,
+        "coverage_gap_frequency": 1.0,
+        "ragas_context_precision": 0.1,
+        "ragas_context_relevancy": 0.28
+      }
+    },
+    "AQ": {
+      "score": 0.858,
+      "threshold": 0.85,
+      "passes": true,
+      "sub": {
+        "groundedness": 1.0,
+        "answer_brevity": 1.0,
+        "answer_is_noun_phrase": 1.0,
+        "aliases_count_adequacy": 1.0,
+        "question_specificity": 0.75,
+        "aliases_diversity_semantic": 0.4
+      }
+    },
+    "TRQ": {
+      "score": 0.744,
+      "threshold": 0.75,
+      "passes": false,
+      "sub": {
+        "qc_pass_rate": 0.2,
+        "revised_draft_rate": 0.5,
+        "intervention_rate": 0.75,
+        "reason_codes_clean_rate": 0.5,
+        "euler_question_present": 1.0,
+        "euler_relevance": 1.0,
+        "euler_helpful": 0.938,
+        "euler_no_reveal": 0.875,
+        "repetition_score": 0.938
+      }
+    },
+    "RGC": {
+      "score": 1.0,
+      "threshold": 0.95,
+      "passes": true,
+      "sub": {
+        "no_false_positives": 1.0,
+        "no_false_negatives": 1.0,
+        "evidence_quote_validity": 1.0,
+        "path_distribution": {
+          "skipped_topic_just_locked": 1,
+          "no_overlap_no_paraphrase": 7,
+          "overlap": 1
+        },
+        "confusion_matrix": {
+          "tp": 1,
+          "fp": 0,
+          "tn": 8,
+          "fn": 0
+        }
+      }
+    },
+    "PP": {
+      "score": 0.896,
+      "threshold": 0.6,
+      "passes": true,
+      "sub": {
+        "hint_progression_monotonic": 1.0,
+        "hint_utilization": 1.0,
+        "student_engagement_rate": 1.0,
+        "state_trajectory_score": 0.583
+      }
+    },
+    "ARC": {
+      "score": 0.992,
+      "threshold": 0.7,
+      "passes": true,
+      "sub": {
+        "step_vs_reach_disambiguation_det": 1.0,
+        "intermediate_credit_avoidance_det": 1.0,
+        "mastery_attribution_grounding": 1.0,
+        "step_vs_reach_disambiguation_llm": 1.0,
+        "intermediate_credit_avoidance_llm": 0.95,
+        "off_topic_drift_score": 1.0,
+        "mastery_attribution_evidence": [],
+        "n_intermediate_turns": 0,
+        "n_fabrication_turns": 3
+      }
+    },
+    "CC": {
+      "score": 0.75,
+      "threshold": 1.0,
+      "passes": false,
+      "sub": {
+        "phase_transitions_legal": 1.0,
+        "topic_stability": 1.0,
+        "anchor_stability": 1.0,
+        "invariant_score": 0.0,
+        "invariant_violations_count": 8
+      }
+    },
+    "CE": {
+      "score": 0.313,
+      "threshold": 0.5,
+      "passes": false,
+      "sub": {
+        "cost_score": 0.627,
+        "cache_hit_rate": 0.0,
+        "cost_per_useful_turn": 0.074673225
+      }
+    },
+    "MSC": {
+      "score": 1.0,
+      "threshold": 0.7,
+      "passes": true,
+      "sub": {
+        "confidence_appropriateness": null,
+        "ewma_movement_score": 1.0,
+        "rationale_grounding_llm": 1.0
+      }
+    }
+  },
+  "penalties": [
+    {
+      "code": "LEAK_DETECTED",
+      "severity": "critical",
+      "evidence": "turn 5: no_reveal=0.0 \u2014 Excellent\u2014voltage-gated channels is exactly right. These channels open in response to depolarization and allow ions to flow down their concentration gradients. Now that you've identified the channel t",
+      "turn_id": 5,
+      "source": "llm"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "8 invariant violation(s) on this session (kinds: ungrounded_tutoring_turn); first: kind=ungrounded_tutoring_turn turn=2",
+      "raw_count": 8,
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 5: 'you've identified' \u2014 Excellent\u2014voltage-gated channels is exactly right. These channels open in response to depolarization and allow ions to flow down their concentration gradients. ",
+      "turn_id": 5,
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 9: 'You've correctly identified' \u2014 You've correctly identified voltage-gated sodium channels as the mechanism underlying the rapid depolarization phase. Would you like to apply this knowledge to ",
+      "turn_id": 9,
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 11: 'correctly identified' \u2014 What you got right: You correctly identified that positive charge spreads laterally along the inside of the membrane to neighboring regions, and you accurately ",
+      "turn_id": 11,
+      "source": "det"
+    }
+  ],
+  "verdict": "failed_critical_penalty",
+  "raw_signals": {
+    "turn_count": 9,
+    "max_turns": 25,
+    "final_phase": "memory_update",
+    "final_hint_level": 0,
+    "max_hints": 3,
+    "final_student_reached_answer": true,
+    "interventions": 2,
+    "coverage_gap_events": 0,
+    "retrieval_calls": 1,
+    "cost_usd": 0.5973858,
+    "api_calls": 55,
+    "input_tokens": 83338,
+    "output_tokens": 8347,
+    "n_tutoring_turns": 8,
+    "n_intermediate_turns": 0,
+    "n_fabrication_turns": 3
+  },
+  "deterministic_signals": {
+    "intermediate_turns": [],
+    "fabrication_turns": [
+      {
+        "turn_id": 5,
+        "evidence": "you've identified",
+        "tutor_msg": "Excellent\u2014voltage-gated channels is exactly right. These channels open in response to depolarization and allow ions to flow down their concentration gradients. Now that you've identified the channel t"
+      },
+      {
+        "turn_id": 9,
+        "evidence": "You've correctly identified",
+        "tutor_msg": "You've correctly identified voltage-gated sodium channels as the mechanism underlying the rapid depolarization phase. Would you like to apply this knowledge to a clinical scenario involving sodium cha"
+      },
+      {
+        "turn_id": 11,
+        "evidence": "correctly identified",
+        "tutor_msg": "What you got right: You correctly identified that positive charge spreads laterally along the inside of the membrane to neighboring regions, and you accurately described the sequential triggering of v"
+      }
+    ],
+    "off_topic_turns": [],
+    "det_tlq_match_top_score": 0.8888888888888888,
+    "det_tlq_vote_consensus": 0.43802014892685065,
+    "det_tlq_coverage_gate_pass": 1.0,
+    "det_tlq_anchor_extraction_success": 1.0,
+    "det_tlq_repair_clean": 1.0,
+    "det_tlq_repair_invoked": false,
+    "det_rrq_chunk_count_adequacy": 1.0,
+    "det_rrq_mean_top3_score": 0.9999996423721313,
+    "det_rrq_section_match_rate": 1.0,
+    "det_rrq_retrieval_calls_efficiency": 1.0,
+    "det_rrq_coverage_gap_frequency": 1.0,
+    "det_rrq_chunk_count": 28,
+    "det_rrq_retrieval_calls": 1,
+    "det_aq_answer_brevity": 1.0,
+    "det_aq_answer_is_noun_phrase": 1.0,
+    "det_aq_aliases_count_adequacy": 1.0,
+    "det_aq_aliases_count": 4,
+    "det_aq_groundedness": 1.0,
+    "det_aq_sanitize_action": "kept",
+    "det_aq_locked_answer_word_count": 4,
+    "det_trq_qc_pass_rate": 0.2,
+    "det_trq_revised_draft_rate": 0.5,
+    "det_trq_intervention_rate": 0.75,
+    "det_trq_reason_codes_clean_rate": 0.5,
+    "det_trq_n_tutoring_turns": 8,
+    "det_rgc_false_positive_rate": 0.0,
+    "det_rgc_false_negative_rate": 0.0,
+    "det_rgc_evidence_quote_validity": 1.0,
+    "det_rgc_path_distribution": {
+      "skipped_topic_just_locked": 1,
+      "no_overlap_no_paraphrase": 7,
+      "overlap": 1
+    },
+    "det_rgc_n_decisions": 9,
+    "det_rgc_tp": 1,
+    "det_rgc_fp": 0,
+    "det_rgc_tn": 8,
+    "det_rgc_fn": 0,
+    "det_pp_hint_progression_monotonic": 1.0,
+    "det_pp_hint_utilization": 1.0,
+    "det_pp_student_engagement_rate": 1.0,
+    "det_pp_state_trajectory_score": 0.5833333333333334,
+    "det_arc_step_vs_reach_disambiguation": 1.0,
+    "det_arc_intermediate_credit_avoidance": 1.0,
+    "det_arc_n_intermediate_turns": 0,
+    "det_arc_n_fabrication_turns": 3,
+    "det_cc_phase_transitions_legal": 1.0,
+    "det_cc_topic_stability": 1.0,
+    "det_cc_anchor_stability": 1.0,
+    "det_cc_invariant_violations_count": 8,
+    "det_cc_invariant_score": 0.0,
+    "det_ce_cost_per_useful_turn": 0.074673225,
+    "det_ce_cost_score": 0.626633875,
+    "det_ce_cache_hit_rate": 0.0,
+    "det_ce_mean_turn_latency": null,
+    "det_ce_latency_score": null,
+    "det_msc_confidence_appropriateness": null,
+    "det_msc_ewma_movement_score": 1.0,
+    "det_msc_has_mastery": false
+  },
+  "llm_telemetry": [
+    {
+      "label": "per_turn",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 7.855,
+      "in_tok": 4915,
+      "out_tok": 1271,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"turns\": [\n    {\n      \"turn_id\": 1,\n      \"question_present\": 1.0,\n      \"relevance\": 1.0,\n      \"helpful\": 0.5,\n      \"no_reveal\": 1.0,\n      \"faithfulness\": 1.0,\n      \"answer_relevancy..."
+    },
+    {
+      "label": "retrieval",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 5.571,
+      "in_tok": 1579,
+      "out_tok": 605,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"per_chunk\": [\n    {\n      \"id\": 0,\n      \"relevance\": 0.3,\n      \"rationale\": \"Describes neuromuscular junction signaling but not ion channels opening along sarcolemma.\"\n    },\n    {\n    ..."
+    },
+    {
+      "label": "synthesis",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 10.495,
+      "in_tok": 4588,
+      "out_tok": 949,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"mastery_attribution_grounding\": 1.0,\n  \"mastery_attribution_evidence\": [],\n  \"step_vs_reach_disambiguation\": 1.0,\n  \"intermediate_credit_avoidance\": 0.95,\n  \"off_topic_drift_score\": 1.0,\n..."
+    },
+    {
+      "label": "anchor",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 1.229,
+      "in_tok": 529,
+      "out_tok": 117,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"question_specificity\": 0.75,\n  \"question_specificity_rationale\": \"Question is specific and answerable but slightly broad\u2014action potentials involve multiple ion channels sequentially, not ..."
+    }
+  ],
+  "anchors_inspected": {
+    "locked_question": "What ion channels open in sequence to allow an action potential to propagate along the sarcolemma of a muscle fiber?",
+    "locked_answer": "voltage gated sodium channels",
+    "locked_answer_aliases": [
+      "voltage-gated Na+ channels",
+      "sodium channels",
+      "Na+ channels",
+      "voltage-sensitive sodium channels"
+    ],
+    "locked_topic": {}
+  },
+  "expectations": null
+}

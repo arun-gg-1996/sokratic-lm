@@ -1,0 +1,86 @@
+{
+  "started_at": "2026-04-30T04:31:07",
+  "completed_at": "2026-04-30T04:44:20",
+  "elapsed_s": 792.708618,
+  "total_conversations": 18,
+  "expected_conversations": 18,
+  "total_cost_usd": 8.6673,
+  "concurrency": 4,
+  "saved_files": [
+    "eval18_pair1_strong_session1.json",
+    "eval18_pair1_strong_session2.json",
+    "eval18_pair2_moderate_session1.json",
+    "eval18_pair2_moderate_session2.json",
+    "eval18_pair3_disengaged_session1.json",
+    "eval18_pair3_disengaged_session2.json",
+    "eval18_solo1_S1_session1.json",
+    "eval18_solo2_S2_session1.json",
+    "eval18_solo3_S3_session1.json",
+    "eval18_solo4_S4_session1.json",
+    "eval18_solo5_S5_session1.json",
+    "eval18_solo6_S6_session1.json",
+    "eval18_triple1_progressing_session1.json",
+    "eval18_triple1_progressing_session2.json",
+    "eval18_triple1_progressing_session3.json",
+    "eval18_triple2_exploratory_session1.json",
+    "eval18_triple2_exploratory_session2.json",
+    "eval18_triple2_exploratory_session3.json"
+  ],
+  "plan_summary": [
+    {
+      "student_id": "eval18_pair1_strong",
+      "profile": "S1",
+      "n_sessions": 2
+    },
+    {
+      "student_id": "eval18_pair2_moderate",
+      "profile": "S2",
+      "n_sessions": 2
+    },
+    {
+      "student_id": "eval18_pair3_disengaged",
+      "profile": "S5",
+      "n_sessions": 2
+    },
+    {
+      "student_id": "eval18_triple1_progressing",
+      "profile": "S3",
+      "n_sessions": 3
+    },
+    {
+      "student_id": "eval18_triple2_exploratory",
+      "profile": "S6",
+      "n_sessions": 3
+    },
+    {
+      "student_id": "eval18_solo1_S1",
+      "profile": "S1",
+      "n_sessions": 1
+    },
+    {
+      "student_id": "eval18_solo2_S2",
+      "profile": "S2",
+      "n_sessions": 1
+    },
+    {
+      "student_id": "eval18_solo3_S3",
+      "profile": "S3",
+      "n_sessions": 1
+    },
+    {
+      "student_id": "eval18_solo4_S4",
+      "profile": "S4",
+      "n_sessions": 1
+    },
+    {
+      "student_id": "eval18_solo5_S5",
+      "profile": "S5",
+      "n_sessions": 1
+    },
+    {
+      "student_id": "eval18_solo6_S6",
+      "profile": "S6",
+      "n_sessions": 1
+    }
+  ]
+}

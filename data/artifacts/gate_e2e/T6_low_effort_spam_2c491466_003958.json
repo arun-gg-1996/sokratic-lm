@@ -1,0 +1,976 @@
+{
+  "name": "T6_low_effort_spam",
+  "conv_id": "2c491466",
+  "description": "Help-abuse cap: 2 consecutive low_effort student turns must trigger the dean's session cap (hint_level \u2192 max_hints+1, routes to assessment) instead of escalating help. Pre-Change-3 behavior was to ADVANCE hint_level on help_abuse, effectively rewarding stonewalling. Post-Change-3 behavior is to end the tutoring loop with mastery=needs_review.",
+  "expectations": {
+    "reached": false,
+    "no_fabrication_keywords": [
+      "you've identified",
+      "correctly identified",
+      "did well identifying",
+      "great job, the answer is"
+    ]
+  },
+  "outcomes": {
+    "final_reached": true,
+    "fabrication_hits_in_last_tutor": [],
+    "last_tutor_message": "Would you like to explore a clinical scenario where SA node dysfunction occurs, or would you prefer to move on?",
+    "phase_final": "assessment",
+    "locked_answer": "sinoatrial node",
+    "locked_answer_aliases": [
+      "SA node",
+      "sinus node",
+      "pacemaker of the heart",
+      "cardiac pacemaker"
+    ],
+    "locked_question": "What structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?",
+    "turn_count": 3,
+    "hint_level_final": 0,
+    "student_state_final": "correct"
+  },
+  "gate_traces": [
+    {
+      "wrapper": "dean.confidence_score",
+      "result": "answer_conf=0.950, mastery_conf=0.633, reached=True (gate_path=overlap)",
+      "locked_answer": "sinoatrial node",
+      "gate_path": "overlap",
+      "gate_evidence": "SA node"
+    }
+  ],
+  "final_state": {
+    "student_id": "gate_test_T6_low_effort_spam_2c491466",
+    "phase": "assessment",
+    "messages": [
+      {
+        "role": "tutor",
+        "content": "Good morning. I'm here to work through human anatomy with you using questions and reasoning rather than just handing over answers\u2014that approach tends to stick better when you're preparing for exams or building real understanding. What topic would you like to focus on today?",
+        "phase": "rapport"
+      },
+      {
+        "role": "student",
+        "content": "no idea"
+      },
+      {
+        "role": "tutor",
+        "content": "Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?",
+        "phase": "tutoring"
+      },
+      {
+        "role": "student",
+        "content": "just tell me"
+      },
+      {
+        "role": "tutor",
+        "content": "The heartbeat has to start somewhere\u2014one chamber must depolarize before the others. Which of the four chambers would logically contract first to pump blood efficiently through the heart?",
+        "phase": "tutoring"
+      },
+      {
+        "role": "student",
+        "content": "fine, the SA node"
+      },
+      {
+        "role": "tutor",
+        "content": "Would you like to explore a clinical scenario where SA node dysfunction occurs, or would you prefer to move on?",
+        "phase": "assessment"
+      }
+    ],
+    "retrieved_chunks": [
+      {
+        "chunk_id": "7b16c632-7936-4124-b538-b0d7c030dd92",
+        "text": "Both bundle branches descend and reach the apex of the heart where they connect with the Purkinje fibers. The Purkinje fibers are additional myocardial conductive fibers that spread the impulse to the myocardial contractile cells in the ventricles. They extend throughout the myocardium from the apex of the heart toward the atrioventricular septum and the base of the heart. The Purkinje fibers have a fast inherent conduction rate, and the electrical impulse reaches all of the ventricular muscle cells in about 75 ms. Since the electrical stimulus begins at the apex, the contraction also begins at the apex and travels toward the base of the heart, similar to squeezing a tube of toothpaste from the bottom. This allows the blood to be pumped out of the ventricles and into the aorta and pulmonary trunk.",
+        "chapter_num": 19,
+        "chapter_title": "The Cardiovascular System: The Heart",
+        "section_title": "Cardiac Muscle and Electrical Activity",
+        "subsection_title": "Conduction System of the Heart",
+        "page": 790,
+        "element_type": "paragraph_overlap",
+        "image_filename": "",
+        "_window_role": "neighbor_prev",
+        "_primary_chunk_id": "cd07371b-11a9-4bcc-a8e2-7d7216eebb34"
+      },
+      {
+        "chunk_id": "2b3e7d37-4b7f-410f-a8f0-c3ef00de0073",
+        "text": "The total time elapsed from the initiation of the impulse in the SA node until depolarization of the ventricles is approximately 225 ms. Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells.",
+        "chapter_num": 19,
+        "chapter_title": "The Cardiovascular System: The Heart",
+        "section_title": "Cardiac Muscle and Electrical Activity",
+        "subsection_title": "Conduction System of the Heart",
+        "page": 790,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "neighbor_prev",
+        "_primary_chunk_id": "cd07371b-11a9-4bcc-a8e2-7d7216eebb34"
+      },
+      {
+        "chunk_id": "cd07371b-11a9-4bcc-a8e2-7d7216eebb34",
+        "text": "Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells.",
+        "score": 0.9996992349624634,
+        "chapter_num": 19,
+        "chapter_title": "The Cardiovascular System: The Heart",
+        "section_title": "Cardiac Muscle and Electrical Activity",
+        "subsection_title": "Conduction System of the Heart",
+        "page": 790,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "primary",
+        "_primary_chunk_id": "cd07371b-11a9-4bcc-a8e2-7d7216eebb34"
+      },
+      {
+        "chunk_id": "c39101cc-3df6-4f45-ba9f-9ac565de7d6b",
+        "text": "While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.",
+        "chapter_num": 19,
+        "chapter_title": "The Cardiovascular System: The Heart",
+        "section_title": "Cardiac Muscle and Electrical Activity",
+        "subsection_title": "Conduction System of the Heart",
+        "page": 790,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "neighbor_next",
+        "_primary_chunk_id": "cd07371b-11a9-4bcc-a8e2-7d7216eebb34"
+      },
+      {
+        "chunk_id": "cad3356e-8363-4add-8ffc-b64b1ebd7023",
+        "text": "Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells. While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.",
+        "chapter_num": 19,
+        "chapter_title": "The Cardiovascular System: The Heart",
+        "section_title": "Cardiac Muscle and Electrical Activity",
+        "subsection_title": "Conduction System of the Heart",
+        "page": 790,
+        "element_type": "paragraph_overlap",
+        "image_filename": "",
+        "_window_role": "neighbor_next",
+        "_primary_chunk_id": "cd07371b-11a9-4bcc-a8e2-7d7216eebb34"
+      },
+      {
+        "chunk_id": "19036600-151a-45c9-8a56-aafe01288c5f",
+        "text": "Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.",
+        "chapter_num": 19,
+        "chapter_title": "The Cardiovascular System: The Heart",
+        "section_title": "Cardiac Muscle and Electrical Activity",
+        "subsection_title": "Conduction System of the Heart",
+        "page": 790,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "neighbor_prev",
+        "_primary_chunk_id": "b4c0c3c7-9971-4364-a125-00f7df9ca020"
+      },
+      {
+        "chunk_id": "b4c0c3c7-9971-4364-a125-00f7df9ca020",
+        "text": "While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential. Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.",
+        "score": 0.8350841403007507,
+        "chapter_num": 19,
+        "chapter_title": "The Cardiovascular System: The Heart",
+        "section_title": "Cardiac Muscle and Electrical Activity",
+        "subsection_title": "Conduction System of the Heart",
+        "page": 790,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "primary",
+        "_primary_chunk_id": "b4c0c3c7-9971-4364-a125-00f7df9ca020"
+      },
+      {
+        "chunk_id": "1c88a0e5-a1ab-42d9-a76f-424877f5d47c",
+        "text": "The resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization).",
+        "chapter_num": 19,
+        "chapter_title": "The Cardiovascular System: The Heart",
+        "section_title": "Cardiac Muscle and Electrical Activity",
+        "subsection_title": "Conduction System of the Heart",
+        "page": 790,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "neighbor_next",
+        "_primary_chunk_id": "b4c0c3c7-9971-4364-a125-00f7df9ca020"
+      },
+      {
+        "chunk_id": "6322f9d9-64ef-4b06-8695-996416c20488",
+        "text": "Context from previous chunk: Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV. The resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization ).",
+        "chapter_num": 19,
+        "chapter_title": "The Cardiovascular System: The Heart",
+        "section_title": "Cardiac Muscle and Electrical Activity",
+        "subsection_title": "Conduction System of the Heart",
+        "page": 790,
+        "element_type": "paragraph_overlap",
+        "image_filename": "",
+        "_window_role": "neighbor_next",
+        "_primary_chunk_id": "b4c0c3c7-9971-4364-a125-00f7df9ca020"
+      }
+    ],
+    "locked_question": "What structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?",
+    "locked_answer": "sinoatrial node",
+    "locked_answer_aliases": [
+      "SA node",
+      "sinus node",
+      "pacemaker of the heart",
+      "cardiac pacemaker"
+    ],
+    "locked_topic": {
+      "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart",
+      "chapter": "The Cardiovascular System: The Heart",
+      "section": "Cardiac Muscle and Electrical Activity",
+      "subsection": "Conduction System of the Heart",
+      "difficulty": "moderate",
+      "chunk_count": 16,
+      "limited": false,
+      "score": 101.0
+    },
+    "topic_confirmed": true,
+    "topic_selection": "Conduction System of the Heart",
+    "topic_just_locked": false,
+    "hint_level": 0,
+    "max_hints": 3,
+    "max_turns": 25,
+    "turn_count": 3,
+    "student_state": "correct",
+    "student_reached_answer": true,
+    "student_answer_confidence": 0.95,
+    "student_mastery_confidence": 0.633,
+    "confidence_samples": 3,
+    "help_abuse_count": 1,
+    "assessment_turn": 1,
+    "clinical_state": null,
+    "clinical_confidence": 0.0,
+    "core_mastery_tier": "not_assessed",
+    "clinical_mastery_tier": "not_assessed",
+    "mastery_tier": "not_assessed",
+    "grading_rationale": "",
+    "session_memory_summary": "",
+    "weak_topics": [],
+    "rejected_topic_paths": [],
+    "exploration_max": 3,
+    "exploration_used": 0,
+    "debug": {
+      "api_calls": 11,
+      "input_tokens": 12035,
+      "output_tokens": 1045,
+      "cost_usd": 0.05177999999999999,
+      "interventions": 0,
+      "retrieval_calls": 1,
+      "coverage_gap_events": 0,
+      "grounded_turns": 3,
+      "ungrounded_turns": 0,
+      "invariant_violations": [],
+      "current_node": "assessment_node",
+      "last_routing": "assessment_node (student_reached_answer)",
+      "turn_trace": [
+        {
+          "wrapper": "dean._setup_call",
+          "decision_effect": "classification_only",
+          "input_hash": "a24d88dd80c6c985",
+          "elapsed_s": 2.02,
+          "in_tok": 2023,
+          "out_tok": 154,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.00838,
+          "s_per_tok": 0.0131,
+          "cached_est_tokens": 1558,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": true,
+              "est_tokens": 1558
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 192
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 269
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean supervising one Socratic tutoring turn.\nTools are already handled in Python. Do NOT request tools.\nThis is an evaluation setting: classify strictly based on evidence in the student's latest message.\n\nSTRICT LOW_EFFORT RULES (highest priority):\n  The student must be GENUINELY ATTEMPTING the locked_question.\n  low_effort when: bare denial (\"no\", \"idk\", \"i don't know\"), demand\n  to be told (\"just tell me\"), frustration (\"if i wanted to read...\"),\n  empty deflection (<5 words, no domain content), profanity, or\n  dismissal. Off-topic + frustration \u2192 low_effort.\n  irrelevant: genuinely off-topic question on a different subject.\n\nOTHER:\n  question: genuine specific clarifying question about human anatomy,\n    with engagement. Rhetorical/frustrated questions \u2192 low_effort.\n  incorrect: genuine attempt but wrong.\n  partial_correct: answers an INTERMEDIATE scaffold the tutor asked,\n    but NOT the locked answer. (e.g. \"stroke volume goes lower\" when\n    locked_answer is \"skeletal muscle pump\" \u2192 partial_correct.)\n  correct: student STATES the locked_answer or a clear paraphrase.\n    Getting an intermediate scaffold right is partial_correct, NOT correct.\n    Only the LOCKED answer being stated counts as correct.\n\nstudent_reached_answer: ALWAYS set to false. Python's\n  reached_answer_gate computes the authoritative reached signal.\n\nconfidence_score:\n  - 0.85-1.00: explicit, accurate, certain\n  - 0.65-0.84: mostly correct, mild ambiguity\n  - 0.40-0.64: partial / uncertain\n  - 0.00-0.39: incorrect, irrelevant, low-effort\n\nhint_level: leave unchanged (Python increments for incorrect).\nlocked_answer is already set; do not propose a new one.\n\nReturn one JSON object only (no markdown):\n{{\n  \"student_state\": \"correct|partial_correct|incorrect|question|irrelevant|low_effort\",\n  \"student_reached_answer\": false,\n  \"confidence_score\": 0.0,\n  \"hint_level\": 1,\n  \"search_needed\": false,\n  \"critique\": \"\"\n}}\n\n\n[1] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nBoth bundle branches descend and reach the apex of the heart where they connect with the Purkinje fibers. The Purkinje fibers are additional myocardial conductive fibers that spread the impulse to the myocardial contractile cells in the ventricles. They extend throughout the myocardium from the apex of the heart toward the atrioventricular septum and the base of the heart. The Purkinje fibers have a fast inherent conduction rate, and the electrical impulse reaches all of the ventricular muscle cells in about 75 ms. Since the electrical stimulus begins at the apex, the contraction also begins at the apex and travels toward the base of the heart, similar to squeezing a tube of toothpaste from the bottom. This allows the blood to be pumped out of the ventricles and into the aorta and pulmonary trunk.\n\n===\n\n[2] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nThe total time elapsed from the initiation of the impulse in the SA node until depolarization of the ventricles is approximately 225 ms. Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n===\n\n[3] (p.790, score=1.00) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n===\n\n[4] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n===\n\n[5] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells. While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n===\n\n[6] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nConductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n===\n\n[7] (p.790, score=0.84) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential. Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n===\n\n[8] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nThe resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization).\n\n===\n\n[9] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nContext from previous chunk: Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV. The resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization ).\n\n---\n\nTutor: Good morning. I'm here to work through human anatomy with you using questions and reasoning rather than just handing over answers\u2014that approach tends to stick better when you're preparing for exams or building real understanding. What topic would you like to focus on today?\nStudent: no idea\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\nStudent: just tell me\nTutor: The heartbeat has to start somewhere\u2014one chamber must depolarize before the others. Which of the four chambers would logically contract first to pump blood efficiently through the heart?\nStudent: fine, the SA node\n\n---\n\nCurrent state:\n- locked_question: What structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\n- locked_answer: sinoatrial node\n- hint_level: 0\n- turn_count: 2\n\nRecent conversation history:\nTutor: Good morning. I'm here to work through human anatomy with you using questions and reasoning rather than just handing over answers\u2014that approach tends to stick better when you're preparing for exams or building real understanding. What topic would you like to focus on today?\nStudent: no idea\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\nStudent: just tell me\nTutor: The heartbeat has to start somewhere\u2014one chamber must depolarize before the others. Which of the four chambers would logically contract first to pump blood efficiently through the heart?\nStudent: fine, the SA node\nClassify the student's MOST RECENT message. Prior history is context only.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Classify this turn and return JSON."
+            }
+          ],
+          "response_text": "```json\n{\n  \"student_state\": \"correct\",\n  \"student_reached_answer\": false,\n  \"confidence_score\": 0.95,\n  \"hint_level\": 0,\n  \"search_needed\": false,\n  \"critique\": \"Student correctly identified the sinoatrial (SA) node as the structure that spontaneously generates the electrical impulse starting each heartbeat. This matches the locked_answer. The response shows engagement after initial resistance\u2014the tutor's scaffolding question about chamber order helped the student reason toward the correct answer. Confidence is high because 'SA node' is an explicit, accurate statement of the target concept.\"\n}\n```",
+          "tool_calls_made": [],
+          "result": "student_state=correct, hint=0",
+          "locked_answer_final": "sinoatrial node"
+        },
+        {
+          "wrapper": "dean.sanitize_locked_answer",
+          "candidate": "sinoatrial node",
+          "action": "wiped_ungrounded",
+          "final": "sinoatrial node"
+        },
+        {
+          "wrapper": "dean.confidence_score",
+          "result": "answer_conf=0.950, mastery_conf=0.633, reached=True (gate_path=overlap)",
+          "locked_answer": "sinoatrial node",
+          "gate_path": "overlap",
+          "gate_evidence": "SA node"
+        },
+        {
+          "wrapper": "dean.hint_progress",
+          "hint_before": 0,
+          "hint_after": 0,
+          "hint_reason": "unchanged",
+          "active_hint": ""
+        },
+        {
+          "wrapper": "teacher.draft_clinical_opt_in",
+          "decision_effect": null,
+          "input_hash": "0e80f69820cb3a8e",
+          "elapsed_s": 0.97,
+          "in_tok": 203,
+          "out_tok": 25,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.00098,
+          "s_per_tok": 0.0389,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 183
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 16
+            }
+          ],
+          "system_prompt": "You are\na Socratic tutor in human anatomy working with a student.\nThis is an evaluated learning session.\nGlobal rules for all teacher wrappers:\n- Keep language academically focused and concise.\n- Do not reveal final answers unless wrapper-specific instructions explicitly allow it.\n- Follow wrapper output contracts exactly.\n- If strict JSON is requested by the wrapper, return strict JSON only.\n- Avoid generic motivational filler; prioritize targeted reasoning prompts.\n\n\na anatomy tutor.\nThe student has reached the core answer.\nAsk whether they want to do an optional clinical application challenge.\n\nRules:\n- Keep to 2 sentences max.\n- Do not restate the answer.\n- End with exactly one question that offers a clear yes/no choice.\n\n\n---\n\nCorrect answer already reached (do not restate): sinoatrial node\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Ask if the student wants the optional clinical question."
+            }
+          ],
+          "response_text": "Would you like to explore a clinical scenario where SA node dysfunction occurs, or would you prefer to move on?",
+          "tool_calls_made": []
+        }
+      ],
+      "all_turn_traces": [
+        {
+          "turn": 0,
+          "phase": "tutoring",
+          "trace": [
+            {
+              "wrapper": "dean.python_retrieval",
+              "result": "9 chunks returned | query=Conduction System of the Heart",
+              "retrieval": {
+                "query": "Conduction System of the Heart",
+                "top_chunks": [
+                  {
+                    "rank": 1,
+                    "score": 0.0,
+                    "section_title": "Cardiac Muscle and Electrical Activity",
+                    "subsection_title": "Conduction System of the Heart",
+                    "chunk_id": "7b16c632-7936-4124-b538-b0d7c030dd92",
+                    "text_preview": "Both bundle branches descend and reach the apex of the heart where they connect with the Purkinje fibers. The Purkinje fibers are additional myocardial conductive fibers that spread the impulse to the myocardial contractile cells in the ven"
+                  },
+                  {
+                    "rank": 2,
+                    "score": 0.0,
+                    "section_title": "Cardiac Muscle and Electrical Activity",
+                    "subsection_title": "Conduction System of the Heart",
+                    "chunk_id": "2b3e7d37-4b7f-410f-a8f0-c3ef00de0073",
+                    "text_preview": "The total time elapsed from the initiation of the impulse in the SA node until depolarization of the ventricles is approximately 225 ms. Action potentials are considerably different between cardiac conductive cells and cardiac contractive c"
+                  },
+                  {
+                    "rank": 3,
+                    "score": 0.9996992349624634,
+                    "section_title": "Cardiac Muscle and Electrical Activity",
+                    "subsection_title": "Conduction System of the Heart",
+                    "chunk_id": "cd07371b-11a9-4bcc-a8e2-7d7216eebb34",
+                    "text_preview": "Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells."
+                  },
+                  {
+                    "rank": 4,
+                    "score": 0.0,
+                    "section_title": "Cardiac Muscle and Electrical Activity",
+                    "subsection_title": "Conduction System of the Heart",
+                    "chunk_id": "c39101cc-3df6-4f45-ba9f-9ac565de7d6b",
+                    "text_preview": "While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential."
+                  },
+                  {
+                    "rank": 5,
+                    "score": 0.0,
+                    "section_title": "Cardiac Muscle and Electrical Activity",
+                    "subsection_title": "Conduction System of the Heart",
+                    "chunk_id": "cad3356e-8363-4add-8ffc-b64b1ebd7023",
+                    "text_preview": "Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells. While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardi"
+                  },
+                  {
+                    "rank": 6,
+                    "score": 0.0,
+                    "section_title": "Cardiac Muscle and Electrical Activity",
+                    "subsection_title": "Conduction System of the Heart",
+                    "chunk_id": "19036600-151a-45c9-8a56-aafe01288c5f",
+                    "text_preview": "Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV."
+                  },
+                  {
+                    "rank": 7,
+                    "score": 0.8350841403007507,
+                    "section_title": "Cardiac Muscle and Electrical Activity",
+                    "subsection_title": "Conduction System of the Heart",
+                    "chunk_id": "b4c0c3c7-9971-4364-a125-00f7df9ca020",
+                    "text_preview": "While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential. Conductive cells contain a series of sodium ion c"
+                  }
+                ],
+                "total_chunks_returned": 9
+              },
+              "retrieval_calls": 1,
+              "retrieval_schema_keys": [
+                "_primary_chunk_id",
+                "_window_role",
+                "chapter_num",
+                "chapter_title",
+                "chunk_id",
+                "element_type",
+                "image_filename",
+                "page",
+                "section_title",
+                "subsection_title",
+                "text"
+              ]
+            },
+            {
+              "wrapper": "teacher.draft_rapport",
+              "decision_effect": null,
+              "input_hash": "02af03ec34d58415",
+              "elapsed_s": 1.2,
+              "in_tok": 439,
+              "out_tok": 56,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00216,
+              "s_per_tok": 0.0215,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 413
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 43
+                }
+              ],
+              "system_prompt": "You are\na Socratic tutor in human anatomy working with a student.\nThis is an evaluated learning session.\nGlobal rules for all teacher wrappers:\n- Keep language academically focused and concise.\n- Do not reveal final answers unless wrapper-specific instructions explicitly allow it.\n- Follow wrapper output contracts exactly.\n- If strict JSON is requested by the wrapper, return strict JSON only.\n- Avoid generic motivational filler; prioritize targeted reasoning prompts.\n\n\na Socratic human anatomy tutor opening a new session with a student.\nWrite a brief, natural opener (2-3 sentences max). Vary your tone.\nFirst words must be exactly the \"Good {time_of_day}\" greeting provided\nin the runtime context block below (e.g., \"Good morning\").\nDo NOT start with \"Hello\" or \"Welcome\". Do NOT use generic tutor clich\u00e9s.\nKeep it relevant and concrete for a student audience (coursework, exams, conceptual understanding).\nAssume a classroom/learning context by default.\nEnd with exactly one question asking what human anatomy topic the student wants to tackle today.\n\nPast session context (extracted from prior sessions \u2014 may be empty):\nNo previous history \u2014 new student.\n\nIf \"Past session context\" is empty / \"No previous history\": treat as a\nfresh session, do NOT mention prior struggles, weak topics, or invent\nhistorical difficulties.\n\nIf \"Past session context\" contains real prior data: you MAY briefly\nreference ONE specific past topic or open thread when offering a\nstarting point (\"...last time you were working through X \u2014 pick that\nup or start fresh?\"). At most ONE prior item; no recap, no list, no\nlearning-style summary; do NOT reveal past answers.\n\n\n---\n\nRuntime context for this session:\n  time_of_day: morning\nUse the corresponding 'Good morning' / 'Good afternoon' / 'Good evening' as the first words of your reply, exactly.",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Start the session."
+                }
+              ],
+              "response_text": "Good morning. I'm here to work through human anatomy with you using questions and reasoning rather than just handing over answers\u2014that approach tends to stick better when you're preparing for exams or building real understanding. What topic would you like to focus on today?",
+              "tool_calls_made": []
+            }
+          ]
+        },
+        {
+          "turn": 1,
+          "phase": "tutoring",
+          "trace": [
+            {
+              "wrapper": "dean.topic_lock_guard",
+              "result": "bypassed_setup_classification_on_topic_selection"
+            },
+            {
+              "wrapper": "dean.sanitize_locked_answer",
+              "candidate": "sinoatrial node",
+              "action": "wiped_ungrounded",
+              "final": "sinoatrial node"
+            },
+            {
+              "wrapper": "dean.confidence_score",
+              "result": "answer_conf=0.000, mastery_conf=0.000, reached=False (gate_path=skipped_topic_just_locked)",
+              "locked_answer": "sinoatrial node",
+              "gate_path": "skipped_topic_just_locked",
+              "gate_evidence": ""
+            },
+            {
+              "wrapper": "dean.hint_progress",
+              "hint_before": 0,
+              "hint_after": 0,
+              "hint_reason": "unchanged",
+              "active_hint": ""
+            },
+            {
+              "wrapper": "dean.complexity_classifier",
+              "decision_effect": null,
+              "input_hash": "d0a3cea2b550348b",
+              "elapsed_s": 1.39,
+              "in_tok": 608,
+              "out_tok": 68,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00284,
+              "s_per_tok": 0.0205,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 494
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean of a Socratic human anatomy tutoring system. Classify\nthe complexity of the student's most recent message into ONE of three\ntiers (Adaptive-RAG, Jeong 2024). The tier drives downstream retrieval\nstrategy.\n\nTiers:\n  simple\n    \u2014 Direct factual or definitional question on the locked topic.\n    \u2014 Answerable from a single retrieval pass.\n    \u2014 Examples:\n        \"What is the SA node?\"\n        \"Where is the brachial plexus located?\"\n        \"Define synaptic cleft.\"\n\n  tangential\n    \u2014 Curiosity drift outside the locked topic but still within the\n      domain. Worth a one-shot un-section-filtered retrieval to\n      surface the related concept without losing the locked topic.\n    \u2014 Examples (when locked on Cardiac Conduction):\n        \"Wait, how does this connect to blood pressure?\"\n        \"I read about heart attacks \u2014 is that the same as arrhythmia?\"\n\n  complex\n    \u2014 Multi-step reasoning question, comparison across topics, or\n      synthesis spanning multiple subsections. May benefit from\n      multi-hop retrieval (D.4 \u2014 currently treated as `simple`).\n    \u2014 Examples:\n        \"How does the autonomic nervous system regulate cardiac\n         output during exercise?\"\n        \"Compare and contrast skeletal vs cardiac muscle tissue at\n         the cellular and functional levels.\"\n\nOutput a 1-sentence rationale citing the specific aspect of the\nstudent's message that drove the classification. Do not classify\nbased on locked topic alone \u2014 the message content is what matters.\n\nReturn strict JSON only, no prose:\n{\n  \"tier\": \"simple|tangential|complex\",\n  \"rationale\": \"\"\n}\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Locked topic (subsection): Conduction System of the Heart\nLocked anchor question: What structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\n\nRecent conversation history (most recent last):\nTutor: Good morning. I'm here to work through human anatomy with you using questions and reasoning rather than just handing over answers\u2014that approach tends to stick better when you're preparing for exams or building real understanding. What topic would you like to focus on today?\nStudent: no idea\n\nStudent's latest message:\nno idea\n\nClassify.\n"
+                }
+              ],
+              "response_text": "```json\n{\n  \"tier\": \"simple\",\n  \"rationale\": \"The student has not yet engaged with the locked topic or posed a substantive question; this is a pre-engagement statement requiring tutor redirection rather than content retrieval, making it the minimal complexity tier.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.complexity_classifier",
+              "tier": "simple",
+              "rationale": "The student has not yet engaged with the locked topic or posed a substantive question; this is a pre-engagement statement requiring tutor redirection rather than content retrieval, making it the minim"
+            },
+            {
+              "wrapper": "dean._exploration_judge",
+              "decision_effect": null,
+              "input_hash": "b0e3ebcda09720e0",
+              "elapsed_s": 1.72,
+              "in_tok": 580,
+              "out_tok": 124,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.0036,
+              "s_per_tok": 0.0138,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 397
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 74
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 146
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean in the middle of a Socratic tutoring session. A topic is\nlocked and Teacher is about to respond. Your job is to decide whether the\nstudent's latest message is asking about something OUTSIDE the locked\ntopic \u2014 a tangential concept, a clarifying prerequisite, a connection to\nanother body system, etc. \u2014 that would genuinely benefit from fetching\nextra textbook context beyond the locked section.\n\nReturn `exploration_needed: true` ONLY when ALL of these hold:\n  - The student is asking about a human anatomy concept that is NOT the\n    locked topic or a direct sub-question of it.\n  - The tangential concept has a clear short query string (3-8 words) that\n    a textbook search could retrieve.\n  - Answering it would help the student make progress on the locked topic,\n    not just scratch curiosity unrelated to the session.\n\nIf the student is answering the locked question (correct/partial/incorrect),\nasking a question strictly about the locked topic, or venting/off-topic, set\n`exploration_needed: false`. When in doubt, say false \u2014 Teacher already has\nthe locked section's context.\n\nReturn strict JSON only:\n{{\n  \"exploration_needed\": false,\n  \"exploration_query\": \"\",\n  \"rationale\": \"\"\n}}\n\n\n---\n\nTutor: Good morning. I'm here to work through human anatomy with you using questions and reasoning rather than just handing over answers\u2014that approach tends to stick better when you're preparing for exams or building real understanding. What topic would you like to focus on today?\nStudent: no idea\n\n---\n\nLocked topic: Conduction System of the Heart\nLocked question (Teacher is guiding toward this): What structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\n\nRecent conversation history:\nTutor: Good morning. I'm here to work through human anatomy with you using questions and reasoning rather than just handing over answers\u2014that approach tends to stick better when you're preparing for exams or building real understanding. What topic would you like to focus on today?\nStudent: no idea\n\nDecide based ONLY on the student's most recent message.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Judge and return strict JSON only."
+                }
+              ],
+              "response_text": "```json\n{\n  \"exploration_needed\": false,\n  \"exploration_query\": \"\",\n  \"rationale\": \"Student has not asked a question about anatomy. They responded 'no idea' to the tutor's opening prompt about topic selection. This is a procedural response, not a substantive question about the locked topic (Conduction System of the Heart) or any tangential concept. The tutor should proceed by either suggesting the locked topic or asking clarifying questions about student interests. No textbook exploration is warranted at this stage.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.exploration_judge",
+              "result": "skip",
+              "needed": false,
+              "query": "",
+              "rationale": "Student has not asked a question about anatomy. They responded 'no idea' to the tutor's opening prompt about topic selection. This is a procedural response, not a substantive question about the locked topic (Conduction System of the Heart) or any tangential concept. The tutor should proceed by either suggesting the locked topic or asking clarifying questions about student interests. No textbook exploration is warranted at this stage."
+            },
+            {
+              "wrapper": "dean.topic_ack_emitted",
+              "result": "ack_message_emitted_skipping_teacher_draft",
+              "locked_question": "What structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?"
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "phase": "tutoring",
+          "trace": [
+            {
+              "wrapper": "dean._setup_call",
+              "decision_effect": "classification_only",
+              "input_hash": "8818ef3e2943b5c4",
+              "elapsed_s": 2.12,
+              "in_tok": 1925,
+              "out_tok": 140,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00788,
+              "s_per_tok": 0.0151,
+              "cached_est_tokens": 1558,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": true,
+                  "est_tokens": 1558
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 136
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 213
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean supervising one Socratic tutoring turn.\nTools are already handled in Python. Do NOT request tools.\nThis is an evaluation setting: classify strictly based on evidence in the student's latest message.\n\nSTRICT LOW_EFFORT RULES (highest priority):\n  The student must be GENUINELY ATTEMPTING the locked_question.\n  low_effort when: bare denial (\"no\", \"idk\", \"i don't know\"), demand\n  to be told (\"just tell me\"), frustration (\"if i wanted to read...\"),\n  empty deflection (<5 words, no domain content), profanity, or\n  dismissal. Off-topic + frustration \u2192 low_effort.\n  irrelevant: genuinely off-topic question on a different subject.\n\nOTHER:\n  question: genuine specific clarifying question about human anatomy,\n    with engagement. Rhetorical/frustrated questions \u2192 low_effort.\n  incorrect: genuine attempt but wrong.\n  partial_correct: answers an INTERMEDIATE scaffold the tutor asked,\n    but NOT the locked answer. (e.g. \"stroke volume goes lower\" when\n    locked_answer is \"skeletal muscle pump\" \u2192 partial_correct.)\n  correct: student STATES the locked_answer or a clear paraphrase.\n    Getting an intermediate scaffold right is partial_correct, NOT correct.\n    Only the LOCKED answer being stated counts as correct.\n\nstudent_reached_answer: ALWAYS set to false. Python's\n  reached_answer_gate computes the authoritative reached signal.\n\nconfidence_score:\n  - 0.85-1.00: explicit, accurate, certain\n  - 0.65-0.84: mostly correct, mild ambiguity\n  - 0.40-0.64: partial / uncertain\n  - 0.00-0.39: incorrect, irrelevant, low-effort\n\nhint_level: leave unchanged (Python increments for incorrect).\nlocked_answer is already set; do not propose a new one.\n\nReturn one JSON object only (no markdown):\n{{\n  \"student_state\": \"correct|partial_correct|incorrect|question|irrelevant|low_effort\",\n  \"student_reached_answer\": false,\n  \"confidence_score\": 0.0,\n  \"hint_level\": 1,\n  \"search_needed\": false,\n  \"critique\": \"\"\n}}\n\n\n[1] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nBoth bundle branches descend and reach the apex of the heart where they connect with the Purkinje fibers. The Purkinje fibers are additional myocardial conductive fibers that spread the impulse to the myocardial contractile cells in the ventricles. They extend throughout the myocardium from the apex of the heart toward the atrioventricular septum and the base of the heart. The Purkinje fibers have a fast inherent conduction rate, and the electrical impulse reaches all of the ventricular muscle cells in about 75 ms. Since the electrical stimulus begins at the apex, the contraction also begins at the apex and travels toward the base of the heart, similar to squeezing a tube of toothpaste from the bottom. This allows the blood to be pumped out of the ventricles and into the aorta and pulmonary trunk.\n\n===\n\n[2] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nThe total time elapsed from the initiation of the impulse in the SA node until depolarization of the ventricles is approximately 225 ms. Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n===\n\n[3] (p.790, score=1.00) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n===\n\n[4] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n===\n\n[5] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells. While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n===\n\n[6] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nConductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n===\n\n[7] (p.790, score=0.84) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential. Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n===\n\n[8] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nThe resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization).\n\n===\n\n[9] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nContext from previous chunk: Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV. The resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization ).\n\n---\n\nTutor: Good morning. I'm here to work through human anatomy with you using questions and reasoning rather than just handing over answers\u2014that approach tends to stick better when you're preparing for exams or building real understanding. What topic would you like to focus on today?\nStudent: no idea\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\nStudent: just tell me\n\n---\n\nCurrent state:\n- locked_question: What structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\n- locked_answer: sinoatrial node\n- hint_level: 0\n- turn_count: 1\n\nRecent conversation history:\nTutor: Good morning. I'm here to work through human anatomy with you using questions and reasoning rather than just handing over answers\u2014that approach tends to stick better when you're preparing for exams or building real understanding. What topic would you like to focus on today?\nStudent: no idea\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\nStudent: just tell me\nClassify the student's MOST RECENT message. Prior history is context only.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Classify this turn and return JSON."
+                }
+              ],
+              "response_text": "```json\n{\n  \"student_state\": \"low_effort\",\n  \"student_reached_answer\": false,\n  \"confidence_score\": 0.95,\n  \"hint_level\": 0,\n  \"search_needed\": false,\n  \"critique\": \"Student responded with 'just tell me'\u2014a direct demand to be given the answer rather than engaging with the Socratic question. This is a bare refusal to attempt reasoning, matching the low_effort criterion of demanding to be told the answer. No genuine attempt at the locked question (sinoatrial node) was made.\"\n}\n```",
+              "tool_calls_made": [],
+              "result": "student_state=low_effort, hint=0",
+              "locked_answer_final": "sinoatrial node"
+            },
+            {
+              "wrapper": "dean.sanitize_locked_answer",
+              "candidate": "sinoatrial node",
+              "action": "wiped_ungrounded",
+              "final": "sinoatrial node"
+            },
+            {
+              "wrapper": "dean.reached_answer_gate",
+              "decision_effect": null,
+              "input_hash": "32db9816c78a8e8a",
+              "elapsed_s": 1.67,
+              "in_tok": 955,
+              "out_tok": 88,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00419,
+              "s_per_tok": 0.019,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 563
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 136
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 224
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean checking whether the student has STATED the locked answer\nin their most recent message. This is the final gate before tutoring ends \u2014\na false positive fabricates a confirmation the student didn't earn, so be\nstrict.\n\nDEFINITIONS:\n- locked_answer: the target term/concept (e.g. \"skeletal muscle pump\").\n- aliases: equivalent phrasings the student could use instead.\n- \"Reached\" means the student asserted the answer or paraphrased it as a\n  positive answer in THIS message.\n\nREACHED = TRUE rules (must satisfy ALL):\n1. The student names locked_answer (or any alias) OR paraphrases the\n   concept unambiguously.\n2. The phrasing is an ASSERTION (not a question, not a hedge).\n   - Asserting: \"It's the skeletal muscle pump\" / \"The muscles squeeze\n     the veins to push blood up\" \u2192 REACHED.\n   - Asking: \"Is it the skeletal muscle pump?\" \u2192 NOT REACHED.\n   - Hedging: \"Maybe gravity? I'm not sure\" \u2192 NOT REACHED.\n   - Denying: \"I don't know what skeletal muscle pump is\" \u2192 NOT REACHED.\n3. You can quote a contiguous substring from the student's latest message\n   that demonstrates this assertion. The quote must appear VERBATIM in the\n   student's message. No quote \u2192 NOT REACHED.\n\nREACHED = FALSE if any of:\n- The student names a different concept (even a related/neighboring one).\n  e.g. locked=\"SA node\", student says \"AV node\" \u2192 NOT REACHED.\n- The student names only one component of a multi-word answer in a way\n  that doesn't convey the full concept.\n  e.g. locked=\"skeletal muscle pump\", student says \"muscles\" alone \u2192 NOT REACHED.\n- The student is asking, hedging, denying, or off-topic.\n\nBIAS: When in doubt, return reached=false. False positives are costly.\n\nReturn strict JSON ONLY (no markdown, no prose):\n{{\n  \"reached\": true,\n  \"evidence\": \"exact verbatim quote from student message\",\n  \"rationale\": \"1 sentence on why this counts (or doesn't)\"\n}}\n\n\n---\n\nTutor: Good morning. I'm here to work through human anatomy with you using questions and reasoning rather than just handing over answers\u2014that approach tends to stick better when you're preparing for exams or building real understanding. What topic would you like to focus on today?\nStudent: no idea\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\nStudent: just tell me\n\n---\n\nLocked answer: sinoatrial node\nAliases (equivalent phrasings): SA node, sinus node, pacemaker of the heart, cardiac pacemaker\n\nRecent conversation (for context only \u2014 judge based on the LATEST student message):\nTutor: Good morning. I'm here to work through human anatomy with you using questions and reasoning rather than just handing over answers\u2014that approach tends to stick better when you're preparing for exams or building real understanding. What topic would you like to focus on today?\nStudent: no idea\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\nStudent: just tell me\n\nStudent's LATEST message:\njust tell me\n\nDecide: did the student reach the locked answer in their LATEST message?\nReturn strict JSON only.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Decide and return strict JSON."
+                }
+              ],
+              "response_text": "```json\n{\n  \"reached\": false,\n  \"evidence\": \"N/A\",\n  \"rationale\": \"Student's message 'just tell me' is a request for information, not an assertion of the locked answer (sinoatrial node / SA node / sinus node / pacemaker of the heart). No concept is named or paraphrased.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.confidence_score",
+              "result": "answer_conf=0.950, mastery_conf=0.475, reached=False (gate_path=no_overlap_no_paraphrase)",
+              "locked_answer": "sinoatrial node",
+              "gate_path": "no_overlap_no_paraphrase",
+              "gate_evidence": ""
+            },
+            {
+              "wrapper": "dean.hint_progress",
+              "hint_before": 0,
+              "hint_after": 0,
+              "hint_reason": "unchanged",
+              "active_hint": ""
+            },
+            {
+              "wrapper": "dean.complexity_classifier",
+              "decision_effect": null,
+              "input_hash": "f6da1dd6bfb5b457",
+              "elapsed_s": 1.34,
+              "in_tok": 671,
+              "out_tok": 79,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.0032,
+              "s_per_tok": 0.0169,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 494
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean of a Socratic human anatomy tutoring system. Classify\nthe complexity of the student's most recent message into ONE of three\ntiers (Adaptive-RAG, Jeong 2024). The tier drives downstream retrieval\nstrategy.\n\nTiers:\n  simple\n    \u2014 Direct factual or definitional question on the locked topic.\n    \u2014 Answerable from a single retrieval pass.\n    \u2014 Examples:\n        \"What is the SA node?\"\n        \"Where is the brachial plexus located?\"\n        \"Define synaptic cleft.\"\n\n  tangential\n    \u2014 Curiosity drift outside the locked topic but still within the\n      domain. Worth a one-shot un-section-filtered retrieval to\n      surface the related concept without losing the locked topic.\n    \u2014 Examples (when locked on Cardiac Conduction):\n        \"Wait, how does this connect to blood pressure?\"\n        \"I read about heart attacks \u2014 is that the same as arrhythmia?\"\n\n  complex\n    \u2014 Multi-step reasoning question, comparison across topics, or\n      synthesis spanning multiple subsections. May benefit from\n      multi-hop retrieval (D.4 \u2014 currently treated as `simple`).\n    \u2014 Examples:\n        \"How does the autonomic nervous system regulate cardiac\n         output during exercise?\"\n        \"Compare and contrast skeletal vs cardiac muscle tissue at\n         the cellular and functional levels.\"\n\nOutput a 1-sentence rationale citing the specific aspect of the\nstudent's message that drove the classification. Do not classify\nbased on locked topic alone \u2014 the message content is what matters.\n\nReturn strict JSON only, no prose:\n{\n  \"tier\": \"simple|tangential|complex\",\n  \"rationale\": \"\"\n}\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Locked topic (subsection): Conduction System of the Heart\nLocked anchor question: What structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\n\nRecent conversation history (most recent last):\nTutor: Good morning. I'm here to work through human anatomy with you using questions and reasoning rather than just handing over answers\u2014that approach tends to stick better when you're preparing for exams or building real understanding. What topic would you like to focus on today?\nStudent: no idea\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\nStudent: just tell me\n\nStudent's latest message:\njust tell me\n\nClassify.\n"
+                }
+              ],
+              "response_text": "```json\n{\n  \"tier\": \"simple\",\n  \"rationale\": \"The student is requesting direct information delivery rather than engaging with the anchor question; this is a compliance/engagement issue, not a complexity classification\u2014the underlying question (SA node identification) remains a straightforward factual recall task answerable in a single retrieval pass.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.complexity_classifier",
+              "tier": "simple",
+              "rationale": "The student is requesting direct information delivery rather than engaging with the anchor question; this is a compliance/engagement issue, not a complexity classification\u2014the underlying question (SA "
+            },
+            {
+              "wrapper": "dean._exploration_judge",
+              "decision_effect": null,
+              "input_hash": "fc4cdbd9e7c68b0c",
+              "elapsed_s": 1.36,
+              "in_tok": 703,
+              "out_tok": 97,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00356,
+              "s_per_tok": 0.014,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 397
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 136
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 208
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean in the middle of a Socratic tutoring session. A topic is\nlocked and Teacher is about to respond. Your job is to decide whether the\nstudent's latest message is asking about something OUTSIDE the locked\ntopic \u2014 a tangential concept, a clarifying prerequisite, a connection to\nanother body system, etc. \u2014 that would genuinely benefit from fetching\nextra textbook context beyond the locked section.\n\nReturn `exploration_needed: true` ONLY when ALL of these hold:\n  - The student is asking about a human anatomy concept that is NOT the\n    locked topic or a direct sub-question of it.\n  - The tangential concept has a clear short query string (3-8 words) that\n    a textbook search could retrieve.\n  - Answering it would help the student make progress on the locked topic,\n    not just scratch curiosity unrelated to the session.\n\nIf the student is answering the locked question (correct/partial/incorrect),\nasking a question strictly about the locked topic, or venting/off-topic, set\n`exploration_needed: false`. When in doubt, say false \u2014 Teacher already has\nthe locked section's context.\n\nReturn strict JSON only:\n{{\n  \"exploration_needed\": false,\n  \"exploration_query\": \"\",\n  \"rationale\": \"\"\n}}\n\n\n---\n\nTutor: Good morning. I'm here to work through human anatomy with you using questions and reasoning rather than just handing over answers\u2014that approach tends to stick better when you're preparing for exams or building real understanding. What topic would you like to focus on today?\nStudent: no idea\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\nStudent: just tell me\n\n---\n\nLocked topic: Conduction System of the Heart\nLocked question (Teacher is guiding toward this): What structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\n\nRecent conversation history:\nTutor: Good morning. I'm here to work through human anatomy with you using questions and reasoning rather than just handing over answers\u2014that approach tends to stick better when you're preparing for exams or building real understanding. What topic would you like to focus on today?\nStudent: no idea\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\nStudent: just tell me\n\nDecide based ONLY on the student's most recent message.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Judge and return strict JSON only."
+                }
+              ],
+              "response_text": "```json\n{\n  \"exploration_needed\": false,\n  \"exploration_query\": \"\",\n  \"rationale\": \"Student is resisting the Socratic method and asking for a direct answer to the locked question itself, not asking about a tangential concept. This is a pedagogical pushback, not a request for prerequisite or related anatomy context. Teacher should address the student's resistance to guided learning before proceeding.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.exploration_judge",
+              "result": "skip",
+              "needed": false,
+              "query": "",
+              "rationale": "Student is resisting the Socratic method and asking for a direct answer to the locked question itself, not asking about a tangential concept. This is a pedagogical pushback, not a request for prerequisite or related anatomy context. Teacher should address the student's resistance to guided learning before proceeding."
+            },
+            {
+              "wrapper": "teacher.draft_socratic",
+              "decision_effect": null,
+              "input_hash": "545fe09c4a179c10",
+              "elapsed_s": 1.8,
+              "in_tok": 1919,
+              "out_tok": 67,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00676,
+              "s_per_tok": 0.0269,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 1473
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 136
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 383
+                }
+              ],
+              "system_prompt": "You are\na Socratic tutor in human anatomy working with a student.\nThis is an evaluated learning session.\nGlobal rules for all teacher wrappers:\n- Keep language academically focused and concise.\n- Do not reveal final answers unless wrapper-specific instructions explicitly allow it.\n- Follow wrapper output contracts exactly.\n- If strict JSON is requested by the wrapper, return strict JSON only.\n- Avoid generic motivational filler; prioritize targeted reasoning prompts.\n\n\na Socratic anatomy tutor.\nThe student is being evaluated on human anatomy reasoning quality.\n\nHard rules:\n- Never reveal the answer directly or indirectly.\n- Never state \"you're correct\" unless you also ask for reasoning or application.\n- Keep output to 2-4 sentences.\n- End with exactly one question.\n- Ask only one question total.\n- If the student is incorrect, do not bluntly correct; use probing guidance.\n- Do NOT use strong affirmation phrases (for example: \"Exactly\", \"Correct\", \"That's right\", \"You got it\")\n  unless student_state is exactly \"correct\".\n\nBehavior by student_state:\n- correct: affirm briefly, then deepen via mechanism/function.\n- partial_correct: acknowledge only the accurate fragment (use \"close\"/\"partly right\"), then probe missing link.\n- incorrect: do not affirm; probe reasoning path and guide toward self-correction.\n- question: briefly answer clarification, then return to core reasoning.\n- irrelevant: redirect to current human anatomy target.\n- low_effort: request a concrete attempt before moving on.\n\nHint-level behavior:\n- level 1: broad activation question.\n- level 2: narrower mechanism/relationship question.\n- level 3: direct but non-revealing final push.\n\nInternal quality check before finalizing (EULER-lite):\n- Question present: ends with exactly one real question.\n- Relevance: tied to latest student message and target concept.\n- Helpful: advances reasoning, not generic filler.\n- No reveal: locked answer/synonym is not inferable in one hop.\n- Avoid repetitive empathy wrappers and filler phrases.\n\nBanned lead-ins \u2014 NEVER start a sentence with these:\n- \"I can see\"\n- \"I notice\"\n- \"I hear\"\n- \"That's okay\"\n- \"I understand\"\n- \"I see that\"\n- \"It sounds like\"\nViolation of any banned lead-in = automatic rewrite.\n\nOutput contract:\n- At most 4 sentences total.\n- Sentence 1: brief targeted acknowledgment (optional).\n- Sentence 2-3: focused reasoning scaffold.\n- Final sentence: exactly one question.\nOutput only the final tutor message.\n\n\nTextbook propositions:\n[1] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nBoth bundle branches descend and reach the apex of the heart where they connect with the Purkinje fibers. The Purkinje fibers are additional myocardial conductive fibers that spread the impulse to the myocardial contractile cells in the ventricles. They extend throughout the myocardium from the apex of the heart toward the atrioventricular septum and the base of the heart. The Purkinje fibers have a fast inherent conduction rate, and the electrical impulse reaches all of the ventricular muscle cells in about 75 ms. Since the electrical stimulus begins at the apex, the contraction also begins at the apex and travels toward the base of the heart, similar to squeezing a tube of toothpaste from the bottom. This allows the blood to be pumped out of the ventricles and into the aorta and pulmonary trunk.\n\n[2] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nThe total time elapsed from the initiation of the impulse in the SA node until depolarization of the ventricles is approximately 225 ms. Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n[3] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n[4] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n[5] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells. While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n[6] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nConductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n[7] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential. Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n[8] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nThe resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization).\n\n[9] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nContext from previous chunk: Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV. The resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization ).\n\n\n---\n\nTutor: Good morning. I'm here to work through human anatomy with you using questions and reasoning rather than just handing over answers\u2014that approach tends to stick better when you're preparing for exams or building real understanding. What topic would you like to focus on today?\nStudent: no idea\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\nStudent: just tell me\n\n---\n\nCurrent student_state: low_effort\nCurrent hint level: 0 of 3\nDean's pre-planned hint for this level (use as the pedagogical roadmap; phrase it naturally, do NOT recite verbatim, do NOT reveal the locked answer): \nDean guidance for this draft (preflight + prior critique if any): reason_codes=['preflight']\nrewrite_instruction=Generate one concise Socratic reply that will pass Dean QC.\ncritique=Preflight constraints: exactly one question mark, 2-4 sentences, no generic filler lead-ins, no answer reveal by naming/elimination, and one concrete next reasoning step.\ncontext=student_state:low_effort,hint_level:0,active_hint:\nAnchor question this student is pursuing: What structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\n\nRecent conversation history:\nTutor: Good morning. I'm here to work through human anatomy with you using questions and reasoning rather than just handing over answers\u2014that approach tends to stick better when you're preparing for exams or building real understanding. What topic would you like to focus on today?\nStudent: no idea\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\nStudent: just tell me\nPrior turns are provided for continuity. Use them to avoid repeating questions you've already asked and to maintain hint-level progression. Respond to the student's most recent message.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "just tell me"
+                }
+              ],
+              "response_text": "I can explain how the process works, but first you'll need to make a concrete attempt\u2014that's how the material sticks. Here's a scaffold: the heart has four chambers. Which chamber's wall would logically need to trigger the heartbeat first, and why would that chamber be the logical starting point?",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean._deterministic_quality_check",
+              "result": "PASS",
+              "reason_codes": []
+            },
+            {
+              "wrapper": "dean._quality_check_call",
+              "decision_effect": "qc_fail",
+              "input_hash": "79178e1ed30763d8",
+              "elapsed_s": 2.87,
+              "in_tok": 2009,
+              "out_tok": 147,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00823,
+              "s_per_tok": 0.0195,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 1447
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 136
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 460
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean reviewing a teacher draft before release to the student.\nThis is an evaluation setting: enforce standards strictly and consistently.\n\nEvaluate against all 4 EULER criteria. Fail if any fails:\n1. QUESTION_PRESENT: ends with exactly one question.\n2. RELEVANCE: grounded in student's latest message and current target.\n3. HELPFUL: meaningfully advances reasoning (not generic filler).\n4. NO_REVEAL (LeakGuard): response does not expose or entail locked_answer via direct naming,\n   one-hop inference, elimination, or sycophantic confirmation.\n\nAdditional strict checks:\n- Exactly one question mark \"?\" in tutoring mode.\n- No repetitive generic coaching filler.\n- Must include a concrete next reasoning step.\n\nResponse requirements:\n- Return a single valid JSON object only (no markdown, no backticks, no prose).\n- Include revised_teacher_draft only when pass=false.\n- Use strict JSON with double quotes.\n- Keep critique <= 20 words and rewrite_instruction <= 14 words.\n- Keep revised_teacher_draft <= 4 sentences and plain text only.\n\nRespond with JSON only:\n{{\n  \"pass\": true/false,\n  \"critique\": \"short explanation if fail, empty if pass\",\n  \"leak_detected\": true/false,\n  \"reason_codes\": [\"missing_question\"|\"multi_question\"|\"generic_filler\"|\"low_helpfulness\"|\"reveal_risk\"|\"sycophancy_risk\"|\"off_topic\"|\"other\"],\n  \"rewrite_instruction\": \"one concrete instruction for the next draft\",\n  \"revised_teacher_draft\": \"full revised tutor response, empty when pass=true\"\n}}\n\n\n[1] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nBoth bundle branches descend and reach the apex of the heart where they connect with the Purkinje fibers. The Purkinje fibers are additional myocardial conductive fibers that spread the impulse to the myocardial contractile cells in the ventricles. They extend throughout the myocardium from the apex of the heart toward the atrioventricular septum and the base of the heart. The Purkinje fibers have a fast inherent conduction rate, and the electrical impulse reaches all of the ventricular muscle cells in about 75 ms. Since the electrical stimulus begins at the apex, the contraction also begins at the apex and travels toward the base of the heart, similar to squeezing a tube of toothpaste from the bottom. This allows the blood to be pumped out of the ventricles and into the aorta and pulmonary trunk.\n\n===\n\n[2] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nThe total time elapsed from the initiation of the impulse in the SA node until depolarization of the ventricles is approximately 225 ms. Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n===\n\n[3] (p.790, score=1.00) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n===\n\n[4] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n===\n\n[5] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells. While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n===\n\n[6] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nConductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n===\n\n[7] (p.790, score=0.84) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential. Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n===\n\n[8] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nThe resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization).\n\n===\n\n[9] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nContext from previous chunk: Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV. The resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization ).\n\n---\n\nTutor: Good morning. I'm here to work through human anatomy with you using questions and reasoning rather than just handing over answers\u2014that approach tends to stick better when you're preparing for exams or building real understanding. What topic would you like to focus on today?\nStudent: no idea\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\nStudent: just tell me\n\n---\n\nPhase: tutoring\nCorrect answer (never reveal): sinoatrial node\nStudent's last message: just tell me\nTeacher's draft: I can explain how the process works, but first you'll need to make a concrete attempt\u2014that's how the material sticks. Here's a scaffold: the heart has four chambers. Which chamber's wall would logically need to trigger the heartbeat first, and why would that chamber be the logical starting point?\nPrior preflight critique (the deterministic-check or earlier dean_critique that\nthe Teacher was already given for this turn \u2014 empty if this is the first eval):\nreason_codes=['preflight']\nrewrite_instruction=Generate one concise Socratic reply that will pass Dean QC.\ncritique=Preflight constraints: exactly one question mark, 2-4 sentences, no generic filler lead-ins, no answer reveal by naming/elimination, and one concrete next reasoning step.\ncontext=student_state:low_effort,hint_level:0,active_hint:\nRecent conversation history:\nTutor: Good morning. I'm here to work through human anatomy with you using questions and reasoning rather than just handing over answers\u2014that approach tends to stick better when you're preparing for exams or building real understanding. What topic would you like to focus on today?\nStudent: no idea\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?\nStudent: just tell me\nEvaluate ONLY the Teacher's most recent draft against the student's most recent message. Use prior conversation history to detect repetition, contradiction, or improper hint regression \u2014 not as material to grade. If prior_preflight_critique is non-empty, your rewrite_instruction MUST address that specific failure mode (do not regress to it).\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Evaluate this Teacher draft."
+                }
+              ],
+              "response_text": "```json\n{\n  \"pass\": false,\n  \"critique\": \"Scaffold repeats prior failed strategy; student rejected direct teaching. Reframe as minimal hint with single concrete question.\",\n  \"leak_detected\": false,\n  \"reason_codes\": [\"low_helpfulness\", \"generic_filler\"],\n  \"rewrite_instruction\": \"Ask one direct question about which chamber contracts first, without scaffold preamble.\",\n  \"revised_teacher_draft\": \"The heartbeat has to start somewhere\u2014one chamber must depolarize before the others. Which of the four chambers would logically contract first to pump blood efficiently through the heart?\"\n}\n```",
+              "tool_calls_made": [],
+              "result": "FAIL: Scaffold repeats prior failed strategy; student rejected direct teaching. Reframe as minimal hint with single concrete question.",
+              "reason_codes": [
+                "low_helpfulness",
+                "generic_filler"
+              ],
+              "rewrite_instruction": "Ask one direct question about which chamber contracts first, without scaffold preamble.",
+              "parse_ok": true,
+              "revised_teacher_draft": "The heartbeat has to start somewhere\u2014one chamber must depolarize before the others. Which of the four chambers would logically contract first to pump blood efficiently through the heart?"
+            },
+            {
+              "wrapper": "dean._deterministic_quality_check_revised",
+              "result": "PASS",
+              "reason_codes": []
+            },
+            {
+              "wrapper": "dean.revised_teacher_draft_applied",
+              "result": "Applied Dean revised_teacher_draft (single-pass repair)"
+            }
+          ]
+        }
+      ],
+      "hint_progress": [
+        {
+          "turn": 0,
+          "student_state": "question",
+          "hint_before": 0,
+          "hint_after": 0,
+          "reason": "unchanged",
+          "active_hint": ""
+        },
+        {
+          "turn": 1,
+          "student_state": "low_effort",
+          "hint_before": 0,
+          "hint_after": 0,
+          "reason": "unchanged",
+          "active_hint": ""
+        },
+        {
+          "turn": 2,
+          "student_state": "correct",
+          "hint_before": 0,
+          "hint_after": 0,
+          "reason": "unchanged",
+          "active_hint": ""
+        }
+      ],
+      "hint_plan": [],
+      "complexity_tier": "simple"
+    }
+  },
+  "result": {
+    "reached_pass": false,
+    "fabrication_pass": true,
+    "overall_pass": false
+  },
+  "notes": [],
+  "log": [
+    {
+      "step": "prelock",
+      "matcher_path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart",
+      "matcher_score": 101.0,
+      "chunk_count": 16,
+      "locked_question": "What structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?",
+      "locked_answer": "sinoatrial node",
+      "locked_answer_aliases": [
+        "SA node",
+        "sinus node",
+        "pacemaker of the heart",
+        "cardiac pacemaker"
+      ],
+      "lock_source": "forced"
+    },
+    {
+      "step": "rapport_greeting",
+      "tutor": "Good morning. I'm here to work through human anatomy with you using questions and reasoning rather than just handing over answers\u2014that approach tends to stick better when you're preparing for exams or building real understanding. What topic would you like to focus on today?"
+    },
+    {
+      "step": "tutoring_turn_1_student",
+      "student": "no idea"
+    },
+    {
+      "step": "tutoring_turn_1_after_invoke",
+      "tutor": "Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?",
+      "student_state": "question",
+      "student_reached_answer": false,
+      "student_answer_confidence": 0.0,
+      "phase": "tutoring",
+      "hint_level": 0
+    },
+    {
+      "step": "tutoring_turn_2_student",
+      "student": "just tell me"
+    },
+    {
+      "step": "tutoring_turn_2_after_invoke",
+      "tutor": "The heartbeat has to start somewhere\u2014one chamber must depolarize before the others. Which of the four chambers would logically contract first to pump blood efficiently through the heart?",
+      "student_state": "low_effort",
+      "student_reached_answer": false,
+      "student_answer_confidence": 0.95,
+      "phase": "tutoring",
+      "hint_level": 0
+    },
+    {
+      "step": "tutoring_turn_3_student",
+      "student": "fine, the SA node"
+    },
+    {
+      "step": "tutoring_turn_3_after_invoke",
+      "tutor": "Would you like to explore a clinical scenario where SA node dysfunction occurs, or would you prefer to move on?",
+      "student_state": "correct",
+      "student_reached_answer": true,
+      "student_answer_confidence": 0.95,
+      "phase": "assessment",
+      "hint_level": 0
+    }
+  ],
+  "debug_summary": {
+    "api_calls": 11,
+    "input_tokens": 12035,
+    "output_tokens": 1045,
+    "cost_usd": 0.05177999999999999
+  }
+}

@@ -1,0 +1,326 @@
+{
+  "session_id": "72ec38f3",
+  "test_id": null,
+  "description": "",
+  "scored_at": "2026-04-30T08:50:46+00:00",
+  "primary": {
+    "EULER": {
+      "question_present": 1.0,
+      "relevance": 1.0,
+      "helpful": 0.75,
+      "no_reveal": 0.25,
+      "passes_all_thresholds": false,
+      "n_turns_scored": 4
+    },
+    "RAGAS": {
+      "context_precision": 0.7,
+      "context_recall": 1.0,
+      "context_relevancy": 0.63,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "answer_correctness": 0.0,
+      "passes_all_thresholds": false
+    }
+  },
+  "secondary": {
+    "TLQ": {
+      "score": 0.931,
+      "threshold": 0.8,
+      "passes": true,
+      "sub": {
+        "match_top_score": 1.0,
+        "vote_consensus": 0.657,
+        "coverage_gate_pass": 1.0,
+        "anchor_extraction_success": 1.0,
+        "repair_clean": 1.0
+      }
+    },
+    "RRQ": {
+      "score": 0.904,
+      "threshold": 0.75,
+      "passes": true,
+      "sub": {
+        "chunk_count_adequacy": 1.0,
+        "mean_top3_score": 1.0,
+        "section_match_rate": 1.0,
+        "retrieval_calls_efficiency": 1.0,
+        "coverage_gap_frequency": 1.0,
+        "ragas_context_precision": 0.7,
+        "ragas_context_relevancy": 0.63
+      }
+    },
+    "AQ": {
+      "score": 0.783,
+      "threshold": 0.85,
+      "passes": false,
+      "sub": {
+        "groundedness": 1.0,
+        "answer_brevity": 0.7,
+        "answer_is_noun_phrase": 1.0,
+        "aliases_count_adequacy": 0.75,
+        "question_specificity": 0.85,
+        "aliases_diversity_semantic": 0.4
+      }
+    },
+    "TRQ": {
+      "score": 0.648,
+      "threshold": 0.75,
+      "passes": false,
+      "sub": {
+        "qc_pass_rate": 0.333,
+        "revised_draft_rate": 0.5,
+        "intervention_rate": 0.75,
+        "reason_codes_clean_rate": 0.5,
+        "euler_question_present": 1.0,
+        "euler_relevance": 1.0,
+        "euler_helpful": 0.75,
+        "euler_no_reveal": 0.25,
+        "repetition_score": 0.75
+      }
+    },
+    "RGC": {
+      "score": 1.0,
+      "threshold": 0.95,
+      "passes": true,
+      "sub": {
+        "no_false_positives": 1.0,
+        "no_false_negatives": 1.0,
+        "evidence_quote_validity": 1.0,
+        "path_distribution": {
+          "skipped_topic_just_locked": 1,
+          "no_overlap_no_paraphrase": 3
+        },
+        "confusion_matrix": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 4,
+          "fn": 0
+        }
+      }
+    },
+    "PP": {
+      "score": 0.667,
+      "threshold": 0.6,
+      "passes": true,
+      "sub": {
+        "hint_progression_monotonic": 1.0,
+        "hint_utilization": 0.667,
+        "student_engagement_rate": 0.5,
+        "state_trajectory_score": 0.5
+      }
+    },
+    "ARC": {
+      "score": 1.0,
+      "threshold": 0.7,
+      "passes": true,
+      "sub": {
+        "step_vs_reach_disambiguation_det": 1.0,
+        "intermediate_credit_avoidance_det": 1.0,
+        "mastery_attribution_grounding": null,
+        "step_vs_reach_disambiguation_llm": 1.0,
+        "intermediate_credit_avoidance_llm": 1.0,
+        "off_topic_drift_score": 1.0,
+        "mastery_attribution_evidence": [],
+        "n_intermediate_turns": 0,
+        "n_fabrication_turns": 0
+      }
+    },
+    "CC": {
+      "score": 0.75,
+      "threshold": 1.0,
+      "passes": false,
+      "sub": {
+        "phase_transitions_legal": 1.0,
+        "topic_stability": 1.0,
+        "anchor_stability": 1.0,
+        "invariant_score": 0.0,
+        "invariant_violations_count": 14
+      }
+    },
+    "CE": {
+      "score": 0.0,
+      "threshold": 0.5,
+      "passes": false,
+      "sub": {
+        "cost_score": 0.0,
+        "cache_hit_rate": 0.0,
+        "cost_per_useful_turn": 0.29683368749999994
+      }
+    },
+    "MSC": {
+      "score": 0.5,
+      "threshold": 0.7,
+      "passes": false,
+      "sub": {
+        "confidence_appropriateness": null,
+        "ewma_movement_score": 0.5,
+        "rationale_grounding_llm": null
+      }
+    }
+  },
+  "penalties": [
+    {
+      "code": "LEAK_DETECTED",
+      "severity": "critical",
+      "evidence": "turn 1: no_reveal=0.0 \u2014 Exactly\u2014the sodium gradient is the engine. You've now traced three mechanisms: diffusion (passive), active transport (the pump itself), and secondary active transport (sodium powering glucose). Before",
+      "turn_id": 1,
+      "source": "llm"
+    },
+    {
+      "code": "LEAK_DETECTED",
+      "severity": "critical",
+      "evidence": "turn 2: no_reveal=0.0 \u2014 Good instinct to separate two ideas. Let's focus: osmosis specifically moves *water* in response to solute concentration differences. Now, of the five mechanisms we've traced\u2014diffusion, active transpo",
+      "turn_id": 2,
+      "source": "llm"
+    },
+    {
+      "code": "LEAK_DETECTED",
+      "severity": "critical",
+      "evidence": "turn 3: no_reveal=0.0 \u2014 Exactly\u2014lipid-soluble substances slip through on their own. Now picture oxygen crossing into a cell because it's more concentrated outside, or carbon dioxide leaving because it's more concentrated ins",
+      "turn_id": 3,
+      "source": "llm"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "14 invariant violation(s) on this session (kinds: ungrounded_tutoring_turn); first: kind=ungrounded_tutoring_turn turn=2",
+      "raw_count": 14,
+      "source": "det"
+    }
+  ],
+  "verdict": "failed_critical_penalty",
+  "raw_signals": {
+    "turn_count": 15,
+    "max_turns": 25,
+    "final_phase": "tutoring",
+    "final_hint_level": 2,
+    "max_hints": 3,
+    "final_student_reached_answer": false,
+    "interventions": 1,
+    "coverage_gap_events": 0,
+    "retrieval_calls": 1,
+    "cost_usd": 1.1873347499999998,
+    "api_calls": 90,
+    "input_tokens": 270367,
+    "output_tokens": 13167,
+    "n_tutoring_turns": 4,
+    "n_intermediate_turns": 0,
+    "n_fabrication_turns": 0
+  },
+  "deterministic_signals": {
+    "intermediate_turns": [],
+    "fabrication_turns": [],
+    "off_topic_turns": [],
+    "det_tlq_match_top_score": 1.0,
+    "det_tlq_vote_consensus": 0.6570302233902758,
+    "det_tlq_coverage_gate_pass": 1.0,
+    "det_tlq_anchor_extraction_success": 1.0,
+    "det_tlq_repair_clean": 1.0,
+    "det_tlq_repair_invoked": false,
+    "det_rrq_chunk_count_adequacy": 1.0,
+    "det_rrq_mean_top3_score": 0.9996796051661173,
+    "det_rrq_section_match_rate": 1.0,
+    "det_rrq_retrieval_calls_efficiency": 1.0,
+    "det_rrq_coverage_gap_frequency": 1.0,
+    "det_rrq_chunk_count": 17,
+    "det_rrq_retrieval_calls": 1,
+    "det_aq_answer_brevity": 0.7,
+    "det_aq_answer_is_noun_phrase": 1.0,
+    "det_aq_aliases_count_adequacy": 0.75,
+    "det_aq_aliases_count": 3,
+    "det_aq_groundedness": 1.0,
+    "det_aq_sanitize_action": "kept",
+    "det_aq_locked_answer_word_count": 10,
+    "det_trq_qc_pass_rate": 0.3333333333333333,
+    "det_trq_revised_draft_rate": 0.5,
+    "det_trq_intervention_rate": 0.75,
+    "det_trq_reason_codes_clean_rate": 0.5,
+    "det_trq_n_tutoring_turns": 4,
+    "det_rgc_false_positive_rate": 0.0,
+    "det_rgc_false_negative_rate": 0.0,
+    "det_rgc_evidence_quote_validity": 1.0,
+    "det_rgc_path_distribution": {
+      "skipped_topic_just_locked": 1,
+      "no_overlap_no_paraphrase": 3
+    },
+    "det_rgc_n_decisions": 4,
+    "det_rgc_tp": 0,
+    "det_rgc_fp": 0,
+    "det_rgc_tn": 4,
+    "det_rgc_fn": 0,
+    "det_pp_hint_progression_monotonic": 1.0,
+    "det_pp_hint_utilization": 0.6666666666666666,
+    "det_pp_student_engagement_rate": 0.5,
+    "det_pp_state_trajectory_score": 0.5,
+    "det_arc_step_vs_reach_disambiguation": 1.0,
+    "det_arc_intermediate_credit_avoidance": 1.0,
+    "det_arc_n_intermediate_turns": 0,
+    "det_arc_n_fabrication_turns": 0,
+    "det_cc_phase_transitions_legal": 1.0,
+    "det_cc_topic_stability": 1.0,
+    "det_cc_anchor_stability": 1.0,
+    "det_cc_invariant_violations_count": 14,
+    "det_cc_invariant_score": 0.0,
+    "det_ce_cost_per_useful_turn": 0.29683368749999994,
+    "det_ce_cost_score": 0.0,
+    "det_ce_cache_hit_rate": 0.0,
+    "det_ce_mean_turn_latency": null,
+    "det_ce_latency_score": null,
+    "det_msc_confidence_appropriateness": null,
+    "det_msc_ewma_movement_score": 0.5,
+    "det_msc_has_mastery": false
+  },
+  "llm_telemetry": [
+    {
+      "label": "per_turn",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 4.716,
+      "in_tok": 3406,
+      "out_tok": 633,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"turns\": [\n    {\n      \"turn_id\": 1,\n      \"question_present\": 1.0,\n      \"relevance\": 1.0,\n      \"helpful\": 1.0,\n      \"no_reveal\": 0.0,\n      \"faithfulness\": 1.0,\n      \"answer_relevancy..."
+    },
+    {
+      "label": "retrieval",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 4.892,
+      "in_tok": 1482,
+      "out_tok": 626,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"per_chunk\": [\n    {\n      \"id\": 0,\n      \"relevance\": 1.0,\n      \"rationale\": \"Directly lists all five mechanisms: active transport, diffusion, facilitated diffusion, secondary active tra..."
+    },
+    {
+      "label": "synthesis",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 6.834,
+      "in_tok": 2441,
+      "out_tok": 604,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"mastery_attribution_grounding\": null,\n  \"mastery_attribution_evidence\": [],\n  \"step_vs_reach_disambiguation\": 1.0,\n  \"intermediate_credit_avoidance\": 1.0,\n  \"off_topic_drift_score\": 1.0,\n..."
+    },
+    {
+      "label": "anchor",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 1.311,
+      "in_tok": 539,
+      "out_tok": 101,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"question_specificity\": 0.85,\n  \"question_specificity_rationale\": \"Question is specific and answerable, asking for five defined mechanisms in a clear physiological context.\",\n  \"aliases_di..."
+    }
+  ],
+  "anchors_inspected": {
+    "locked_question": "What are the five main mechanisms by which substances move across tubular membranes during reabsorption and secretion?",
+    "locked_answer": "active transport diffusion facilitated diffusion secondary active transport and osmosis",
+    "locked_answer_aliases": [
+      "five mechanisms of membrane transport",
+      "ATP-dependent and passive transport mechanisms",
+      "membrane transport processes in the nephron"
+    ],
+    "locked_topic": {}
+  },
+  "expectations": null
+}

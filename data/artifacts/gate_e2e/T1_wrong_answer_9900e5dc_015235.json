@@ -1,0 +1,1233 @@
+{
+  "name": "T1_wrong_answer",
+  "conv_id": "9900e5dc",
+  "description": "Wrong-but-plausible answer (AV node) must not fire reached.",
+  "expectations": {
+    "reached": false,
+    "no_fabrication_keywords": [
+      "you've identified",
+      "you have identified",
+      "correctly identified",
+      "you've reached",
+      "great job, the answer is"
+    ]
+  },
+  "outcomes": {
+    "final_reached": false,
+    "fabrication_hits_in_last_tutor": [],
+    "last_tutor_message": "The AV node is part of the conduction pathway, but it's a *structure* that delays the impulse, not the fiber type that rapidly spreads it through the ventricles. After the impulse leaves the AV node and travels down the bundle branches, what specialized fibers then take over to distribute it quickly throughout the ventricular muscle tissue?",
+    "phase_final": "tutoring",
+    "locked_answer": "purkinje fibers",
+    "locked_answer_aliases": [
+      "Purkinje cells",
+      "ventricular conduction fibers",
+      "myocardial conductive fibers of the ventricles",
+      "terminal conduction fibers"
+    ],
+    "locked_question": "What are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?",
+    "turn_count": 3,
+    "hint_level_final": 1,
+    "student_state_final": "incorrect"
+  },
+  "gate_traces": [
+    {
+      "wrapper": "dean.reached_answer_gate",
+      "decision_effect": null,
+      "input_hash": "753da5477626333b",
+      "elapsed_s": 1.23,
+      "in_tok": 1106,
+      "out_tok": 83,
+      "cache_read": 0,
+      "cache_write": 0,
+      "cost_usd": 0.00456,
+      "s_per_tok": 0.0149,
+      "cached_est_tokens": 0,
+      "system_blocks": [
+        {
+          "index": 1,
+          "cached": false,
+          "est_tokens": 563
+        },
+        {
+          "index": 2,
+          "cached": false,
+          "est_tokens": 213
+        },
+        {
+          "index": 3,
+          "cached": false,
+          "est_tokens": 314
+        }
+      ],
+      "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean checking whether the student has STATED the locked answer\nin their most recent message. This is the final gate before tutoring ends \u2014\na false positive fabricates a confirmation the student didn't earn, so be\nstrict.\n\nDEFINITIONS:\n- locked_answer: the target term/concept (e.g. \"skeletal muscle pump\").\n- aliases: equivalent phrasings the student could use instead.\n- \"Reached\" means the student asserted the answer or paraphrased it as a\n  positive answer in THIS message.\n\nREACHED = TRUE rules (must satisfy ALL):\n1. The student names locked_answer (or any alias) OR paraphrases the\n   concept unambiguously.\n2. The phrasing is an ASSERTION (not a question, not a hedge).\n   - Asserting: \"It's the skeletal muscle pump\" / \"The muscles squeeze\n     the veins to push blood up\" \u2192 REACHED.\n   - Asking: \"Is it the skeletal muscle pump?\" \u2192 NOT REACHED.\n   - Hedging: \"Maybe gravity? I'm not sure\" \u2192 NOT REACHED.\n   - Denying: \"I don't know what skeletal muscle pump is\" \u2192 NOT REACHED.\n3. You can quote a contiguous substring from the student's latest message\n   that demonstrates this assertion. The quote must appear VERBATIM in the\n   student's message. No quote \u2192 NOT REACHED.\n\nREACHED = FALSE if any of:\n- The student names a different concept (even a related/neighboring one).\n  e.g. locked=\"SA node\", student says \"AV node\" \u2192 NOT REACHED.\n- The student names only one component of a multi-word answer in a way\n  that doesn't convey the full concept.\n  e.g. locked=\"skeletal muscle pump\", student says \"muscles\" alone \u2192 NOT REACHED.\n- The student is asking, hedging, denying, or off-topic.\n\nBIAS: When in doubt, return reached=false. False positives are costly.\n\nReturn strict JSON ONLY (no markdown, no prose):\n{{\n  \"reached\": true,\n  \"evidence\": \"exact verbatim quote from student message\",\n  \"rationale\": \"1 sentence on why this counts (or doesn't)\"\n}}\n\n\n---\n\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\nTutor: You're right that location matters. The textbook emphasizes these fibers conduct impulses in about 75 ms\u2014faster than any other cardiac tissue. What property or characteristic of a fiber would allow such rapid conduction?\nStudent: AV node\n\n---\n\nLocked answer: purkinje fibers\nAliases (equivalent phrasings): Purkinje cells, ventricular conduction fibers, myocardial conductive fibers of the ventricles, terminal conduction fibers\n\nRecent conversation (for context only \u2014 judge based on the LATEST student message):\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\nTutor: You're right that location matters. The textbook emphasizes these fibers conduct impulses in about 75 ms\u2014faster than any other cardiac tissue. What property or characteristic of a fiber would allow such rapid conduction?\nStudent: AV node\n\nStudent's LATEST message:\nAV node\n\nDecide: did the student reach the locked answer in their LATEST message?\nReturn strict JSON only.\n",
+      "messages_sent": [
+        {
+          "role": "user",
+          "content": "Decide and return strict JSON."
+        }
+      ],
+      "response_text": "```json\n{\n  \"reached\": false,\n  \"evidence\": \"AV node\",\n  \"rationale\": \"Student named 'AV node', which is a different cardiac conduction structure; the locked answer is 'Purkinje fibers'. AV node does not convey the concept of ventricular conduction fibers.\"\n}\n```",
+      "tool_calls_made": []
+    },
+    {
+      "wrapper": "dean.confidence_score",
+      "result": "answer_conf=0.150, mastery_conf=0.233, reached=False (gate_path=no_overlap_no_paraphrase)",
+      "locked_answer": "purkinje fibers",
+      "gate_path": "no_overlap_no_paraphrase",
+      "gate_evidence": ""
+    }
+  ],
+  "final_state": {
+    "student_id": "gate_test_T1_wrong_answer_9900e5dc",
+    "phase": "tutoring",
+    "messages": [
+      {
+        "role": "tutor",
+        "content": "Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?",
+        "phase": "rapport"
+      },
+      {
+        "role": "student",
+        "content": "I think it has to do with electrical signals in the heart"
+      },
+      {
+        "role": "tutor",
+        "content": "Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?",
+        "phase": "tutoring"
+      },
+      {
+        "role": "student",
+        "content": "Maybe the electrical impulses start somewhere specific?"
+      },
+      {
+        "role": "tutor",
+        "content": "You're right that location matters. The textbook emphasizes these fibers conduct impulses in about 75 ms\u2014faster than any other cardiac tissue. What property or characteristic of a fiber would allow such rapid conduction?",
+        "phase": "tutoring"
+      },
+      {
+        "role": "student",
+        "content": "AV node"
+      },
+      {
+        "role": "tutor",
+        "content": "The AV node is part of the conduction pathway, but it's a *structure* that delays the impulse, not the fiber type that rapidly spreads it through the ventricles. After the impulse leaves the AV node and travels down the bundle branches, what specialized fibers then take over to distribute it quickly throughout the ventricular muscle tissue?",
+        "phase": "tutoring"
+      }
+    ],
+    "retrieved_chunks": [
+      {
+        "chunk_id": "7b16c632-7936-4124-b538-b0d7c030dd92",
+        "text": "Both bundle branches descend and reach the apex of the heart where they connect with the Purkinje fibers. The Purkinje fibers are additional myocardial conductive fibers that spread the impulse to the myocardial contractile cells in the ventricles. They extend throughout the myocardium from the apex of the heart toward the atrioventricular septum and the base of the heart. The Purkinje fibers have a fast inherent conduction rate, and the electrical impulse reaches all of the ventricular muscle cells in about 75 ms. Since the electrical stimulus begins at the apex, the contraction also begins at the apex and travels toward the base of the heart, similar to squeezing a tube of toothpaste from the bottom. This allows the blood to be pumped out of the ventricles and into the aorta and pulmonary trunk.",
+        "chapter_num": 19,
+        "chapter_title": "The Cardiovascular System: The Heart",
+        "section_title": "Cardiac Muscle and Electrical Activity",
+        "subsection_title": "Conduction System of the Heart",
+        "page": 790,
+        "element_type": "paragraph_overlap",
+        "image_filename": "",
+        "_window_role": "neighbor_prev",
+        "_primary_chunk_id": "cd07371b-11a9-4bcc-a8e2-7d7216eebb34"
+      },
+      {
+        "chunk_id": "2b3e7d37-4b7f-410f-a8f0-c3ef00de0073",
+        "text": "The total time elapsed from the initiation of the impulse in the SA node until depolarization of the ventricles is approximately 225 ms. Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells.",
+        "chapter_num": 19,
+        "chapter_title": "The Cardiovascular System: The Heart",
+        "section_title": "Cardiac Muscle and Electrical Activity",
+        "subsection_title": "Conduction System of the Heart",
+        "page": 790,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "neighbor_prev",
+        "_primary_chunk_id": "cd07371b-11a9-4bcc-a8e2-7d7216eebb34"
+      },
+      {
+        "chunk_id": "cd07371b-11a9-4bcc-a8e2-7d7216eebb34",
+        "text": "Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells.",
+        "score": 0.9996992349624634,
+        "chapter_num": 19,
+        "chapter_title": "The Cardiovascular System: The Heart",
+        "section_title": "Cardiac Muscle and Electrical Activity",
+        "subsection_title": "Conduction System of the Heart",
+        "page": 790,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "primary",
+        "_primary_chunk_id": "cd07371b-11a9-4bcc-a8e2-7d7216eebb34"
+      },
+      {
+        "chunk_id": "c39101cc-3df6-4f45-ba9f-9ac565de7d6b",
+        "text": "While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.",
+        "chapter_num": 19,
+        "chapter_title": "The Cardiovascular System: The Heart",
+        "section_title": "Cardiac Muscle and Electrical Activity",
+        "subsection_title": "Conduction System of the Heart",
+        "page": 790,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "neighbor_next",
+        "_primary_chunk_id": "cd07371b-11a9-4bcc-a8e2-7d7216eebb34"
+      },
+      {
+        "chunk_id": "cad3356e-8363-4add-8ffc-b64b1ebd7023",
+        "text": "Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells. While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.",
+        "chapter_num": 19,
+        "chapter_title": "The Cardiovascular System: The Heart",
+        "section_title": "Cardiac Muscle and Electrical Activity",
+        "subsection_title": "Conduction System of the Heart",
+        "page": 790,
+        "element_type": "paragraph_overlap",
+        "image_filename": "",
+        "_window_role": "neighbor_next",
+        "_primary_chunk_id": "cd07371b-11a9-4bcc-a8e2-7d7216eebb34"
+      },
+      {
+        "chunk_id": "19036600-151a-45c9-8a56-aafe01288c5f",
+        "text": "Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.",
+        "chapter_num": 19,
+        "chapter_title": "The Cardiovascular System: The Heart",
+        "section_title": "Cardiac Muscle and Electrical Activity",
+        "subsection_title": "Conduction System of the Heart",
+        "page": 790,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "neighbor_prev",
+        "_primary_chunk_id": "b4c0c3c7-9971-4364-a125-00f7df9ca020"
+      },
+      {
+        "chunk_id": "b4c0c3c7-9971-4364-a125-00f7df9ca020",
+        "text": "While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential. Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.",
+        "score": 0.8350841403007507,
+        "chapter_num": 19,
+        "chapter_title": "The Cardiovascular System: The Heart",
+        "section_title": "Cardiac Muscle and Electrical Activity",
+        "subsection_title": "Conduction System of the Heart",
+        "page": 790,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "primary",
+        "_primary_chunk_id": "b4c0c3c7-9971-4364-a125-00f7df9ca020"
+      },
+      {
+        "chunk_id": "1c88a0e5-a1ab-42d9-a76f-424877f5d47c",
+        "text": "The resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization).",
+        "chapter_num": 19,
+        "chapter_title": "The Cardiovascular System: The Heart",
+        "section_title": "Cardiac Muscle and Electrical Activity",
+        "subsection_title": "Conduction System of the Heart",
+        "page": 790,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "neighbor_next",
+        "_primary_chunk_id": "b4c0c3c7-9971-4364-a125-00f7df9ca020"
+      },
+      {
+        "chunk_id": "6322f9d9-64ef-4b06-8695-996416c20488",
+        "text": "Context from previous chunk: Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV. The resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization ).",
+        "chapter_num": 19,
+        "chapter_title": "The Cardiovascular System: The Heart",
+        "section_title": "Cardiac Muscle and Electrical Activity",
+        "subsection_title": "Conduction System of the Heart",
+        "page": 790,
+        "element_type": "paragraph_overlap",
+        "image_filename": "",
+        "_window_role": "neighbor_next",
+        "_primary_chunk_id": "b4c0c3c7-9971-4364-a125-00f7df9ca020"
+      }
+    ],
+    "locked_question": "What are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?",
+    "locked_answer": "purkinje fibers",
+    "locked_answer_aliases": [
+      "Purkinje cells",
+      "ventricular conduction fibers",
+      "myocardial conductive fibers of the ventricles",
+      "terminal conduction fibers"
+    ],
+    "locked_topic": {
+      "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart",
+      "chapter": "The Cardiovascular System: The Heart",
+      "section": "Cardiac Muscle and Electrical Activity",
+      "subsection": "Conduction System of the Heart",
+      "difficulty": "moderate",
+      "chunk_count": 16,
+      "limited": false,
+      "score": 101.0
+    },
+    "topic_confirmed": true,
+    "topic_selection": "Conduction System of the Heart",
+    "topic_just_locked": false,
+    "hint_level": 1,
+    "max_hints": 3,
+    "max_turns": 25,
+    "turn_count": 3,
+    "student_state": "incorrect",
+    "student_reached_answer": false,
+    "student_answer_confidence": 0.15,
+    "student_mastery_confidence": 0.233,
+    "confidence_samples": 3,
+    "help_abuse_count": 0,
+    "off_topic_count": 0,
+    "total_low_effort_turns": 0,
+    "total_off_topic_turns": 0,
+    "clinical_low_effort_count": 0,
+    "clinical_off_topic_count": 0,
+    "assessment_turn": 0,
+    "clinical_state": null,
+    "clinical_confidence": 0.0,
+    "core_mastery_tier": "not_assessed",
+    "clinical_mastery_tier": "not_assessed",
+    "mastery_tier": "not_assessed",
+    "grading_rationale": "",
+    "session_memory_summary": "",
+    "weak_topics": [],
+    "rejected_topic_paths": [],
+    "exploration_max": 3,
+    "exploration_used": 0,
+    "debug": {
+      "api_calls": 16,
+      "input_tokens": 21470,
+      "output_tokens": 2103,
+      "cost_usd": 0.095955,
+      "interventions": 0,
+      "retrieval_calls": 1,
+      "coverage_gap_events": 0,
+      "grounded_turns": 3,
+      "ungrounded_turns": 0,
+      "invariant_violations": [],
+      "current_node": "dean_node",
+      "last_routing": "END",
+      "turn_trace": [
+        {
+          "wrapper": "dean._setup_call",
+          "decision_effect": "classification_only",
+          "input_hash": "ea5a7ba19bcd4a03",
+          "elapsed_s": 2.77,
+          "in_tok": 2068,
+          "out_tok": 205,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.00928,
+          "s_per_tok": 0.0135,
+          "cached_est_tokens": 1558,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": true,
+              "est_tokens": 1558
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 213
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 299
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean supervising one Socratic tutoring turn.\nTools are already handled in Python. Do NOT request tools.\nThis is an evaluation setting: classify strictly based on evidence in the student's latest message.\n\nSTRICT LOW_EFFORT RULES (highest priority):\n  The student must be GENUINELY ATTEMPTING the locked_question.\n  low_effort when: bare denial (\"no\", \"idk\", \"i don't know\"), demand\n  to be told (\"just tell me\"), frustration (\"if i wanted to read...\"),\n  empty deflection (<5 words, no domain content), profanity, or\n  dismissal. Off-topic + frustration \u2192 low_effort.\n  irrelevant: genuinely off-topic question on a different subject.\n\nOTHER:\n  question: genuine specific clarifying question about human anatomy,\n    with engagement. Rhetorical/frustrated questions \u2192 low_effort.\n  incorrect: genuine attempt but wrong.\n  partial_correct: answers an INTERMEDIATE scaffold the tutor asked,\n    but NOT the locked answer. (e.g. \"stroke volume goes lower\" when\n    locked_answer is \"skeletal muscle pump\" \u2192 partial_correct.)\n  correct: student STATES the locked_answer or a clear paraphrase.\n    Getting an intermediate scaffold right is partial_correct, NOT correct.\n    Only the LOCKED answer being stated counts as correct.\n\nstudent_reached_answer: ALWAYS set to false. Python's\n  reached_answer_gate computes the authoritative reached signal.\n\nconfidence_score:\n  - 0.85-1.00: explicit, accurate, certain\n  - 0.65-0.84: mostly correct, mild ambiguity\n  - 0.40-0.64: partial / uncertain\n  - 0.00-0.39: incorrect, irrelevant, low-effort\n\nhint_level: leave unchanged (Python increments for incorrect).\nlocked_answer is already set; do not propose a new one.\n\nReturn one JSON object only (no markdown):\n{{\n  \"student_state\": \"correct|partial_correct|incorrect|question|irrelevant|low_effort\",\n  \"student_reached_answer\": false,\n  \"confidence_score\": 0.0,\n  \"hint_level\": 1,\n  \"search_needed\": false,\n  \"critique\": \"\"\n}}\n\n\n[1] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nBoth bundle branches descend and reach the apex of the heart where they connect with the Purkinje fibers. The Purkinje fibers are additional myocardial conductive fibers that spread the impulse to the myocardial contractile cells in the ventricles. They extend throughout the myocardium from the apex of the heart toward the atrioventricular septum and the base of the heart. The Purkinje fibers have a fast inherent conduction rate, and the electrical impulse reaches all of the ventricular muscle cells in about 75 ms. Since the electrical stimulus begins at the apex, the contraction also begins at the apex and travels toward the base of the heart, similar to squeezing a tube of toothpaste from the bottom. This allows the blood to be pumped out of the ventricles and into the aorta and pulmonary trunk.\n\n===\n\n[2] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nThe total time elapsed from the initiation of the impulse in the SA node until depolarization of the ventricles is approximately 225 ms. Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n===\n\n[3] (p.790, score=1.00) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n===\n\n[4] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n===\n\n[5] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells. While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n===\n\n[6] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nConductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n===\n\n[7] (p.790, score=0.84) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential. Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n===\n\n[8] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nThe resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization).\n\n===\n\n[9] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nContext from previous chunk: Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV. The resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization ).\n\n---\n\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\nTutor: You're right that location matters. The textbook emphasizes these fibers conduct impulses in about 75 ms\u2014faster than any other cardiac tissue. What property or characteristic of a fiber would allow such rapid conduction?\nStudent: AV node\n\n---\n\nCurrent state:\n- locked_question: What are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\n- locked_answer: purkinje fibers\n- hint_level: 0\n- turn_count: 2\n\nRecent conversation history:\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\nTutor: You're right that location matters. The textbook emphasizes these fibers conduct impulses in about 75 ms\u2014faster than any other cardiac tissue. What property or characteristic of a fiber would allow such rapid conduction?\nStudent: AV node\nClassify the student's MOST RECENT message. Prior history is context only.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Classify this turn and return JSON."
+            }
+          ],
+          "response_text": "```json\n{\n  \"student_state\": \"incorrect\",\n  \"student_reached_answer\": false,\n  \"confidence_score\": 0.15,\n  \"hint_level\": 0,\n  \"search_needed\": false,\n  \"critique\": \"The student answered 'AV node,' which is a different structure in the cardiac conduction system. The AV node slows conduction (not rapid), and it is located between the atria and ventricles\u2014not in the ventricles. The locked answer is 'Purkinje fibers,' which are the specialized fibers that rapidly conduct impulses throughout the ventricles starting at the apex in ~75 ms. The student has confused a component of the conduction pathway with the target structure. A hint should clarify the distinction between conduction nodes (which slow impulses) and the rapid ventricular conduction fibers.\"\n}\n```",
+          "tool_calls_made": [],
+          "result": "student_state=incorrect, hint=0",
+          "locked_answer_final": "purkinje fibers"
+        },
+        {
+          "wrapper": "dean.sanitize_locked_answer",
+          "candidate": "purkinje fibers",
+          "action": "kept",
+          "final": "purkinje fibers"
+        },
+        {
+          "wrapper": "dean.reached_answer_gate",
+          "decision_effect": null,
+          "input_hash": "753da5477626333b",
+          "elapsed_s": 1.23,
+          "in_tok": 1106,
+          "out_tok": 83,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.00456,
+          "s_per_tok": 0.0149,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 563
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 213
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 314
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean checking whether the student has STATED the locked answer\nin their most recent message. This is the final gate before tutoring ends \u2014\na false positive fabricates a confirmation the student didn't earn, so be\nstrict.\n\nDEFINITIONS:\n- locked_answer: the target term/concept (e.g. \"skeletal muscle pump\").\n- aliases: equivalent phrasings the student could use instead.\n- \"Reached\" means the student asserted the answer or paraphrased it as a\n  positive answer in THIS message.\n\nREACHED = TRUE rules (must satisfy ALL):\n1. The student names locked_answer (or any alias) OR paraphrases the\n   concept unambiguously.\n2. The phrasing is an ASSERTION (not a question, not a hedge).\n   - Asserting: \"It's the skeletal muscle pump\" / \"The muscles squeeze\n     the veins to push blood up\" \u2192 REACHED.\n   - Asking: \"Is it the skeletal muscle pump?\" \u2192 NOT REACHED.\n   - Hedging: \"Maybe gravity? I'm not sure\" \u2192 NOT REACHED.\n   - Denying: \"I don't know what skeletal muscle pump is\" \u2192 NOT REACHED.\n3. You can quote a contiguous substring from the student's latest message\n   that demonstrates this assertion. The quote must appear VERBATIM in the\n   student's message. No quote \u2192 NOT REACHED.\n\nREACHED = FALSE if any of:\n- The student names a different concept (even a related/neighboring one).\n  e.g. locked=\"SA node\", student says \"AV node\" \u2192 NOT REACHED.\n- The student names only one component of a multi-word answer in a way\n  that doesn't convey the full concept.\n  e.g. locked=\"skeletal muscle pump\", student says \"muscles\" alone \u2192 NOT REACHED.\n- The student is asking, hedging, denying, or off-topic.\n\nBIAS: When in doubt, return reached=false. False positives are costly.\n\nReturn strict JSON ONLY (no markdown, no prose):\n{{\n  \"reached\": true,\n  \"evidence\": \"exact verbatim quote from student message\",\n  \"rationale\": \"1 sentence on why this counts (or doesn't)\"\n}}\n\n\n---\n\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\nTutor: You're right that location matters. The textbook emphasizes these fibers conduct impulses in about 75 ms\u2014faster than any other cardiac tissue. What property or characteristic of a fiber would allow such rapid conduction?\nStudent: AV node\n\n---\n\nLocked answer: purkinje fibers\nAliases (equivalent phrasings): Purkinje cells, ventricular conduction fibers, myocardial conductive fibers of the ventricles, terminal conduction fibers\n\nRecent conversation (for context only \u2014 judge based on the LATEST student message):\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\nTutor: You're right that location matters. The textbook emphasizes these fibers conduct impulses in about 75 ms\u2014faster than any other cardiac tissue. What property or characteristic of a fiber would allow such rapid conduction?\nStudent: AV node\n\nStudent's LATEST message:\nAV node\n\nDecide: did the student reach the locked answer in their LATEST message?\nReturn strict JSON only.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Decide and return strict JSON."
+            }
+          ],
+          "response_text": "```json\n{\n  \"reached\": false,\n  \"evidence\": \"AV node\",\n  \"rationale\": \"Student named 'AV node', which is a different cardiac conduction structure; the locked answer is 'Purkinje fibers'. AV node does not convey the concept of ventricular conduction fibers.\"\n}\n```",
+          "tool_calls_made": []
+        },
+        {
+          "wrapper": "dean.confidence_score",
+          "result": "answer_conf=0.150, mastery_conf=0.233, reached=False (gate_path=no_overlap_no_paraphrase)",
+          "locked_answer": "purkinje fibers",
+          "gate_path": "no_overlap_no_paraphrase",
+          "gate_evidence": ""
+        },
+        {
+          "wrapper": "dean.hint_progress",
+          "hint_before": 0,
+          "hint_after": 1,
+          "hint_reason": "incorrect_first_post_ack",
+          "active_hint": ""
+        },
+        {
+          "wrapper": "dean.complexity_classifier",
+          "decision_effect": null,
+          "input_hash": "b816835c697f2151",
+          "elapsed_s": 1.38,
+          "in_tok": 746,
+          "out_tok": 83,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.00348,
+          "s_per_tok": 0.0166,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 494
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean of a Socratic human anatomy tutoring system. Classify\nthe complexity of the student's most recent message into ONE of three\ntiers (Adaptive-RAG, Jeong 2024). The tier drives downstream retrieval\nstrategy.\n\nTiers:\n  simple\n    \u2014 Direct factual or definitional question on the locked topic.\n    \u2014 Answerable from a single retrieval pass.\n    \u2014 Examples:\n        \"What is the SA node?\"\n        \"Where is the brachial plexus located?\"\n        \"Define synaptic cleft.\"\n\n  tangential\n    \u2014 Curiosity drift outside the locked topic but still within the\n      domain. Worth a one-shot un-section-filtered retrieval to\n      surface the related concept without losing the locked topic.\n    \u2014 Examples (when locked on Cardiac Conduction):\n        \"Wait, how does this connect to blood pressure?\"\n        \"I read about heart attacks \u2014 is that the same as arrhythmia?\"\n\n  complex\n    \u2014 Multi-step reasoning question, comparison across topics, or\n      synthesis spanning multiple subsections. May benefit from\n      multi-hop retrieval (D.4 \u2014 currently treated as `simple`).\n    \u2014 Examples:\n        \"How does the autonomic nervous system regulate cardiac\n         output during exercise?\"\n        \"Compare and contrast skeletal vs cardiac muscle tissue at\n         the cellular and functional levels.\"\n\nOutput a 1-sentence rationale citing the specific aspect of the\nstudent's message that drove the classification. Do not classify\nbased on locked topic alone \u2014 the message content is what matters.\n\nReturn strict JSON only, no prose:\n{\n  \"tier\": \"simple|tangential|complex\",\n  \"rationale\": \"\"\n}\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Locked topic (subsection): Conduction System of the Heart\nLocked anchor question: What are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\n\nRecent conversation history (most recent last):\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\nTutor: You're right that location matters. The textbook emphasizes these fibers conduct impulses in about 75 ms\u2014faster than any other cardiac tissue. What property or characteristic of a fiber would allow such rapid conduction?\nStudent: AV node\n\nStudent's latest message:\nAV node\n\nClassify.\n"
+            }
+          ],
+          "response_text": "```json\n{\n  \"tier\": \"simple\",\n  \"rationale\": \"The student has provided a single anatomical structure name (AV node) in response to a question about which fibers conduct impulses through the ventricles; this is a direct factual answer requiring clarification or confirmation rather than multi-step reasoning or cross-topic synthesis.\"\n}\n```",
+          "tool_calls_made": []
+        },
+        {
+          "wrapper": "dean.complexity_classifier",
+          "tier": "simple",
+          "rationale": "The student has provided a single anatomical structure name (AV node) in response to a question about which fibers conduct impulses through the ventricles; this is a direct factual answer requiring cl"
+        },
+        {
+          "wrapper": "dean._exploration_judge",
+          "decision_effect": null,
+          "input_hash": "2e4798f33860e12d",
+          "elapsed_s": 1.73,
+          "in_tok": 846,
+          "out_tok": 132,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.00452,
+          "s_per_tok": 0.0131,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 397
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 213
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 294
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean in the middle of a Socratic tutoring session. A topic is\nlocked and Teacher is about to respond. Your job is to decide whether the\nstudent's latest message is asking about something OUTSIDE the locked\ntopic \u2014 a tangential concept, a clarifying prerequisite, a connection to\nanother body system, etc. \u2014 that would genuinely benefit from fetching\nextra textbook context beyond the locked section.\n\nReturn `exploration_needed: true` ONLY when ALL of these hold:\n  - The student is asking about a human anatomy concept that is NOT the\n    locked topic or a direct sub-question of it.\n  - The tangential concept has a clear short query string (3-8 words) that\n    a textbook search could retrieve.\n  - Answering it would help the student make progress on the locked topic,\n    not just scratch curiosity unrelated to the session.\n\nIf the student is answering the locked question (correct/partial/incorrect),\nasking a question strictly about the locked topic, or venting/off-topic, set\n`exploration_needed: false`. When in doubt, say false \u2014 Teacher already has\nthe locked section's context.\n\nReturn strict JSON only:\n{{\n  \"exploration_needed\": false,\n  \"exploration_query\": \"\",\n  \"rationale\": \"\"\n}}\n\n\n---\n\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\nTutor: You're right that location matters. The textbook emphasizes these fibers conduct impulses in about 75 ms\u2014faster than any other cardiac tissue. What property or characteristic of a fiber would allow such rapid conduction?\nStudent: AV node\n\n---\n\nLocked topic: Conduction System of the Heart\nLocked question (Teacher is guiding toward this): What are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\n\nRecent conversation history:\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\nTutor: You're right that location matters. The textbook emphasizes these fibers conduct impulses in about 75 ms\u2014faster than any other cardiac tissue. What property or characteristic of a fiber would allow such rapid conduction?\nStudent: AV node\n\nDecide based ONLY on the student's most recent message.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Judge and return strict JSON only."
+            }
+          ],
+          "response_text": "```json\n{\n  \"exploration_needed\": false,\n  \"exploration_query\": \"\",\n  \"rationale\": \"The student answered 'AV node,' which is a direct component of the conduction system of the heart (the locked topic). This is not a tangential concept or prerequisite\u2014it is part of the core anatomy being studied. The student is engaging with the locked question about the conduction pathway. The tutor already has full context from Chapter 19 to address whether this answer is correct, incomplete, or needs refinement. No external textbook exploration is needed.\"\n}\n```",
+          "tool_calls_made": []
+        },
+        {
+          "wrapper": "dean.exploration_judge",
+          "result": "skip",
+          "needed": false,
+          "query": "",
+          "rationale": "The student answered 'AV node,' which is a direct component of the conduction system of the heart (the locked topic). This is not a tangential concept or prerequisite\u2014it is part of the core anatomy being studied. The student is engaging with the locked question about the conduction pathway. The tutor already has full context from Chapter 19 to address whether this answer is correct, incomplete, or needs refinement. No external textbook exploration is needed."
+        },
+        {
+          "wrapper": "teacher.draft_socratic",
+          "decision_effect": null,
+          "input_hash": "35f2e9f148e3cb14",
+          "elapsed_s": 2.51,
+          "in_tok": 2058,
+          "out_tok": 78,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.00734,
+          "s_per_tok": 0.0322,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1473
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 213
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 469
+            }
+          ],
+          "system_prompt": "You are\na Socratic tutor in human anatomy working with a student.\nThis is an evaluated learning session.\nGlobal rules for all teacher wrappers:\n- Keep language academically focused and concise.\n- Do not reveal final answers unless wrapper-specific instructions explicitly allow it.\n- Follow wrapper output contracts exactly.\n- If strict JSON is requested by the wrapper, return strict JSON only.\n- Avoid generic motivational filler; prioritize targeted reasoning prompts.\n\n\na Socratic anatomy tutor.\nThe student is being evaluated on human anatomy reasoning quality.\n\nHard rules:\n- Never reveal the answer directly or indirectly.\n- Never state \"you're correct\" unless you also ask for reasoning or application.\n- Keep output to 2-4 sentences.\n- End with exactly one question.\n- Ask only one question total.\n- If the student is incorrect, do not bluntly correct; use probing guidance.\n- Do NOT use strong affirmation phrases (for example: \"Exactly\", \"Correct\", \"That's right\", \"You got it\")\n  unless student_state is exactly \"correct\".\n\nBehavior by student_state:\n- correct: affirm briefly, then deepen via mechanism/function.\n- partial_correct: acknowledge only the accurate fragment (use \"close\"/\"partly right\"), then probe missing link.\n- incorrect: do not affirm; probe reasoning path and guide toward self-correction.\n- question: briefly answer clarification, then return to core reasoning.\n- irrelevant: redirect to current human anatomy target.\n- low_effort: request a concrete attempt before moving on.\n\nHint-level behavior:\n- level 1: broad activation question.\n- level 2: narrower mechanism/relationship question.\n- level 3: direct but non-revealing final push.\n\nInternal quality check before finalizing (EULER-lite):\n- Question present: ends with exactly one real question.\n- Relevance: tied to latest student message and target concept.\n- Helpful: advances reasoning, not generic filler.\n- No reveal: locked answer/synonym is not inferable in one hop.\n- Avoid repetitive empathy wrappers and filler phrases.\n\nBanned lead-ins \u2014 NEVER start a sentence with these:\n- \"I can see\"\n- \"I notice\"\n- \"I hear\"\n- \"That's okay\"\n- \"I understand\"\n- \"I see that\"\n- \"It sounds like\"\nViolation of any banned lead-in = automatic rewrite.\n\nOutput contract:\n- At most 4 sentences total.\n- Sentence 1: brief targeted acknowledgment (optional).\n- Sentence 2-3: focused reasoning scaffold.\n- Final sentence: exactly one question.\nOutput only the final tutor message.\n\n\nTextbook propositions:\n[1] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nBoth bundle branches descend and reach the apex of the heart where they connect with the Purkinje fibers. The Purkinje fibers are additional myocardial conductive fibers that spread the impulse to the myocardial contractile cells in the ventricles. They extend throughout the myocardium from the apex of the heart toward the atrioventricular septum and the base of the heart. The Purkinje fibers have a fast inherent conduction rate, and the electrical impulse reaches all of the ventricular muscle cells in about 75 ms. Since the electrical stimulus begins at the apex, the contraction also begins at the apex and travels toward the base of the heart, similar to squeezing a tube of toothpaste from the bottom. This allows the blood to be pumped out of the ventricles and into the aorta and pulmonary trunk.\n\n[2] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nThe total time elapsed from the initiation of the impulse in the SA node until depolarization of the ventricles is approximately 225 ms. Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n[3] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n[4] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n[5] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells. While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n[6] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nConductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n[7] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential. Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n[8] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nThe resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization).\n\n[9] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nContext from previous chunk: Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV. The resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization ).\n\n\n---\n\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\nTutor: You're right that location matters. The textbook emphasizes these fibers conduct impulses in about 75 ms\u2014faster than any other cardiac tissue. What property or characteristic of a fiber would allow such rapid conduction?\nStudent: AV node\n\n---\n\nCurrent student_state: incorrect\nCurrent hint level: 1 of 3\nDean's pre-planned hint for this level (use as the pedagogical roadmap; phrase it naturally, do NOT recite verbatim, do NOT reveal the locked answer): \nDean guidance for this draft (preflight + prior critique if any): reason_codes=['preflight']\nrewrite_instruction=Generate one concise Socratic reply that will pass Dean QC.\ncritique=Preflight constraints: exactly one question mark, 2-4 sentences, no generic filler lead-ins, no answer reveal by naming/elimination, and one concrete next reasoning step.\ncontext=student_state:incorrect,hint_level:1,active_hint:\nAnchor question this student is pursuing: What are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\n\nRecent conversation history:\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\nTutor: You're right that location matters. The textbook emphasizes these fibers conduct impulses in about 75 ms\u2014faster than any other cardiac tissue. What property or characteristic of a fiber would allow such rapid conduction?\nStudent: AV node\nPrior turns are provided for continuity. Use them to avoid repeating questions you've already asked and to maintain hint-level progression. Respond to the student's most recent message.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "AV node"
+            }
+          ],
+          "response_text": "The AV node is part of the conduction pathway, but it's a *structure* that delays the impulse, not the fiber type that rapidly spreads it through the ventricles. After the impulse leaves the AV node and travels down the bundle branches, what specialized fibers then take over to distribute it quickly throughout the ventricular muscle tissue?",
+          "tool_calls_made": []
+        },
+        {
+          "wrapper": "dean._deterministic_quality_check",
+          "result": "PASS",
+          "reason_codes": []
+        },
+        {
+          "wrapper": "dean._quality_check_call",
+          "decision_effect": "qc_pass",
+          "input_hash": "4922c91f3a1c4fc0",
+          "elapsed_s": 4.32,
+          "in_tok": 2154,
+          "out_tok": 327,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.01137,
+          "s_per_tok": 0.0132,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1447
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 213
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 546
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean reviewing a teacher draft before release to the student.\nThis is an evaluation setting: enforce standards strictly and consistently.\n\nEvaluate against all 4 EULER criteria. Fail if any fails:\n1. QUESTION_PRESENT: ends with exactly one question.\n2. RELEVANCE: grounded in student's latest message and current target.\n3. HELPFUL: meaningfully advances reasoning (not generic filler).\n4. NO_REVEAL (LeakGuard): response does not expose or entail locked_answer via direct naming,\n   one-hop inference, elimination, or sycophantic confirmation.\n\nAdditional strict checks:\n- Exactly one question mark \"?\" in tutoring mode.\n- No repetitive generic coaching filler.\n- Must include a concrete next reasoning step.\n\nResponse requirements:\n- Return a single valid JSON object only (no markdown, no backticks, no prose).\n- Include revised_teacher_draft only when pass=false.\n- Use strict JSON with double quotes.\n- Keep critique <= 20 words and rewrite_instruction <= 14 words.\n- Keep revised_teacher_draft <= 4 sentences and plain text only.\n\nRespond with JSON only:\n{{\n  \"pass\": true/false,\n  \"critique\": \"short explanation if fail, empty if pass\",\n  \"leak_detected\": true/false,\n  \"reason_codes\": [\"missing_question\"|\"multi_question\"|\"generic_filler\"|\"low_helpfulness\"|\"reveal_risk\"|\"sycophancy_risk\"|\"off_topic\"|\"other\"],\n  \"rewrite_instruction\": \"one concrete instruction for the next draft\",\n  \"revised_teacher_draft\": \"full revised tutor response, empty when pass=true\"\n}}\n\n\n[1] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nBoth bundle branches descend and reach the apex of the heart where they connect with the Purkinje fibers. The Purkinje fibers are additional myocardial conductive fibers that spread the impulse to the myocardial contractile cells in the ventricles. They extend throughout the myocardium from the apex of the heart toward the atrioventricular septum and the base of the heart. The Purkinje fibers have a fast inherent conduction rate, and the electrical impulse reaches all of the ventricular muscle cells in about 75 ms. Since the electrical stimulus begins at the apex, the contraction also begins at the apex and travels toward the base of the heart, similar to squeezing a tube of toothpaste from the bottom. This allows the blood to be pumped out of the ventricles and into the aorta and pulmonary trunk.\n\n===\n\n[2] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nThe total time elapsed from the initiation of the impulse in the SA node until depolarization of the ventricles is approximately 225 ms. Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n===\n\n[3] (p.790, score=1.00) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n===\n\n[4] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n===\n\n[5] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells. While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n===\n\n[6] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nConductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n===\n\n[7] (p.790, score=0.84) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential. Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n===\n\n[8] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nThe resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization).\n\n===\n\n[9] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nContext from previous chunk: Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV. The resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization ).\n\n---\n\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\nTutor: You're right that location matters. The textbook emphasizes these fibers conduct impulses in about 75 ms\u2014faster than any other cardiac tissue. What property or characteristic of a fiber would allow such rapid conduction?\nStudent: AV node\n\n---\n\nPhase: tutoring\nCorrect answer (never reveal): purkinje fibers\nStudent's last message: AV node\nTeacher's draft: The AV node is part of the conduction pathway, but it's a *structure* that delays the impulse, not the fiber type that rapidly spreads it through the ventricles. After the impulse leaves the AV node and travels down the bundle branches, what specialized fibers then take over to distribute it quickly throughout the ventricular muscle tissue?\nPrior preflight critique (the deterministic-check or earlier dean_critique that\nthe Teacher was already given for this turn \u2014 empty if this is the first eval):\nreason_codes=['preflight']\nrewrite_instruction=Generate one concise Socratic reply that will pass Dean QC.\ncritique=Preflight constraints: exactly one question mark, 2-4 sentences, no generic filler lead-ins, no answer reveal by naming/elimination, and one concrete next reasoning step.\ncontext=student_state:incorrect,hint_level:1,active_hint:\nRecent conversation history:\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\nTutor: You're right that location matters. The textbook emphasizes these fibers conduct impulses in about 75 ms\u2014faster than any other cardiac tissue. What property or characteristic of a fiber would allow such rapid conduction?\nStudent: AV node\nEvaluate ONLY the Teacher's most recent draft against the student's most recent message. Use prior conversation history to detect repetition, contradiction, or improper hint regression \u2014 not as material to grade. If prior_preflight_critique is non-empty, your rewrite_instruction MUST address that specific failure mode (do not regress to it).\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Evaluate this Teacher draft."
+            }
+          ],
+          "response_text": "```json\n{\n  \"pass\": true,\n  \"critique\": \"\",\n  \"leak_detected\": false,\n  \"reason_codes\": [],\n  \"rewrite_instruction\": \"\",\n  \"revised_teacher_draft\": \"\"\n}\n```\n\n**Rationale:**\n\n1. **QUESTION_PRESENT**: Draft ends with exactly one question mark: \"what specialized fibers then take over to distribute it quickly throughout the ventricular muscle tissue?\"\n\n2. **RELEVANCE**: Directly addresses student's incorrect answer (AV node) by clarifying its role as a *delaying* structure, not the rapid-conduction fiber type. Grounded in student's latest message and the target concept (Purkinje fibers).\n\n3. **HELPFUL**: Provides concrete next reasoning step\u2014distinguishing between AV node function (delay) and the fiber type sought (rapid distribution). Advances reasoning without generic filler.\n\n4. **NO_REVEAL (LeakGuard)**: Does not name, eliminate to, or enable one-hop inference of \"Purkinje fibers.\" The question asks *what fibers take over after the AV node*, which is open-ended and requires student reasoning.\n\n5. **Preflight compliance**: Addresses prior rewrite_instruction by delivering one concise Socratic reply (2 sentences + 1 question), no generic lead-ins, no answer reveal, and one concrete next step (distinguish structure role from fiber type).",
+          "tool_calls_made": [],
+          "result": "PASS",
+          "reason_codes": [],
+          "rewrite_instruction": "",
+          "parse_ok": true
+        }
+      ],
+      "all_turn_traces": [
+        {
+          "turn": 0,
+          "phase": "tutoring",
+          "trace": [
+            {
+              "wrapper": "dean.python_retrieval",
+              "result": "9 chunks returned | query=Conduction System of the Heart",
+              "retrieval": {
+                "query": "Conduction System of the Heart",
+                "top_chunks": [
+                  {
+                    "rank": 1,
+                    "score": 0.0,
+                    "section_title": "Cardiac Muscle and Electrical Activity",
+                    "subsection_title": "Conduction System of the Heart",
+                    "chunk_id": "7b16c632-7936-4124-b538-b0d7c030dd92",
+                    "text_preview": "Both bundle branches descend and reach the apex of the heart where they connect with the Purkinje fibers. The Purkinje fibers are additional myocardial conductive fibers that spread the impulse to the myocardial contractile cells in the ven"
+                  },
+                  {
+                    "rank": 2,
+                    "score": 0.0,
+                    "section_title": "Cardiac Muscle and Electrical Activity",
+                    "subsection_title": "Conduction System of the Heart",
+                    "chunk_id": "2b3e7d37-4b7f-410f-a8f0-c3ef00de0073",
+                    "text_preview": "The total time elapsed from the initiation of the impulse in the SA node until depolarization of the ventricles is approximately 225 ms. Action potentials are considerably different between cardiac conductive cells and cardiac contractive c"
+                  },
+                  {
+                    "rank": 3,
+                    "score": 0.9996992349624634,
+                    "section_title": "Cardiac Muscle and Electrical Activity",
+                    "subsection_title": "Conduction System of the Heart",
+                    "chunk_id": "cd07371b-11a9-4bcc-a8e2-7d7216eebb34",
+                    "text_preview": "Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells."
+                  },
+                  {
+                    "rank": 4,
+                    "score": 0.0,
+                    "section_title": "Cardiac Muscle and Electrical Activity",
+                    "subsection_title": "Conduction System of the Heart",
+                    "chunk_id": "c39101cc-3df6-4f45-ba9f-9ac565de7d6b",
+                    "text_preview": "While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential."
+                  },
+                  {
+                    "rank": 5,
+                    "score": 0.0,
+                    "section_title": "Cardiac Muscle and Electrical Activity",
+                    "subsection_title": "Conduction System of the Heart",
+                    "chunk_id": "cad3356e-8363-4add-8ffc-b64b1ebd7023",
+                    "text_preview": "Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells. While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardi"
+                  },
+                  {
+                    "rank": 6,
+                    "score": 0.0,
+                    "section_title": "Cardiac Muscle and Electrical Activity",
+                    "subsection_title": "Conduction System of the Heart",
+                    "chunk_id": "19036600-151a-45c9-8a56-aafe01288c5f",
+                    "text_preview": "Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV."
+                  },
+                  {
+                    "rank": 7,
+                    "score": 0.8350841403007507,
+                    "section_title": "Cardiac Muscle and Electrical Activity",
+                    "subsection_title": "Conduction System of the Heart",
+                    "chunk_id": "b4c0c3c7-9971-4364-a125-00f7df9ca020",
+                    "text_preview": "While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential. Conductive cells contain a series of sodium ion c"
+                  }
+                ],
+                "total_chunks_returned": 9
+              },
+              "retrieval_calls": 1,
+              "retrieval_schema_keys": [
+                "_primary_chunk_id",
+                "_window_role",
+                "chapter_num",
+                "chapter_title",
+                "chunk_id",
+                "element_type",
+                "image_filename",
+                "page",
+                "section_title",
+                "subsection_title",
+                "text"
+              ]
+            },
+            {
+              "wrapper": "dean._lock_anchors_call",
+              "decision_effect": null,
+              "input_hash": "815fdde4da507074",
+              "elapsed_s": 1.94,
+              "in_tok": 2465,
+              "out_tok": 175,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.01002,
+              "s_per_tok": 0.0111,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 1448
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 1020
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean establishing pedagogical anchors for a new Socratic tutoring session.\nThe student has just selected a specific topic.\nRetrieval has fired and returned textbook excerpts.\n\nYour job: extract THREE anchors that guide the session.\n\n1) locked_question: a specific, answerable question for this session.\n2) locked_answer: the target answer term/concept the student must reach.\n3) locked_answer_aliases: 4-5 alternate phrasings the student might use\n   (synonyms, abbreviations, common shorthand). Do NOT include\n   locked_answer itself. Return [] if locked_answer is empty.\n\nStrict rules:\n- locked_answer must be a SHORT term or noun phrase: typically 2-5 words,\n  hard max 10 words. Examples: \"Purkinje fibers\", \"sinoatrial node\",\n  \"skeletal muscle pump\", \"ATP synthase\".\n- locked_answer must NOT be a sentence or clause. No verbs, no commas\n  separating multiple ideas. If you find yourself writing \"X does Y to\n  Z\", you've gone too far \u2014 pick the X (the structure or term itself).\n- locked_answer must be grounded in the retrieved chunks.\n- DO NOT use parametric / training-data knowledge: if the chunks do not\n  contain a clear answer to the topic question, return empty anchors.\n- If signal is insufficient, return empty anchors with rationale.\n- rationale must be brief (max 25 words).\n\nReturn strict JSON only:\n{{\n  \"locked_question\": \"string\",\n  \"locked_answer\": \"string\",\n  \"locked_answer_aliases\": [\"alias1\", \"alias2\", \"alias3\", \"alias4\"],\n  \"rationale\": \"string\"\n}}\n\n\n[1] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nBoth bundle branches descend and reach the apex of the heart where they connect with the Purkinje fibers. The Purkinje fibers are additional myocardial conductive fibers that spread the impulse to the myocardial contractile cells in the ventricles. They extend throughout the myocardium from the apex of the heart toward the atrioventricular septum and the base of the heart. The Purkinje fibers have a fast inherent conduction rate, and the electrical impulse reaches all of the ventricular muscle cells in about 75 ms. Since the electrical stimulus begins at the apex, the contraction also begins at the apex and travels toward the base of the heart, similar to squeezing a tube of toothpaste from the bottom. This allows the blood to be pumped out of the ventricles and into the aorta and pulmonary trunk.\n\n===\n\n[2] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nThe total time elapsed from the initiation of the impulse in the SA node until depolarization of the ventricles is approximately 225 ms. Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n===\n\n[3] (p.790, score=1.00) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n===\n\n[4] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n===\n\n[5] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells. While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n===\n\n[6] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nConductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n===\n\n[7] (p.790, score=0.84) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential. Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n===\n\n[8] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nThe resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization).\n\n===\n\n[9] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nContext from previous chunk: Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV. The resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization ).\n\n---\n\nStudent selected topic: Conduction System of the Heart\nConversation history:\n\n\nRetrieved propositions:\n[1] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nBoth bundle branches descend and reach the apex of the heart where they connect with the Purkinje fibers. The Purkinje fibers are additional myocardial conductive fibers that spread the impulse to the myocardial contractile cells in the ventricles. They extend throughout the myocardium from the apex of the heart toward the atrioventricular septum and the base of the heart. The Purkinje fibers have a fast inherent conduction rate, and the electrical impulse reaches all of the ventricular muscle cells in about 75 ms. Since the electrical stimulus begins at the apex, the contraction also begins at the apex and travels toward the base of the heart, similar to squeezing a tube of toothpaste from the bottom. This allows the blood to be pumped out of the ventricles and into the aorta and pulmonary trunk.\n\n===\n\n[2] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nThe total time elapsed from the initiation of the impulse in the SA node until depolarization of the ventricles is approximately 225 ms. Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n===\n\n[3] (p.790, score=1.00) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n===\n\n[4] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n===\n\n[5] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells. While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n===\n\n[6] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nConductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n===\n\n[7] (p.790, score=0.84) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential. Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n===\n\n[8] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nThe resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization).\n\n===\n\n[9] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nContext from previous chunk: Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV. The resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization ).\n\nLock anchors and return strict JSON only.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Lock anchors and return strict JSON."
+                }
+              ],
+              "response_text": "```json\n{\n  \"locked_question\": \"What are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\",\n  \"locked_answer\": \"Purkinje fibers\",\n  \"locked_answer_aliases\": [\n    \"Purkinje cells\",\n    \"ventricular conduction fibers\",\n    \"myocardial conductive fibers of the ventricles\",\n    \"terminal conduction fibers\"\n  ],\n  \"rationale\": \"Chunk [1] explicitly identifies Purkinje fibers as myocardial conductive fibers spreading impulse to ventricular contractile cells with fast conduction rate (~75 ms). Clear, grounded anchor.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.sanitize_locked_answer",
+              "candidate": "Purkinje fibers",
+              "action": "kept",
+              "final": "purkinje fibers"
+            },
+            {
+              "wrapper": "teacher.draft_rapport",
+              "decision_effect": null,
+              "input_hash": "02af03ec34d58415",
+              "elapsed_s": 1.15,
+              "in_tok": 439,
+              "out_tok": 44,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00198,
+              "s_per_tok": 0.026,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 413
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 43
+                }
+              ],
+              "system_prompt": "You are\na Socratic tutor in human anatomy working with a student.\nThis is an evaluated learning session.\nGlobal rules for all teacher wrappers:\n- Keep language academically focused and concise.\n- Do not reveal final answers unless wrapper-specific instructions explicitly allow it.\n- Follow wrapper output contracts exactly.\n- If strict JSON is requested by the wrapper, return strict JSON only.\n- Avoid generic motivational filler; prioritize targeted reasoning prompts.\n\n\na Socratic human anatomy tutor opening a new session with a student.\nWrite a brief, natural opener (2-3 sentences max). Vary your tone.\nFirst words must be exactly the \"Good {time_of_day}\" greeting provided\nin the runtime context block below (e.g., \"Good morning\").\nDo NOT start with \"Hello\" or \"Welcome\". Do NOT use generic tutor clich\u00e9s.\nKeep it relevant and concrete for a student audience (coursework, exams, conceptual understanding).\nAssume a classroom/learning context by default.\nEnd with exactly one question asking what human anatomy topic the student wants to tackle today.\n\nPast session context (extracted from prior sessions \u2014 may be empty):\nNo previous history \u2014 new student.\n\nIf \"Past session context\" is empty / \"No previous history\": treat as a\nfresh session, do NOT mention prior struggles, weak topics, or invent\nhistorical difficulties.\n\nIf \"Past session context\" contains real prior data: you MAY briefly\nreference ONE specific past topic or open thread when offering a\nstarting point (\"...last time you were working through X \u2014 pick that\nup or start fresh?\"). At most ONE prior item; no recap, no list, no\nlearning-style summary; do NOT reveal past answers.\n\n\n---\n\nRuntime context for this session:\n  time_of_day: morning\nUse the corresponding 'Good morning' / 'Good afternoon' / 'Good evening' as the first words of your reply, exactly.",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Start the session."
+                }
+              ],
+              "response_text": "Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?",
+              "tool_calls_made": []
+            }
+          ]
+        },
+        {
+          "turn": 1,
+          "phase": "tutoring",
+          "trace": [
+            {
+              "wrapper": "dean.topic_lock_guard",
+              "result": "bypassed_setup_classification_on_topic_selection"
+            },
+            {
+              "wrapper": "dean.sanitize_locked_answer",
+              "candidate": "purkinje fibers",
+              "action": "kept",
+              "final": "purkinje fibers"
+            },
+            {
+              "wrapper": "dean.confidence_score",
+              "result": "answer_conf=0.000, mastery_conf=0.000, reached=False (gate_path=skipped_topic_just_locked)",
+              "locked_answer": "purkinje fibers",
+              "gate_path": "skipped_topic_just_locked",
+              "gate_evidence": ""
+            },
+            {
+              "wrapper": "dean.hint_progress",
+              "hint_before": 0,
+              "hint_after": 0,
+              "hint_reason": "unchanged",
+              "active_hint": ""
+            },
+            {
+              "wrapper": "dean.complexity_classifier",
+              "decision_effect": null,
+              "input_hash": "f8e2c919fe149bfc",
+              "elapsed_s": 1.41,
+              "in_tok": 623,
+              "out_tok": 89,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.0032,
+              "s_per_tok": 0.0158,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 494
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean of a Socratic human anatomy tutoring system. Classify\nthe complexity of the student's most recent message into ONE of three\ntiers (Adaptive-RAG, Jeong 2024). The tier drives downstream retrieval\nstrategy.\n\nTiers:\n  simple\n    \u2014 Direct factual or definitional question on the locked topic.\n    \u2014 Answerable from a single retrieval pass.\n    \u2014 Examples:\n        \"What is the SA node?\"\n        \"Where is the brachial plexus located?\"\n        \"Define synaptic cleft.\"\n\n  tangential\n    \u2014 Curiosity drift outside the locked topic but still within the\n      domain. Worth a one-shot un-section-filtered retrieval to\n      surface the related concept without losing the locked topic.\n    \u2014 Examples (when locked on Cardiac Conduction):\n        \"Wait, how does this connect to blood pressure?\"\n        \"I read about heart attacks \u2014 is that the same as arrhythmia?\"\n\n  complex\n    \u2014 Multi-step reasoning question, comparison across topics, or\n      synthesis spanning multiple subsections. May benefit from\n      multi-hop retrieval (D.4 \u2014 currently treated as `simple`).\n    \u2014 Examples:\n        \"How does the autonomic nervous system regulate cardiac\n         output during exercise?\"\n        \"Compare and contrast skeletal vs cardiac muscle tissue at\n         the cellular and functional levels.\"\n\nOutput a 1-sentence rationale citing the specific aspect of the\nstudent's message that drove the classification. Do not classify\nbased on locked topic alone \u2014 the message content is what matters.\n\nReturn strict JSON only, no prose:\n{\n  \"tier\": \"simple|tangential|complex\",\n  \"rationale\": \"\"\n}\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Locked topic (subsection): Conduction System of the Heart\nLocked anchor question: What are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\n\nRecent conversation history (most recent last):\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\n\nStudent's latest message:\nI think it has to do with electrical signals in the heart\n\nClassify.\n"
+                }
+              ],
+              "response_text": "```json\n{\n  \"tier\": \"simple\",\n  \"rationale\": \"The student's message is a broad topic statement indicating interest in cardiac electrical signals, which directly aligns with the locked topic (Conduction System of the Heart) and requires only a single retrieval pass to introduce foundational concepts like the SA node, AV node, or Purkinje fibers.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.complexity_classifier",
+              "tier": "simple",
+              "rationale": "The student's message is a broad topic statement indicating interest in cardiac electrical signals, which directly aligns with the locked topic (Conduction System of the Heart) and requires only a sin"
+            },
+            {
+              "wrapper": "dean._exploration_judge",
+              "decision_effect": null,
+              "input_hash": "db95cbd7472e1ef2",
+              "elapsed_s": 1.72,
+              "in_tok": 582,
+              "out_tok": 127,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00365,
+              "s_per_tok": 0.0136,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 397
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 69
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 150
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean in the middle of a Socratic tutoring session. A topic is\nlocked and Teacher is about to respond. Your job is to decide whether the\nstudent's latest message is asking about something OUTSIDE the locked\ntopic \u2014 a tangential concept, a clarifying prerequisite, a connection to\nanother body system, etc. \u2014 that would genuinely benefit from fetching\nextra textbook context beyond the locked section.\n\nReturn `exploration_needed: true` ONLY when ALL of these hold:\n  - The student is asking about a human anatomy concept that is NOT the\n    locked topic or a direct sub-question of it.\n  - The tangential concept has a clear short query string (3-8 words) that\n    a textbook search could retrieve.\n  - Answering it would help the student make progress on the locked topic,\n    not just scratch curiosity unrelated to the session.\n\nIf the student is answering the locked question (correct/partial/incorrect),\nasking a question strictly about the locked topic, or venting/off-topic, set\n`exploration_needed: false`. When in doubt, say false \u2014 Teacher already has\nthe locked section's context.\n\nReturn strict JSON only:\n{{\n  \"exploration_needed\": false,\n  \"exploration_query\": \"\",\n  \"rationale\": \"\"\n}}\n\n\n---\n\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\n\n---\n\nLocked topic: Conduction System of the Heart\nLocked question (Teacher is guiding toward this): What are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\n\nRecent conversation history:\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\n\nDecide based ONLY on the student's most recent message.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Judge and return strict JSON only."
+                }
+              ],
+              "response_text": "```json\n{\n  \"exploration_needed\": false,\n  \"exploration_query\": \"\",\n  \"rationale\": \"The student's message is a general statement about their topic interest ('electrical signals in the heart'), not a question that deviates from or requires context beyond the locked topic. The student is simply confirming the subject area. The Tutor has already locked the topic as 'Conduction System of the Heart' and is about to guide toward the specific question about Purkinje fibers. No tangential exploration is needed at this stage.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.exploration_judge",
+              "result": "skip",
+              "needed": false,
+              "query": "",
+              "rationale": "The student's message is a general statement about their topic interest ('electrical signals in the heart'), not a question that deviates from or requires context beyond the locked topic. The student is simply confirming the subject area. The Tutor has already locked the topic as 'Conduction System of the Heart' and is about to guide toward the specific question about Purkinje fibers. No tangential exploration is needed at this stage."
+            },
+            {
+              "wrapper": "dean.topic_ack_emitted",
+              "result": "ack_message_emitted_skipping_teacher_draft",
+              "locked_question": "What are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?"
+            }
+          ]
+        },
+        {
+          "turn": 2,
+          "phase": "tutoring",
+          "trace": [
+            {
+              "wrapper": "dean._setup_call",
+              "decision_effect": "classification_only",
+              "input_hash": "a0d9a245ce8d2c3f",
+              "elapsed_s": 2.43,
+              "in_tok": 1953,
+              "out_tok": 189,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00869,
+              "s_per_tok": 0.0128,
+              "cached_est_tokens": 1558,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": true,
+                  "est_tokens": 1558
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 152
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 238
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean supervising one Socratic tutoring turn.\nTools are already handled in Python. Do NOT request tools.\nThis is an evaluation setting: classify strictly based on evidence in the student's latest message.\n\nSTRICT LOW_EFFORT RULES (highest priority):\n  The student must be GENUINELY ATTEMPTING the locked_question.\n  low_effort when: bare denial (\"no\", \"idk\", \"i don't know\"), demand\n  to be told (\"just tell me\"), frustration (\"if i wanted to read...\"),\n  empty deflection (<5 words, no domain content), profanity, or\n  dismissal. Off-topic + frustration \u2192 low_effort.\n  irrelevant: genuinely off-topic question on a different subject.\n\nOTHER:\n  question: genuine specific clarifying question about human anatomy,\n    with engagement. Rhetorical/frustrated questions \u2192 low_effort.\n  incorrect: genuine attempt but wrong.\n  partial_correct: answers an INTERMEDIATE scaffold the tutor asked,\n    but NOT the locked answer. (e.g. \"stroke volume goes lower\" when\n    locked_answer is \"skeletal muscle pump\" \u2192 partial_correct.)\n  correct: student STATES the locked_answer or a clear paraphrase.\n    Getting an intermediate scaffold right is partial_correct, NOT correct.\n    Only the LOCKED answer being stated counts as correct.\n\nstudent_reached_answer: ALWAYS set to false. Python's\n  reached_answer_gate computes the authoritative reached signal.\n\nconfidence_score:\n  - 0.85-1.00: explicit, accurate, certain\n  - 0.65-0.84: mostly correct, mild ambiguity\n  - 0.40-0.64: partial / uncertain\n  - 0.00-0.39: incorrect, irrelevant, low-effort\n\nhint_level: leave unchanged (Python increments for incorrect).\nlocked_answer is already set; do not propose a new one.\n\nReturn one JSON object only (no markdown):\n{{\n  \"student_state\": \"correct|partial_correct|incorrect|question|irrelevant|low_effort\",\n  \"student_reached_answer\": false,\n  \"confidence_score\": 0.0,\n  \"hint_level\": 1,\n  \"search_needed\": false,\n  \"critique\": \"\"\n}}\n\n\n[1] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nBoth bundle branches descend and reach the apex of the heart where they connect with the Purkinje fibers. The Purkinje fibers are additional myocardial conductive fibers that spread the impulse to the myocardial contractile cells in the ventricles. They extend throughout the myocardium from the apex of the heart toward the atrioventricular septum and the base of the heart. The Purkinje fibers have a fast inherent conduction rate, and the electrical impulse reaches all of the ventricular muscle cells in about 75 ms. Since the electrical stimulus begins at the apex, the contraction also begins at the apex and travels toward the base of the heart, similar to squeezing a tube of toothpaste from the bottom. This allows the blood to be pumped out of the ventricles and into the aorta and pulmonary trunk.\n\n===\n\n[2] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nThe total time elapsed from the initiation of the impulse in the SA node until depolarization of the ventricles is approximately 225 ms. Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n===\n\n[3] (p.790, score=1.00) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n===\n\n[4] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n===\n\n[5] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells. While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n===\n\n[6] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nConductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n===\n\n[7] (p.790, score=0.84) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential. Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n===\n\n[8] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nThe resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization).\n\n===\n\n[9] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nContext from previous chunk: Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV. The resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization ).\n\n---\n\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\n\n---\n\nCurrent state:\n- locked_question: What are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\n- locked_answer: purkinje fibers\n- hint_level: 0\n- turn_count: 1\n\nRecent conversation history:\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\nClassify the student's MOST RECENT message. Prior history is context only.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Classify this turn and return JSON."
+                }
+              ],
+              "response_text": "```json\n{\n  \"student_state\": \"question\",\n  \"student_reached_answer\": false,\n  \"confidence_score\": 0.55,\n  \"hint_level\": 0,\n  \"search_needed\": false,\n  \"critique\": \"Student is asking a clarifying question about where electrical impulses originate, which shows engagement with the topic. However, the question is somewhat vague and does not directly address the locked question about the NAME of the specialized fibers. The student is circling around the concept (impulse location/origin) rather than attempting to identify the fiber type itself. This is a genuine attempt to understand, but it's an intermediate scaffold question, not an answer to the locked question. Encourage the student to focus on identifying the specific fiber type that conducts these impulses in the ventricles.\"\n}\n```",
+              "tool_calls_made": [],
+              "result": "student_state=question, hint=0",
+              "locked_answer_final": "purkinje fibers"
+            },
+            {
+              "wrapper": "dean.sanitize_locked_answer",
+              "candidate": "purkinje fibers",
+              "action": "kept",
+              "final": "purkinje fibers"
+            },
+            {
+              "wrapper": "dean.reached_answer_gate",
+              "decision_effect": null,
+              "input_hash": "c4d9860e6d328d04",
+              "elapsed_s": 1.51,
+              "in_tok": 998,
+              "out_tok": 92,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00437,
+              "s_per_tok": 0.0164,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 563
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 152
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 265
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean checking whether the student has STATED the locked answer\nin their most recent message. This is the final gate before tutoring ends \u2014\na false positive fabricates a confirmation the student didn't earn, so be\nstrict.\n\nDEFINITIONS:\n- locked_answer: the target term/concept (e.g. \"skeletal muscle pump\").\n- aliases: equivalent phrasings the student could use instead.\n- \"Reached\" means the student asserted the answer or paraphrased it as a\n  positive answer in THIS message.\n\nREACHED = TRUE rules (must satisfy ALL):\n1. The student names locked_answer (or any alias) OR paraphrases the\n   concept unambiguously.\n2. The phrasing is an ASSERTION (not a question, not a hedge).\n   - Asserting: \"It's the skeletal muscle pump\" / \"The muscles squeeze\n     the veins to push blood up\" \u2192 REACHED.\n   - Asking: \"Is it the skeletal muscle pump?\" \u2192 NOT REACHED.\n   - Hedging: \"Maybe gravity? I'm not sure\" \u2192 NOT REACHED.\n   - Denying: \"I don't know what skeletal muscle pump is\" \u2192 NOT REACHED.\n3. You can quote a contiguous substring from the student's latest message\n   that demonstrates this assertion. The quote must appear VERBATIM in the\n   student's message. No quote \u2192 NOT REACHED.\n\nREACHED = FALSE if any of:\n- The student names a different concept (even a related/neighboring one).\n  e.g. locked=\"SA node\", student says \"AV node\" \u2192 NOT REACHED.\n- The student names only one component of a multi-word answer in a way\n  that doesn't convey the full concept.\n  e.g. locked=\"skeletal muscle pump\", student says \"muscles\" alone \u2192 NOT REACHED.\n- The student is asking, hedging, denying, or off-topic.\n\nBIAS: When in doubt, return reached=false. False positives are costly.\n\nReturn strict JSON ONLY (no markdown, no prose):\n{{\n  \"reached\": true,\n  \"evidence\": \"exact verbatim quote from student message\",\n  \"rationale\": \"1 sentence on why this counts (or doesn't)\"\n}}\n\n\n---\n\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\n\n---\n\nLocked answer: purkinje fibers\nAliases (equivalent phrasings): Purkinje cells, ventricular conduction fibers, myocardial conductive fibers of the ventricles, terminal conduction fibers\n\nRecent conversation (for context only \u2014 judge based on the LATEST student message):\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\n\nStudent's LATEST message:\nMaybe the electrical impulses start somewhere specific?\n\nDecide: did the student reach the locked answer in their LATEST message?\nReturn strict JSON only.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Decide and return strict JSON."
+                }
+              ],
+              "response_text": "```json\n{\n  \"reached\": false,\n  \"evidence\": \"No verbatim quote available \u2014 student did not name or assert Purkinje fibers or any alias.\",\n  \"rationale\": \"The student's message is a hedged question ('Maybe...?') that does not assert the locked answer; it merely speculates about where impulses start without naming the specialized fibers.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.confidence_score",
+              "result": "answer_conf=0.550, mastery_conf=0.275, reached=False (gate_path=no_overlap_no_paraphrase)",
+              "locked_answer": "purkinje fibers",
+              "gate_path": "no_overlap_no_paraphrase",
+              "gate_evidence": ""
+            },
+            {
+              "wrapper": "dean.hint_progress",
+              "hint_before": 0,
+              "hint_after": 0,
+              "hint_reason": "unchanged",
+              "active_hint": ""
+            },
+            {
+              "wrapper": "dean.complexity_classifier",
+              "decision_effect": null,
+              "input_hash": "79bf11c6b5d24e7b",
+              "elapsed_s": 1.17,
+              "in_tok": 695,
+              "out_tok": 83,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00333,
+              "s_per_tok": 0.0141,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 494
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean of a Socratic human anatomy tutoring system. Classify\nthe complexity of the student's most recent message into ONE of three\ntiers (Adaptive-RAG, Jeong 2024). The tier drives downstream retrieval\nstrategy.\n\nTiers:\n  simple\n    \u2014 Direct factual or definitional question on the locked topic.\n    \u2014 Answerable from a single retrieval pass.\n    \u2014 Examples:\n        \"What is the SA node?\"\n        \"Where is the brachial plexus located?\"\n        \"Define synaptic cleft.\"\n\n  tangential\n    \u2014 Curiosity drift outside the locked topic but still within the\n      domain. Worth a one-shot un-section-filtered retrieval to\n      surface the related concept without losing the locked topic.\n    \u2014 Examples (when locked on Cardiac Conduction):\n        \"Wait, how does this connect to blood pressure?\"\n        \"I read about heart attacks \u2014 is that the same as arrhythmia?\"\n\n  complex\n    \u2014 Multi-step reasoning question, comparison across topics, or\n      synthesis spanning multiple subsections. May benefit from\n      multi-hop retrieval (D.4 \u2014 currently treated as `simple`).\n    \u2014 Examples:\n        \"How does the autonomic nervous system regulate cardiac\n         output during exercise?\"\n        \"Compare and contrast skeletal vs cardiac muscle tissue at\n         the cellular and functional levels.\"\n\nOutput a 1-sentence rationale citing the specific aspect of the\nstudent's message that drove the classification. Do not classify\nbased on locked topic alone \u2014 the message content is what matters.\n\nReturn strict JSON only, no prose:\n{\n  \"tier\": \"simple|tangential|complex\",\n  \"rationale\": \"\"\n}\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Locked topic (subsection): Conduction System of the Heart\nLocked anchor question: What are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\n\nRecent conversation history (most recent last):\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\n\nStudent's latest message:\nMaybe the electrical impulses start somewhere specific?\n\nClassify.\n"
+                }
+              ],
+              "response_text": "```json\n{\n  \"tier\": \"simple\",\n  \"rationale\": \"The student is asking for clarification on the anatomical origin point of ventricular electrical conduction, which is a direct factual question about the locked topic (Conduction System of the Heart) answerable from a single retrieval pass identifying the apex as the starting location.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.complexity_classifier",
+              "tier": "simple",
+              "rationale": "The student is asking for clarification on the anatomical origin point of ventricular electrical conduction, which is a direct factual question about the locked topic (Conduction System of the Heart) "
+            },
+            {
+              "wrapper": "dean._exploration_judge",
+              "decision_effect": null,
+              "input_hash": "045a99a49c353a5d",
+              "elapsed_s": 1.89,
+              "in_tok": 732,
+              "out_tok": 146,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00439,
+              "s_per_tok": 0.013,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 397
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 152
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 233
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean in the middle of a Socratic tutoring session. A topic is\nlocked and Teacher is about to respond. Your job is to decide whether the\nstudent's latest message is asking about something OUTSIDE the locked\ntopic \u2014 a tangential concept, a clarifying prerequisite, a connection to\nanother body system, etc. \u2014 that would genuinely benefit from fetching\nextra textbook context beyond the locked section.\n\nReturn `exploration_needed: true` ONLY when ALL of these hold:\n  - The student is asking about a human anatomy concept that is NOT the\n    locked topic or a direct sub-question of it.\n  - The tangential concept has a clear short query string (3-8 words) that\n    a textbook search could retrieve.\n  - Answering it would help the student make progress on the locked topic,\n    not just scratch curiosity unrelated to the session.\n\nIf the student is answering the locked question (correct/partial/incorrect),\nasking a question strictly about the locked topic, or venting/off-topic, set\n`exploration_needed: false`. When in doubt, say false \u2014 Teacher already has\nthe locked section's context.\n\nReturn strict JSON only:\n{{\n  \"exploration_needed\": false,\n  \"exploration_query\": \"\",\n  \"rationale\": \"\"\n}}\n\n\n---\n\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\n\n---\n\nLocked topic: Conduction System of the Heart\nLocked question (Teacher is guiding toward this): What are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\n\nRecent conversation history:\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\n\nDecide based ONLY on the student's most recent message.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Judge and return strict JSON only."
+                }
+              ],
+              "response_text": "```json\n{\n  \"exploration_needed\": false,\n  \"exploration_query\": \"\",\n  \"rationale\": \"The student's message 'Maybe the electrical impulses start somewhere specific?' is a clarifying question directly about the locked topic\u2014the Conduction System of the Heart. The student is probing the origin point of electrical impulses in the ventricles, which is a core sub-question of the locked prompt asking about fibers that conduct impulses 'beginning at the apex.' This is not tangential; it is the student engaging with the locked question itself. Teacher already has full context from Chapter 19 to answer this directly.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.exploration_judge",
+              "result": "skip",
+              "needed": false,
+              "query": "",
+              "rationale": "The student's message 'Maybe the electrical impulses start somewhere specific?' is a clarifying question directly about the locked topic\u2014the Conduction System of the Heart. The student is probing the origin point of electrical impulses in the ventricles, which is a core sub-question of the locked prompt asking about fibers that conduct impulses 'beginning at the apex.' This is not tangential; it is the student engaging with the locked question itself. Teacher already has full context from Chapter 19 to answer this directly."
+            },
+            {
+              "wrapper": "teacher.draft_socratic",
+              "decision_effect": null,
+              "input_hash": "c2e47cf50c143e50",
+              "elapsed_s": 3.99,
+              "in_tok": 1949,
+              "out_tok": 89,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00718,
+              "s_per_tok": 0.0449,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 1473
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 152
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 407
+                }
+              ],
+              "system_prompt": "You are\na Socratic tutor in human anatomy working with a student.\nThis is an evaluated learning session.\nGlobal rules for all teacher wrappers:\n- Keep language academically focused and concise.\n- Do not reveal final answers unless wrapper-specific instructions explicitly allow it.\n- Follow wrapper output contracts exactly.\n- If strict JSON is requested by the wrapper, return strict JSON only.\n- Avoid generic motivational filler; prioritize targeted reasoning prompts.\n\n\na Socratic anatomy tutor.\nThe student is being evaluated on human anatomy reasoning quality.\n\nHard rules:\n- Never reveal the answer directly or indirectly.\n- Never state \"you're correct\" unless you also ask for reasoning or application.\n- Keep output to 2-4 sentences.\n- End with exactly one question.\n- Ask only one question total.\n- If the student is incorrect, do not bluntly correct; use probing guidance.\n- Do NOT use strong affirmation phrases (for example: \"Exactly\", \"Correct\", \"That's right\", \"You got it\")\n  unless student_state is exactly \"correct\".\n\nBehavior by student_state:\n- correct: affirm briefly, then deepen via mechanism/function.\n- partial_correct: acknowledge only the accurate fragment (use \"close\"/\"partly right\"), then probe missing link.\n- incorrect: do not affirm; probe reasoning path and guide toward self-correction.\n- question: briefly answer clarification, then return to core reasoning.\n- irrelevant: redirect to current human anatomy target.\n- low_effort: request a concrete attempt before moving on.\n\nHint-level behavior:\n- level 1: broad activation question.\n- level 2: narrower mechanism/relationship question.\n- level 3: direct but non-revealing final push.\n\nInternal quality check before finalizing (EULER-lite):\n- Question present: ends with exactly one real question.\n- Relevance: tied to latest student message and target concept.\n- Helpful: advances reasoning, not generic filler.\n- No reveal: locked answer/synonym is not inferable in one hop.\n- Avoid repetitive empathy wrappers and filler phrases.\n\nBanned lead-ins \u2014 NEVER start a sentence with these:\n- \"I can see\"\n- \"I notice\"\n- \"I hear\"\n- \"That's okay\"\n- \"I understand\"\n- \"I see that\"\n- \"It sounds like\"\nViolation of any banned lead-in = automatic rewrite.\n\nOutput contract:\n- At most 4 sentences total.\n- Sentence 1: brief targeted acknowledgment (optional).\n- Sentence 2-3: focused reasoning scaffold.\n- Final sentence: exactly one question.\nOutput only the final tutor message.\n\n\nTextbook propositions:\n[1] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nBoth bundle branches descend and reach the apex of the heart where they connect with the Purkinje fibers. The Purkinje fibers are additional myocardial conductive fibers that spread the impulse to the myocardial contractile cells in the ventricles. They extend throughout the myocardium from the apex of the heart toward the atrioventricular septum and the base of the heart. The Purkinje fibers have a fast inherent conduction rate, and the electrical impulse reaches all of the ventricular muscle cells in about 75 ms. Since the electrical stimulus begins at the apex, the contraction also begins at the apex and travels toward the base of the heart, similar to squeezing a tube of toothpaste from the bottom. This allows the blood to be pumped out of the ventricles and into the aorta and pulmonary trunk.\n\n[2] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nThe total time elapsed from the initiation of the impulse in the SA node until depolarization of the ventricles is approximately 225 ms. Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n[3] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n[4] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n[5] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells. While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n[6] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nConductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n[7] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential. Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n[8] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nThe resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization).\n\n[9] Cardiac Muscle and Electrical Activity > Conduction System of the Heart\nContext from previous chunk: Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV. The resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization ).\n\n\n---\n\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\n\n---\n\nCurrent student_state: question\nCurrent hint level: 0 of 3\nDean's pre-planned hint for this level (use as the pedagogical roadmap; phrase it naturally, do NOT recite verbatim, do NOT reveal the locked answer): \nDean guidance for this draft (preflight + prior critique if any): reason_codes=['preflight']\nrewrite_instruction=Generate one concise Socratic reply that will pass Dean QC.\ncritique=Preflight constraints: exactly one question mark, 2-4 sentences, no generic filler lead-ins, no answer reveal by naming/elimination, and one concrete next reasoning step.\ncontext=student_state:question,hint_level:0,active_hint:\nAnchor question this student is pursuing: What are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\n\nRecent conversation history:\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\nPrior turns are provided for continuity. Use them to avoid repeating questions you've already asked and to maintain hint-level progression. Respond to the student's most recent message.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Maybe the electrical impulses start somewhere specific?"
+                }
+              ],
+              "response_text": "You're sensing something important\u2014the *location* where impulses begin does matter for identifying these fibers. The textbook notes that impulses reach the apex first, then spread toward the base; the fibers responsible for this rapid spread have a specific name tied to their function. What anatomical structure or fiber type do you think would be needed to conduct an impulse *so quickly* throughout the ventricular muscle?",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean._deterministic_quality_check",
+              "result": "PASS",
+              "reason_codes": []
+            },
+            {
+              "wrapper": "dean._quality_check_call",
+              "decision_effect": "qc_fail",
+              "input_hash": "7ba6555c72bffec4",
+              "elapsed_s": 2.48,
+              "in_tok": 2056,
+              "out_tok": 161,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00858,
+              "s_per_tok": 0.0154,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 1447
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 152
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 518
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean reviewing a teacher draft before release to the student.\nThis is an evaluation setting: enforce standards strictly and consistently.\n\nEvaluate against all 4 EULER criteria. Fail if any fails:\n1. QUESTION_PRESENT: ends with exactly one question.\n2. RELEVANCE: grounded in student's latest message and current target.\n3. HELPFUL: meaningfully advances reasoning (not generic filler).\n4. NO_REVEAL (LeakGuard): response does not expose or entail locked_answer via direct naming,\n   one-hop inference, elimination, or sycophantic confirmation.\n\nAdditional strict checks:\n- Exactly one question mark \"?\" in tutoring mode.\n- No repetitive generic coaching filler.\n- Must include a concrete next reasoning step.\n\nResponse requirements:\n- Return a single valid JSON object only (no markdown, no backticks, no prose).\n- Include revised_teacher_draft only when pass=false.\n- Use strict JSON with double quotes.\n- Keep critique <= 20 words and rewrite_instruction <= 14 words.\n- Keep revised_teacher_draft <= 4 sentences and plain text only.\n\nRespond with JSON only:\n{{\n  \"pass\": true/false,\n  \"critique\": \"short explanation if fail, empty if pass\",\n  \"leak_detected\": true/false,\n  \"reason_codes\": [\"missing_question\"|\"multi_question\"|\"generic_filler\"|\"low_helpfulness\"|\"reveal_risk\"|\"sycophancy_risk\"|\"off_topic\"|\"other\"],\n  \"rewrite_instruction\": \"one concrete instruction for the next draft\",\n  \"revised_teacher_draft\": \"full revised tutor response, empty when pass=true\"\n}}\n\n\n[1] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nBoth bundle branches descend and reach the apex of the heart where they connect with the Purkinje fibers. The Purkinje fibers are additional myocardial conductive fibers that spread the impulse to the myocardial contractile cells in the ventricles. They extend throughout the myocardium from the apex of the heart toward the atrioventricular septum and the base of the heart. The Purkinje fibers have a fast inherent conduction rate, and the electrical impulse reaches all of the ventricular muscle cells in about 75 ms. Since the electrical stimulus begins at the apex, the contraction also begins at the apex and travels toward the base of the heart, similar to squeezing a tube of toothpaste from the bottom. This allows the blood to be pumped out of the ventricles and into the aorta and pulmonary trunk.\n\n===\n\n[2] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nThe total time elapsed from the initiation of the impulse in the SA node until depolarization of the ventricles is approximately 225 ms. Action potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n===\n\n[3] (p.790, score=1.00) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells.\n\n===\n\n[4] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n===\n\n[5] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nAction potentials are considerably different between cardiac conductive cells and cardiac contractive cells. While Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential.\n\n===\n\n[6] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nConductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n===\n\n[7] (p.790, score=0.84) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nWhile Na + and K + play essential roles, Ca 2+ is also critical for both types of cells. Unlike skeletal muscles and neurons, cardiac conductive cells do not have a stable resting potential. Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV.\n\n===\n\n[8] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nThe resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization).\n\n===\n\n[9] (p.790) The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart\n---\nContext from previous chunk: Conductive cells contain a series of sodium ion channels that allow a normal and slow influx of sodium ions that causes the membrane potential to rise slowly from an initial value of \u221260 mV up to about \u201340 mV. The resulting movement of sodium ions creates spontaneous depolarization (or prepotential depolarization ).\n\n---\n\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\n\n---\n\nPhase: tutoring\nCorrect answer (never reveal): purkinje fibers\nStudent's last message: Maybe the electrical impulses start somewhere specific?\nTeacher's draft: You're sensing something important\u2014the *location* where impulses begin does matter for identifying these fibers. The textbook notes that impulses reach the apex first, then spread toward the base; the fibers responsible for this rapid spread have a specific name tied to their function. What anatomical structure or fiber type do you think would be needed to conduct an impulse *so quickly* throughout the ventricular muscle?\nPrior preflight critique (the deterministic-check or earlier dean_critique that\nthe Teacher was already given for this turn \u2014 empty if this is the first eval):\nreason_codes=['preflight']\nrewrite_instruction=Generate one concise Socratic reply that will pass Dean QC.\ncritique=Preflight constraints: exactly one question mark, 2-4 sentences, no generic filler lead-ins, no answer reveal by naming/elimination, and one concrete next reasoning step.\ncontext=student_state:question,hint_level:0,active_hint:\nRecent conversation history:\nTutor: Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?\nStudent: I think it has to do with electrical signals in the heart\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: Maybe the electrical impulses start somewhere specific?\nEvaluate ONLY the Teacher's most recent draft against the student's most recent message. Use prior conversation history to detect repetition, contradiction, or improper hint regression \u2014 not as material to grade. If prior_preflight_critique is non-empty, your rewrite_instruction MUST address that specific failure mode (do not regress to it).\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Evaluate this Teacher draft."
+                }
+              ],
+              "response_text": "```json\n{\n  \"pass\": false,\n  \"critique\": \"Repeats prior hint without advancing reasoning; asks vague question about 'fiber type' instead of concrete next step.\",\n  \"leak_detected\": false,\n  \"reason_codes\": [\"generic_filler\", \"low_helpfulness\"],\n  \"rewrite_instruction\": \"Ask student to name the fiber type based on speed of conduction, not repeat location hint.\",\n  \"revised_teacher_draft\": \"You're right that location matters. The textbook emphasizes these fibers conduct impulses in about 75 ms\u2014faster than any other cardiac tissue. What property or characteristic of a fiber would allow such rapid conduction?\"\n}\n```",
+              "tool_calls_made": [],
+              "result": "FAIL: Repeats prior hint without advancing reasoning; asks vague question about 'fiber type' instead of concrete next step.",
+              "reason_codes": [
+                "generic_filler",
+                "low_helpfulness"
+              ],
+              "rewrite_instruction": "Ask student to name the fiber type based on speed of conduction, not repeat location hint.",
+              "parse_ok": true,
+              "revised_teacher_draft": "You're right that location matters. The textbook emphasizes these fibers conduct impulses in about 75 ms\u2014faster than any other cardiac tissue. What property or characteristic of a fiber would allow such rapid conduction?"
+            },
+            {
+              "wrapper": "dean._deterministic_quality_check_revised",
+              "result": "PASS",
+              "reason_codes": []
+            },
+            {
+              "wrapper": "dean.revised_teacher_draft_applied",
+              "result": "Applied Dean revised_teacher_draft (single-pass repair)"
+            }
+          ]
+        }
+      ],
+      "hint_progress": [
+        {
+          "turn": 0,
+          "student_state": "question",
+          "hint_before": 0,
+          "hint_after": 0,
+          "reason": "unchanged",
+          "active_hint": ""
+        },
+        {
+          "turn": 1,
+          "student_state": "question",
+          "hint_before": 0,
+          "hint_after": 0,
+          "reason": "unchanged",
+          "active_hint": ""
+        },
+        {
+          "turn": 2,
+          "student_state": "incorrect",
+          "hint_before": 0,
+          "hint_after": 1,
+          "reason": "incorrect_first_post_ack",
+          "active_hint": ""
+        }
+      ],
+      "hint_plan": [],
+      "complexity_tier": "simple"
+    }
+  },
+  "result": {
+    "reached_pass": true,
+    "fabrication_pass": true,
+    "overall_pass": true
+  },
+  "notes": [],
+  "log": [
+    {
+      "step": "prelock",
+      "matcher_path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart",
+      "matcher_score": 101.0,
+      "chunk_count": 16,
+      "locked_question": "What are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?",
+      "locked_answer": "purkinje fibers",
+      "locked_answer_aliases": [
+        "Purkinje cells",
+        "ventricular conduction fibers",
+        "myocardial conductive fibers of the ventricles",
+        "terminal conduction fibers"
+      ],
+      "lock_source": "llm"
+    },
+    {
+      "step": "rapport_greeting",
+      "tutor": "Good morning. Human anatomy covers a lot of ground\u2014from cellular structures to organ systems\u2014so let's focus on what will actually help you most right now. What anatomy topic are you working through today?"
+    },
+    {
+      "step": "tutoring_turn_1_student",
+      "student": "I think it has to do with electrical signals in the heart"
+    },
+    {
+      "step": "tutoring_turn_1_after_invoke",
+      "tutor": "Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?",
+      "student_state": "question",
+      "student_reached_answer": false,
+      "student_answer_confidence": 0.0,
+      "phase": "tutoring",
+      "hint_level": 0
+    },
+    {
+      "step": "tutoring_turn_2_student",
+      "student": "Maybe the electrical impulses start somewhere specific?"
+    },
+    {
+      "step": "tutoring_turn_2_after_invoke",
+      "tutor": "You're right that location matters. The textbook emphasizes these fibers conduct impulses in about 75 ms\u2014faster than any other cardiac tissue. What property or characteristic of a fiber would allow such rapid conduction?",
+      "student_state": "question",
+      "student_reached_answer": false,
+      "student_answer_confidence": 0.55,
+      "phase": "tutoring",
+      "hint_level": 0
+    },
+    {
+      "step": "tutoring_turn_3_student",
+      "student": "AV node"
+    },
+    {
+      "step": "tutoring_turn_3_after_invoke",
+      "tutor": "The AV node is part of the conduction pathway, but it's a *structure* that delays the impulse, not the fiber type that rapidly spreads it through the ventricles. After the impulse leaves the AV node and travels down the bundle branches, what specialized fibers then take over to distribute it quickly throughout the ventricular muscle tissue?",
+      "student_state": "incorrect",
+      "student_reached_answer": false,
+      "student_answer_confidence": 0.15,
+      "phase": "tutoring",
+      "hint_level": 1
+    }
+  ],
+  "debug_summary": {
+    "api_calls": 16,
+    "input_tokens": 21470,
+    "output_tokens": 2103,
+    "cost_usd": 0.095955
+  }
+}

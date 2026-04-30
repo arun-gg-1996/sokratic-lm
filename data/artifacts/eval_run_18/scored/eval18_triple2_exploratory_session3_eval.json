@@ -1,0 +1,376 @@
+{
+  "session_id": "f8ff410e",
+  "test_id": null,
+  "description": "",
+  "scored_at": "2026-04-30T08:51:41+00:00",
+  "primary": {
+    "EULER": {
+      "question_present": 1.0,
+      "relevance": 1.0,
+      "helpful": 0.9615384615384616,
+      "no_reveal": 0.7692307692307693,
+      "passes_all_thresholds": false,
+      "n_turns_scored": 13
+    },
+    "RAGAS": {
+      "context_precision": 0.4,
+      "context_recall": 1.0,
+      "context_relevancy": 0.5700000000000001,
+      "faithfulness": 0.9615384615384616,
+      "answer_relevancy": 1.0,
+      "answer_correctness": 1.0,
+      "passes_all_thresholds": false
+    }
+  },
+  "secondary": {
+    "TLQ": {
+      "score": 0.895,
+      "threshold": 0.8,
+      "passes": true,
+      "sub": {
+        "match_top_score": 0.892,
+        "vote_consensus": 0.584,
+        "coverage_gate_pass": 1.0,
+        "anchor_extraction_success": 1.0,
+        "repair_clean": 1.0
+      }
+    },
+    "RRQ": {
+      "score": 0.853,
+      "threshold": 0.75,
+      "passes": true,
+      "sub": {
+        "chunk_count_adequacy": 1.0,
+        "mean_top3_score": 1.0,
+        "section_match_rate": 1.0,
+        "retrieval_calls_efficiency": 1.0,
+        "coverage_gap_frequency": 1.0,
+        "ragas_context_precision": 0.4,
+        "ragas_context_relevancy": 0.57
+      }
+    },
+    "AQ": {
+      "score": 0.783,
+      "threshold": 0.85,
+      "passes": false,
+      "sub": {
+        "groundedness": 1.0,
+        "answer_brevity": 0.7,
+        "answer_is_noun_phrase": 1.0,
+        "aliases_count_adequacy": 0.75,
+        "question_specificity": 0.85,
+        "aliases_diversity_semantic": 0.4
+      }
+    },
+    "TRQ": {
+      "score": 0.756,
+      "threshold": 0.75,
+      "passes": true,
+      "sub": {
+        "qc_pass_rate": 0.3,
+        "revised_draft_rate": 0.538,
+        "intervention_rate": 0.769,
+        "reason_codes_clean_rate": 0.462,
+        "euler_question_present": 1.0,
+        "euler_relevance": 1.0,
+        "euler_helpful": 0.962,
+        "euler_no_reveal": 0.769,
+        "repetition_score": 1.0
+      }
+    },
+    "RGC": {
+      "score": 0.667,
+      "threshold": 0.95,
+      "passes": false,
+      "sub": {
+        "no_false_positives": 1.0,
+        "no_false_negatives": 1.0,
+        "evidence_quote_validity": 0.0,
+        "path_distribution": {
+          "skipped_topic_just_locked": 1,
+          "no_overlap_no_paraphrase": 11,
+          "llm_parse_fail": 1,
+          "paraphrase": 1
+        },
+        "confusion_matrix": {
+          "tp": 1,
+          "fp": 0,
+          "tn": 13,
+          "fn": 0
+        }
+      }
+    },
+    "PP": {
+      "score": 0.714,
+      "threshold": 0.6,
+      "passes": true,
+      "sub": {
+        "hint_progression_monotonic": 0.833,
+        "hint_utilization": 0.667,
+        "student_engagement_rate": 1.0,
+        "state_trajectory_score": 0.355
+      }
+    },
+    "ARC": {
+      "score": 0.5,
+      "threshold": 0.7,
+      "passes": false,
+      "sub": {
+        "step_vs_reach_disambiguation_det": 0.0,
+        "intermediate_credit_avoidance_det": 0.0,
+        "mastery_attribution_grounding": 1.0,
+        "step_vs_reach_disambiguation_llm": 0.5,
+        "intermediate_credit_avoidance_llm": 0.5,
+        "off_topic_drift_score": 1.0,
+        "mastery_attribution_evidence": [],
+        "n_intermediate_turns": 1,
+        "n_fabrication_turns": 3
+      }
+    },
+    "CC": {
+      "score": 0.75,
+      "threshold": 1.0,
+      "passes": false,
+      "sub": {
+        "phase_transitions_legal": 1.0,
+        "topic_stability": 1.0,
+        "anchor_stability": 1.0,
+        "invariant_score": 0.0,
+        "invariant_violations_count": 13
+      }
+    },
+    "CE": {
+      "score": 0.294,
+      "threshold": 0.5,
+      "passes": false,
+      "sub": {
+        "cost_score": 0.589,
+        "cache_hit_rate": 0.0,
+        "cost_per_useful_turn": 0.08229027692307692
+      }
+    },
+    "MSC": {
+      "score": 1.0,
+      "threshold": 0.7,
+      "passes": true,
+      "sub": {
+        "confidence_appropriateness": null,
+        "ewma_movement_score": 1.0,
+        "rationale_grounding_llm": 1.0
+      }
+    }
+  },
+  "penalties": [
+    {
+      "code": "LEAK_DETECTED",
+      "severity": "critical",
+      "evidence": "turn 1: no_reveal=0.0 \u2014 Got it \u2014 let's work on **Chemical Digestion** from Chemical Digestion and Absorption: A Closer Look.\n\nWhat are the five mechanisms by which the small intestine absorbs nutrients across the epithelial ",
+      "turn_id": 1,
+      "source": "llm"
+    },
+    {
+      "code": "LEAK_DETECTED",
+      "severity": "critical",
+      "evidence": "turn 8: no_reveal=0.0 \u2014 Your instinct about the carrier protein is sound\u2014glucose is a polar molecule and cannot pass directly through the phospholipid bilayer on its own. When a substance moves down its concentration gradien",
+      "turn_id": 8,
+      "source": "llm"
+    },
+    {
+      "code": "LEAK_DETECTED",
+      "severity": "critical",
+      "evidence": "turn 12: no_reveal=0.0 \u2014 Exactly right\u2014co-transport couples sodium's inward movement down its gradient with glucose's inward movement. Now, why do you think the sodium gradient is strong enough to pull glucose in against any ",
+      "turn_id": 12,
+      "source": "llm"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "13 invariant violation(s) on this session (kinds: ungrounded_tutoring_turn); first: kind=ungrounded_tutoring_turn turn=2",
+      "raw_count": 13,
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 2: 'You've identified' \u2014 You've identified all five correctly\u2014your confidence is warranted. Now that you have the mechanisms named, let's deepen your understanding: if active transport ",
+      "turn_id": 2,
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 13: 'You've identified' \u2014 You've identified the steep gradient correctly. Now think about this: if sodium ions are constantly flowing *into* the cell through co-transport, what must be c",
+      "turn_id": 13,
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 14: 'You've correctly identified' \u2014 You've correctly identified the major transport mechanisms. Would you like to tackle a clinical application challenge involving these processes, or are you read",
+      "turn_id": 14,
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 12: LLM-detected \u2014 'Exactly right\u2014co-transport couples sodium's inward movement down its gradient with glucose's inward movement.'",
+      "turn_id": 12,
+      "source": "llm"
+    }
+  ],
+  "verdict": "failed_critical_penalty",
+  "raw_signals": {
+    "turn_count": 14,
+    "max_turns": 25,
+    "final_phase": "assessment",
+    "final_hint_level": 1,
+    "max_hints": 3,
+    "final_student_reached_answer": true,
+    "interventions": 3,
+    "coverage_gap_events": 0,
+    "retrieval_calls": 1,
+    "cost_usd": 1.0697736,
+    "api_calls": 84,
+    "input_tokens": 144785,
+    "output_tokens": 12008,
+    "n_tutoring_turns": 13,
+    "n_intermediate_turns": 1,
+    "n_fabrication_turns": 3
+  },
+  "deterministic_signals": {
+    "intermediate_turns": [
+      2
+    ],
+    "fabrication_turns": [
+      {
+        "turn_id": 2,
+        "evidence": "You've identified",
+        "tutor_msg": "You've identified all five correctly\u2014your confidence is warranted. Now that you have the mechanisms named, let's deepen your understanding: if active transport moves molecules *against* the concentrat"
+      },
+      {
+        "turn_id": 13,
+        "evidence": "You've identified",
+        "tutor_msg": "You've identified the steep gradient correctly. Now think about this: if sodium ions are constantly flowing *into* the cell through co-transport, what must be continuously happening to keep that gradi"
+      },
+      {
+        "turn_id": 14,
+        "evidence": "You've correctly identified",
+        "tutor_msg": "You've correctly identified the major transport mechanisms. Would you like to tackle a clinical application challenge involving these processes, or are you ready to move on?"
+      }
+    ],
+    "off_topic_turns": [],
+    "det_tlq_match_top_score": 0.8923529411764706,
+    "det_tlq_vote_consensus": 0.5838808585194918,
+    "det_tlq_coverage_gate_pass": 1.0,
+    "det_tlq_anchor_extraction_success": 1.0,
+    "det_tlq_repair_clean": 1.0,
+    "det_tlq_repair_invoked": false,
+    "det_rrq_chunk_count_adequacy": 1.0,
+    "det_rrq_mean_top3_score": 0.999998132387797,
+    "det_rrq_section_match_rate": 1.0,
+    "det_rrq_retrieval_calls_efficiency": 1.0,
+    "det_rrq_coverage_gap_frequency": 1.0,
+    "det_rrq_chunk_count": 46,
+    "det_rrq_retrieval_calls": 1,
+    "det_aq_answer_brevity": 0.7,
+    "det_aq_answer_is_noun_phrase": 1.0,
+    "det_aq_aliases_count_adequacy": 0.75,
+    "det_aq_aliases_count": 3,
+    "det_aq_groundedness": 1.0,
+    "det_aq_sanitize_action": "kept",
+    "det_aq_locked_answer_word_count": 9,
+    "det_trq_qc_pass_rate": 0.3,
+    "det_trq_revised_draft_rate": 0.5384615384615384,
+    "det_trq_intervention_rate": 0.7692307692307692,
+    "det_trq_reason_codes_clean_rate": 0.46153846153846156,
+    "det_trq_n_tutoring_turns": 13,
+    "det_rgc_false_positive_rate": 0.0,
+    "det_rgc_false_negative_rate": 0.0,
+    "det_rgc_evidence_quote_validity": 0.0,
+    "det_rgc_path_distribution": {
+      "skipped_topic_just_locked": 1,
+      "no_overlap_no_paraphrase": 11,
+      "llm_parse_fail": 1,
+      "paraphrase": 1
+    },
+    "det_rgc_n_decisions": 14,
+    "det_rgc_tp": 1,
+    "det_rgc_fp": 0,
+    "det_rgc_tn": 13,
+    "det_rgc_fn": 0,
+    "det_pp_hint_progression_monotonic": 0.8333333333333334,
+    "det_pp_hint_utilization": 0.6666666666666667,
+    "det_pp_student_engagement_rate": 1.0,
+    "det_pp_state_trajectory_score": 0.35494505494505496,
+    "det_arc_step_vs_reach_disambiguation": 0.0,
+    "det_arc_intermediate_credit_avoidance": 0.0,
+    "det_arc_n_intermediate_turns": 1,
+    "det_arc_n_fabrication_turns": 3,
+    "det_cc_phase_transitions_legal": 1.0,
+    "det_cc_topic_stability": 1.0,
+    "det_cc_anchor_stability": 1.0,
+    "det_cc_invariant_violations_count": 13,
+    "det_cc_invariant_score": 0.0,
+    "det_ce_cost_per_useful_turn": 0.08229027692307692,
+    "det_ce_cost_score": 0.5885486153846154,
+    "det_ce_cache_hit_rate": 0.0,
+    "det_ce_mean_turn_latency": null,
+    "det_ce_latency_score": null,
+    "det_msc_confidence_appropriateness": null,
+    "det_msc_ewma_movement_score": 1.0,
+    "det_msc_has_mastery": false
+  },
+  "llm_telemetry": [
+    {
+      "label": "per_turn",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 10.883,
+      "in_tok": 6452,
+      "out_tok": 2002,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"turns\": [\n    {\n      \"turn_id\": 1,\n      \"question_present\": 1.0,\n      \"relevance\": 1.0,\n      \"helpful\": 0.5,\n      \"no_reveal\": 0.0,\n      \"faithfulness\": 1.0,\n      \"answer_relevancy..."
+    },
+    {
+      "label": "retrieval",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 4.481,
+      "in_tok": 1550,
+      "out_tok": 573,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"per_chunk\": [\n    {\n      \"id\": 0,\n      \"relevance\": 0.0,\n      \"rationale\": \"Discusses nucleic acid digestion; unrelated to absorption mechanisms.\"\n    },\n    {\n      \"id\": 1,\n      \"re..."
+    },
+    {
+      "label": "synthesis",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 13.558,
+      "in_tok": 4758,
+      "out_tok": 1245,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"mastery_attribution_grounding\": 1.0,\n  \"mastery_attribution_evidence\": [],\n  \"step_vs_reach_disambiguation\": 0.5,\n  \"intermediate_credit_avoidance\": 0.5,\n  \"off_topic_drift_score\": 1.0,\n ..."
+    },
+    {
+      "label": "anchor",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 1.537,
+      "in_tok": 528,
+      "out_tok": 117,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"question_specificity\": 0.85,\n  \"question_specificity_rationale\": \"Question is specific and answerable, asking for five defined mechanisms. Scope is appropriately bounded to small intestin..."
+    }
+  ],
+  "anchors_inspected": {
+    "locked_question": "What are the five mechanisms by which the small intestine absorbs nutrients across the epithelial cells?",
+    "locked_answer": "active transport passive diffusion facilitated diffusion co transport endocytosis",
+    "locked_answer_aliases": [
+      "five absorption mechanisms",
+      "five transport mechanisms",
+      "nutrient absorption pathways"
+    ],
+    "locked_topic": {}
+  },
+  "expectations": null
+}

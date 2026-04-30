@@ -1,0 +1,328 @@
+{
+  "session_id": "0dbc4b60",
+  "test_id": null,
+  "description": "",
+  "scored_at": "2026-04-30T08:48:10+00:00",
+  "primary": {
+    "EULER": {
+      "question_present": 1.0,
+      "relevance": 0.7727272727272727,
+      "helpful": 0.6818181818181818,
+      "no_reveal": 0.8181818181818182,
+      "passes_all_thresholds": false,
+      "n_turns_scored": 11
+    },
+    "RAGAS": {
+      "context_precision": 0.4,
+      "context_recall": 0.95,
+      "context_relevancy": 0.41500000000000004,
+      "faithfulness": 0.9545454545454546,
+      "answer_relevancy": 0.5454545454545454,
+      "answer_correctness": 0.0,
+      "passes_all_thresholds": false
+    }
+  },
+  "secondary": {
+    "TLQ": {
+      "score": 0.892,
+      "threshold": 0.8,
+      "passes": true,
+      "sub": {
+        "match_top_score": 0.916,
+        "vote_consensus": 0.546,
+        "coverage_gate_pass": 1.0,
+        "anchor_extraction_success": 1.0,
+        "repair_clean": 1.0
+      }
+    },
+    "RRQ": {
+      "score": 0.814,
+      "threshold": 0.75,
+      "passes": true,
+      "sub": {
+        "chunk_count_adequacy": 1.0,
+        "mean_top3_score": 0.884,
+        "section_match_rate": 1.0,
+        "retrieval_calls_efficiency": 1.0,
+        "coverage_gap_frequency": 1.0,
+        "ragas_context_precision": 0.4,
+        "ragas_context_relevancy": 0.415
+      }
+    },
+    "AQ": {
+      "score": 0.875,
+      "threshold": 0.85,
+      "passes": true,
+      "sub": {
+        "groundedness": 1.0,
+        "answer_brevity": 1.0,
+        "answer_is_noun_phrase": 1.0,
+        "aliases_count_adequacy": 1.0,
+        "question_specificity": 0.75,
+        "aliases_diversity_semantic": 0.5
+      }
+    },
+    "TRQ": {
+      "score": 0.714,
+      "threshold": 0.75,
+      "passes": false,
+      "sub": {
+        "qc_pass_rate": 0.429,
+        "revised_draft_rate": 0.727,
+        "intervention_rate": 0.636,
+        "reason_codes_clean_rate": 0.636,
+        "euler_question_present": 1.0,
+        "euler_relevance": 0.773,
+        "euler_helpful": 0.682,
+        "euler_no_reveal": 0.818,
+        "repetition_score": 0.727
+      }
+    },
+    "RGC": {
+      "score": 1.0,
+      "threshold": 0.95,
+      "passes": true,
+      "sub": {
+        "no_false_positives": 1.0,
+        "no_false_negatives": 1.0,
+        "evidence_quote_validity": 1.0,
+        "path_distribution": {
+          "skipped_topic_just_locked": 1,
+          "no_overlap_no_paraphrase": 10
+        },
+        "confusion_matrix": {
+          "tp": 0,
+          "fp": 0,
+          "tn": 11,
+          "fn": 0
+        }
+      }
+    },
+    "PP": {
+      "score": 0.766,
+      "threshold": 0.6,
+      "passes": true,
+      "sub": {
+        "hint_progression_monotonic": 0.8,
+        "hint_utilization": 1.0,
+        "student_engagement_rate": 0.636,
+        "state_trajectory_score": 0.627
+      }
+    },
+    "ARC": {
+      "score": 0.6,
+      "threshold": 0.7,
+      "passes": false,
+      "sub": {
+        "step_vs_reach_disambiguation_det": 1.0,
+        "intermediate_credit_avoidance_det": 1.0,
+        "mastery_attribution_grounding": null,
+        "step_vs_reach_disambiguation_llm": 0.0,
+        "intermediate_credit_avoidance_llm": 0.0,
+        "off_topic_drift_score": 1.0,
+        "mastery_attribution_evidence": [],
+        "n_intermediate_turns": 1,
+        "n_fabrication_turns": 0
+      }
+    },
+    "CC": {
+      "score": 0.75,
+      "threshold": 1.0,
+      "passes": false,
+      "sub": {
+        "phase_transitions_legal": 1.0,
+        "topic_stability": 1.0,
+        "anchor_stability": 1.0,
+        "invariant_score": 0.0,
+        "invariant_violations_count": 10
+      }
+    },
+    "CE": {
+      "score": 0.39,
+      "threshold": 0.5,
+      "passes": false,
+      "sub": {
+        "cost_score": 0.78,
+        "cache_hit_rate": 0.0,
+        "cost_per_useful_turn": 0.043908777272727274
+      }
+    },
+    "MSC": {
+      "score": 0.5,
+      "threshold": 0.7,
+      "passes": false,
+      "sub": {
+        "confidence_appropriateness": null,
+        "ewma_movement_score": 0.5,
+        "rationale_grounding_llm": null
+      }
+    }
+  },
+  "penalties": [
+    {
+      "code": "LEAK_DETECTED",
+      "severity": "critical",
+      "evidence": "turn 9: no_reveal=0.0 \u2014 Exactly right\u2014force captures it. That difference between 120 and 80 is the pressure *swing* with each heartbeat, reflecting how forcefully blood is ejected. In anatomy, we combine the words for 'diffe",
+      "turn_id": 9,
+      "source": "llm"
+    },
+    {
+      "code": "LEAK_DETECTED",
+      "severity": "critical",
+      "evidence": "turn 10: no_reveal=0.0 \u2014 You've got it\u2014**pulse pressure** is exactly right! That's the pressure swing created by each heartbeat.\n\nNow, thinking back to your original question about cardiac output: if heart rate increases, how",
+      "turn_id": 10,
+      "source": "llm"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "10 invariant violation(s) on this session (kinds: ungrounded_tutoring_turn); first: kind=ungrounded_tutoring_turn turn=2",
+      "raw_count": 10,
+      "source": "det"
+    },
+    {
+      "code": "MASTERY_OVERCLAIM",
+      "severity": "major",
+      "evidence": "LLM-flagged mastery overclaim in session-end summary",
+      "source": "llm"
+    }
+  ],
+  "verdict": "failed_critical_penalty",
+  "raw_signals": {
+    "turn_count": 11,
+    "max_turns": 25,
+    "final_phase": "memory_update",
+    "final_hint_level": 4,
+    "max_hints": 3,
+    "final_student_reached_answer": false,
+    "interventions": 4,
+    "coverage_gap_events": 0,
+    "retrieval_calls": 1,
+    "cost_usd": 0.48299655,
+    "api_calls": 68,
+    "input_tokens": 82193,
+    "output_tokens": 8868,
+    "n_tutoring_turns": 11,
+    "n_intermediate_turns": 1,
+    "n_fabrication_turns": 0
+  },
+  "deterministic_signals": {
+    "intermediate_turns": [
+      10
+    ],
+    "fabrication_turns": [],
+    "off_topic_turns": [],
+    "det_tlq_match_top_score": 0.9156603773584905,
+    "det_tlq_vote_consensus": 0.5455537370430987,
+    "det_tlq_coverage_gate_pass": 1.0,
+    "det_tlq_anchor_extraction_success": 1.0,
+    "det_tlq_repair_clean": 1.0,
+    "det_tlq_repair_invoked": false,
+    "det_rrq_chunk_count_adequacy": 1.0,
+    "det_rrq_mean_top3_score": 0.883573035399119,
+    "det_rrq_section_match_rate": 1.0,
+    "det_rrq_retrieval_calls_efficiency": 1.0,
+    "det_rrq_coverage_gap_frequency": 1.0,
+    "det_rrq_chunk_count": 19,
+    "det_rrq_retrieval_calls": 1,
+    "det_aq_answer_brevity": 1.0,
+    "det_aq_answer_is_noun_phrase": 1.0,
+    "det_aq_aliases_count_adequacy": 1.0,
+    "det_aq_aliases_count": 4,
+    "det_aq_groundedness": 1.0,
+    "det_aq_sanitize_action": "kept",
+    "det_aq_locked_answer_word_count": 2,
+    "det_trq_qc_pass_rate": 0.42857142857142855,
+    "det_trq_revised_draft_rate": 0.7272727272727273,
+    "det_trq_intervention_rate": 0.6363636363636364,
+    "det_trq_reason_codes_clean_rate": 0.6363636363636364,
+    "det_trq_n_tutoring_turns": 11,
+    "det_rgc_false_positive_rate": 0.0,
+    "det_rgc_false_negative_rate": 0.0,
+    "det_rgc_evidence_quote_validity": 1.0,
+    "det_rgc_path_distribution": {
+      "skipped_topic_just_locked": 1,
+      "no_overlap_no_paraphrase": 10
+    },
+    "det_rgc_n_decisions": 11,
+    "det_rgc_tp": 0,
+    "det_rgc_fp": 0,
+    "det_rgc_tn": 11,
+    "det_rgc_fn": 0,
+    "det_pp_hint_progression_monotonic": 0.8,
+    "det_pp_hint_utilization": 1.0,
+    "det_pp_student_engagement_rate": 0.6363636363636364,
+    "det_pp_state_trajectory_score": 0.6272727272727272,
+    "det_arc_step_vs_reach_disambiguation": 1.0,
+    "det_arc_intermediate_credit_avoidance": 1.0,
+    "det_arc_n_intermediate_turns": 1,
+    "det_arc_n_fabrication_turns": 0,
+    "det_cc_phase_transitions_legal": 1.0,
+    "det_cc_topic_stability": 1.0,
+    "det_cc_anchor_stability": 1.0,
+    "det_cc_invariant_violations_count": 10,
+    "det_cc_invariant_score": 0.0,
+    "det_ce_cost_per_useful_turn": 0.043908777272727274,
+    "det_ce_cost_score": 0.7804561136363637,
+    "det_ce_cache_hit_rate": 0.0,
+    "det_ce_mean_turn_latency": null,
+    "det_ce_latency_score": null,
+    "det_msc_confidence_appropriateness": null,
+    "det_msc_ewma_movement_score": 0.5,
+    "det_msc_has_mastery": false
+  },
+  "llm_telemetry": [
+    {
+      "label": "per_turn",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 10.838,
+      "in_tok": 5586,
+      "out_tok": 1729,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"turns\": [\n    {\n      \"turn_id\": 1,\n      \"question_present\": 1.0,\n      \"relevance\": 1.0,\n      \"helpful\": 0.5,\n      \"no_reveal\": 1.0,\n      \"faithfulness\": 1.0,\n      \"answer_relevancy..."
+    },
+    {
+      "label": "retrieval",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 5.564,
+      "in_tok": 1585,
+      "out_tok": 649,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"per_chunk\": [\n    {\n      \"id\": 0,\n      \"relevance\": 0.9,\n      \"rationale\": \"Directly defines systolic and diastolic pressures as components of arterial blood pressure and mentions puls..."
+    },
+    {
+      "label": "synthesis",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 16.243,
+      "in_tok": 3074,
+      "out_tok": 1300,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"mastery_attribution_grounding\": null,\n  \"mastery_attribution_evidence\": [],\n  \"step_vs_reach_disambiguation\": 0.0,\n  \"intermediate_credit_avoidance\": 0.0,\n  \"off_topic_drift_score\": 1.0,\n..."
+    },
+    {
+      "label": "anchor",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 1.215,
+      "in_tok": 527,
+      "out_tok": 104,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"question_specificity\": 0.75,\n  \"question_specificity_rationale\": \"Question is clear and answerable, but compound structure (definition plus calculation method) slightly reduces focus.\",\n ..."
+    }
+  ],
+  "anchors_inspected": {
+    "locked_question": "What is the difference between systolic and diastolic pressure, and how do we calculate the pressure that results from that difference?",
+    "locked_answer": "pulse pressure",
+    "locked_answer_aliases": [
+      "systolic minus diastolic",
+      "difference between systolic and diastolic",
+      "PP",
+      "wide pressure"
+    ],
+    "locked_topic": {}
+  },
+  "expectations": null
+}

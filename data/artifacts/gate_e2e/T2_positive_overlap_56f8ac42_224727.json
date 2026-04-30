@@ -1,0 +1,94 @@
+{
+  "name": "T2_positive_overlap",
+  "conv_id": "56f8ac42",
+  "description": "Direct SA-node statement should fire reached via Step A overlap.",
+  "expectations": {
+    "reached": true,
+    "no_fabrication_keywords": []
+  },
+  "outcomes": {
+    "final_reached": false,
+    "fabrication_hits_in_last_tutor": [],
+    "last_tutor_message": "Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?",
+    "phase_final": "tutoring",
+    "locked_answer": "sinoatrial node",
+    "locked_answer_aliases": [
+      "SA node",
+      "sinus node",
+      "pacemaker of the heart",
+      "cardiac pacemaker"
+    ],
+    "locked_question": "What structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?",
+    "turn_count": 2,
+    "hint_level_final": 0,
+    "student_state_final": "question"
+  },
+  "gate_traces": [
+    {
+      "wrapper": "dean.confidence_score",
+      "result": "answer_conf=0.000, mastery_conf=0.000, reached=False (gate_path=skipped_topic_just_locked)",
+      "locked_answer": "sinoatrial node",
+      "gate_path": "skipped_topic_just_locked",
+      "gate_evidence": ""
+    }
+  ],
+  "result": {
+    "reached_pass": false,
+    "fabrication_pass": true,
+    "overall_pass": false
+  },
+  "notes": [],
+  "log": [
+    {
+      "step": "prelock",
+      "matcher_path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart",
+      "matcher_score": 101.0,
+      "chunk_count": 16,
+      "locked_question": "What structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?",
+      "locked_answer": "sinoatrial node",
+      "locked_answer_aliases": [
+        "SA node",
+        "sinus node",
+        "pacemaker of the heart",
+        "cardiac pacemaker"
+      ],
+      "lock_source": "forced"
+    },
+    {
+      "step": "rapport_greeting",
+      "tutor": "Good evening. I'm here to help you work through human anatomy concepts in a way that builds real understanding\u2014we'll use questions to sharpen your thinking rather than just review facts. What topic in human anatomy are you focusing on right now, or what would be most useful to clarify today?"
+    },
+    {
+      "step": "tutoring_turn_1_student",
+      "student": "It must be the electrical signals in the heart"
+    },
+    {
+      "step": "tutoring_turn_1_after_invoke",
+      "tutor": "Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?",
+      "student_state": "question",
+      "student_reached_answer": false,
+      "student_answer_confidence": 0.0,
+      "phase": "tutoring",
+      "hint_level": 0
+    },
+    {
+      "step": "tutoring_turn_2_student",
+      "student": "I think the SA node starts the heartbeat"
+    },
+    {
+      "step": "tutoring_turn_2_after_invoke",
+      "tutor": "Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?",
+      "student_state": "question",
+      "student_reached_answer": false,
+      "student_answer_confidence": 0.0,
+      "phase": "tutoring",
+      "hint_level": 0
+    }
+  ],
+  "debug_summary": {
+    "api_calls": 5,
+    "input_tokens": 3116,
+    "output_tokens": 417,
+    "cost_usd": 0.015603
+  }
+}

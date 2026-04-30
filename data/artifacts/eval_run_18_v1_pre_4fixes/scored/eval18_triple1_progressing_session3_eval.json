@@ -1,0 +1,422 @@
+{
+  "session_id": "37a19651",
+  "test_id": null,
+  "description": "",
+  "scored_at": "2026-04-30T07:06:45+00:00",
+  "primary": {
+    "EULER": {
+      "question_present": 1.0,
+      "relevance": 0.9545454545454546,
+      "helpful": 0.8636363636363636,
+      "no_reveal": 0.9090909090909091,
+      "passes_all_thresholds": false,
+      "n_turns_scored": 11
+    },
+    "RAGAS": {
+      "context_precision": 0.7,
+      "context_recall": 1.0,
+      "context_relevancy": 0.66,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.9090909090909091,
+      "answer_correctness": 1.0,
+      "passes_all_thresholds": false
+    }
+  },
+  "secondary": {
+    "TLQ": {
+      "score": 0.931,
+      "threshold": 0.8,
+      "passes": true,
+      "sub": {
+        "match_top_score": 1.0,
+        "vote_consensus": 0.657,
+        "coverage_gate_pass": 1.0,
+        "anchor_extraction_success": 1.0,
+        "repair_clean": 1.0
+      }
+    },
+    "RRQ": {
+      "score": 0.909,
+      "threshold": 0.75,
+      "passes": true,
+      "sub": {
+        "chunk_count_adequacy": 1.0,
+        "mean_top3_score": 1.0,
+        "section_match_rate": 1.0,
+        "retrieval_calls_efficiency": 1.0,
+        "coverage_gap_frequency": 1.0,
+        "ragas_context_precision": 0.7,
+        "ragas_context_relevancy": 0.66
+      }
+    },
+    "AQ": {
+      "score": 0.808,
+      "threshold": 0.85,
+      "passes": false,
+      "sub": {
+        "groundedness": 1.0,
+        "answer_brevity": 0.7,
+        "answer_is_noun_phrase": 1.0,
+        "aliases_count_adequacy": 1.0,
+        "question_specificity": 0.75,
+        "aliases_diversity_semantic": 0.4
+      }
+    },
+    "TRQ": {
+      "score": 0.709,
+      "threshold": 0.75,
+      "passes": false,
+      "sub": {
+        "qc_pass_rate": 0.2,
+        "revised_draft_rate": 0.273,
+        "intervention_rate": 1.0,
+        "reason_codes_clean_rate": 0.273,
+        "euler_question_present": 1.0,
+        "euler_relevance": 0.955,
+        "euler_helpful": 0.864,
+        "euler_no_reveal": 0.909,
+        "repetition_score": 0.909
+      }
+    },
+    "RGC": {
+      "score": 0.333,
+      "threshold": 0.95,
+      "passes": false,
+      "sub": {
+        "no_false_positives": 0.0,
+        "no_false_negatives": 1.0,
+        "evidence_quote_validity": 0.0,
+        "path_distribution": {
+          "skipped_topic_just_locked": 1,
+          "no_overlap_no_paraphrase": 10,
+          "paraphrase": 1
+        },
+        "confusion_matrix": {
+          "tp": 0,
+          "fp": 1,
+          "tn": 11,
+          "fn": 0
+        }
+      }
+    },
+    "PP": {
+      "score": 0.549,
+      "threshold": 0.6,
+      "passes": false,
+      "sub": {
+        "hint_progression_monotonic": 0.9,
+        "hint_utilization": 0.0,
+        "student_engagement_rate": 0.636,
+        "state_trajectory_score": 0.659
+      }
+    },
+    "ARC": {
+      "score": 0.75,
+      "threshold": 0.7,
+      "passes": true,
+      "sub": {
+        "step_vs_reach_disambiguation_det": 1.0,
+        "intermediate_credit_avoidance_det": 1.0,
+        "mastery_attribution_grounding": 0.2,
+        "step_vs_reach_disambiguation_llm": 1.0,
+        "intermediate_credit_avoidance_llm": 0.4,
+        "off_topic_drift_score": 0.9,
+        "mastery_attribution_evidence": [
+          "Claim: 'You started with significant gaps in foundational transport concepts\u2014osmosis, diffusion, and active transport' \u2014 osmosis and diffusion were never explicitly named by student; only active transport was mentioned (turn 7). Tutor introduced osmosis and diffusion.",
+          "Claim: 'you worked through to identify secondary active transport' \u2014 student guessed 'secondary active transport' (turn 12) but with explicit uncertainty ('I'm honestly not totally sure'). Tutor had already named it in turn 9 context.",
+          "Claim: 'you correctly connected ATP depletion \u2192 weakened sodium gradient \u2192 reduced glucose reabsorption' \u2014 student did make this connection (turn 14), grounded in student utterance.",
+          "Claim: 'the Na\u207a/K\u207a pump's role' \u2014 student named the pump (turn 9) but tutor explained its function in turn 9; student never independently articulated what it does."
+        ],
+        "n_intermediate_turns": 0,
+        "n_fabrication_turns": 3
+      }
+    },
+    "CC": {
+      "score": 0.75,
+      "threshold": 1.0,
+      "passes": false,
+      "sub": {
+        "phase_transitions_legal": 1.0,
+        "topic_stability": 1.0,
+        "anchor_stability": 1.0,
+        "invariant_score": 0.0,
+        "invariant_violations_count": 11
+      }
+    },
+    "CE": {
+      "score": 0.244,
+      "threshold": 0.5,
+      "passes": false,
+      "sub": {
+        "cost_score": 0.488,
+        "cache_hit_rate": 0.0,
+        "cost_per_useful_turn": 0.10245474545454547
+      }
+    },
+    "MSC": {
+      "score": 0.6,
+      "threshold": 0.7,
+      "passes": false,
+      "sub": {
+        "confidence_appropriateness": null,
+        "ewma_movement_score": 1.0,
+        "rationale_grounding_llm": 0.2
+      }
+    }
+  },
+  "penalties": [
+    {
+      "code": "LEAK_DETECTED",
+      "severity": "critical",
+      "evidence": "turn 9: no_reveal=0.0 \u2014 You've named the exact mechanism\u2014the sodium-potassium pump uses ATP energy to push sodium *out* of the cell and potassium *in*, creating and maintaining that steep sodium gradient the whole process de",
+      "turn_id": 9,
+      "source": "llm"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=2 chunk_count=9",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=3 chunk_count=24",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=4 chunk_count=39",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=5 chunk_count=39",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=6 chunk_count=39",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=7 chunk_count=47",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=8 chunk_count=47",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=9 chunk_count=55",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=10 chunk_count=55",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=11 chunk_count=55",
+      "source": "det"
+    },
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "kind=ungrounded_tutoring_turn turn=12 chunk_count=55",
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 9: 'you've identified' \u2014 You've named the exact mechanism\u2014the sodium-potassium pump uses ATP energy to push sodium *out* of the cell and potassium *in*, creating and maintaining that st",
+      "turn_id": 9,
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 12: 'You've identified' \u2014 You've identified the key transport mechanisms correctly. Would you like to apply these concepts to a clinical scenario involving cellular dysfunction?",
+      "turn_id": 12,
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 13: 'you've identified' \u2014 Good\u2014you've identified secondary active transport. Now let's test that understanding: if a patient's Na\u207a/K\u207a pump became less active due to low ATP availability,",
+      "turn_id": 13,
+      "source": "det"
+    },
+    {
+      "code": "MASTERY_OVERCLAIM",
+      "severity": "major",
+      "evidence": "LLM-flagged mastery overclaim in session-end summary",
+      "source": "llm"
+    }
+  ],
+  "verdict": "failed_critical_penalty",
+  "raw_signals": {
+    "turn_count": 12,
+    "max_turns": 25,
+    "final_phase": "memory_update",
+    "final_hint_level": 3,
+    "max_hints": 3,
+    "final_student_reached_answer": true,
+    "interventions": 0,
+    "coverage_gap_events": 0,
+    "retrieval_calls": 1,
+    "cost_usd": 1.1270022000000002,
+    "api_calls": 73,
+    "input_tokens": 120549,
+    "output_tokens": 11059,
+    "n_tutoring_turns": 11,
+    "n_intermediate_turns": 0,
+    "n_fabrication_turns": 3
+  },
+  "deterministic_signals": {
+    "intermediate_turns": [],
+    "fabrication_turns": [
+      {
+        "turn_id": 9,
+        "evidence": "you've identified",
+        "tutor_msg": "You've named the exact mechanism\u2014the sodium-potassium pump uses ATP energy to push sodium *out* of the cell and potassium *in*, creating and maintaining that steep sodium gradient the whole process de"
+      },
+      {
+        "turn_id": 12,
+        "evidence": "You've identified",
+        "tutor_msg": "You've identified the key transport mechanisms correctly. Would you like to apply these concepts to a clinical scenario involving cellular dysfunction?"
+      },
+      {
+        "turn_id": 13,
+        "evidence": "you've identified",
+        "tutor_msg": "Good\u2014you've identified secondary active transport. Now let's test that understanding: if a patient's Na\u207a/K\u207a pump became less active due to low ATP availability, the sodium gradient across the tubular "
+      }
+    ],
+    "off_topic_turns": [],
+    "det_tlq_match_top_score": 1.0,
+    "det_tlq_vote_consensus": 0.6570302233902758,
+    "det_tlq_coverage_gate_pass": 1.0,
+    "det_tlq_anchor_extraction_success": 1.0,
+    "det_tlq_repair_clean": 1.0,
+    "det_tlq_repair_invoked": false,
+    "det_rrq_chunk_count_adequacy": 1.0,
+    "det_rrq_mean_top3_score": 0.9999998807907104,
+    "det_rrq_section_match_rate": 1.0,
+    "det_rrq_retrieval_calls_efficiency": 1.0,
+    "det_rrq_coverage_gap_frequency": 1.0,
+    "det_rrq_chunk_count": 55,
+    "det_rrq_retrieval_calls": 1,
+    "det_aq_answer_brevity": 0.7,
+    "det_aq_answer_is_noun_phrase": 1.0,
+    "det_aq_aliases_count_adequacy": 1.0,
+    "det_aq_aliases_count": 4,
+    "det_aq_groundedness": 1.0,
+    "det_aq_sanitize_action": "kept",
+    "det_aq_locked_answer_word_count": 9,
+    "det_trq_qc_pass_rate": 0.2,
+    "det_trq_revised_draft_rate": 0.2727272727272727,
+    "det_trq_intervention_rate": 1.0,
+    "det_trq_reason_codes_clean_rate": 0.2727272727272727,
+    "det_trq_n_tutoring_turns": 11,
+    "det_rgc_false_positive_rate": 1.0,
+    "det_rgc_false_negative_rate": 0.0,
+    "det_rgc_evidence_quote_validity": 0.0,
+    "det_rgc_path_distribution": {
+      "skipped_topic_just_locked": 1,
+      "no_overlap_no_paraphrase": 10,
+      "paraphrase": 1
+    },
+    "det_rgc_n_decisions": 12,
+    "det_rgc_tp": 0,
+    "det_rgc_fp": 1,
+    "det_rgc_tn": 11,
+    "det_rgc_fn": 0,
+    "det_pp_hint_progression_monotonic": 0.9,
+    "det_pp_hint_utilization": 0.0,
+    "det_pp_student_engagement_rate": 0.6363636363636364,
+    "det_pp_state_trajectory_score": 0.6590909090909091,
+    "det_arc_step_vs_reach_disambiguation": 1.0,
+    "det_arc_intermediate_credit_avoidance": 1.0,
+    "det_arc_n_intermediate_turns": 0,
+    "det_arc_n_fabrication_turns": 3,
+    "det_cc_phase_transitions_legal": 1.0,
+    "det_cc_topic_stability": 1.0,
+    "det_cc_anchor_stability": 1.0,
+    "det_cc_invariant_violations_count": 11,
+    "det_cc_invariant_score": 0.0,
+    "det_ce_cost_per_useful_turn": 0.10245474545454547,
+    "det_ce_cost_score": 0.48772627272727265,
+    "det_ce_cache_hit_rate": 0.0,
+    "det_ce_mean_turn_latency": null,
+    "det_ce_latency_score": null,
+    "det_msc_confidence_appropriateness": null,
+    "det_msc_ewma_movement_score": 1.0,
+    "det_msc_has_mastery": false
+  },
+  "llm_telemetry": [
+    {
+      "label": "per_turn",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 11.591,
+      "in_tok": 5532,
+      "out_tok": 1757,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"turns\": [\n    {\n      \"turn_id\": 1,\n      \"question_present\": 1.0,\n      \"relevance\": 1.0,\n      \"helpful\": 0.5,\n      \"no_reveal\": 1.0,\n      \"faithfulness\": 1.0,\n      \"answer_relevancy..."
+    },
+    {
+      "label": "retrieval",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 4.401,
+      "in_tok": 1420,
+      "out_tok": 582,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"per_chunk\": [\n    {\n      \"id\": 0,\n      \"relevance\": 1.0,\n      \"rationale\": \"Directly lists all five mechanisms of membrane transport for reabsorption and secretion.\"\n    },\n    {\n     ..."
+    },
+    {
+      "label": "synthesis",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 15.829,
+      "in_tok": 4016,
+      "out_tok": 1500,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"mastery_attribution_grounding\": 0.2,\n  \"mastery_attribution_evidence\": [\n    \"Claim: 'You started with significant gaps in foundational transport concepts\u2014osmosis, diffusion, and active t..."
+    },
+    {
+      "label": "anchor",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 1.53,
+      "in_tok": 535,
+      "out_tok": 119,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"question_specificity\": 0.75,\n  \"question_specificity_rationale\": \"Question is specific and answerable but slightly broad; asks for five mechanisms without constraining context (kidney tub..."
+    }
+  ],
+  "anchors_inspected": {
+    "locked_question": "What are the five main mechanisms by which substances move across tubular membranes during reabsorption and secretion?",
+    "locked_answer": "active transport diffusion facilitated diffusion secondary active transport osmosis",
+    "locked_answer_aliases": [
+      "five transport mechanisms",
+      "membrane transport processes",
+      "reabsorption mechanisms",
+      "active and passive transport"
+    ],
+    "locked_topic": {}
+  },
+  "expectations": null
+}

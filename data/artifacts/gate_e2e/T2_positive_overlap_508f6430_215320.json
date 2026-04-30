@@ -1,0 +1,94 @@
+{
+  "name": "T2_positive_overlap",
+  "conv_id": "508f6430",
+  "description": "Direct SA-node statement should fire reached via Step A overlap.",
+  "expectations": {
+    "reached": true,
+    "no_fabrication_keywords": []
+  },
+  "outcomes": {
+    "final_reached": true,
+    "fabrication_hits_in_last_tutor": [],
+    "last_tutor_message": "You've identified the sinoatrial node correctly. Would you like to explore how SA node dysfunction manifests clinically, or are you satisfied with the anatomical concept for now?",
+    "phase_final": "assessment",
+    "locked_answer": "sinoatrial node",
+    "locked_answer_aliases": [
+      "SA node",
+      "sinus node",
+      "pacemaker of the heart",
+      "cardiac pacemaker"
+    ],
+    "locked_question": "What structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?",
+    "turn_count": 2,
+    "hint_level_final": 2,
+    "student_state_final": "correct"
+  },
+  "gate_traces": [
+    {
+      "wrapper": "dean.confidence_score",
+      "result": "answer_conf=0.950, mastery_conf=0.595, reached=True (gate_path=overlap)",
+      "locked_answer": "sinoatrial node",
+      "gate_path": "overlap",
+      "gate_evidence": "SA node"
+    }
+  ],
+  "result": {
+    "reached_pass": true,
+    "fabrication_pass": true,
+    "overall_pass": true
+  },
+  "notes": [],
+  "log": [
+    {
+      "step": "prelock",
+      "matcher_path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart",
+      "matcher_score": 101.0,
+      "chunk_count": 16,
+      "locked_question": "What structure in the heart spontaneously generates the electrical impulse that starts each heartbeat?",
+      "locked_answer": "sinoatrial node",
+      "locked_answer_aliases": [
+        "SA node",
+        "sinus node",
+        "pacemaker of the heart",
+        "cardiac pacemaker"
+      ],
+      "lock_source": "forced"
+    },
+    {
+      "step": "rapport_greeting",
+      "tutor": "Good evening. Anatomy has a lot of moving parts\u2014literally\u2014so it helps to zero in on what matters most to you right now. Are you preparing for an exam, working through a specific system, or trying to solidify a concept that's been unclear?"
+    },
+    {
+      "step": "tutoring_turn_1_student",
+      "student": "It must be the electrical signals in the heart"
+    },
+    {
+      "step": "tutoring_turn_1_after_invoke",
+      "tutor": "You're right that electrical signals drive the heartbeat. Conductive cells spontaneously depolarize without external stimulus\u2014a unique property. Which cardiac structure do you think relies on this automatic firing to set the pace for the entire heart?",
+      "student_state": "incorrect",
+      "student_reached_answer": false,
+      "student_answer_confidence": 0.24,
+      "phase": "tutoring",
+      "hint_level": 2
+    },
+    {
+      "step": "tutoring_turn_2_student",
+      "student": "I think the SA node starts the heartbeat"
+    },
+    {
+      "step": "tutoring_turn_2_after_invoke",
+      "tutor": "You've identified the sinoatrial node correctly. Would you like to explore how SA node dysfunction manifests clinically, or are you satisfied with the anatomical concept for now?",
+      "student_state": "correct",
+      "student_reached_answer": true,
+      "student_answer_confidence": 0.95,
+      "phase": "assessment",
+      "hint_level": 2
+    }
+  ],
+  "debug_summary": {
+    "api_calls": 9,
+    "input_tokens": 10309,
+    "output_tokens": 991,
+    "cost_usd": 0.045792000000000006
+  }
+}

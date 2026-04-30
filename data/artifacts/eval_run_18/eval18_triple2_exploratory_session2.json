@@ -1,0 +1,1109 @@
+{
+  "student_id": "eval18_triple2_exploratory",
+  "conv_id": "3690b3af",
+  "profile_id": "S6",
+  "topic": "What enzymes break down proteins in the stomach?",
+  "session_index": 2,
+  "timestamp": "2026-04-30T04:37:14",
+  "turns_log": [
+    {
+      "turn": 0,
+      "phase": "rapport",
+      "role": "tutor",
+      "content": "Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?"
+    },
+    {
+      "turn": 0,
+      "phase": "topic_input",
+      "role": "student",
+      "content": "What enzymes break down proteins in the stomach?"
+    },
+    {
+      "turn": 0,
+      "phase": "topic_engagement",
+      "role": "tutor",
+      "content": "Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?"
+    },
+    {
+      "turn": 2,
+      "phase": "tutoring",
+      "role": "student",
+      "content": "I think it's pepsin? But I'm not totally sure \u2014 we just covered this in class and I'm still trying to remember all the different enzymes."
+    },
+    {
+      "turn": 2,
+      "phase": "assessment",
+      "role": "tutor",
+      "content": "You've correctly identified pepsin as the primary protease of the stomach. Would you like to explore a brief clinical scenario that applies this concept, or are you satisfied with your understanding at this point?",
+      "student_state": "correct",
+      "hint_level": 0,
+      "student_reached_answer": true
+    },
+    {
+      "turn": 3,
+      "phase": "assessment",
+      "role": "student",
+      "content": "Yeah, I think I get the basic idea of pepsin breaking down proteins, but honestly I'm still a little fuzzy on some of the details\u2014like, I'm not totally sure how the stomach acid activates it or what happens if that doesn't work right. Maybe we could go through that scenario thing you mentioned?"
+    },
+    {
+      "turn": 2,
+      "phase": "assessment",
+      "role": "tutor",
+      "content": "Let's build on what you said. In the stomach, HCl creates an acidic pH of 1.5\u20133.5 that does two things: it denatures proteins to unfold them, and it activates pepsin from its inactive form. If stomach acid is reduced, pepsin can't work as well. So here's a simpler scenario: if a patient takes medication that lowers stomach acid, how do you think the small intestine would need to compensate to break down proteins? What enzymes or processes there might take on a bigger role?",
+      "student_state": "correct",
+      "hint_level": 0,
+      "student_reached_answer": true
+    },
+    {
+      "turn": 3,
+      "phase": "assessment",
+      "role": "student",
+      "content": "Um, I'm thinking maybe the small intestine would have to rely more on pepsin somehow? Or like, maybe it produces more of its own enzymes to compensate? I'm not totally sure though\u2014I might be mixing things up."
+    },
+    {
+      "turn": 2,
+      "phase": "assessment",
+      "role": "tutor",
+      "content": "What you got right: You recognized that compensation must occur in the small intestine when stomach acid is reduced\u2014that's the right direction. What to correct next: Pepsin cannot function in the small intestine because the pancreas neutralizes HCl there (raising pH to ~7\u20138), and pepsin is only active in acidic conditions (pH 1.5\u20133.5). The small intestine doesn't produce pepsin; instead, it relies on pancreatic proteases (trypsin, chymotrypsin, elastase) that are activated there. These enzymes would need to work harder to compensate for incomplete protein breakdown in the stomach. Here's your follow-up: If pepsin cannot work in the small intestine's neutral pH environment, what do you think happens to partially digested proteins that enter from the stomach\u2014and which pancreatic enzymes would take over that job?",
+      "student_state": "correct",
+      "hint_level": 0,
+      "student_reached_answer": true
+    },
+    {
+      "turn": 3,
+      "phase": "assessment",
+      "role": "student",
+      "content": "Okay, so like... I'm thinking the partially digested proteins just kinda stay that way until they hit the small intestine, and then the pancreatic enzymes\u2014trypsin and chymotrypsin maybe?\u2014have to break them down the rest of the way? I'm not totally confident about that though, it could be completely off."
+    },
+    {
+      "turn": 2,
+      "phase": "assessment",
+      "role": "tutor",
+      "content": "What you got right: You correctly identified trypsin and chymotrypsin as the pancreatic enzymes that take over protein breakdown in the small intestine, and you understood that partially digested proteins enter from the stomach and require further breakdown. What to correct next: You need to be more precise about what happens to those partially digested proteins\u2014they don't simply \"stay that way\"; they actively continue being broken down by the pancreatic proteases you named. Also, you omitted elastase, which is the third major pancreatic protease working alongside trypsin and chymotrypsin. Additionally, you should recognize that the small intestine also releases its own enzymes (peptidases in the intestinal wall) that complete amino acid liberation. Your confidence is justified\u2014you're on the right track, but precision matters in clinical reasoning. Can you explain why the pancreas releases these enzymes as inactive proenzymes (trypsinogen, chymotrypsinogen) rather than in their active forms, and what would happen if they were activated in the pancreas itself?",
+      "student_state": "correct",
+      "hint_level": 0,
+      "student_reached_answer": true
+    },
+    {
+      "turn": 3,
+      "phase": "assessment",
+      "role": "student",
+      "content": "Oh, okay, so I think the inactive forms protect the pancreas itself from being digested\u2014like, if trypsin was already active in there, it would just start breaking down the pancreatic tissue, right? I'm not totally sure about this, but could it maybe cause some kind of autodigestion or inflammation if the enzymes activated too early?"
+    },
+    {
+      "turn": 2,
+      "phase": "memory_update",
+      "role": "tutor",
+      "content": "You did well identifying pepsin and understanding that the small intestine compensates with pancreatic enzymes when stomach acid is reduced. Your intuition about autodigestion protection was on the right track. To strengthen your clinical reasoning, focus on: (1) the complete trio of pancreatic proteases (trypsin, chymotrypsin, elastase), (2) the enterokinase activation cascade that safely activates trypsinogen in the small intestine, and (3) why this sequential activation matters clinically. You're building solid foundational knowledge\u2014keep pushing for precision in mechanism and terminology.",
+      "student_state": "correct",
+      "hint_level": 0,
+      "student_reached_answer": true
+    }
+  ],
+  "outcome": {
+    "phase_final": "memory_update",
+    "reached_answer": true,
+    "locked_answer": "pepsin",
+    "hint_level_final": 0,
+    "turn_count": 2,
+    "assessment_turn": 3,
+    "student_state_final": "correct",
+    "core_mastery_tier": "proficient",
+    "clinical_mastery_tier": "developing",
+    "mastery_tier": "proficient",
+    "total_low_effort_turns": 0,
+    "total_off_topic_turns": 0
+  },
+  "debug_summary": {
+    "api_calls": 14,
+    "input_tokens": 24055,
+    "output_tokens": 2520,
+    "cost_usd": 0.10996500000000001,
+    "interventions": 0
+  },
+  "bugs_noted": [],
+  "final_state": {
+    "student_id": "eval18_triple2_exploratory",
+    "phase": "memory_update",
+    "messages": [
+      {
+        "role": "tutor",
+        "content": "Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?",
+        "phase": "rapport"
+      },
+      {
+        "role": "student",
+        "content": "What enzymes break down proteins in the stomach?"
+      },
+      {
+        "role": "tutor",
+        "content": "Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?",
+        "phase": "tutoring"
+      },
+      {
+        "role": "student",
+        "content": "I think it's pepsin? But I'm not totally sure \u2014 we just covered this in class and I'm still trying to remember all the different enzymes."
+      },
+      {
+        "role": "tutor",
+        "content": "You've correctly identified pepsin as the primary protease of the stomach. Would you like to explore a brief clinical scenario that applies this concept, or are you satisfied with your understanding at this point?",
+        "phase": "assessment"
+      },
+      {
+        "role": "student",
+        "content": "Yeah, I think I get the basic idea of pepsin breaking down proteins, but honestly I'm still a little fuzzy on some of the details\u2014like, I'm not totally sure how the stomach acid activates it or what happens if that doesn't work right. Maybe we could go through that scenario thing you mentioned?"
+      },
+      {
+        "role": "tutor",
+        "content": "Let's build on what you said. In the stomach, HCl creates an acidic pH of 1.5\u20133.5 that does two things: it denatures proteins to unfold them, and it activates pepsin from its inactive form. If stomach acid is reduced, pepsin can't work as well. So here's a simpler scenario: if a patient takes medication that lowers stomach acid, how do you think the small intestine would need to compensate to break down proteins? What enzymes or processes there might take on a bigger role?",
+        "phase": "assessment"
+      },
+      {
+        "role": "student",
+        "content": "Um, I'm thinking maybe the small intestine would have to rely more on pepsin somehow? Or like, maybe it produces more of its own enzymes to compensate? I'm not totally sure though\u2014I might be mixing things up."
+      },
+      {
+        "role": "tutor",
+        "content": "What you got right: You recognized that compensation must occur in the small intestine when stomach acid is reduced\u2014that's the right direction. What to correct next: Pepsin cannot function in the small intestine because the pancreas neutralizes HCl there (raising pH to ~7\u20138), and pepsin is only active in acidic conditions (pH 1.5\u20133.5). The small intestine doesn't produce pepsin; instead, it relies on pancreatic proteases (trypsin, chymotrypsin, elastase) that are activated there. These enzymes would need to work harder to compensate for incomplete protein breakdown in the stomach. Here's your follow-up: If pepsin cannot work in the small intestine's neutral pH environment, what do you think happens to partially digested proteins that enter from the stomach\u2014and which pancreatic enzymes would take over that job?",
+        "phase": "assessment"
+      },
+      {
+        "role": "student",
+        "content": "Okay, so like... I'm thinking the partially digested proteins just kinda stay that way until they hit the small intestine, and then the pancreatic enzymes\u2014trypsin and chymotrypsin maybe?\u2014have to break them down the rest of the way? I'm not totally confident about that though, it could be completely off."
+      },
+      {
+        "role": "tutor",
+        "content": "What you got right: You correctly identified trypsin and chymotrypsin as the pancreatic enzymes that take over protein breakdown in the small intestine, and you understood that partially digested proteins enter from the stomach and require further breakdown. What to correct next: You need to be more precise about what happens to those partially digested proteins\u2014they don't simply \"stay that way\"; they actively continue being broken down by the pancreatic proteases you named. Also, you omitted elastase, which is the third major pancreatic protease working alongside trypsin and chymotrypsin. Additionally, you should recognize that the small intestine also releases its own enzymes (peptidases in the intestinal wall) that complete amino acid liberation. Your confidence is justified\u2014you're on the right track, but precision matters in clinical reasoning. Can you explain why the pancreas releases these enzymes as inactive proenzymes (trypsinogen, chymotrypsinogen) rather than in their active forms, and what would happen if they were activated in the pancreas itself?",
+        "phase": "assessment"
+      },
+      {
+        "role": "student",
+        "content": "Oh, okay, so I think the inactive forms protect the pancreas itself from being digested\u2014like, if trypsin was already active in there, it would just start breaking down the pancreatic tissue, right? I'm not totally sure about this, but could it maybe cause some kind of autodigestion or inflammation if the enzymes activated too early?"
+      },
+      {
+        "role": "tutor",
+        "content": "You did well identifying pepsin and understanding that the small intestine compensates with pancreatic enzymes when stomach acid is reduced. Your intuition about autodigestion protection was on the right track. To strengthen your clinical reasoning, focus on: (1) the complete trio of pancreatic proteases (trypsin, chymotrypsin, elastase), (2) the enterokinase activation cascade that safely activates trypsinogen in the small intestine, and (3) why this sequential activation matters clinically. You're building solid foundational knowledge\u2014keep pushing for precision in mechanism and terminology.",
+        "phase": "memory_update"
+      }
+    ],
+    "retrieved_chunks": [
+      {
+        "chunk_id": "f84d00ff-1b8b-4ed2-b10f-e7c71b7ee5d3",
+        "text": "There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.",
+        "chapter_num": 24,
+        "chapter_title": "Metabolism and Nutrition",
+        "section_title": "Protein Metabolism",
+        "subsection_title": "",
+        "page": 1097,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "neighbor_prev",
+        "_primary_chunk_id": "21605519-144a-48ef-89a1-745f88f6c2ba"
+      },
+      {
+        "chunk_id": "0a6d94bd-f6f3-4b1a-8653-bb5566a7ecec",
+        "text": "Context from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.",
+        "chapter_num": 24,
+        "chapter_title": "Metabolism and Nutrition",
+        "section_title": "Protein Metabolism",
+        "subsection_title": "",
+        "page": 1097,
+        "element_type": "paragraph_overlap",
+        "image_filename": "",
+        "_window_role": "neighbor_prev",
+        "_primary_chunk_id": "21605519-144a-48ef-89a1-745f88f6c2ba"
+      },
+      {
+        "chunk_id": "21605519-144a-48ef-89a1-745f88f6c2ba",
+        "text": "Proteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.",
+        "score": 0.9999991655349731,
+        "chapter_num": 24,
+        "chapter_title": "Metabolism and Nutrition",
+        "section_title": "Protein Metabolism",
+        "subsection_title": "",
+        "page": 1097,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "primary",
+        "_primary_chunk_id": "21605519-144a-48ef-89a1-745f88f6c2ba"
+      },
+      {
+        "chunk_id": "69f325ae-0600-4f7e-8751-80570b4b6a82",
+        "text": "Context from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.",
+        "chapter_num": 24,
+        "chapter_title": "Metabolism and Nutrition",
+        "section_title": "Protein Metabolism",
+        "subsection_title": "",
+        "page": 1097,
+        "element_type": "paragraph_overlap",
+        "image_filename": "",
+        "_window_role": "neighbor_next",
+        "_primary_chunk_id": "21605519-144a-48ef-89a1-745f88f6c2ba"
+      },
+      {
+        "chunk_id": "9082f2ee-b1b9-4ed4-a5a4-a712148a6441",
+        "text": "When protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.",
+        "chapter_num": 24,
+        "chapter_title": "Metabolism and Nutrition",
+        "section_title": "Protein Metabolism",
+        "subsection_title": "",
+        "page": 1097,
+        "element_type": "paragraph",
+        "image_filename": "",
+        "_window_role": "neighbor_next",
+        "_primary_chunk_id": "21605519-144a-48ef-89a1-745f88f6c2ba"
+      }
+    ],
+    "locked_question": "What enzyme breaks down proteins in the stomach?",
+    "locked_answer": "pepsin",
+    "locked_answer_aliases": [
+      "gastric protease",
+      "stomach protease",
+      "gastric enzyme",
+      "peptic enzyme"
+    ],
+    "full_answer": "pepsin",
+    "locked_topic": null,
+    "topic_confirmed": true,
+    "topic_selection": "Protein Metabolism",
+    "topic_just_locked": false,
+    "hint_level": 0,
+    "max_hints": 3,
+    "max_turns": 25,
+    "turn_count": 2,
+    "student_state": "correct",
+    "student_reached_answer": true,
+    "student_answer_confidence": 0.92,
+    "student_mastery_confidence": 0.46,
+    "confidence_samples": 2,
+    "help_abuse_count": 0,
+    "off_topic_count": 0,
+    "total_low_effort_turns": 0,
+    "total_off_topic_turns": 0,
+    "clinical_low_effort_count": 0,
+    "clinical_off_topic_count": 0,
+    "assessment_turn": 3,
+    "clinical_state": "partial_correct",
+    "clinical_confidence": 0.78,
+    "core_mastery_tier": "proficient",
+    "clinical_mastery_tier": "developing",
+    "mastery_tier": "proficient",
+    "grading_rationale": "Student correctly identified pepsin as the primary gastric protease and demonstrated solid understanding of pancreatic enzyme compensation in the small intestine (trypsin, chymotrypsin). However, clinical reasoning remained incomplete: the student grasped the autodigestion protection concept but did not articulate the specific mechanism (enterokinase activation cascade) or name elastase, and confidence in clinical application remained low (0.46 mastery confidence vs. 0.92 answer confidence).",
+    "session_memory_summary": "Student demonstrated proficient core knowledge of gastric and pancreatic protein digestion, correctly naming pepsin and pancreatic proteases. Clinical application was developing: student recognized compensation mechanisms and autodigestion risk but lacked precision on the enterokinase cascade and omitted elastase. Confidence gap (answer 0.92 vs. mastery 0.46) suggests student knows isolated facts but struggles integrating them into coherent clinical reasoning. Recommend reinforcement on proenzyme activation mechanisms and complete protease inventory.",
+    "weak_topics": [],
+    "rejected_topic_paths": [],
+    "exploration_max": 3,
+    "exploration_used": 0,
+    "debug": {
+      "api_calls": 14,
+      "input_tokens": 24055,
+      "output_tokens": 2520,
+      "cost_usd": 0.10996500000000001,
+      "interventions": 0,
+      "retrieval_calls": 1,
+      "coverage_gap_events": 0,
+      "grounded_turns": 1,
+      "ungrounded_turns": 1,
+      "invariant_violations": [
+        {
+          "turn": 2,
+          "kind": "ungrounded_tutoring_turn",
+          "has_locked_topic": false,
+          "chunk_count": 5
+        }
+      ],
+      "current_node": "memory_update_node",
+      "last_routing": "assessment_node (student_reached_answer)",
+      "turn_trace": [
+        {
+          "wrapper": "dean._setup_call",
+          "decision_effect": "classification_only",
+          "input_hash": "155342ffd6f06681",
+          "elapsed_s": 1.94,
+          "in_tok": 1900,
+          "out_tok": 143,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.00784,
+          "s_per_tok": 0.0135,
+          "cached_est_tokens": 1532,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": true,
+              "est_tokens": 1532
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 140
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 201
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean supervising one Socratic tutoring turn.\nTools are already handled in Python. Do NOT request tools.\nThis is an evaluation setting: classify strictly based on evidence in the student's latest message.\n\nSTRICT LOW_EFFORT RULES (highest priority):\n  The student must be GENUINELY ATTEMPTING the locked_question.\n  low_effort when: bare denial (\"no\", \"idk\", \"i don't know\"), demand\n  to be told (\"just tell me\"), frustration (\"if i wanted to read...\"),\n  empty deflection (<5 words, no domain content), profanity, or\n  dismissal. Off-topic + frustration \u2192 low_effort.\n  irrelevant: genuinely off-topic question on a different subject.\n\nOTHER:\n  question: genuine specific clarifying question about human anatomy,\n    with engagement. Rhetorical/frustrated questions \u2192 low_effort.\n  incorrect: genuine attempt but wrong.\n  partial_correct: answers an INTERMEDIATE scaffold the tutor asked,\n    but NOT the locked answer. (e.g. \"stroke volume goes lower\" when\n    locked_answer is \"skeletal muscle pump\" \u2192 partial_correct.)\n  correct: student STATES the locked_answer or a clear paraphrase.\n    Getting an intermediate scaffold right is partial_correct, NOT correct.\n    Only the LOCKED answer being stated counts as correct.\n\nstudent_reached_answer: ALWAYS set to false. Python's\n  reached_answer_gate computes the authoritative reached signal.\n\nconfidence_score:\n  - 0.85-1.00: explicit, accurate, certain\n  - 0.65-0.84: mostly correct, mild ambiguity\n  - 0.40-0.64: partial / uncertain\n  - 0.00-0.39: incorrect, irrelevant, low-effort\n\nhint_level: leave unchanged (Python increments for incorrect).\nlocked_answer is already set; do not propose a new one.\n\nReturn one JSON object only (no markdown):\n{{\n  \"student_state\": \"correct|partial_correct|incorrect|question|irrelevant|low_effort\",\n  \"student_reached_answer\": false,\n  \"confidence_score\": 0.0,\n  \"hint_level\": 1,\n  \"search_needed\": false,\n  \"critique\": \"\"\n}}\n\n\n[1] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[2] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[3] (p.1097, score=1.00) Metabolism and Nutrition > Protein Metabolism\n---\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[4] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[5] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\n---\n\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it's pepsin? But I'm not totally sure \u2014 we just covered this in class and I'm still trying to remember all the different enzymes.\n\n---\n\nCurrent state:\n- locked_question: What enzyme breaks down proteins in the stomach?\n- locked_answer: pepsin\n- hint_level: 0\n- turn_count: 1\n\nRecent conversation history:\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it's pepsin? But I'm not totally sure \u2014 we just covered this in class and I'm still trying to remember all the different enzymes.\nClassify the student's MOST RECENT message. Prior history is context only.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Classify this turn and return JSON."
+            }
+          ],
+          "response_text": "```json\n{\n  \"student_state\": \"correct\",\n  \"student_reached_answer\": false,\n  \"confidence_score\": 0.92,\n  \"hint_level\": 0,\n  \"search_needed\": false,\n  \"critique\": \"Student correctly identifies pepsin as the enzyme that breaks down proteins in the stomach. The answer is accurate and directly matches the locked answer. The student's mild hedging ('I think', 'not totally sure') reflects appropriate epistemic humility rather than low effort\u2014they are genuinely attempting the question and engaging with the material. This is a solid correct response.\"\n}\n```",
+          "tool_calls_made": [],
+          "result": "student_state=correct, hint=0",
+          "locked_answer_final": "pepsin"
+        },
+        {
+          "wrapper": "dean.sanitize_locked_answer",
+          "candidate": "pepsin",
+          "action": "kept",
+          "final": "pepsin"
+        },
+        {
+          "wrapper": "dean.confidence_score",
+          "result": "answer_conf=0.920, mastery_conf=0.460, reached=True (gate_path=overlap)",
+          "locked_answer": "pepsin",
+          "gate_path": "overlap",
+          "gate_evidence": "pepsin"
+        },
+        {
+          "wrapper": "dean.hint_progress",
+          "hint_before": 0,
+          "hint_after": 0,
+          "hint_reason": "unchanged",
+          "active_hint": ""
+        },
+        {
+          "wrapper": "teacher.draft_clinical_opt_in",
+          "decision_effect": null,
+          "input_hash": "22b5e9705820c176",
+          "elapsed_s": 1.08,
+          "in_tok": 200,
+          "out_tok": 43,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.00125,
+          "s_per_tok": 0.0251,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 183
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 14
+            }
+          ],
+          "system_prompt": "You are\na Socratic tutor in human anatomy working with a student.\nThis is an evaluated learning session.\nGlobal rules for all teacher wrappers:\n- Keep language academically focused and concise.\n- Do not reveal final answers unless wrapper-specific instructions explicitly allow it.\n- Follow wrapper output contracts exactly.\n- If strict JSON is requested by the wrapper, return strict JSON only.\n- Avoid generic motivational filler; prioritize targeted reasoning prompts.\n\n\na anatomy tutor.\nThe student has reached the core answer.\nAsk whether they want to do an optional clinical application challenge.\n\nRules:\n- Keep to 2 sentences max.\n- Do not restate the answer.\n- End with exactly one question that offers a clear yes/no choice.\n\n\n---\n\nCorrect answer already reached (do not restate): pepsin\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Ask if the student wants the optional clinical question."
+            }
+          ],
+          "response_text": "You've correctly identified pepsin as the primary protease of the stomach. Would you like to explore a brief clinical scenario that applies this concept, or are you satisfied with your understanding at this point?",
+          "tool_calls_made": []
+        },
+        {
+          "wrapper": "teacher.draft_clinical",
+          "decision_effect": null,
+          "input_hash": "456f93d4280cf0bc",
+          "elapsed_s": 1.43,
+          "in_tok": 1079,
+          "out_tok": 68,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.00426,
+          "s_per_tok": 0.021,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1109
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 27
+            }
+          ],
+          "system_prompt": "You are\na Socratic tutor in human anatomy working with a student.\nThis is an evaluated learning session.\nGlobal rules for all teacher wrappers:\n- Keep language academically focused and concise.\n- Do not reveal final answers unless wrapper-specific instructions explicitly allow it.\n- Follow wrapper output contracts exactly.\n- If strict JSON is requested by the wrapper, return strict JSON only.\n- Avoid generic motivational filler; prioritize targeted reasoning prompts.\n\n\na Socratic tutor writing a human anatomy application question.\n\nRules:\n- Briefly acknowledge progress without restating the answer.\n- Ask exactly one question tied to exam findings, function, or intervention planning.\n- Keep output to 2-3 sentences.\n- End with exactly one question.\n- Avoid generic filler and avoid answer reveal.\n\n\nRelevant textbook propositions:\n[1] Protein Metabolism\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n[2] Protein Metabolism\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n[3] Protein Metabolism\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n[4] Protein Metabolism\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n[5] Protein Metabolism\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\n\n---\n\nReached answer (never restate directly): pepsin\nDean critique from prior failed draft (empty on first pass): \n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Ask a clinical application question."
+            }
+          ],
+          "response_text": "A patient presents with severe gastritis and is prescribed a proton pump inhibitor to reduce gastric acid production. Given the role of the acidic environment in protein digestion, what compensatory mechanism or subsequent digestive process would need to be enhanced in the small intestine to ensure adequate protein breakdown and amino acid absorption?",
+          "tool_calls_made": []
+        },
+        {
+          "wrapper": "dean._quality_check_call",
+          "decision_effect": "qc_fail",
+          "input_hash": "ebac1fe5375eb956",
+          "elapsed_s": 5.48,
+          "in_tok": 1911,
+          "out_tok": 393,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.01163,
+          "s_per_tok": 0.0139,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1253
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 271
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 481
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean reviewing an assessment-phase message.\nGoal: ensure clinical application relevance and concise clarity.\n\nPass criteria:\n- Relevant to clinical application context.\n- Clear and concise (2-4 sentences for questions, 3-5 for summaries).\n- No unsafe factual contradiction with provided textbook context.\n\nResponse requirements:\n- Return a single valid JSON object only (no markdown, no backticks, no prose).\n- Include revised_teacher_draft only when pass=false.\n\nRespond with JSON only:\n{{\n  \"pass\": true/false,\n  \"critique\": \"short explanation if fail, empty if pass\",\n  \"reason_codes\": [\"irrelevance\"|\"verbosity\"|\"factual_risk\"|\"other\"],\n  \"rewrite_instruction\": \"one concrete instruction for the next draft\",\n  \"revised_teacher_draft\": \"full revised assessment response, empty when pass=true\"\n}}\n\n\n[1] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[2] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[3] (p.1097, score=1.00) Metabolism and Nutrition > Protein Metabolism\n---\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[4] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[5] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\n---\n\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it's pepsin? But I'm not totally sure \u2014 we just covered this in class and I'm still trying to remember all the different enzymes.\nTutor: You've correctly identified pepsin as the primary protease of the stomach. Would you like to explore a brief clinical scenario that applies this concept, or are you satisfied with your understanding at this point?\nStudent: Yeah, I think I get the basic idea of pepsin breaking down proteins, but honestly I'm still a little fuzzy on some of the details\u2014like, I'm not totally sure how the stomach acid activates it or what happens if that doesn't work right. Maybe we could go through that scenario thing you mentioned?\n\n---\n\nPhase: assessment\nCorrect answer: pepsin\nStudent's last message: Yeah, I think I get the basic idea of pepsin breaking down proteins, but honestly I'm still a little fuzzy on some of the details\u2014like, I'm not totally sure how the stomach acid activates it or what happens if that doesn't work right. Maybe we could go through that scenario thing you mentioned?\nDraft: A patient presents with severe gastritis and is prescribed a proton pump inhibitor to reduce gastric acid production. Given the role of the acidic environment in protein digestion, what compensatory mechanism or subsequent digestive process would need to be enhanced in the small intestine to ensure adequate protein breakdown and amino acid absorption?\nRecent conversation history:\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it's pepsin? But I'm not totally sure \u2014 we just covered this in class and I'm still trying to remember all the different enzymes.\nTutor: You've correctly identified pepsin as the primary protease of the stomach. Would you like to explore a brief clinical scenario that applies this concept, or are you satisfied with your understanding at this point?\nStudent: Yeah, I think I get the basic idea of pepsin breaking down proteins, but honestly I'm still a little fuzzy on some of the details\u2014like, I'm not totally sure how the stomach acid activates it or what happens if that doesn't work right. Maybe we could go through that scenario thing you mentioned?\nEvaluate ONLY the Teacher's most recent draft against the student's most recent message.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Evaluate this Teacher draft."
+            }
+          ],
+          "response_text": "```json\n{\n  \"pass\": false,\n  \"critique\": \"The draft jumps to a complex clinical scenario (gastritis + proton pump inhibitor) that exceeds the student's current readiness. The student explicitly stated they're 'fuzzy on details' about acid activation and malfunction\u2014they need foundational clarification first, not a compensatory mechanism question. The scenario is also factually risky: it assumes the student understands that small intestine proteases can fully compensate for lost gastric acid, which oversimplifies the clinical reality and may contradict the textbook's emphasis on pepsin's role in initial protein denaturation.\",\n  \"reason_codes\": [\"irrelevance\", \"verbosity\"],\n  \"rewrite_instruction\": \"Start with a simpler scenario that directly addresses the student's stated confusion: explain how HCl denatures proteins and activates pepsin, then ask what happens if acid is reduced (e.g., 'If stomach acid is lowered, pepsin works less effectively\u2014what does the small intestine have to do instead?'). Save the proton pump inhibitor case for a follow-up once they grasp the basic mechanism.\",\n  \"revised_teacher_draft\": \"Let's build on what you said. In the stomach, HCl creates an acidic pH of 1.5\u20133.5 that does two things: it denatures proteins to unfold them, and it activates pepsin from its inactive form. If stomach acid is reduced, pepsin can't work as well. So here's a simpler scenario: if a patient takes medication that lowers stomach acid, how do you think the small intestine would need to compensate to break down proteins? What enzymes or processes there might take on a bigger role?\"\n}\n```",
+          "tool_calls_made": [],
+          "result": "FAIL: The draft jumps to a complex clinical scenario (gastritis + proton pump inhibitor) that exceeds the student's current readiness. The student explicitly stated they're 'fuzzy on details' about acid activation and malfunction\u2014they need foundational clarification first, not a compensatory mechanism question. The scenario is also factually risky: it assumes the student understands that small intestine proteases can fully compensate for lost gastric acid, which oversimplifies the clinical reality and may contradict the textbook's emphasis on pepsin's role in initial protein denaturation.",
+          "reason_codes": [
+            "irrelevance",
+            "verbosity"
+          ],
+          "rewrite_instruction": "Start with a simpler scenario that directly addresses the student's stated confusion: explain how HCl denatures proteins and activates pepsin, then ask what happens if acid is reduced (e.g., 'If stomach acid is lowered, pepsin works less effectively\u2014what does the small intestine have to do instead?'). Save the proton pump inhibitor case for a follow-up once they grasp the basic mechanism.",
+          "parse_ok": true,
+          "revised_teacher_draft": "Let's build on what you said. In the stomach, HCl creates an acidic pH of 1.5\u20133.5 that does two things: it denatures proteins to unfold them, and it activates pepsin from its inactive form. If stomach acid is reduced, pepsin can't work as well. So here's a simpler scenario: if a patient takes medication that lowers stomach acid, how do you think the small intestine would need to compensate to break down proteins? What enzymes or processes there might take on a bigger role?"
+        },
+        {
+          "wrapper": "dean.revised_teacher_draft_applied",
+          "result": "Applied Dean revised_teacher_draft for clinical question"
+        },
+        {
+          "wrapper": "dean._clinical_turn_call",
+          "decision_effect": null,
+          "input_hash": "7e8baf592a8fad89",
+          "elapsed_s": 3.36,
+          "in_tok": 2342,
+          "out_tok": 240,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.01063,
+          "s_per_tok": 0.014,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1299
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 447
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 668
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean evaluating a student's clinical application response.\nThis is an evaluation setting: be strict and specific.\n\nClassify the latest response as exactly one:\n- correct\n- partial_correct\n- incorrect\n\nScoring guidance:\n- correct: accurate conclusion + mechanism/reasoning link + no key contradiction\n- partial_correct: right direction but missing distinction, mechanism, or precision\n- incorrect: wrong reasoning, wrong conclusion, or unsafe contradiction\n\nReturn strict JSON only:\n{{\n  \"student_state\": \"correct|partial_correct|incorrect\",\n  \"confidence_score\": 0.0,\n  \"pass\": true/false,\n  \"feedback_message\": \"empty when pass=true; otherwise 3-4 sentences with: What you got right, What to correct next, and one follow-up question\"\n}}\n\nConstraints for feedback_message (when pass=false):\n- Must include the literal labels:\n  \"What you got right:\" and \"What to correct next:\"\n- Must end with exactly one question.\n- Keep grounded in exam findings, function, or intervention planning.\n\n\n[1] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[2] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[3] (p.1097, score=1.00) Metabolism and Nutrition > Protein Metabolism\n---\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[4] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[5] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\n---\n\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it's pepsin? But I'm not totally sure \u2014 we just covered this in class and I'm still trying to remember all the different enzymes.\nTutor: You've correctly identified pepsin as the primary protease of the stomach. Would you like to explore a brief clinical scenario that applies this concept, or are you satisfied with your understanding at this point?\nStudent: Yeah, I think I get the basic idea of pepsin breaking down proteins, but honestly I'm still a little fuzzy on some of the details\u2014like, I'm not totally sure how the stomach acid activates it or what happens if that doesn't work right. Maybe we could go through that scenario thing you mentioned?\nTutor: Let's build on what you said. In the stomach, HCl creates an acidic pH of 1.5\u20133.5 that does two things: it denatures proteins to unfold them, and it activates pepsin from its inactive form. If stomach acid is reduced, pepsin can't work as well. So here's a simpler scenario: if a patient takes medication that lowers stomach acid, how do you think the small intestine would need to compensate to break down proteins? What enzymes or processes there might take on a bigger role?\nStudent: Um, I'm thinking maybe the small intestine would have to rely more on pepsin somehow? Or like, maybe it produces more of its own enzymes to compensate? I'm not totally sure though\u2014I might be mixing things up.\n\n---\n\nLocked answer: pepsin\nClinical turn: 1/3\nTutor question: Let's build on what you said. In the stomach, HCl creates an acidic pH of 1.5\u20133.5 that does two things: it denatures proteins to unfold them, and it activates pepsin from its inactive form. If stomach acid is reduced, pepsin can't work as well. So here's a simpler scenario: if a patient takes medication that lowers stomach acid, how do you think the small intestine would need to compensate to break down proteins? What enzymes or processes there might take on a bigger role?\nStudent response: Um, I'm thinking maybe the small intestine would have to rely more on pepsin somehow? Or like, maybe it produces more of its own enzymes to compensate? I'm not totally sure though\u2014I might be mixing things up.\n\nConversation history:\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it's pepsin? But I'm not totally sure \u2014 we just covered this in class and I'm still trying to remember all the different enzymes.\nTutor: You've correctly identified pepsin as the primary protease of the stomach. Would you like to explore a brief clinical scenario that applies this concept, or are you satisfied with your understanding at this point?\nStudent: Yeah, I think I get the basic idea of pepsin breaking down proteins, but honestly I'm still a little fuzzy on some of the details\u2014like, I'm not totally sure how the stomach acid activates it or what happens if that doesn't work right. Maybe we could go through that scenario thing you mentioned?\nTutor: Let's build on what you said. In the stomach, HCl creates an acidic pH of 1.5\u20133.5 that does two things: it denatures proteins to unfold them, and it activates pepsin from its inactive form. If stomach acid is reduced, pepsin can't work as well. So here's a simpler scenario: if a patient takes medication that lowers stomach acid, how do you think the small intestine would need to compensate to break down proteins? What enzymes or processes there might take on a bigger role?\nStudent: Um, I'm thinking maybe the small intestine would have to rely more on pepsin somehow? Or like, maybe it produces more of its own enzymes to compensate? I'm not totally sure though\u2014I might be mixing things up.\nEvaluate the student's most recent response. Prior exchanges are context for coaching continuity.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Evaluate this clinical response and return JSON."
+            }
+          ],
+          "response_text": "```json\n{\n  \"student_state\": \"incorrect\",\n  \"confidence_score\": 0.95,\n  \"pass\": false,\n  \"feedback_message\": \"What you got right: You recognized that compensation must occur in the small intestine when stomach acid is reduced\u2014that's the right direction. What to correct next: Pepsin cannot function in the small intestine because the pancreas neutralizes HCl there (raising pH to ~7\u20138), and pepsin is only active in acidic conditions (pH 1.5\u20133.5). The small intestine doesn't produce pepsin; instead, it relies on pancreatic proteases (trypsin, chymotrypsin, elastase) that are activated there. These enzymes would need to work harder to compensate for incomplete protein breakdown in the stomach. Here's your follow-up: If pepsin cannot work in the small intestine's neutral pH environment, what do you think happens to partially digested proteins that enter from the stomach\u2014and which pancreatic enzymes would take over that job?\"\n}\n```",
+          "tool_calls_made": []
+        },
+        {
+          "wrapper": "dean._clinical_turn_call",
+          "decision_effect": null,
+          "input_hash": "bfe33c9b713bae71",
+          "elapsed_s": 3.47,
+          "in_tok": 2990,
+          "out_tok": 280,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.01317,
+          "s_per_tok": 0.0124,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1299
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 733
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 1064
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean evaluating a student's clinical application response.\nThis is an evaluation setting: be strict and specific.\n\nClassify the latest response as exactly one:\n- correct\n- partial_correct\n- incorrect\n\nScoring guidance:\n- correct: accurate conclusion + mechanism/reasoning link + no key contradiction\n- partial_correct: right direction but missing distinction, mechanism, or precision\n- incorrect: wrong reasoning, wrong conclusion, or unsafe contradiction\n\nReturn strict JSON only:\n{{\n  \"student_state\": \"correct|partial_correct|incorrect\",\n  \"confidence_score\": 0.0,\n  \"pass\": true/false,\n  \"feedback_message\": \"empty when pass=true; otherwise 3-4 sentences with: What you got right, What to correct next, and one follow-up question\"\n}}\n\nConstraints for feedback_message (when pass=false):\n- Must include the literal labels:\n  \"What you got right:\" and \"What to correct next:\"\n- Must end with exactly one question.\n- Keep grounded in exam findings, function, or intervention planning.\n\n\n[1] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[2] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[3] (p.1097, score=1.00) Metabolism and Nutrition > Protein Metabolism\n---\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[4] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[5] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\n---\n\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it's pepsin? But I'm not totally sure \u2014 we just covered this in class and I'm still trying to remember all the different enzymes.\nTutor: You've correctly identified pepsin as the primary protease of the stomach. Would you like to explore a brief clinical scenario that applies this concept, or are you satisfied with your understanding at this point?\nStudent: Yeah, I think I get the basic idea of pepsin breaking down proteins, but honestly I'm still a little fuzzy on some of the details\u2014like, I'm not totally sure how the stomach acid activates it or what happens if that doesn't work right. Maybe we could go through that scenario thing you mentioned?\nTutor: Let's build on what you said. In the stomach, HCl creates an acidic pH of 1.5\u20133.5 that does two things: it denatures proteins to unfold them, and it activates pepsin from its inactive form. If stomach acid is reduced, pepsin can't work as well. So here's a simpler scenario: if a patient takes medication that lowers stomach acid, how do you think the small intestine would need to compensate to break down proteins? What enzymes or processes there might take on a bigger role?\nStudent: Um, I'm thinking maybe the small intestine would have to rely more on pepsin somehow? Or like, maybe it produces more of its own enzymes to compensate? I'm not totally sure though\u2014I might be mixing things up.\nTutor: What you got right: You recognized that compensation must occur in the small intestine when stomach acid is reduced\u2014that's the right direction. What to correct next: Pepsin cannot function in the small intestine because the pancreas neutralizes HCl there (raising pH to ~7\u20138), and pepsin is only active in acidic conditions (pH 1.5\u20133.5). The small intestine doesn't produce pepsin; instead, it relies on pancreatic proteases (trypsin, chymotrypsin, elastase) that are activated there. These enzymes would need to work harder to compensate for incomplete protein breakdown in the stomach. Here's your follow-up: If pepsin cannot work in the small intestine's neutral pH environment, what do you think happens to partially digested proteins that enter from the stomach\u2014and which pancreatic enzymes would take over that job?\nStudent: Okay, so like... I'm thinking the partially digested proteins just kinda stay that way until they hit the small intestine, and then the pancreatic enzymes\u2014trypsin and chymotrypsin maybe?\u2014have to break them down the rest of the way? I'm not totally confident about that though, it could be completely off.\n\n---\n\nLocked answer: pepsin\nClinical turn: 2/3\nTutor question: What you got right: You recognized that compensation must occur in the small intestine when stomach acid is reduced\u2014that's the right direction. What to correct next: Pepsin cannot function in the small intestine because the pancreas neutralizes HCl there (raising pH to ~7\u20138), and pepsin is only active in acidic conditions (pH 1.5\u20133.5). The small intestine doesn't produce pepsin; instead, it relies on pancreatic proteases (trypsin, chymotrypsin, elastase) that are activated there. These enzymes would need to work harder to compensate for incomplete protein breakdown in the stomach. Here's your follow-up: If pepsin cannot work in the small intestine's neutral pH environment, what do you think happens to partially digested proteins that enter from the stomach\u2014and which pancreatic enzymes would take over that job?\nStudent response: Okay, so like... I'm thinking the partially digested proteins just kinda stay that way until they hit the small intestine, and then the pancreatic enzymes\u2014trypsin and chymotrypsin maybe?\u2014have to break them down the rest of the way? I'm not totally confident about that though, it could be completely off.\n\nConversation history:\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it's pepsin? But I'm not totally sure \u2014 we just covered this in class and I'm still trying to remember all the different enzymes.\nTutor: You've correctly identified pepsin as the primary protease of the stomach. Would you like to explore a brief clinical scenario that applies this concept, or are you satisfied with your understanding at this point?\nStudent: Yeah, I think I get the basic idea of pepsin breaking down proteins, but honestly I'm still a little fuzzy on some of the details\u2014like, I'm not totally sure how the stomach acid activates it or what happens if that doesn't work right. Maybe we could go through that scenario thing you mentioned?\nTutor: Let's build on what you said. In the stomach, HCl creates an acidic pH of 1.5\u20133.5 that does two things: it denatures proteins to unfold them, and it activates pepsin from its inactive form. If stomach acid is reduced, pepsin can't work as well. So here's a simpler scenario: if a patient takes medication that lowers stomach acid, how do you think the small intestine would need to compensate to break down proteins? What enzymes or processes there might take on a bigger role?\nStudent: Um, I'm thinking maybe the small intestine would have to rely more on pepsin somehow? Or like, maybe it produces more of its own enzymes to compensate? I'm not totally sure though\u2014I might be mixing things up.\nTutor: What you got right: You recognized that compensation must occur in the small intestine when stomach acid is reduced\u2014that's the right direction. What to correct next: Pepsin cannot function in the small intestine because the pancreas neutralizes HCl there (raising pH to ~7\u20138), and pepsin is only active in acidic conditions (pH 1.5\u20133.5). The small intestine doesn't produce pepsin; instead, it relies on pancreatic proteases (trypsin, chymotrypsin, elastase) that are activated there. These enzymes would need to work harder to compensate for incomplete protein breakdown in the stomach. Here's your follow-up: If pepsin cannot work in the small intestine's neutral pH environment, what do you think happens to partially digested proteins that enter from the stomach\u2014and which pancreatic enzymes would take over that job?\nStudent: Okay, so like... I'm thinking the partially digested proteins just kinda stay that way until they hit the small intestine, and then the pancreatic enzymes\u2014trypsin and chymotrypsin maybe?\u2014have to break them down the rest of the way? I'm not totally confident about that though, it could be completely off.\nEvaluate the student's most recent response. Prior exchanges are context for coaching continuity.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Evaluate this clinical response and return JSON."
+            }
+          ],
+          "response_text": "```json\n{\n  \"student_state\": \"partial_correct\",\n  \"confidence_score\": 0.72,\n  \"pass\": false,\n  \"feedback_message\": \"What you got right: You correctly identified trypsin and chymotrypsin as the pancreatic enzymes that take over protein breakdown in the small intestine, and you understood that partially digested proteins enter from the stomach and require further breakdown. What to correct next: You need to be more precise about what happens to those partially digested proteins\u2014they don't simply \\\"stay that way\\\"; they actively continue being broken down by the pancreatic proteases you named. Also, you omitted elastase, which is the third major pancreatic protease working alongside trypsin and chymotrypsin. Additionally, you should recognize that the small intestine also releases its own enzymes (peptidases in the intestinal wall) that complete amino acid liberation. Your confidence is justified\u2014you're on the right track, but precision matters in clinical reasoning. Can you explain why the pancreas releases these enzymes as inactive proenzymes (trypsinogen, chymotrypsinogen) rather than in their active forms, and what would happen if they were activated in the pancreas itself?\"\n}\n```",
+          "tool_calls_made": []
+        },
+        {
+          "wrapper": "dean._clinical_turn_call",
+          "decision_effect": null,
+          "input_hash": "384b9e85e6a01eca",
+          "elapsed_s": 3.18,
+          "in_tok": 3651,
+          "out_tok": 256,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.01479,
+          "s_per_tok": 0.0124,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1299
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 1089
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 1491
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean evaluating a student's clinical application response.\nThis is an evaluation setting: be strict and specific.\n\nClassify the latest response as exactly one:\n- correct\n- partial_correct\n- incorrect\n\nScoring guidance:\n- correct: accurate conclusion + mechanism/reasoning link + no key contradiction\n- partial_correct: right direction but missing distinction, mechanism, or precision\n- incorrect: wrong reasoning, wrong conclusion, or unsafe contradiction\n\nReturn strict JSON only:\n{{\n  \"student_state\": \"correct|partial_correct|incorrect\",\n  \"confidence_score\": 0.0,\n  \"pass\": true/false,\n  \"feedback_message\": \"empty when pass=true; otherwise 3-4 sentences with: What you got right, What to correct next, and one follow-up question\"\n}}\n\nConstraints for feedback_message (when pass=false):\n- Must include the literal labels:\n  \"What you got right:\" and \"What to correct next:\"\n- Must end with exactly one question.\n- Keep grounded in exam findings, function, or intervention planning.\n\n\n[1] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[2] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[3] (p.1097, score=1.00) Metabolism and Nutrition > Protein Metabolism\n---\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[4] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[5] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\n---\n\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it's pepsin? But I'm not totally sure \u2014 we just covered this in class and I'm still trying to remember all the different enzymes.\nTutor: You've correctly identified pepsin as the primary protease of the stomach. Would you like to explore a brief clinical scenario that applies this concept, or are you satisfied with your understanding at this point?\nStudent: Yeah, I think I get the basic idea of pepsin breaking down proteins, but honestly I'm still a little fuzzy on some of the details\u2014like, I'm not totally sure how the stomach acid activates it or what happens if that doesn't work right. Maybe we could go through that scenario thing you mentioned?\nTutor: Let's build on what you said. In the stomach, HCl creates an acidic pH of 1.5\u20133.5 that does two things: it denatures proteins to unfold them, and it activates pepsin from its inactive form. If stomach acid is reduced, pepsin can't work as well. So here's a simpler scenario: if a patient takes medication that lowers stomach acid, how do you think the small intestine would need to compensate to break down proteins? What enzymes or processes there might take on a bigger role?\nStudent: Um, I'm thinking maybe the small intestine would have to rely more on pepsin somehow? Or like, maybe it produces more of its own enzymes to compensate? I'm not totally sure though\u2014I might be mixing things up.\nTutor: What you got right: You recognized that compensation must occur in the small intestine when stomach acid is reduced\u2014that's the right direction. What to correct next: Pepsin cannot function in the small intestine because the pancreas neutralizes HCl there (raising pH to ~7\u20138), and pepsin is only active in acidic conditions (pH 1.5\u20133.5). The small intestine doesn't produce pepsin; instead, it relies on pancreatic proteases (trypsin, chymotrypsin, elastase) that are activated there. These enzymes would need to work harder to compensate for incomplete protein breakdown in the stomach. Here's your follow-up: If pepsin cannot work in the small intestine's neutral pH environment, what do you think happens to partially digested proteins that enter from the stomach\u2014and which pancreatic enzymes would take over that job?\nStudent: Okay, so like... I'm thinking the partially digested proteins just kinda stay that way until they hit the small intestine, and then the pancreatic enzymes\u2014trypsin and chymotrypsin maybe?\u2014have to break them down the rest of the way? I'm not totally confident about that though, it could be completely off.\nTutor: What you got right: You correctly identified trypsin and chymotrypsin as the pancreatic enzymes that take over protein breakdown in the small intestine, and you understood that partially digested proteins enter from the stomach and require further breakdown. What to correct next: You need to be more precise about what happens to those partially digested proteins\u2014they don't simply \"stay that way\"; they actively continue being broken down by the pancreatic proteases you named. Also, you omitted elastase, which is the third major pancreatic protease working alongside trypsin and chymotrypsin. Additionally, you should recognize that the small intestine also releases its own enzymes (peptidases in the intestinal wall) that complete amino acid liberation. Your confidence is justified\u2014you're on the right track, but precision matters in clinical reasoning. Can you explain why the pancreas releases these enzymes as inactive proenzymes (trypsinogen, chymotrypsinogen) rather than in their active forms, and what would happen if they were activated in the pancreas itself?\nStudent: Oh, okay, so I think the inactive forms protect the pancreas itself from being digested\u2014like, if trypsin was already active in there, it would just start breaking down the pancreatic tissue, right? I'm not totally sure about this, but could it maybe cause some kind of autodigestion or inflammation if the enzymes activated too early?\n\n---\n\nLocked answer: pepsin\nClinical turn: 3/3\nTutor question: What you got right: You correctly identified trypsin and chymotrypsin as the pancreatic enzymes that take over protein breakdown in the small intestine, and you understood that partially digested proteins enter from the stomach and require further breakdown. What to correct next: You need to be more precise about what happens to those partially digested proteins\u2014they don't simply \"stay that way\"; they actively continue being broken down by the pancreatic proteases you named. Also, you omitted elastase, which is the third major pancreatic protease working alongside trypsin and chymotrypsin. Additionally, you should recognize that the small intestine also releases its own enzymes (peptidases in the intestinal wall) that complete amino acid liberation. Your confidence is justified\u2014you're on the right track, but precision matters in clinical reasoning. Can you explain why the pancreas releases these enzymes as inactive proenzymes (trypsinogen, chymotrypsinogen) rather than in their active forms, and what would happen if they were activated in the pancreas itself?\nStudent response: Oh, okay, so I think the inactive forms protect the pancreas itself from being digested\u2014like, if trypsin was already active in there, it would just start breaking down the pancreatic tissue, right? I'm not totally sure about this, but could it maybe cause some kind of autodigestion or inflammation if the enzymes activated too early?\n\nConversation history:\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it's pepsin? But I'm not totally sure \u2014 we just covered this in class and I'm still trying to remember all the different enzymes.\nTutor: You've correctly identified pepsin as the primary protease of the stomach. Would you like to explore a brief clinical scenario that applies this concept, or are you satisfied with your understanding at this point?\nStudent: Yeah, I think I get the basic idea of pepsin breaking down proteins, but honestly I'm still a little fuzzy on some of the details\u2014like, I'm not totally sure how the stomach acid activates it or what happens if that doesn't work right. Maybe we could go through that scenario thing you mentioned?\nTutor: Let's build on what you said. In the stomach, HCl creates an acidic pH of 1.5\u20133.5 that does two things: it denatures proteins to unfold them, and it activates pepsin from its inactive form. If stomach acid is reduced, pepsin can't work as well. So here's a simpler scenario: if a patient takes medication that lowers stomach acid, how do you think the small intestine would need to compensate to break down proteins? What enzymes or processes there might take on a bigger role?\nStudent: Um, I'm thinking maybe the small intestine would have to rely more on pepsin somehow? Or like, maybe it produces more of its own enzymes to compensate? I'm not totally sure though\u2014I might be mixing things up.\nTutor: What you got right: You recognized that compensation must occur in the small intestine when stomach acid is reduced\u2014that's the right direction. What to correct next: Pepsin cannot function in the small intestine because the pancreas neutralizes HCl there (raising pH to ~7\u20138), and pepsin is only active in acidic conditions (pH 1.5\u20133.5). The small intestine doesn't produce pepsin; instead, it relies on pancreatic proteases (trypsin, chymotrypsin, elastase) that are activated there. These enzymes would need to work harder to compensate for incomplete protein breakdown in the stomach. Here's your follow-up: If pepsin cannot work in the small intestine's neutral pH environment, what do you think happens to partially digested proteins that enter from the stomach\u2014and which pancreatic enzymes would take over that job?\nStudent: Okay, so like... I'm thinking the partially digested proteins just kinda stay that way until they hit the small intestine, and then the pancreatic enzymes\u2014trypsin and chymotrypsin maybe?\u2014have to break them down the rest of the way? I'm not totally confident about that though, it could be completely off.\nTutor: What you got right: You correctly identified trypsin and chymotrypsin as the pancreatic enzymes that take over protein breakdown in the small intestine, and you understood that partially digested proteins enter from the stomach and require further breakdown. What to correct next: You need to be more precise about what happens to those partially digested proteins\u2014they don't simply \"stay that way\"; they actively continue being broken down by the pancreatic proteases you named. Also, you omitted elastase, which is the third major pancreatic protease working alongside trypsin and chymotrypsin. Additionally, you should recognize that the small intestine also releases its own enzymes (peptidases in the intestinal wall) that complete amino acid liberation. Your confidence is justified\u2014you're on the right track, but precision matters in clinical reasoning. Can you explain why the pancreas releases these enzymes as inactive proenzymes (trypsinogen, chymotrypsinogen) rather than in their active forms, and what would happen if they were activated in the pancreas itself?\nStudent: Oh, okay, so I think the inactive forms protect the pancreas itself from being digested\u2014like, if trypsin was already active in there, it would just start breaking down the pancreatic tissue, right? I'm not totally sure about this, but could it maybe cause some kind of autodigestion or inflammation if the enzymes activated too early?\nEvaluate the student's most recent response. Prior exchanges are context for coaching continuity.\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Evaluate this clinical response and return JSON."
+            }
+          ],
+          "response_text": "```json\n{\n  \"student_state\": \"partial_correct\",\n  \"confidence_score\": 0.78,\n  \"pass\": false,\n  \"feedback_message\": \"What you got right: You correctly identified the core protective mechanism\u2014that inactive proenzymes prevent autodigestion of pancreatic tissue, and you recognized that premature activation would be harmful. What to correct next: You need to move beyond speculation ('could it maybe cause') to precise mechanism: premature activation of trypsin and chymotrypsin in the pancreas would directly digest pancreatic acinar cells and ductal tissue, causing acute pancreatitis\u2014a serious, potentially life-threatening condition. This isn't just inflammation; it's a specific pathological outcome. Also, you should name enterokinase as the small intestinal enzyme that safely activates trypsinogen to trypsin only after proenzymes reach the small intestine. Your reasoning is sound, but clinical anatomy demands specificity about consequences. Can you explain how enterokinase acts as a 'safety switch' to ensure activation occurs only in the small intestine and not in the pancreas?\"\n}\n```",
+          "tool_calls_made": []
+        },
+        {
+          "wrapper": "dean._close_session_call",
+          "decision_effect": "session_close_evaluated",
+          "input_hash": "e4b8e813af85e74c",
+          "elapsed_s": 5.19,
+          "in_tok": 3510,
+          "out_tok": 420,
+          "cache_read": 0,
+          "cache_write": 0,
+          "cost_usd": 0.01683,
+          "s_per_tok": 0.0123,
+          "cached_est_tokens": 0,
+          "system_blocks": [
+            {
+              "index": 1,
+              "cached": false,
+              "est_tokens": 1332
+            },
+            {
+              "index": 2,
+              "cached": false,
+              "est_tokens": 1089
+            },
+            {
+              "index": 3,
+              "cached": false,
+              "est_tokens": 1232
+            }
+          ],
+          "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean closing out a tutoring session.\nThis is an evaluated learning session: report performance honestly and specifically.\n\nReturn strict JSON only:\n{{\n  \"core_mastery_tier\": \"strong|proficient|developing|needs_review|not_assessed|ungraded\",\n  \"clinical_mastery_tier\": \"strong|proficient|developing|needs_review|not_assessed|ungraded\",\n  \"mastery_tier\": \"strong|proficient|developing|needs_review|not_assessed|ungraded\",\n  \"grading_rationale\": \"1-2 sentence diagnosis of performance\",\n  \"student_facing_message\": \"final message shown to student\",\n  \"memory_summary\": \"3-5 sentence memory summary for long-term storage\"\n}}\n\nGrading rubric:\n- Use both core and clinical application performance.\n- Consider whether the student reached the answer, hint usage, confidence trajectory,\n  and clinical application quality (if attempted).\n- Favor transferable reasoning over rote memorization.\n- Keep tiers conservative when certainty is low.\n- student_facing_message must honestly reflect demonstrated performance.\n  If the student struggled, state that kindly but clearly; do not paper over gaps with generic praise.\n\n\n[1] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[2] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[3] (p.1097, score=1.00) Metabolism and Nutrition > Protein Metabolism\n---\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[4] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[5] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\n---\n\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it's pepsin? But I'm not totally sure \u2014 we just covered this in class and I'm still trying to remember all the different enzymes.\nTutor: You've correctly identified pepsin as the primary protease of the stomach. Would you like to explore a brief clinical scenario that applies this concept, or are you satisfied with your understanding at this point?\nStudent: Yeah, I think I get the basic idea of pepsin breaking down proteins, but honestly I'm still a little fuzzy on some of the details\u2014like, I'm not totally sure how the stomach acid activates it or what happens if that doesn't work right. Maybe we could go through that scenario thing you mentioned?\nTutor: Let's build on what you said. In the stomach, HCl creates an acidic pH of 1.5\u20133.5 that does two things: it denatures proteins to unfold them, and it activates pepsin from its inactive form. If stomach acid is reduced, pepsin can't work as well. So here's a simpler scenario: if a patient takes medication that lowers stomach acid, how do you think the small intestine would need to compensate to break down proteins? What enzymes or processes there might take on a bigger role?\nStudent: Um, I'm thinking maybe the small intestine would have to rely more on pepsin somehow? Or like, maybe it produces more of its own enzymes to compensate? I'm not totally sure though\u2014I might be mixing things up.\nTutor: What you got right: You recognized that compensation must occur in the small intestine when stomach acid is reduced\u2014that's the right direction. What to correct next: Pepsin cannot function in the small intestine because the pancreas neutralizes HCl there (raising pH to ~7\u20138), and pepsin is only active in acidic conditions (pH 1.5\u20133.5). The small intestine doesn't produce pepsin; instead, it relies on pancreatic proteases (trypsin, chymotrypsin, elastase) that are activated there. These enzymes would need to work harder to compensate for incomplete protein breakdown in the stomach. Here's your follow-up: If pepsin cannot work in the small intestine's neutral pH environment, what do you think happens to partially digested proteins that enter from the stomach\u2014and which pancreatic enzymes would take over that job?\nStudent: Okay, so like... I'm thinking the partially digested proteins just kinda stay that way until they hit the small intestine, and then the pancreatic enzymes\u2014trypsin and chymotrypsin maybe?\u2014have to break them down the rest of the way? I'm not totally confident about that though, it could be completely off.\nTutor: What you got right: You correctly identified trypsin and chymotrypsin as the pancreatic enzymes that take over protein breakdown in the small intestine, and you understood that partially digested proteins enter from the stomach and require further breakdown. What to correct next: You need to be more precise about what happens to those partially digested proteins\u2014they don't simply \"stay that way\"; they actively continue being broken down by the pancreatic proteases you named. Also, you omitted elastase, which is the third major pancreatic protease working alongside trypsin and chymotrypsin. Additionally, you should recognize that the small intestine also releases its own enzymes (peptidases in the intestinal wall) that complete amino acid liberation. Your confidence is justified\u2014you're on the right track, but precision matters in clinical reasoning. Can you explain why the pancreas releases these enzymes as inactive proenzymes (trypsinogen, chymotrypsinogen) rather than in their active forms, and what would happen if they were activated in the pancreas itself?\nStudent: Oh, okay, so I think the inactive forms protect the pancreas itself from being digested\u2014like, if trypsin was already active in there, it would just start breaking down the pancreatic tissue, right? I'm not totally sure about this, but could it maybe cause some kind of autodigestion or inflammation if the enzymes activated too early?\n\n---\n\nSession outcome: reached_answer\nCorrect answer: pepsin\nTopic selection: Protein Metabolism\nStudent reached answer: True\nFinal hint level: 0/3\nStudent answer confidence: 0.92\nStudent mastery confidence: 0.46\nClinical opted in: True\nClinical completed: False\nClinical turns used: 3/3\nClinical history: [{\"turn\": 1, \"state\": \"incorrect\", \"confidence\": 0.95, \"pass\": false}, {\"turn\": 2, \"state\": \"partial_correct\", \"confidence\": 0.72, \"pass\": false}, {\"turn\": 3, \"state\": \"partial_correct\", \"confidence\": 0.78, \"pass\": false}]\nExisting weak topics: []\n\nConversation history:\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?\nTutor: Got it \u2014 let's work on **Protein Metabolism** from Protein Metabolism.\n\nWhat enzyme breaks down proteins in the stomach?\nStudent: I think it's pepsin? But I'm not totally sure \u2014 we just covered this in class and I'm still trying to remember all the different enzymes.\nTutor: You've correctly identified pepsin as the primary protease of the stomach. Would you like to explore a brief clinical scenario that applies this concept, or are you satisfied with your understanding at this point?\nStudent: Yeah, I think I get the basic idea of pepsin breaking down proteins, but honestly I'm still a little fuzzy on some of the details\u2014like, I'm not totally sure how the stomach acid activates it or what happens if that doesn't work right. Maybe we could go through that scenario thing you mentioned?\nTutor: Let's build on what you said. In the stomach, HCl creates an acidic pH of 1.5\u20133.5 that does two things: it denatures proteins to unfold them, and it activates pepsin from its inactive form. If stomach acid is reduced, pepsin can't work as well. So here's a simpler scenario: if a patient takes medication that lowers stomach acid, how do you think the small intestine would need to compensate to break down proteins? What enzymes or processes there might take on a bigger role?\nStudent: Um, I'm thinking maybe the small intestine would have to rely more on pepsin somehow? Or like, maybe it produces more of its own enzymes to compensate? I'm not totally sure though\u2014I might be mixing things up.\nTutor: What you got right: You recognized that compensation must occur in the small intestine when stomach acid is reduced\u2014that's the right direction. What to correct next: Pepsin cannot function in the small intestine because the pancreas neutralizes HCl there (raising pH to ~7\u20138), and pepsin is only active in acidic conditions (pH 1.5\u20133.5). The small intestine doesn't produce pepsin; instead, it relies on pancreatic proteases (trypsin, chymotrypsin, elastase) that are activated there. These enzymes would need to work harder to compensate for incomplete protein breakdown in the stomach. Here's your follow-up: If pepsin cannot work in the small intestine's neutral pH environment, what do you think happens to partially digested proteins that enter from the stomach\u2014and which pancreatic enzymes would take over that job?\nStudent: Okay, so like... I'm thinking the partially digested proteins just kinda stay that way until they hit the small intestine, and then the pancreatic enzymes\u2014trypsin and chymotrypsin maybe?\u2014have to break them down the rest of the way? I'm not totally confident about that though, it could be completely off.\nTutor: What you got right: You correctly identified trypsin and chymotrypsin as the pancreatic enzymes that take over protein breakdown in the small intestine, and you understood that partially digested proteins enter from the stomach and require further breakdown. What to correct next: You need to be more precise about what happens to those partially digested proteins\u2014they don't simply \"stay that way\"; they actively continue being broken down by the pancreatic proteases you named. Also, you omitted elastase, which is the third major pancreatic protease working alongside trypsin and chymotrypsin. Additionally, you should recognize that the small intestine also releases its own enzymes (peptidases in the intestinal wall) that complete amino acid liberation. Your confidence is justified\u2014you're on the right track, but precision matters in clinical reasoning. Can you explain why the pancreas releases these enzymes as inactive proenzymes (trypsinogen, chymotrypsinogen) rather than in their active forms, and what would happen if they were activated in the pancreas itself?\nStudent: Oh, okay, so I think the inactive forms protect the pancreas itself from being digested\u2014like, if trypsin was already active in there, it would just start breaking down the pancreatic tissue, right? I'm not totally sure about this, but could it maybe cause some kind of autodigestion or inflammation if the enzymes activated too early?\n",
+          "messages_sent": [
+            {
+              "role": "user",
+              "content": "Return strict JSON only."
+            }
+          ],
+          "response_text": "```json\n{\n  \"core_mastery_tier\": \"proficient\",\n  \"clinical_mastery_tier\": \"developing\",\n  \"mastery_tier\": \"proficient\",\n  \"grading_rationale\": \"Student correctly identified pepsin as the primary gastric protease and demonstrated solid understanding of pancreatic enzyme compensation in the small intestine (trypsin, chymotrypsin). However, clinical reasoning remained incomplete: the student grasped the autodigestion protection concept but did not articulate the specific mechanism (enterokinase activation cascade) or name elastase, and confidence in clinical application remained low (0.46 mastery confidence vs. 0.92 answer confidence).\",\n  \"student_facing_message\": \"You did well identifying pepsin and understanding that the small intestine compensates with pancreatic enzymes when stomach acid is reduced. Your intuition about autodigestion protection was on the right track. To strengthen your clinical reasoning, focus on: (1) the complete trio of pancreatic proteases (trypsin, chymotrypsin, elastase), (2) the enterokinase activation cascade that safely activates trypsinogen in the small intestine, and (3) why this sequential activation matters clinically. You're building solid foundational knowledge\u2014keep pushing for precision in mechanism and terminology.\",\n  \"memory_summary\": \"Student demonstrated proficient core knowledge of gastric and pancreatic protein digestion, correctly naming pepsin and pancreatic proteases. Clinical application was developing: student recognized compensation mechanisms and autodigestion risk but lacked precision on the enterokinase cascade and omitted elastase. Confidence gap (answer 0.92 vs. mastery 0.46) suggests student knows isolated facts but struggles integrating them into coherent clinical reasoning. Recommend reinforcement on proenzyme activation mechanisms and complete protease inventory.\"\n}\n```",
+          "tool_calls_made": [],
+          "result": "close_session_json_ok"
+        },
+        {
+          "wrapper": "memory_manager.flush",
+          "result": "wrote_3_of_3",
+          "flushed": true
+        },
+        {
+          "wrapper": "mastery_store.update",
+          "result": "updated mastery=0.45 confidence=0.25 sessions=1"
+        }
+      ],
+      "all_turn_traces": [
+        {
+          "turn": 0,
+          "phase": "tutoring",
+          "trace": [
+            {
+              "wrapper": "teacher.draft_rapport",
+              "decision_effect": null,
+              "input_hash": "02af03ec34d58415",
+              "elapsed_s": 1.37,
+              "in_tok": 439,
+              "out_tok": 49,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00205,
+              "s_per_tok": 0.028,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 413
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 43
+                }
+              ],
+              "system_prompt": "You are\na Socratic tutor in human anatomy working with a student.\nThis is an evaluated learning session.\nGlobal rules for all teacher wrappers:\n- Keep language academically focused and concise.\n- Do not reveal final answers unless wrapper-specific instructions explicitly allow it.\n- Follow wrapper output contracts exactly.\n- If strict JSON is requested by the wrapper, return strict JSON only.\n- Avoid generic motivational filler; prioritize targeted reasoning prompts.\n\n\na Socratic human anatomy tutor opening a new session with a student.\nWrite a brief, natural opener (2-3 sentences max). Vary your tone.\nFirst words must be exactly the \"Good {time_of_day}\" greeting provided\nin the runtime context block below (e.g., \"Good morning\").\nDo NOT start with \"Hello\" or \"Welcome\". Do NOT use generic tutor clich\u00e9s.\nKeep it relevant and concrete for a student audience (coursework, exams, conceptual understanding).\nAssume a classroom/learning context by default.\nEnd with exactly one question asking what human anatomy topic the student wants to tackle today.\n\nPast session context (extracted from prior sessions \u2014 may be empty):\nNo previous history \u2014 new student.\n\nIf \"Past session context\" is empty / \"No previous history\": treat as a\nfresh session, do NOT mention prior struggles, weak topics, or invent\nhistorical difficulties.\n\nIf \"Past session context\" contains real prior data: you MAY briefly\nreference ONE specific past topic or open thread when offering a\nstarting point (\"...last time you were working through X \u2014 pick that\nup or start fresh?\"). At most ONE prior item; no recap, no list, no\nlearning-style summary; do NOT reveal past answers.\n\n\n---\n\nRuntime context for this session:\n  time_of_day: morning\nUse the corresponding 'Good morning' / 'Good afternoon' / 'Good evening' as the first words of your reply, exactly.",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Start the session."
+                }
+              ],
+              "response_text": "Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?",
+              "tool_calls_made": []
+            }
+          ]
+        },
+        {
+          "turn": 1,
+          "phase": "tutoring",
+          "trace": [
+            {
+              "wrapper": "dean._prelock_intent_call",
+              "decision_effect": null,
+              "input_hash": "de2166ee2d7ffd94",
+              "elapsed_s": 1.61,
+              "in_tok": 1237,
+              "out_tok": 105,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00529,
+              "s_per_tok": 0.0153,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 1028
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 71
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 118
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean handling the topic-selection phase of a tutoring session in human anatomy.\nThe student has not yet locked to a specific topic. Your job is to read their latest\nmessage, classify what they want, and write the tutor's next utterance in your own\nvoice (no templates, no canned strings).\n\nClassify the student's latest message as exactly one intent:\n  topic_query       \u2014 names or describes a human anatomy topic they want to learn.\n                      INCLUDES: questions, statements/assertions, leading claims,\n                      hedged or anxious phrasings, and one-word noun phrases \u2014 as\n                      long as a human anatomy topic is present in the message.\n  card_pick         \u2014 references one of the card options (number, label, close paraphrase)\n  greeting          \u2014 \"hi\", \"hello\", starting the session\n  distress          \u2014 emotional venting or frustration (\"ugh\", \"i'm stressed\", \"this is hard\", expletive)\n  off_topic         \u2014 unrelated to human anatomy (small talk, jokes, non-sequiturs)\n  ambiguous         \u2014 too short or too generic to route (single pronoun, empty, filler)\n\nFor topic_query and card_pick, extract `normalized_topic` \u2014 the cleanest topic name\nsuitable for retrieval (strip hedges, numbering, affirmations). For card_pick, set it\nto the referenced option's text (not a number). For other intents, leave it empty.\n\nCRITICAL: students phrase topic queries in many shapes. Treat ALL of these as\ntopic_query and extract the topic noun phrase even when the student is hedging,\nasserting, or just naming a single noun:\n\n  Student: \"What is the deltoid muscle?\"\n  \u2192 intent=topic_query, normalized_topic=\"deltoid muscle\"\n\n  Student: \"Reflexes are basically just instant nerve reactions, right?\"\n  \u2192 intent=topic_query, normalized_topic=\"reflexes\"  (statement IS a topic_query;\n    the leading assertion doesn't disqualify it. Still topic = reflexes.)\n\n  Student: \"I'm not sure I really understand chemical digestion \u2014 could we go through it?\"\n  \u2192 intent=topic_query, normalized_topic=\"chemical digestion\"  (hedging doesn't\n    disqualify; topic is clearly named.)\n\n  Student: \"elbow joint\"\n  \u2192 intent=topic_query, normalized_topic=\"elbow joint\"  (one-word/short-phrase\n    topics are valid; do NOT classify as ambiguous if a domain noun is present.)\n\n  Student: \"umm so... like, what's that thing in the kidney that filters blood?\"\n  \u2192 intent=topic_query, normalized_topic=\"kidney filtration\"  (vague but\n    clearly anatomy; extract the best topic phrase.)\n\n  Student: \"ugh i'm so confused\"\n  \u2192 intent=distress, normalized_topic=\"\"\n\n  Student: \"what should I make for dinner\"\n  \u2192 intent=off_topic, normalized_topic=\"\"\n\nRule of thumb: if you can identify ANY human anatomy noun phrase in the message\nthat the student seems interested in learning about, classify as topic_query and\nextract that phrase as normalized_topic. Reserve ambiguous ONLY for truly empty\nor pronoun-only messages.\n\nFor non-topic intents (greeting, distress, off_topic, ambiguous) write `tutor_reply` \u2014\na short, warm, contextual reply that acknowledges what the student actually said and\ninvites them to name a specific topic. Match the student's emotional register. Do NOT\nrepeat their words back inside quotes. Do NOT use a template phrase. 1-3 sentences.\nIf cards are currently on screen, gently remind the student they can pick one. When\nthe intent is topic_query or card_pick, leave `tutor_reply` as an empty string \u2014 the\nrouting layer will handle it.\n\nNever ask multiple questions. Never reveal answers. Never produce headers or lists.\n\nReturn strict JSON only:\n{{\n  \"intent\": \"topic_query|card_pick|greeting|distress|off_topic|ambiguous\",\n  \"normalized_topic\": \"\",\n  \"tutor_reply\": \"\",\n  \"rationale\": \"\"\n}}\n\n\n---\n\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?\n\n---\n\nCard options currently on screen (empty list means no cards shown this turn):\n[]\n\nRecent conversation history:\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?\n\nClassify ONLY the student's most recent message. Prior history is context.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Student's latest message: 'What enzymes break down proteins in the stomach?'\nReturn strict JSON only."
+                }
+              ],
+              "response_text": "```json\n{\n  \"intent\": \"topic_query\",\n  \"normalized_topic\": \"protein digestion in the stomach\",\n  \"tutor_reply\": \"\",\n  \"rationale\": \"Student names a specific human anatomy process (enzyme-mediated protein breakdown in the stomach). This is a clear topic_query. The question form and specificity make the intent unambiguous. No tutor_reply needed; routing layer will handle topic exploration.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.prelock_intent",
+              "intent": "topic_query",
+              "normalized_topic": "protein digestion in the stomach",
+              "rationale": "Student names a specific human anatomy process (enzyme-mediated protein breakdown in the stomach). This is a clear topic_query. The question form and specificity make the intent unambiguous. No tutor_reply needed; routing layer will handle topic exploration."
+            },
+            {
+              "wrapper": "dean.topic_vote",
+              "n_eligible": 4,
+              "winner_path": "Ch24|Protein Metabolism|",
+              "winner_weight": 1.0,
+              "all_weights": {
+                "Ch24|Protein Metabolism|": 1.0,
+                "Ch23|The Stomach|": 0.5,
+                "Ch3|The Cytoplasm and Cellular Organelles|Organelles of the Endomembrane System": 0.333,
+                "Ch3|The Cell Membrane|Membrane Proteins": 0.25
+              }
+            },
+            {
+              "wrapper": "dean.topic_match",
+              "retrieval_query": "What enzymes break down proteins in the stomach?",
+              "fuzzy_query": "protein digestion in the stomach",
+              "tier": "borderline",
+              "top_score": 100.0,
+              "top_path": "Chapter 23: The Digestive System > The Stomach > Digestive Functions of the Stomach",
+              "semantic_resolved": true,
+              "semantic_path": "Ch24|Protein Metabolism|"
+            },
+            {
+              "wrapper": "dean.topic_locked",
+              "topic_path": "Ch24|Protein Metabolism|",
+              "label": "Protein Metabolism",
+              "chunk_count": 0,
+              "limited": false
+            },
+            {
+              "wrapper": "dean.python_retrieval",
+              "result": "5 chunks returned | query=Protein Metabolism. What enzymes break down proteins in the stomach?",
+              "retrieval": {
+                "query": "Protein Metabolism. What enzymes break down proteins in the stomach?",
+                "top_chunks": [
+                  {
+                    "rank": 1,
+                    "score": 0.0,
+                    "section_title": "Protein Metabolism",
+                    "subsection_title": "",
+                    "chunk_id": "f84d00ff-1b8b-4ed2-b10f-e7c71b7ee5d3",
+                    "text_preview": "There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair."
+                  },
+                  {
+                    "rank": 2,
+                    "score": 0.0,
+                    "section_title": "Protein Metabolism",
+                    "subsection_title": "",
+                    "chunk_id": "0a6d94bd-f6f3-4b1a-8653-bb5566a7ecec",
+                    "text_preview": "Context from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones ("
+                  },
+                  {
+                    "rank": 3,
+                    "score": 0.9999991655349731,
+                    "section_title": "Protein Metabolism",
+                    "subsection_title": "",
+                    "chunk_id": "21605519-144a-48ef-89a1-745f88f6c2ba",
+                    "text_preview": "Proteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize p"
+                  },
+                  {
+                    "rank": 4,
+                    "score": 0.0,
+                    "section_title": "Protein Metabolism",
+                    "subsection_title": "",
+                    "chunk_id": "69f325ae-0600-4f7e-8751-80570b4b6a82",
+                    "text_preview": "Context from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these "
+                  },
+                  {
+                    "rank": 5,
+                    "score": 0.0,
+                    "section_title": "Protein Metabolism",
+                    "subsection_title": "",
+                    "chunk_id": "9082f2ee-b1b9-4ed4-a5a4-a712148a6441",
+                    "text_preview": "When protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts prot"
+                  }
+                ],
+                "total_chunks_returned": 5
+              },
+              "retrieval_calls": 1,
+              "retrieval_schema_keys": [
+                "_primary_chunk_id",
+                "_window_role",
+                "chapter_num",
+                "chapter_title",
+                "chunk_id",
+                "element_type",
+                "image_filename",
+                "page",
+                "section_title",
+                "subsection_title",
+                "text"
+              ]
+            },
+            {
+              "wrapper": "dean._lock_anchors_call",
+              "decision_effect": null,
+              "input_hash": "c527cc7e31d4e2f9",
+              "elapsed_s": 1.69,
+              "in_tok": 2531,
+              "out_tok": 118,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00936,
+              "s_per_tok": 0.0143,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 1422
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 71
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 1062
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean establishing pedagogical anchors for a new Socratic tutoring session.\nThe student has just selected a specific topic.\nRetrieval has fired and returned textbook excerpts.\n\nYour job: extract THREE anchors that guide the session.\n\n1) locked_question: a specific, answerable question for this session.\n2) locked_answer: the target answer term/concept the student must reach.\n3) locked_answer_aliases: 4-5 alternate phrasings the student might use\n   (synonyms, abbreviations, common shorthand). Do NOT include\n   locked_answer itself. Return [] if locked_answer is empty.\n\nStrict rules:\n- locked_answer must be a SHORT term or noun phrase: typically 2-5 words,\n  hard max 10 words. Examples: \"Purkinje fibers\", \"sinoatrial node\",\n  \"skeletal muscle pump\", \"ATP synthase\".\n- locked_answer must NOT be a sentence or clause. No verbs, no commas\n  separating multiple ideas. If you find yourself writing \"X does Y to\n  Z\", you've gone too far \u2014 pick the X (the structure or term itself).\n- locked_answer must be grounded in the retrieved chunks.\n- DO NOT use parametric / training-data knowledge: if the chunks do not\n  contain a clear answer to the topic question, return empty anchors.\n- If signal is insufficient, return empty anchors with rationale.\n- rationale must be brief (max 25 words).\n\nReturn strict JSON only:\n{{\n  \"locked_question\": \"string\",\n  \"locked_answer\": \"string\",\n  \"locked_answer_aliases\": [\"alias1\", \"alias2\", \"alias3\", \"alias4\"],\n  \"rationale\": \"string\"\n}}\n\n\n[1] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[2] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[3] (p.1097, score=1.00) Metabolism and Nutrition > Protein Metabolism\n---\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[4] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[5] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\n---\n\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?\n\n---\n\nStudent selected topic: Protein Metabolism\nConversation history:\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?\n\nRetrieved propositions:\n[1] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[2] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[3] (p.1097, score=1.00) Metabolism and Nutrition > Protein Metabolism\n---\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[4] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[5] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\nLock anchors and return strict JSON only.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Lock anchors and return strict JSON."
+                }
+              ],
+              "response_text": "```json\n{\n  \"locked_question\": \"What enzyme breaks down proteins in the stomach?\",\n  \"locked_answer\": \"pepsin\",\n  \"locked_answer_aliases\": [\n    \"gastric protease\",\n    \"stomach protease\",\n    \"gastric enzyme\",\n    \"peptic enzyme\"\n  ],\n  \"rationale\": \"Chunk [5] explicitly states pepsin is the enzyme that cuts proteins into smaller polypeptides in the stomach alongside HCl.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.sanitize_locked_answer",
+              "candidate": "pepsin",
+              "action": "kept",
+              "final": "pepsin"
+            },
+            {
+              "wrapper": "dean._lock_anchors_call.full_answer_fallback",
+              "result": "full_answer empty in LLM output; fell back to locked_answer"
+            },
+            {
+              "wrapper": "dean.anchors_locked",
+              "locked_question": "What enzyme breaks down proteins in the stomach?",
+              "locked_answer": "pepsin",
+              "rationale": "Chunk [5] explicitly states pepsin is the enzyme that cuts proteins into smaller polypeptides in the stomach alongside HCl."
+            },
+            {
+              "wrapper": "dean._hint_plan_call",
+              "decision_effect": null,
+              "input_hash": "b968dcfabc7a42d6",
+              "elapsed_s": 2.26,
+              "in_tok": 1094,
+              "out_tok": 220,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00658,
+              "s_per_tok": 0.0103,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 1051
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 71
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\n[1] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nThere is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[2] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: Pyruvate crosses back across the mitochondrial membrane to wait for the next cycle of lipogenesis. The acetyl CoA is converted into malonyl CoA that is used to synthesize fatty acids. There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair.\n\n===\n\n[3] (p.1097, score=1.00) Metabolism and Nutrition > Protein Metabolism\n---\nProteins can serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[4] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nContext from previous chunk: There is protein in bones (collagen), muscles, and tendons; the hemoglobin that transports oxygen; and enzymes that catalyze all biochemical reactions. Protein is also used for growth and repair. Amid all these necessary functions, proteins also hold the potential to serve as a metabolic fuel source. Proteins are not stored for later use, so excess proteins must be converted into glucose or triglycerides, and used to supply energy or build energy reserves. Although the body can synthesize proteins from amino acids, food is an important source of those amino acids, especially because humans cannot synthesize all of the 20 amino acids used to build proteins.\n\n===\n\n[5] (p.1097) Metabolism and Nutrition > Protein Metabolism\n---\nWhen protein-rich foods enter the stomach, they are greeted by a mixture of the enzyme pepsin and hydrochloric acid (HCl; 0.5 percent). The latter produces an environmental pH of 1.5\u20133.5 that denatures proteins within food. Pepsin cuts proteins into smaller polypeptides and their constituent amino acids. When the food-gastric juice mixture (chyme) enters the small intestine, the pancreas releases sodium bicarbonate to neutralize the HCl. This helps to protect the lining of the intestine. The small intestine also releases digestive hormones, including secretin and CCK, which stimulate digestive processes to break down the proteins further. Secretin also stimulates the pancreas to release sodium bicarbonate. The pancreas releases most of the digestive enzymes, including the proteases trypsin, chymotrypsin, and elastase, which aid protein digestion. Together, all of these enzymes break complex proteins into smaller individual amino acids, which are then transported across the intestinal mucosa to be used to create new proteins, or to be converted into fats or acetyl CoA and used in the Krebs cycle. In order to avoid breaking down the proteins that make up the pancreas and small intestine, pancreatic enzymes are released as inactive proenzymes that are only activated in the small intestine. In the pancreas, vesicles store trypsin and chymotrypsin as trypsinogen and chymotrypsinogen. Once released into the small intestine, an enzyme found in the wall of the small intestine, called enterokinase, binds to trypsinogen and converts it into its active form, trypsin. Trypsin then binds to chymotrypsinogen to convert it into the active chymotrypsin. Trypsin and chymotrypsin break down large proteins into smaller peptides, a process called proteolysis.\n\n---\n\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Return strict JSON only."
+                }
+              ],
+              "response_text": "```json\n{\n  \"evaluation\": {\n    \"student_question\": \"What enzymes break down proteins in the stomach?\",\n    \"accuracy\": \"INCOMPLETE\",\n    \"issues\": [\n      {\n        \"type\": \"INCOMPLETE_ANSWER\",\n        \"severity\": \"MODERATE\",\n        \"description\": \"Student asked about stomach-specific protein digestion but the provided context indicates pepsin is the primary enzyme in the stomach. The student's question is answerable from [5], but a complete answer requires distinguishing stomach vs. small intestine enzymes.\",\n        \"evidence\": \"Context [5] states: 'Pepsin cuts proteins into smaller polypeptides and their constituent amino acids' in the stomach. Trypsin, chymotrypsin, and elastase are pancreatic enzymes released in the small intestine, not the stomach.\"\n      },\n      {\n        \"type\": \"PEDAGOGICAL_CONCERN\",\n        \"severity\": \"HIGH\",\n        ",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.hint_plan_initialized",
+              "result": "0 hints initialized",
+              "hints": []
+            },
+            {
+              "wrapper": "dean.topic_lock_guard",
+              "result": "bypassed_setup_classification_on_topic_selection"
+            },
+            {
+              "wrapper": "dean.sanitize_locked_answer",
+              "candidate": "pepsin",
+              "action": "kept",
+              "final": "pepsin"
+            },
+            {
+              "wrapper": "dean.confidence_score",
+              "result": "answer_conf=0.000, mastery_conf=0.000, reached=False (gate_path=skipped_topic_just_locked)",
+              "locked_answer": "pepsin",
+              "gate_path": "skipped_topic_just_locked",
+              "gate_evidence": ""
+            },
+            {
+              "wrapper": "dean.hint_progress",
+              "hint_before": 0,
+              "hint_after": 0,
+              "hint_reason": "unchanged",
+              "active_hint": ""
+            },
+            {
+              "wrapper": "dean.complexity_classifier",
+              "decision_effect": null,
+              "input_hash": "95bc50b23a31d815",
+              "elapsed_s": 1.05,
+              "in_tok": 603,
+              "out_tok": 70,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00286,
+              "s_per_tok": 0.0151,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 494
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean of a Socratic human anatomy tutoring system. Classify\nthe complexity of the student's most recent message into ONE of three\ntiers (Adaptive-RAG, Jeong 2024). The tier drives downstream retrieval\nstrategy.\n\nTiers:\n  simple\n    \u2014 Direct factual or definitional question on the locked topic.\n    \u2014 Answerable from a single retrieval pass.\n    \u2014 Examples:\n        \"What is the SA node?\"\n        \"Where is the brachial plexus located?\"\n        \"Define synaptic cleft.\"\n\n  tangential\n    \u2014 Curiosity drift outside the locked topic but still within the\n      domain. Worth a one-shot un-section-filtered retrieval to\n      surface the related concept without losing the locked topic.\n    \u2014 Examples (when locked on Cardiac Conduction):\n        \"Wait, how does this connect to blood pressure?\"\n        \"I read about heart attacks \u2014 is that the same as arrhythmia?\"\n\n  complex\n    \u2014 Multi-step reasoning question, comparison across topics, or\n      synthesis spanning multiple subsections. May benefit from\n      multi-hop retrieval (D.4 \u2014 currently treated as `simple`).\n    \u2014 Examples:\n        \"How does the autonomic nervous system regulate cardiac\n         output during exercise?\"\n        \"Compare and contrast skeletal vs cardiac muscle tissue at\n         the cellular and functional levels.\"\n\nOutput a 1-sentence rationale citing the specific aspect of the\nstudent's message that drove the classification. Do not classify\nbased on locked topic alone \u2014 the message content is what matters.\n\nReturn strict JSON only, no prose:\n{\n  \"tier\": \"simple|tangential|complex\",\n  \"rationale\": \"\"\n}\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Locked topic (subsection): (none)\nLocked anchor question: What enzyme breaks down proteins in the stomach?\n\nRecent conversation history (most recent last):\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?\n\nStudent's latest message:\nWhat enzymes break down proteins in the stomach?\n\nClassify.\n"
+                }
+              ],
+              "response_text": "```json\n{\n  \"tier\": \"simple\",\n  \"rationale\": \"The student asks a direct factual question about a specific enzyme (pepsin) and its location/function in the stomach, answerable from a single retrieval pass without multi-step reasoning or cross-topic synthesis.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.complexity_classifier",
+              "tier": "simple",
+              "rationale": "The student asks a direct factual question about a specific enzyme (pepsin) and its location/function in the stomach, answerable from a single retrieval pass without multi-step reasoning or cross-topi"
+            },
+            {
+              "wrapper": "dean._exploration_judge",
+              "decision_effect": null,
+              "input_hash": "2a6f75e28ac31ecc",
+              "elapsed_s": 1.4,
+              "in_tok": 568,
+              "out_tok": 115,
+              "cache_read": 0,
+              "cache_write": 0,
+              "cost_usd": 0.00343,
+              "s_per_tok": 0.0122,
+              "cached_est_tokens": 0,
+              "system_blocks": [
+                {
+                  "index": 1,
+                  "cached": false,
+                  "est_tokens": 397
+                },
+                {
+                  "index": 2,
+                  "cached": false,
+                  "est_tokens": 71
+                },
+                {
+                  "index": 3,
+                  "cached": false,
+                  "est_tokens": 126
+                }
+              ],
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean in the middle of a Socratic tutoring session. A topic is\nlocked and Teacher is about to respond. Your job is to decide whether the\nstudent's latest message is asking about something OUTSIDE the locked\ntopic \u2014 a tangential concept, a clarifying prerequisite, a connection to\nanother body system, etc. \u2014 that would genuinely benefit from fetching\nextra textbook context beyond the locked section.\n\nReturn `exploration_needed: true` ONLY when ALL of these hold:\n  - The student is asking about a human anatomy concept that is NOT the\n    locked topic or a direct sub-question of it.\n  - The tangential concept has a clear short query string (3-8 words) that\n    a textbook search could retrieve.\n  - Answering it would help the student make progress on the locked topic,\n    not just scratch curiosity unrelated to the session.\n\nIf the student is answering the locked question (correct/partial/incorrect),\nasking a question strictly about the locked topic, or venting/off-topic, set\n`exploration_needed: false`. When in doubt, say false \u2014 Teacher already has\nthe locked section's context.\n\nReturn strict JSON only:\n{{\n  \"exploration_needed\": false,\n  \"exploration_query\": \"\",\n  \"rationale\": \"\"\n}}\n\n\n---\n\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?\n\n---\n\nLocked topic: Protein Metabolism\nLocked question (Teacher is guiding toward this): What enzyme breaks down proteins in the stomach?\n\nRecent conversation history:\nTutor: Good morning. I'm here to help you think through human anatomy more deeply\u2014not just memorize structures, but understand how and why they're organized the way they are.\n\nWhat anatomy topic would you like to explore today?\nStudent: What enzymes break down proteins in the stomach?\n\nDecide based ONLY on the student's most recent message.\n",
+              "messages_sent": [
+                {
+                  "role": "user",
+                  "content": "Judge and return strict JSON only."
+                }
+              ],
+              "response_text": "```json\n{\n  \"exploration_needed\": false,\n  \"exploration_query\": \"\",\n  \"rationale\": \"The student's question is directly aligned with the locked topic (Protein Metabolism) and the specific locked question (What enzyme breaks down proteins in the stomach?). This is not a tangential concept or prerequisite clarification\u2014it is the core question itself. Teacher already has full context on gastric proteolysis and pepsin from the locked section. No external textbook fetch is needed.\"\n}\n```",
+              "tool_calls_made": []
+            },
+            {
+              "wrapper": "dean.exploration_judge",
+              "result": "skip",
+              "needed": false,
+              "query": "",
+              "rationale": "The student's question is directly aligned with the locked topic (Protein Metabolism) and the specific locked question (What enzyme breaks down proteins in the stomach?). This is not a tangential concept or prerequisite clarification\u2014it is the core question itself. Teacher already has full context on gastric proteolysis and pepsin from the locked section. No external textbook fetch is needed."
+            },
+            {
+              "wrapper": "dean.topic_ack_emitted",
+              "result": "ack_message_emitted_skipping_teacher_draft",
+              "locked_question": "What enzyme breaks down proteins in the stomach?"
+            }
+          ]
+        }
+      ],
+      "hint_progress": [
+        {
+          "turn": 0,
+          "student_state": "question",
+          "hint_before": 0,
+          "hint_after": 0,
+          "reason": "unchanged",
+          "active_hint": ""
+        },
+        {
+          "turn": 1,
+          "student_state": "correct",
+          "hint_before": 0,
+          "hint_after": 0,
+          "reason": "unchanged",
+          "active_hint": ""
+        }
+      ],
+      "hint_plan": [],
+      "locked_topic_snapshot": {
+        "path": "Ch24|Protein Metabolism|",
+        "chapter": "Metabolism and Nutrition",
+        "section": "Protein Metabolism",
+        "subsection": "",
+        "difficulty": "moderate",
+        "chunk_count": 0,
+        "limited": false,
+        "score": 0.9996641874313354
+      },
+      "complexity_tier": "simple",
+      "_dedupe_results": {
+        "dean._clinical_turn_call": {
+          "fingerprint": "384b9e85e6a01eca",
+          "result": {
+            "student_state": "partial_correct",
+            "confidence_score": 0.78,
+            "pass": false,
+            "feedback_message": "What you got right: You correctly identified the core protective mechanism\u2014that inactive proenzymes prevent autodigestion of pancreatic tissue, and you recognized that premature activation would be harmful. What to correct next: You need to move beyond speculation ('could it maybe cause') to precise mechanism: premature activation of trypsin and chymotrypsin in the pancreas would directly digest pancreatic acinar cells and ductal tissue, causing acute pancreatitis\u2014a serious, potentially life-threatening condition. This isn't just inflammation; it's a specific pathological outcome. Also, you should name enterokinase as the small intestinal enzyme that safely activates trypsinogen to trypsin only after proenzymes reach the small intestine. Your reasoning is sound, but clinical anatomy demands specificity about consequences. Can you explain how enterokinase acts as a 'safety switch' to ensure activation occurs only in the small intestine and not in the pancreas?"
+          }
+        },
+        "dean._close_session_call": {
+          "fingerprint": "e4b8e813af85e74c",
+          "result": {
+            "core_mastery_tier": "proficient",
+            "clinical_mastery_tier": "developing",
+            "mastery_tier": "proficient",
+            "grading_rationale": "Student correctly identified pepsin as the primary gastric protease and demonstrated solid understanding of pancreatic enzyme compensation in the small intestine (trypsin, chymotrypsin). However, clinical reasoning remained incomplete: the student grasped the autodigestion protection concept but did not articulate the specific mechanism (enterokinase activation cascade) or name elastase, and confidence in clinical application remained low (0.46 mastery confidence vs. 0.92 answer confidence).",
+            "student_facing_message": "You did well identifying pepsin and understanding that the small intestine compensates with pancreatic enzymes when stomach acid is reduced. Your intuition about autodigestion protection was on the right track. To strengthen your clinical reasoning, focus on: (1) the complete trio of pancreatic proteases (trypsin, chymotrypsin, elastase), (2) the enterokinase activation cascade that safely activates trypsinogen in the small intestine, and (3) why this sequential activation matters clinically. You're building solid foundational knowledge\u2014keep pushing for precision in mechanism and terminology.",
+            "memory_summary": "Student demonstrated proficient core knowledge of gastric and pancreatic protein digestion, correctly naming pepsin and pancreatic proteases. Clinical application was developing: student recognized compensation mechanisms and autodigestion risk but lacked precision on the enterokinase cascade and omitted elastase. Confidence gap (answer 0.92 vs. mastery 0.46) suggests student knows isolated facts but struggles integrating them into coherent clinical reasoning. Recommend reinforcement on proenzyme activation mechanisms and complete protease inventory.",
+            "fallback_used": false
+          }
+        }
+      }
+    }
+  }
+}

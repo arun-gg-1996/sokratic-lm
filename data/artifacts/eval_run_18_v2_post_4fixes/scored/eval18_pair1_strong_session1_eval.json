@@ -1,0 +1,319 @@
+{
+  "session_id": "d1c319d6",
+  "test_id": null,
+  "description": "",
+  "scored_at": "2026-04-30T07:51:56+00:00",
+  "primary": {
+    "EULER": {
+      "question_present": 1.0,
+      "relevance": 0.0,
+      "helpful": 0.0,
+      "no_reveal": 1.0,
+      "passes_all_thresholds": false,
+      "n_turns_scored": 1
+    },
+    "RAGAS": {
+      "context_precision": 0.2,
+      "context_recall": 0.6,
+      "context_relevancy": 0.25,
+      "faithfulness": 1.0,
+      "answer_relevancy": 1.0,
+      "answer_correctness": 1.0,
+      "passes_all_thresholds": false
+    }
+  },
+  "secondary": {
+    "TLQ": {
+      "score": 0.915,
+      "threshold": 0.8,
+      "passes": true,
+      "sub": {
+        "match_top_score": 0.91,
+        "vote_consensus": 0.667,
+        "coverage_gate_pass": 1.0,
+        "anchor_extraction_success": 1.0,
+        "repair_clean": 1.0
+      }
+    },
+    "RRQ": {
+      "score": 0.778,
+      "threshold": 0.75,
+      "passes": true,
+      "sub": {
+        "chunk_count_adequacy": 1.0,
+        "mean_top3_score": 0.993,
+        "section_match_rate": 1.0,
+        "retrieval_calls_efficiency": 1.0,
+        "coverage_gap_frequency": 1.0,
+        "ragas_context_precision": 0.2,
+        "ragas_context_relevancy": 0.25
+      }
+    },
+    "AQ": {
+      "score": 0.867,
+      "threshold": 0.85,
+      "passes": true,
+      "sub": {
+        "groundedness": 1.0,
+        "answer_brevity": 0.7,
+        "answer_is_noun_phrase": 1.0,
+        "aliases_count_adequacy": 1.0,
+        "question_specificity": 0.85,
+        "aliases_diversity_semantic": 0.65
+      }
+    },
+    "TRQ": {
+      "score": 0.778,
+      "threshold": 0.75,
+      "passes": true,
+      "sub": {
+        "qc_pass_rate": 1.0,
+        "revised_draft_rate": 1.0,
+        "intervention_rate": 1.0,
+        "reason_codes_clean_rate": 1.0,
+        "euler_question_present": 1.0,
+        "euler_relevance": 0.0,
+        "euler_helpful": 0.0,
+        "euler_no_reveal": 1.0,
+        "repetition_score": 1.0
+      }
+    },
+    "RGC": {
+      "score": 0.333,
+      "threshold": 0.95,
+      "passes": false,
+      "sub": {
+        "no_false_positives": 0.0,
+        "no_false_negatives": 1.0,
+        "evidence_quote_validity": 0.0,
+        "path_distribution": {
+          "skipped_topic_just_locked": 1,
+          "paraphrase": 1
+        },
+        "confusion_matrix": {
+          "tp": 0,
+          "fp": 1,
+          "tn": 1,
+          "fn": 0
+        }
+      }
+    },
+    "PP": {
+      "score": 0.875,
+      "threshold": 0.6,
+      "passes": true,
+      "sub": {
+        "hint_progression_monotonic": 1.0,
+        "hint_utilization": 1.0,
+        "student_engagement_rate": 1.0,
+        "state_trajectory_score": 0.5
+      }
+    },
+    "ARC": {
+      "score": 1.0,
+      "threshold": 0.7,
+      "passes": true,
+      "sub": {
+        "step_vs_reach_disambiguation_det": 1.0,
+        "intermediate_credit_avoidance_det": 1.0,
+        "mastery_attribution_grounding": 1.0,
+        "step_vs_reach_disambiguation_llm": 1.0,
+        "intermediate_credit_avoidance_llm": 1.0,
+        "off_topic_drift_score": 1.0,
+        "mastery_attribution_evidence": [],
+        "n_intermediate_turns": 0,
+        "n_fabrication_turns": 1
+      }
+    },
+    "CC": {
+      "score": 0.875,
+      "threshold": 1.0,
+      "passes": false,
+      "sub": {
+        "phase_transitions_legal": 1.0,
+        "topic_stability": 1.0,
+        "anchor_stability": 1.0,
+        "invariant_score": 0.5,
+        "invariant_violations_count": 1
+      }
+    },
+    "CE": {
+      "score": 0.18,
+      "threshold": 0.5,
+      "passes": false,
+      "sub": {
+        "cost_score": 0.361,
+        "cache_hit_rate": 0.0,
+        "cost_per_useful_turn": 0.127809
+      }
+    },
+    "MSC": {
+      "score": 1.0,
+      "threshold": 0.7,
+      "passes": true,
+      "sub": {
+        "confidence_appropriateness": null,
+        "ewma_movement_score": 1.0,
+        "rationale_grounding_llm": 1.0
+      }
+    }
+  },
+  "penalties": [
+    {
+      "code": "INVARIANT_VIOLATION",
+      "severity": "critical",
+      "evidence": "1 invariant violation(s) on this session (kinds: ungrounded_tutoring_turn); first: kind=ungrounded_tutoring_turn turn=2",
+      "raw_count": 1,
+      "source": "det"
+    },
+    {
+      "code": "FABRICATION_AT_REACHED_FALSE",
+      "severity": "critical",
+      "evidence": "turn 3: 'you've identified' \u2014 Good\u2014you've identified the two phases of ventricular systole correctly. Now consider a patient presenting with acute aortic stenosis, where the aortic valve is ",
+      "turn_id": 3,
+      "source": "det"
+    }
+  ],
+  "verdict": "failed_critical_penalty",
+  "raw_signals": {
+    "turn_count": 2,
+    "max_turns": 25,
+    "final_phase": "memory_update",
+    "final_hint_level": 0,
+    "max_hints": 3,
+    "final_student_reached_answer": true,
+    "interventions": 0,
+    "coverage_gap_events": 0,
+    "retrieval_calls": 1,
+    "cost_usd": 0.127809,
+    "api_calls": 13,
+    "input_tokens": 31893,
+    "output_tokens": 2142,
+    "n_tutoring_turns": 1,
+    "n_intermediate_turns": 0,
+    "n_fabrication_turns": 1
+  },
+  "deterministic_signals": {
+    "intermediate_turns": [],
+    "fabrication_turns": [
+      {
+        "turn_id": 3,
+        "evidence": "you've identified",
+        "tutor_msg": "Good\u2014you've identified the two phases of ventricular systole correctly. Now consider a patient presenting with acute aortic stenosis, where the aortic valve is severely narrowed. How would the pressur"
+      }
+    ],
+    "off_topic_turns": [],
+    "det_tlq_match_top_score": 0.91,
+    "det_tlq_vote_consensus": 0.6666666666666666,
+    "det_tlq_coverage_gate_pass": 1.0,
+    "det_tlq_anchor_extraction_success": 1.0,
+    "det_tlq_repair_clean": 1.0,
+    "det_tlq_repair_invoked": false,
+    "det_rrq_chunk_count_adequacy": 1.0,
+    "det_rrq_mean_top3_score": 0.9926158587137858,
+    "det_rrq_section_match_rate": 1.0,
+    "det_rrq_retrieval_calls_efficiency": 1.0,
+    "det_rrq_coverage_gap_frequency": 1.0,
+    "det_rrq_chunk_count": 18,
+    "det_rrq_retrieval_calls": 1,
+    "det_aq_answer_brevity": 0.7,
+    "det_aq_answer_is_noun_phrase": 1.0,
+    "det_aq_aliases_count_adequacy": 1.0,
+    "det_aq_aliases_count": 4,
+    "det_aq_groundedness": 1.0,
+    "det_aq_sanitize_action": "kept",
+    "det_aq_locked_answer_word_count": 6,
+    "det_trq_qc_pass_rate": 1.0,
+    "det_trq_revised_draft_rate": 1.0,
+    "det_trq_intervention_rate": 1.0,
+    "det_trq_reason_codes_clean_rate": 1.0,
+    "det_trq_n_tutoring_turns": 1,
+    "det_rgc_false_positive_rate": 1.0,
+    "det_rgc_false_negative_rate": 0.0,
+    "det_rgc_evidence_quote_validity": 0.0,
+    "det_rgc_path_distribution": {
+      "skipped_topic_just_locked": 1,
+      "paraphrase": 1
+    },
+    "det_rgc_n_decisions": 2,
+    "det_rgc_tp": 0,
+    "det_rgc_fp": 1,
+    "det_rgc_tn": 1,
+    "det_rgc_fn": 0,
+    "det_pp_hint_progression_monotonic": 1.0,
+    "det_pp_hint_utilization": 1.0,
+    "det_pp_student_engagement_rate": 1.0,
+    "det_pp_state_trajectory_score": 0.5,
+    "det_arc_step_vs_reach_disambiguation": 1.0,
+    "det_arc_intermediate_credit_avoidance": 1.0,
+    "det_arc_n_intermediate_turns": 0,
+    "det_arc_n_fabrication_turns": 1,
+    "det_cc_phase_transitions_legal": 1.0,
+    "det_cc_topic_stability": 1.0,
+    "det_cc_anchor_stability": 1.0,
+    "det_cc_invariant_violations_count": 1,
+    "det_cc_invariant_score": 0.5,
+    "det_ce_cost_per_useful_turn": 0.127809,
+    "det_ce_cost_score": 0.360955,
+    "det_ce_cache_hit_rate": 0.0,
+    "det_ce_mean_turn_latency": null,
+    "det_ce_latency_score": null,
+    "det_msc_confidence_appropriateness": null,
+    "det_msc_ewma_movement_score": 1.0,
+    "det_msc_has_mastery": false
+  },
+  "llm_telemetry": [
+    {
+      "label": "per_turn",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 2.22,
+      "in_tok": 2729,
+      "out_tok": 172,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"turns\": [\n    {\n      \"turn_id\": 1,\n      \"question_present\": 1.0,\n      \"relevance\": 0.0,\n      \"helpful\": 0.0,\n      \"no_reveal\": 1.0,\n      \"faithfulness\": 1.0,\n      \"answer_relevancy..."
+    },
+    {
+      "label": "retrieval",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 5.313,
+      "in_tok": 1609,
+      "out_tok": 657,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"per_chunk\": [\n    {\n      \"id\": 0,\n      \"relevance\": 0.7,\n      \"rationale\": \"Describes initial ventricular contraction phase where pressure rises but semilunar valves don't open yet; id..."
+    },
+    {
+      "label": "synthesis",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 2.372,
+      "in_tok": 2546,
+      "out_tok": 164,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"mastery_attribution_grounding\": 1.0,\n  \"mastery_attribution_evidence\": [],\n  \"step_vs_reach_disambiguation\": 1.0,\n  \"intermediate_credit_avoidance\": 1.0,\n  \"off_topic_drift_score\": 1.0,\n ..."
+    },
+    {
+      "label": "anchor",
+      "model": "claude-haiku-4-5-20251001",
+      "elapsed_s": 1.722,
+      "in_tok": 548,
+      "out_tok": 138,
+      "parse_ok": true,
+      "error": null,
+      "raw_response_preview": "```json\n{\n  \"question_specificity\": 0.85,\n  \"question_specificity_rationale\": \"Question is specific and answerable, asking for two distinct phases and their distinguishing features with proper anatomi..."
+    }
+  ],
+  "anchors_inspected": {
+    "locked_question": "What are the two main phases of ventricular systole, and what distinguishes them?",
+    "locked_answer": "isovolumic contraction and ventricular ejection phase",
+    "locked_answer_aliases": [
+      "isovolumetric contraction and ejection phase",
+      "isovolumic and ejection phases",
+      "pressure rise phase and blood ejection phase",
+      "constant volume contraction and ejection"
+    ],
+    "locked_topic": {}
+  },
+  "expectations": null
+}

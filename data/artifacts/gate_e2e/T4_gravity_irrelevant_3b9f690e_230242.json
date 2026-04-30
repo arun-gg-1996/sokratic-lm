@@ -1,0 +1,137 @@
+{
+  "name": "T4_gravity_irrelevant",
+  "conv_id": "3b9f690e",
+  "description": "Single irrelevant word ('gravity') must never fire reached \u2014 the original bug.",
+  "expectations": {
+    "reached": false,
+    "no_fabrication_keywords": [
+      "you've identified",
+      "correctly identified",
+      "great"
+    ]
+  },
+  "outcomes": {
+    "final_reached": false,
+    "fabrication_hits_in_last_tutor": [],
+    "last_tutor_message": "I appreciate you trying, but that answer doesn't quite fit what we're asking about the heart's electrical system. Let me step back: when you think about how electricity needs to travel *through* the heart muscle to make it contract in an organized way, what kind of structures do you imagine would be necessary to carry that signal quickly?",
+    "phase_final": "tutoring",
+    "locked_answer": "purkinje fibers",
+    "locked_answer_aliases": [
+      "Purkinje cells",
+      "ventricular conduction fibers",
+      "myocardial conductive fibers of the ventricles",
+      "terminal conduction fibers"
+    ],
+    "locked_question": "What are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?",
+    "turn_count": 2,
+    "hint_level_final": 0,
+    "student_state_final": "low_effort"
+  },
+  "gate_traces": [
+    {
+      "wrapper": "dean.reached_answer_gate",
+      "decision_effect": null,
+      "input_hash": "dea0e02e09b7a402",
+      "elapsed_s": 1.15,
+      "in_tok": 959,
+      "out_tok": 75,
+      "cache_read": 0,
+      "cache_write": 0,
+      "cost_usd": 0.004,
+      "s_per_tok": 0.0154,
+      "cached_est_tokens": 0,
+      "system_blocks": [
+        {
+          "index": 1,
+          "cached": false,
+          "est_tokens": 563
+        },
+        {
+          "index": 2,
+          "cached": false,
+          "est_tokens": 128
+        },
+        {
+          "index": 3,
+          "cached": false,
+          "est_tokens": 229
+        }
+      ],
+      "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nYou are the Dean checking whether the student has STATED the locked answer\nin their most recent message. This is the final gate before tutoring ends \u2014\na false positive fabricates a confirmation the student didn't earn, so be\nstrict.\n\nDEFINITIONS:\n- locked_answer: the target term/concept (e.g. \"skeletal muscle pump\").\n- aliases: equivalent phrasings the student could use instead.\n- \"Reached\" means the student asserted the answer or paraphrased it as a\n  positive answer in THIS message.\n\nREACHED = TRUE rules (must satisfy ALL):\n1. The student names locked_answer (or any alias) OR paraphrases the\n   concept unambiguously.\n2. The phrasing is an ASSERTION (not a question, not a hedge).\n   - Asserting: \"It's the skeletal muscle pump\" / \"The muscles squeeze\n     the veins to push blood up\" \u2192 REACHED.\n   - Asking: \"Is it the skeletal muscle pump?\" \u2192 NOT REACHED.\n   - Hedging: \"Maybe gravity? I'm not sure\" \u2192 NOT REACHED.\n   - Denying: \"I don't know what skeletal muscle pump is\" \u2192 NOT REACHED.\n3. You can quote a contiguous substring from the student's latest message\n   that demonstrates this assertion. The quote must appear VERBATIM in the\n   student's message. No quote \u2192 NOT REACHED.\n\nREACHED = FALSE if any of:\n- The student names a different concept (even a related/neighboring one).\n  e.g. locked=\"SA node\", student says \"AV node\" \u2192 NOT REACHED.\n- The student names only one component of a multi-word answer in a way\n  that doesn't convey the full concept.\n  e.g. locked=\"skeletal muscle pump\", student says \"muscles\" alone \u2192 NOT REACHED.\n- The student is asking, hedging, denying, or off-topic.\n\nBIAS: When in doubt, return reached=false. False positives are costly.\n\nReturn strict JSON ONLY (no markdown, no prose):\n{{\n  \"reached\": true,\n  \"evidence\": \"exact verbatim quote from student message\",\n  \"rationale\": \"1 sentence on why this counts (or doesn't)\"\n}}\n\n\n---\n\nTutor: Good evening. Anatomy is precise work, and it helps to know exactly where your questions are sharpest before we dive in. What human anatomy topic would you like to focus on today?\nStudent: I think the heart contracts somehow\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: gravity\n\n---\n\nLocked answer: purkinje fibers\nAliases (equivalent phrasings): Purkinje cells, ventricular conduction fibers, myocardial conductive fibers of the ventricles, terminal conduction fibers\n\nRecent conversation (for context only \u2014 judge based on the LATEST student message):\nTutor: Good evening. Anatomy is precise work, and it helps to know exactly where your questions are sharpest before we dive in. What human anatomy topic would you like to focus on today?\nStudent: I think the heart contracts somehow\nTutor: Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?\nStudent: gravity\n\nStudent's LATEST message:\ngravity\n\nDecide: did the student reach the locked answer in their LATEST message?\nReturn strict JSON only.\n",
+      "messages_sent": [
+        {
+          "role": "user",
+          "content": "Decide and return strict JSON."
+        }
+      ],
+      "response_text": "```json\n{\n  \"reached\": false,\n  \"evidence\": \"gravity\",\n  \"rationale\": \"The student stated 'gravity', which is not the locked answer 'purkinje fibers' or any alias; this is an off-topic assertion that does not demonstrate knowledge of the target concept.\"\n}\n```",
+      "tool_calls_made": []
+    },
+    {
+      "wrapper": "dean.confidence_score",
+      "result": "answer_conf=0.980, mastery_conf=0.490, reached=False (gate_path=no_overlap_no_paraphrase)",
+      "locked_answer": "purkinje fibers",
+      "gate_path": "no_overlap_no_paraphrase",
+      "gate_evidence": ""
+    }
+  ],
+  "result": {
+    "reached_pass": true,
+    "fabrication_pass": true,
+    "overall_pass": true
+  },
+  "notes": [],
+  "log": [
+    {
+      "step": "prelock",
+      "matcher_path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart",
+      "matcher_score": 101.0,
+      "chunk_count": 16,
+      "locked_question": "What are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?",
+      "locked_answer": "purkinje fibers",
+      "locked_answer_aliases": [
+        "Purkinje cells",
+        "ventricular conduction fibers",
+        "myocardial conductive fibers of the ventricles",
+        "terminal conduction fibers"
+      ],
+      "lock_source": "llm"
+    },
+    {
+      "step": "rapport_greeting",
+      "tutor": "Good evening. Anatomy is precise work, and it helps to know exactly where your questions are sharpest before we dive in. What human anatomy topic would you like to focus on today?"
+    },
+    {
+      "step": "tutoring_turn_1_student",
+      "student": "I think the heart contracts somehow"
+    },
+    {
+      "step": "tutoring_turn_1_after_invoke",
+      "tutor": "Got it \u2014 let's work on **Conduction System of the Heart** from Chapter 19 \u2192 Cardiac Muscle and Electrical Activity.\n\nWhat are the specialized cardiac muscle fibers that rapidly conduct the electrical impulse throughout the ventricles, beginning at the apex?",
+      "student_state": "question",
+      "student_reached_answer": false,
+      "student_answer_confidence": 0.0,
+      "phase": "tutoring",
+      "hint_level": 0
+    },
+    {
+      "step": "tutoring_turn_2_student",
+      "student": "gravity"
+    },
+    {
+      "step": "tutoring_turn_2_after_invoke",
+      "tutor": "I appreciate you trying, but that answer doesn't quite fit what we're asking about the heart's electrical system. Let me step back: when you think about how electricity needs to travel *through* the heart muscle to make it contract in an organized way, what kind of structures do you imagine would be necessary to carry that signal quickly?",
+      "student_state": "low_effort",
+      "student_reached_answer": false,
+      "student_answer_confidence": 0.98,
+      "phase": "tutoring",
+      "hint_level": 0
+    }
+  ],
+  "debug_summary": {
+    "api_calls": 11,
+    "input_tokens": 12498,
+    "output_tokens": 1236,
+    "cost_usd": 0.056034
+  }
+}
