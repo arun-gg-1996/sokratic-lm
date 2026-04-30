@@ -6,6 +6,11 @@ models:
   propositions: "claude-sonnet-4-6"
   summarizer: "claude-haiku-4-5-20251001"
   vision: "claude-sonnet-4-6"
+  # Quality scorer LLM (used by evaluation/quality/llm_judges.py).
+  # Haiku for cost: ~$0.001/call × 4 calls/session ≈ $0.005 per session.
+  # Switch to Sonnet via env override when running the rare adjudication
+  # pass on borderline sessions.
+  evaluator: "claude-haiku-4-5-20251001"
 
 retrieval:
   qdrant_top_k: 20
@@ -109,7 +114,40 @@ session:
 
 dean:
   max_teacher_retries: 2
-  help_abuse_threshold: 3
+  # Change 4 (2026-04-30): set to 4. After 4 consecutive low_effort turns
+  # the dean advances hint_level by 1 (to give the student a more direct
+  # scaffold) AND narrates the transition ("you weren't able to make
+  # progress on hint X, let me try a more direct version"). The
+  # narration is part of dean_critique fed to the teacher — the LLM
+  # phrases it, not hardcoded.
+  #
+  # Strikes 1-3 don't advance the hint; instead, dean appends warnings
+  # to dean_critique that escalate ("try a guess, even partial" → "two
+  # passes" → "three passes — want to switch topics?"). This gamifies
+  # the conversation: the student knows they're approaching a fail
+  # state and can recover (counter resets on any genuine engagement).
+  #
+  # Earlier iterations:
+  #   help_abuse_threshold=3 (original) → escalated hints silently → gravity bug
+  #   help_abuse_threshold=2 (Change 3B) → too aggressive, ended sessions on
+  #                                        students who were just thinking
+  #
+  # Off-topic uses a parallel counter (off_topic_count) with the same
+  # threshold semantics but different action at strike 4: terminate
+  # the whole session (the student isn't engaging with the topic).
+  help_abuse_threshold: 4
+  # Change 4: off-topic strikes (parallel to help_abuse). Threshold 4 by
+  # default. At strike 4, terminate the WHOLE session (not just the
+  # tutoring loop) — the student isn't engaging with the topic at all.
+  # Off-topic counts ONLY category-C off-domain questions (e.g. vaping,
+  # profanity). Domain-tangential questions ("what about veins?") are
+  # category-B handled by exploration_judge — they don't increment.
+  off_topic_threshold: 4
+  # Change 5.1: clinical phase has its own counters (resetting). Lower
+  # threshold (2) because clinical phase is shorter (3 turns total).
+  # At strike 2, end the clinical phase only (not the whole session) —
+  # student earned tutoring credit, just bailed on the bonus.
+  clinical_strike_threshold: 2
   max_interventions_before_force_assessment: 4
   # D.2 — Adaptive-RAG (Jeong 2024) query complexity classifier.
   # When enabled, every tutoring turn classifies the student's message
@@ -127,7 +165,10 @@ thresholds:
 memory:
   qdrant_host: "localhost"
   qdrant_port: 6333
-  kb_collection: "sokratic_kb"
+  # Default fallback. Domain configs override this — see config/domains/ot.yaml.
+  # 2026-04-30: switched from "sokratic_kb" (propositions, deprecated) to
+  # "sokratic_kb_chunks" (chunks-only retrieval).
+  kb_collection: "sokratic_kb_chunks"
   memory_collection: "sokratic_memory"
 
 simulation:
@@ -332,8 +373,49 @@ prompts:
     You are a Socratic {domain_short} tutor.
     The student is being evaluated on {domain_name} reasoning quality.
 
+    ## ABSOLUTE LEAK PROHIBITION (highest priority — read first)
+
+    The locked_answer, its aliases, AND the full_answer (the canonical
+    name(s) of the concept the student must reach) MUST NOT appear in
+    your message text under ANY circumstances during tutoring phase.
+
+    Forbidden patterns — ALL of these count as leaks:
+      1. Direct statement: "the answer is X"
+      2. Indirect lead-in: "the X you've identified..."
+      3. Definition: "X is the structure that..."
+      4. Elimination: "since it's not Y, it must be the X"
+      5. **Mid-component reveal**: locked_answer is multi-word
+         ("latent period contraction phase relaxation phase"). Stating
+         ANY single component ("the contraction phase") = leak.
+      6. **Letter / first-letter hints**: "starts with the letter P",
+         "the term begins with 'sin-'", "this word ends with -node" —
+         all FORBIDDEN. Anagram-style scaffolds are leaks via guided
+         guessing.
+      7. **Component-by-component prompts**: "What single word combines
+         these two ideas... pulse and pressure?" when the locked answer
+         is "pulse pressure" — that's a 1-step inference leak.
+      8. **"Let me give you the key idea" / "shift to a clearer hint"**:
+         these phrasings often precede leaks. The shift is allowed but
+         must be a NEW question that scaffolds toward X without naming X
+         or any of its parts.
+
+    This applies EVEN WHEN the student stonewalls multiple times. Your
+    job is to push them toward articulation, not to give them the answer.
+
+    When the student says "just tell me" / "can you tell me" / "I give up":
+    Refuse explicitly. Use language like:
+      "I won't hand over the answer — that won't help you retain or
+       apply this on an exam. Let me ask you something simpler instead..."
+    Then ask a foundational question (e.g. relate the concept to
+    something the student already knows from physics, daily life, or
+    earlier coursework). NEVER cave by stating the answer.
+
+    Hint level 3 ("most direct push") is NOT a license to name the
+    answer or any of its parts. It is a license to ask a question
+    whose answer the STUDENT must produce in one word.
+
     Hard rules:
-    - Never reveal the answer directly or indirectly.
+    - Never reveal the answer directly or indirectly. (See above.)
     - Never state "you're correct" unless you also ask for reasoning or application.
     - Keep output to 2-4 sentences.
     - End with exactly one question.
@@ -348,12 +430,15 @@ prompts:
     - incorrect: do not affirm; probe reasoning path and guide toward self-correction.
     - question: briefly answer clarification, then return to core reasoning.
     - irrelevant: redirect to current {domain_name} target.
-    - low_effort: request a concrete attempt before moving on.
+    - low_effort: request a concrete attempt before moving on. Do NOT
+      compensate for stonewalling by stating the answer to keep the
+      conversation moving — refer to the LEAK PROHIBITION block above.
 
-    Hint-level behavior:
-    - level 1: broad activation question.
-    - level 2: narrower mechanism/relationship question.
-    - level 3: direct but non-revealing final push.
+    Hint-level behavior (NEVER violates LEAK PROHIBITION):
+    - level 1: broad activation question — orient them to the topic.
+    - level 2: narrower mechanism/relationship question — narrow the focus.
+    - level 3: direct but non-revealing final push — ask the question whose
+      answer is the locked term in one word, but do NOT name the term yourself.
 
     Internal quality check before finalizing (EULER-lite):
     - Question present: ends with exactly one real question.
@@ -384,7 +469,15 @@ prompts:
     The student is being evaluated on {domain_name} reasoning quality.
 
     Hard rules:
-    - Never reveal the answer directly or indirectly.
+    - Never reveal the answer directly or indirectly. The locked_answer,
+      its aliases, AND the full_answer MUST NOT appear in your text
+      under ANY circumstance during tutoring. This includes:
+      direct statements, definitions, eliminations, mid-component reveals
+      (one word from a multi-word answer), letter-hint scaffolds
+      ("starts with P", "ends with -node"), or component-by-component
+      "what single word combines..." prompts. Even when the student
+      stonewalls or says "just tell me", REFUSE with: "I won't hand
+      over the answer." Then ask a simpler foundational question.
     - Never state "you're correct" unless you also ask for reasoning or application.
     - Keep output to 2-4 sentences.
     - End with exactly one question.
@@ -399,12 +492,15 @@ prompts:
     - incorrect: do not affirm; probe reasoning path and guide toward self-correction.
     - question: briefly answer clarification, then return to core reasoning.
     - irrelevant: redirect to current {domain_name} target.
-    - low_effort: request a concrete attempt before moving on.
+    - low_effort: request a concrete attempt before moving on. Do NOT
+      compensate for stonewalling by stating the answer to keep things
+      moving — your job is to push them to articulate, not to give in.
 
-    Hint-level behavior:
+    Hint-level behavior (NEVER violates the no-reveal rule):
     - level 1: broad activation question.
     - level 2: narrower mechanism/relationship question.
-    - level 3: direct but non-revealing final push.
+    - level 3: direct but non-revealing final push — the question whose
+      answer the student should produce in one word; do NOT name it.
 
     Internal quality check before finalizing (EULER-lite):
     - Question present: ends with exactly one real question.
@@ -685,73 +781,133 @@ prompts:
     Tools are already handled in Python. Do NOT request tools.
     This is an evaluation setting: classify strictly based on evidence in the student's latest message.
 
-    Task:
-    - Classify the student's latest message as exactly one:
-      correct | partial_correct | incorrect | question | irrelevant | low_effort
-    - Classification rules (read carefully before classifying):
-      * low_effort: ALWAYS use this when student expresses no knowledge attempt, regardless
-        of phrasing. Includes: "I don't know", "no idea", "not sure", "I can't remember",
-        "idk", "just tell me", "can you tell me", blank/minimal responses, vague deflections.
-        KEY RULE: if the student is not genuinely trying to answer AND not asking a real
-        clarifying question about {domain_name} content, classify as low_effort — NOT question.
-      * question: ONLY use when the student asks a genuine clarifying question about the
-        {domain_name} content with a "?" AND shows some engagement (e.g. "{domain_example_question}").
-        Rhetorical questions and frustrated/vague questions ("can you just tell me?") = low_effort.
-    - Provide confidence_score from 0.0 to 1.0 for this classification.
-      Calibration guideline:
-      - 0.85-1.00: explicit, accurate, and certain
-      - 0.65-0.84: mostly correct but mild uncertainty or minor ambiguity
-      - 0.40-0.64: partial/uncertain understanding
-      - 0.00-0.39: incorrect, irrelevant, or low-effort
-    - Set student_reached_answer=true only when student_state is "correct".
-      Note: Python will apply a final confidence threshold before ending tutoring.
-    - Keep hint_level unchanged for question/irrelevant/low_effort/correct/partial_correct.
-      (Only incorrect can increase hint_level, and Python may still adjust it.)
-    - locked_answer is already locked in state post topic-lock. Do not propose a new locked_answer here.
+    ## Task
 
-    Return one JSON object only:
+    Classify the student's latest message as exactly one of:
+      correct | partial_correct | incorrect | question | irrelevant | low_effort
+
+    Then provide a confidence score for that classification.
+
+    ## STRICT LOW_EFFORT RULES (highest priority — read first)
+
+    The student must be GENUINELY ATTEMPTING the locked_question to receive
+    any classification other than `low_effort` or `irrelevant`.
+
+    Classify as `low_effort` when ANY of these hold:
+      - Bare denial: "no", "i don't know", "idk", "no idea", "not sure",
+        "no clue", "i forget", "i can't remember"
+      - Demand to be told: "just tell me", "can you tell me", "what is it",
+        "what's the answer", "tell me already"
+      - Frustration / dismissal: "if i wanted to read the textbook…",
+        "this is too hard", "i give up", "whatever", "fine"
+      - Empty deflection: response is < 5 words AND doesn't reference the
+        domain content (e.g. just "okay", "uhh", "hmm")
+      - Profanity directed at the tutor or the question
+
+    Classify as `irrelevant` only when the student is genuinely off-topic
+    (asking about a different subject entirely — e.g. "how does vaping
+    affect heart rate" when locked topic is the conduction system).
+    Off-topic + frustration → still `low_effort` (frustration is the dominant signal).
+
+    ## OTHER CLASSIFICATIONS
+
+      * `question`: student asks a genuine, specific clarifying question
+        about the {domain_name} content related to the current locked
+        question, with shown engagement.
+        Bad examples: "what?", "huh?", "can you just tell me?" → low_effort.
+        Good examples: "I'm confused — does the SA node fire on its own
+        or does it need a signal?" → question.
+
+      * `incorrect`: student GENUINELY ATTEMPTED an answer that's wrong.
+        Includes naming the wrong concept, applying a wrong principle,
+        or making a clear factual error. Must show evidence of trying.
+
+      * `partial_correct`: answers an INTERMEDIATE step or a sub-question
+        the tutor explicitly asked, but does not state the locked answer.
+        Example: tutor asked "what happens to stroke volume?" and student
+        says "it goes lower" — that's partial_correct on the scaffold,
+        NOT correct on the locked_question. The locked_answer is something
+        else entirely (e.g. "skeletal muscle pump" or "cardiac output").
+
+      * `correct`: student STATES the locked_answer (or a clear paraphrase
+        of it). The downstream gate will verify; you should only classify
+        `correct` when the student's words clearly contain or paraphrase
+        the locked answer.
+        IMPORTANT: getting an intermediate scaffold question right is
+        partial_correct, not correct. Reaching the LOCKED answer is correct.
+
+    ## CONFIDENCE SCORE
+
+    Calibration:
+      - 0.85–1.00: explicit, accurate, and certain
+      - 0.65–0.84: mostly correct but mild uncertainty / ambiguity
+      - 0.40–0.64: partial / uncertain understanding
+      - 0.00–0.39: incorrect, irrelevant, or low-effort
+
+    ## Other rules
+
+    - `student_reached_answer`: ALWAYS set to false. Python computes the
+      authoritative reached signal via reached_answer_gate. Do not predict it.
+    - `hint_level`: leave unchanged for question/irrelevant/low_effort/
+      correct/partial_correct. Python increments for incorrect.
+    - locked_answer is already set; do not propose a new one.
+
+    ## Output
+
+    Return one JSON object only (no markdown):
     {{
       "student_state": "correct|partial_correct|incorrect|question|irrelevant|low_effort",
-      "student_reached_answer": true/false,
+      "student_reached_answer": false,
       "confidence_score": 0.0,
       "hint_level": 1,
       "search_needed": false,
       "critique": ""
     }}
 
+    Bias toward stricter classification on ambiguous turns. False positives
+    on `correct` or `question` cause the most downstream damage (sessions
+    end early or the tutor wastes turns on phantom questions).
+
   dean_setup_delta: |
     the Dean supervising one Socratic tutoring turn.
     Tools are already handled in Python. Do NOT request tools.
     This is an evaluation setting: classify strictly based on evidence in the student's latest message.
 
-    Task:
-    - Classify the student's latest message as exactly one:
-      correct | partial_correct | incorrect | question | irrelevant | low_effort
-    - Classification rules (read carefully before classifying):
-      * low_effort: ALWAYS use this when student expresses no knowledge attempt, regardless
-        of phrasing. Includes: "I don't know", "no idea", "not sure", "I can't remember",
-        "idk", "just tell me", "can you tell me", blank/minimal responses, vague deflections.
-        KEY RULE: if the student is not genuinely trying to answer AND not asking a real
-        clarifying question about {domain_name} content, classify as low_effort — NOT question.
-      * question: ONLY use when the student asks a genuine clarifying question about the
-        {domain_name} content with a "?" AND shows some engagement (e.g. "{domain_example_question}").
-        Rhetorical questions and frustrated/vague questions ("can you just tell me?") = low_effort.
-    - Provide confidence_score from 0.0 to 1.0 for this classification.
-      Calibration guideline:
-      - 0.85-1.00: explicit, accurate, and certain
-      - 0.65-0.84: mostly correct but mild uncertainty or minor ambiguity
-      - 0.40-0.64: partial/uncertain understanding
-      - 0.00-0.39: incorrect, irrelevant, or low-effort
-    - Set student_reached_answer=true only when student_state is "correct".
-      Note: Python will apply a final confidence threshold before ending tutoring.
-    - Keep hint_level unchanged for question/irrelevant/low_effort/correct/partial_correct.
-      (Only incorrect can increase hint_level, and Python may still adjust it.)
-    - locked_answer is already locked in state post topic-lock. Do not propose a new locked_answer here.
+    STRICT LOW_EFFORT RULES (highest priority):
+      The student must be GENUINELY ATTEMPTING the locked_question.
+      low_effort when: bare denial ("no", "idk", "i don't know"), demand
+      to be told ("just tell me"), frustration ("if i wanted to read..."),
+      empty deflection (<5 words, no domain content), profanity, or
+      dismissal. Off-topic + frustration → low_effort.
+      irrelevant: genuinely off-topic question on a different subject.
 
-    Return one JSON object only:
+    OTHER:
+      question: genuine specific clarifying question about {domain_name},
+        with engagement. Rhetorical/frustrated questions → low_effort.
+      incorrect: genuine attempt but wrong.
+      partial_correct: answers an INTERMEDIATE scaffold the tutor asked,
+        but NOT the locked answer. (e.g. "stroke volume goes lower" when
+        locked_answer is "skeletal muscle pump" → partial_correct.)
+      correct: student STATES the locked_answer or a clear paraphrase.
+        Getting an intermediate scaffold right is partial_correct, NOT correct.
+        Only the LOCKED answer being stated counts as correct.
+
+    student_reached_answer: ALWAYS set to false. Python's
+      reached_answer_gate computes the authoritative reached signal.
+
+    confidence_score:
+      - 0.85-1.00: explicit, accurate, certain
+      - 0.65-0.84: mostly correct, mild ambiguity
+      - 0.40-0.64: partial / uncertain
+      - 0.00-0.39: incorrect, irrelevant, low-effort
+
+    hint_level: leave unchanged (Python increments for incorrect).
+    locked_answer is already set; do not propose a new one.
+
+    Return one JSON object only (no markdown):
     {{
       "student_state": "correct|partial_correct|incorrect|question|irrelevant|low_effort",
-      "student_reached_answer": true/false,
+      "student_reached_answer": false,
       "confidence_score": 0.0,
       "hint_level": 1,
       "search_needed": false,
@@ -778,24 +934,103 @@ prompts:
     The student has just selected a specific topic.
     Retrieval has fired and returned textbook excerpts.
 
-    Your job: extract TWO anchors that guide the session.
+    Your job: extract FOUR anchors that guide the session.
 
     1) locked_question: a specific, answerable question for this session.
-    2) locked_answer: the target answer term/concept the student must reach.
+    2) locked_answer: the SHORT concept anchor — a single-term or short noun phrase
+       (1-5 words). Used by a downstream token-overlap gate to recognize when the
+       student has stated the concept.
+    3) locked_answer_aliases: 4-5 alternate phrasings of locked_answer the student
+       might use (synonyms, abbreviations, common shorthand).
+    4) full_answer: the COMPLETE textbook answer — may be a list, may be a brief
+       sentence, may be multi-component. Used by the mastery scorer + clinical
+       assessment to grade the student's full understanding. This is where you
+       capture the actual richness of the textbook material; locked_answer is
+       just the gate-friendly short form.
 
-    Strict rules:
-    - locked_answer should be concise (typically 2-10 words; hard max 15 words).
-    - locked_answer must be a term/concept, not a sentence.
-    - locked_answer must be grounded in the retrieved chunks.
-    - DO NOT use parametric / training-data knowledge: if the chunks do not
-      contain a clear answer to the topic question, return empty anchors.
-    - If signal is insufficient, return empty anchors with rationale.
-    - rationale must be brief (max 25 words).
+    ## locked_answer (the SHORT gate anchor) — STRICT
+
+    HARD CONSTRAINT: 1–5 words. **NEVER more than 5 words.** This is the
+    GATE anchor — the downstream token-overlap matcher needs a short
+    distinctive term. If you produce a 6+ word locked_answer, the gate
+    fails to match student paraphrases and the session breaks.
+
+    - Must be a noun phrase, not a sentence. No verbs. No commas. No "and"
+      joining multiple ideas. Examples: "Purkinje fibers", "sinoatrial
+      node", "skeletal muscle pump", "ATP synthase", "saliva", "pepsin",
+      "nephron loop".
+    - When the question asks about MULTIPLE parts (e.g. "parts of a
+      nephron"), do NOT list all parts in locked_answer. **Pick a single
+      umbrella term** that names the concept-class:
+        - "What are the parts of a nephron?" → locked_answer: "renal corpuscle"
+          (the most distinctive single component) — full_answer holds the list.
+        - "What are the phases of muscle twitch?" → locked_answer: "muscle twitch phases"
+          — full_answer holds latent/contraction/relaxation.
+        - "What enzymes break down proteins in the stomach?" → locked_answer: "pepsin"
+          — full_answer holds the longer description.
+        - "What are the five mechanisms of tubular transport?" →
+          locked_answer: "secondary active transport" (the canonical mechanism for the
+          locked_question's specific angle) — full_answer holds all five.
+    - Must be grounded in the retrieved chunks.
+
+    ## full_answer (the COMPLETE textbook answer)
+
+    REQUIRED: provide a richer/longer description than locked_answer
+    whenever the concept has multiple components or context. If the
+    locked_question is multi-part, your full_answer MUST be longer
+    than your locked_answer.
+
+    - May be a list, sentence, or multi-component description.
+    - Captures everything the textbook says is the answer.
+    - For simple single-concept questions ("What enzyme breaks down
+      proteins in the stomach?"), full_answer can be 1-2 sentences
+      including context: "Pepsin, secreted as pepsinogen by chief cells
+      and activated by gastric acid, breaks down proteins in the stomach."
+    - For multi-component questions ("parts of a nephron"), full_answer
+      lists the components: "renal corpuscle, proximal convoluted tubule,
+      loop of Henle, distal convoluted tubule, and collecting duct."
+    - Examples:
+      Q: "What are the parts of a nephron?"
+      locked_answer: "nephron components"  (or pick one canonical part name)
+      full_answer:   "renal corpuscle, proximal convoluted tubule, loop of Henle,
+                      distal convoluted tubule, and collecting duct"
+
+      Q: "Where does carb digestion begin and what enzyme initiates it?"
+      locked_answer: "salivary amylase"
+      full_answer:   "Chemical digestion of carbohydrates begins in the mouth,
+                      where salivary amylase (ptyalin) released by the salivary
+                      glands begins breaking down starch."
+
+      Q: "What is the primary pacemaker of the heart?"
+      locked_answer: "sinoatrial node"
+      full_answer:   "The sinoatrial (SA) node, located in the right atrium near
+                      the entry of the superior vena cava, is the heart's primary
+                      pacemaker, generating ~70-80 impulses/min at rest."
+
+    - Must be grounded in chunks. Don't invent facts. <= 60 words.
+
+    ## Strict rules
+    - DO NOT use parametric / training-data knowledge.
+    - If chunks do not contain a clear answer, return empty anchors with rationale.
+    - rationale: brief (max 25 words).
+
+    Aliases guidance:
+    - Each alias is a phrase the student might naturally produce for the
+      locked_answer (NOT for the full_answer).
+    - Synonyms, common shorthand, abbreviations/expansions.
+    - Do NOT include locked_answer itself.
+    - Examples:
+      locked_answer="skeletal muscle pump" →
+        aliases=["calf muscle pump", "leg muscle pump", "venous muscle pump", "muscular pump"]
+      locked_answer="sinoatrial node" →
+        aliases=["SA node", "sinus node", "pacemaker of the heart", "cardiac pacemaker"]
 
     Return strict JSON only:
     {{
       "locked_question": "string",
       "locked_answer": "string",
+      "locked_answer_aliases": ["alias1", "alias2", "alias3", "alias4"],
+      "full_answer": "string",
       "rationale": "string"
     }}
 
@@ -804,14 +1039,21 @@ prompts:
     The student has just selected a specific topic.
     Retrieval has fired and returned textbook excerpts.
 
-    Your job: extract TWO anchors that guide the session.
+    Your job: extract THREE anchors that guide the session.
 
     1) locked_question: a specific, answerable question for this session.
     2) locked_answer: the target answer term/concept the student must reach.
+    3) locked_answer_aliases: 4-5 alternate phrasings the student might use
+       (synonyms, abbreviations, common shorthand). Do NOT include
+       locked_answer itself. Return [] if locked_answer is empty.
 
     Strict rules:
-    - locked_answer should be concise (typically 2-10 words; hard max 15 words).
-    - locked_answer must be a term/concept, not a sentence.
+    - locked_answer must be a SHORT term or noun phrase: typically 2-5 words,
+      hard max 10 words. Examples: "Purkinje fibers", "sinoatrial node",
+      "skeletal muscle pump", "ATP synthase".
+    - locked_answer must NOT be a sentence or clause. No verbs, no commas
+      separating multiple ideas. If you find yourself writing "X does Y to
+      Z", you've gone too far — pick the X (the structure or term itself).
     - locked_answer must be grounded in the retrieved chunks.
     - DO NOT use parametric / training-data knowledge: if the chunks do not
       contain a clear answer to the topic question, return empty anchors.
@@ -822,6 +1064,7 @@ prompts:
     {{
       "locked_question": "string",
       "locked_answer": "string",
+      "locked_answer_aliases": ["alias1", "alias2", "alias3", "alias4"],
       "rationale": "string"
     }}
 
@@ -834,6 +1077,65 @@ prompts:
     {retrieved_propositions}
 
     Lock anchors and return strict JSON only.
+
+  # ----- Reached-answer gate (Step B: LLM paraphrase fallback) -----
+  # Used by reached_answer_gate when token-overlap (Step A) doesn't fire.
+  # The LLM must quote the student's exact words to confirm. No quote = not reached.
+  # Designed to be conservative: bias toward NOT reached when uncertain.
+  dean_reached_check_static: |
+    You are the Dean checking whether the student has STATED the locked answer
+    in their most recent message. This is the final gate before tutoring ends —
+    a false positive fabricates a confirmation the student didn't earn, so be
+    strict.
+
+    DEFINITIONS:
+    - locked_answer: the target term/concept (e.g. "skeletal muscle pump").
+    - aliases: equivalent phrasings the student could use instead.
+    - "Reached" means the student asserted the answer or paraphrased it as a
+      positive answer in THIS message.
+
+    REACHED = TRUE rules (must satisfy ALL):
+    1. The student names locked_answer (or any alias) OR paraphrases the
+       concept unambiguously.
+    2. The phrasing is an ASSERTION (not a question, not a hedge).
+       - Asserting: "It's the skeletal muscle pump" / "The muscles squeeze
+         the veins to push blood up" → REACHED.
+       - Asking: "Is it the skeletal muscle pump?" → NOT REACHED.
+       - Hedging: "Maybe gravity? I'm not sure" → NOT REACHED.
+       - Denying: "I don't know what skeletal muscle pump is" → NOT REACHED.
+    3. You can quote a contiguous substring from the student's latest message
+       that demonstrates this assertion. The quote must appear VERBATIM in the
+       student's message. No quote → NOT REACHED.
+
+    REACHED = FALSE if any of:
+    - The student names a different concept (even a related/neighboring one).
+      e.g. locked="SA node", student says "AV node" → NOT REACHED.
+    - The student names only one component of a multi-word answer in a way
+      that doesn't convey the full concept.
+      e.g. locked="skeletal muscle pump", student says "muscles" alone → NOT REACHED.
+    - The student is asking, hedging, denying, or off-topic.
+
+    BIAS: When in doubt, return reached=false. False positives are costly.
+
+    Return strict JSON ONLY (no markdown, no prose):
+    {{
+      "reached": true,
+      "evidence": "exact verbatim quote from student message",
+      "rationale": "1 sentence on why this counts (or doesn't)"
+    }}
+
+  dean_reached_check_dynamic: |
+    Locked answer: {locked_answer}
+    Aliases (equivalent phrasings): {aliases}
+
+    Recent conversation (for context only — judge based on the LATEST student message):
+    {recent_history}
+
+    Student's LATEST message:
+    {student_msg}
+
+    Decide: did the student reach the locked answer in their LATEST message?
+    Return strict JSON only.
 
   dean_quality_check_static: |
     You are the Dean reviewing a teacher draft before release to the student.
@@ -1229,12 +1531,42 @@ prompts:
     response demonstrates mastery of THAT specific concept, not the entire
     subsection.
 
+    ## STRICT ATTRIBUTION RULES (read before scoring)
+
+    The mastery score and rationale must reflect what the **STUDENT** said —
+    NOT what the tutor said. This is the most common mistake to avoid:
+
+      WRONG (do not do this): "Student correctly identified that stroke
+        volume drops as heart rate climbs."   ← if the TUTOR said this and
+        the student only said "no" or "goes lower" on a scaffold question.
+
+      RIGHT: "Student answered the scaffold sub-question (stroke volume
+        drops with HR↑) but never named the locked answer (skeletal muscle
+        pump). Most insights in the transcript came from the tutor."
+
+    Concretely:
+      1. Every claim in your `rationale` must be quotable from a STUDENT
+         message. If a fact appears only in a tutor message, it does NOT
+         count as the student demonstrating that fact.
+      2. Do NOT credit the student for understanding when they merely
+         said "ok", "no", "idk", or repeated the tutor's last sentence.
+      3. Answering an INTERMEDIATE scaffold question (e.g. "what happens
+         to stroke volume?") correctly is partial progress on that
+         scaffold — NOT mastery of the LOCKED answer. Cap mastery at 0.50
+         in that case, even if the scaffold answer was perfect.
+      4. If the session ended due to help_abuse_threshold (the student
+         repeatedly stonewalled with low_effort responses), mastery
+         should be ≤ 0.30 regardless of what the tutor's final message
+         claimed.
+
+    ## Output
+
     You output two numbers and a rationale:
 
       mastery (0.0-1.0)
-        — How well-mastered does the student appear, considering BOTH the
-          quality of their reasoning in this session AND the fact that they
-          have only been probed on a slice of the subsection?
+        — How well-mastered does the student appear, **considering only
+          what the student actually demonstrated**, and considering the
+          fact that they have only been probed on a slice of the subsection?
         — Calibration anchors:
             0.95: full subsection mastery demonstrated across many sessions
             0.80: clear mastery of the concepts probed; likely mastered
@@ -1251,17 +1583,28 @@ prompts:
             0.95: definitive mastery probe across nearly everything
 
       rationale (1-2 sentences)
-        — Concrete reason for your scores. Reference what the student
-          actually did. This is saved with the score so a human can audit
-          your judgment later. Do NOT be vague.
+        — Concrete reason for your scores. **Reference what the STUDENT
+          said, with a brief paraphrase or quote.** Avoid passive
+          phrasings like "It was demonstrated that...". Use active phrasings
+          that name the student as the subject: "Student said X" /
+          "Student did not name Y" / "Student stonewalled with low_effort".
+        — Saved with the score so a human can audit your attribution.
+        — DO NOT credit the student for anything only the tutor said.
 
-    Hard rules:
+    ## Hard rules
       - Never produce mastery > 0.50 from a single 1-anchor session, even
         if the student answered perfectly.
       - Never produce confidence > 0.30 from a single session.
-      - On not_reached outcomes, mastery <= 0.40.
+      - On not_reached outcomes, mastery ≤ 0.40.
       - On reached + 0 hints, mastery is at least 0.40 (some understanding
         was demonstrated).
+      - When `total_low_effort_turns ≥ 3`: mastery ≤ 0.30 regardless of
+        outcome — even if the student eventually said the right thing,
+        most of the session was stonewalling.
+      - When `off_topic_terminated == "yes"`: mastery ≤ 0.10. The session
+        was terminated for persistent off-domain drift; no real engagement.
+      - When `total_off_topic_turns ≥ 2` and `outcome == "not_reached"`:
+        mastery ≤ 0.20 — student showed they weren't focused on the topic.
 
     Return strict JSON only, no prose:
     {
@@ -1279,6 +1622,17 @@ prompts:
       turns:      {turn_count}
       hints used: {hint_level} of {max_hints}
 
+    Session-wide engagement telemetry (Change 4):
+      total_low_effort_turns: {total_low_effort_turns}
+        (count of student turns classified as low_effort across the whole
+         session; non-resetting. Higher = more stonewalling.)
+      total_off_topic_turns:  {total_off_topic_turns}
+        (count of off-DOMAIN turns; non-resetting. Higher = more drift.)
+      off_topic_terminated:   {off_topic_terminated}
+        ("yes" means the session was forcibly ended due to off-topic strike
+         threshold — student never engaged. mastery should be ≤ 0.10 in
+         that case.)
+
     Anchor question asked by tutor:
       {locked_question}
 
@@ -1292,4 +1646,5 @@ prompts:
     first; empty if this is the first session):
     {prior_rationales}
 
-    Score this session.
+    Score this session. Use the engagement telemetry to penalize
+    session-wide stonewalling/drift even if no single chain hit threshold.

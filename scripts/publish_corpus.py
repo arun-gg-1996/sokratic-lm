@@ -39,15 +39,33 @@ load_dotenv(ROOT / ".env", override=True)
 DEFAULT_REPO_NAME = "sokratic-anatomy-corpus"
 
 # Files that are expensive to regenerate and safe to publish.
-# Paths are relative to repo root.
+# Paths are relative to repo root. Files in OPTIONAL_INCLUDE_FILES are
+# uploaded only if they exist locally — useful for the Qdrant snapshot,
+# which isn't always present on dev machines.
+#
+# 2026-04-30: switched to the chunks-only architecture. The previous
+# propositions-based artifacts (chunks_ot.jsonl, propositions_ot.jsonl,
+# raw_*_ot.jsonl, bm25_ot.pkl) are deprecated — see reindex_chunks.py for
+# the rationale (propositions atomize the relational verbs that should be
+# the discriminative retrieval signal on biomedical/textbook corpora).
+# The propositions_openstax_anatomy.jsonl + bm25_openstax_anatomy.pkl pair
+# is also dropped: the runtime now targets the chunks collection.
 INCLUDE_FILES: list[str] = [
-    "data/processed/propositions_ot.jsonl",
-    "data/processed/chunks_ot.jsonl",
-    "data/processed/raw_elements_ot.jsonl",
-    "data/processed/raw_sections_ot.jsonl",
-    "data/indexes/bm25_ot.pkl",
+    "data/processed/chunks_openstax_anatomy.jsonl",
+    "data/indexes/bm25_chunks_openstax_anatomy.pkl",
     "data/textbook_structure.json",
     "data/topic_index.json",
+]
+
+# Optional — uploaded if present locally. The Qdrant snapshot saves teammates
+# ~$0.10 in OpenAI embedding cost + ~10 min on a clean clone. Generate one
+# with:
+#   NAME=$(curl -s -X POST http://localhost:6333/collections/sokratic_kb_chunks/snapshots \
+#          | jq -r '.result.name')
+#   curl -o data/indexes/qdrant_sokratic_kb_chunks.snapshot \
+#     "http://localhost:6333/collections/sokratic_kb_chunks/snapshots/$NAME"
+OPTIONAL_INCLUDE_FILES: list[str] = [
+    "data/indexes/qdrant_sokratic_kb_chunks.snapshot",
 ]
 
 # Never upload these — either copyrighted, secret, or easy to regenerate.
@@ -164,6 +182,13 @@ def main() -> int:
     ap.add_argument(
         "--private", action="store_true", help="Create repo as private (default: public).",
     )
+    ap.add_argument(
+        "--prune", action="store_true",
+        help="Delete remote files that are NOT in the current INCLUDE list. "
+             "Use this after dropping deprecated artifacts (e.g. the propositions-era "
+             "*_ot.* files) so the published dataset doesn't carry stale state. "
+             "MANIFEST.json and README.md are never pruned.",
+    )
     args = ap.parse_args()
 
     token = os.getenv("HF_TOKEN")
@@ -182,6 +207,13 @@ def main() -> int:
     for rel in INCLUDE_FILES:
         p = ROOT / rel
         (present if p.exists() else missing).append(p if p.exists() else rel)
+
+    # Optional files: include silently if present, skip silently if not.
+    for rel in OPTIONAL_INCLUDE_FILES:
+        p = ROOT / rel
+        if p.exists():
+            present.append(p)
+            print(f"[info] including optional file: {rel}")
 
     if missing:
         print(f"[warn] skipping missing files: {missing}")
@@ -262,6 +294,33 @@ def main() -> int:
             path_or_fileobj=p, path_in_repo=rel,
             repo_id=repo_id, repo_type="dataset", token=token,
         )
+
+    # --prune: delete remote files that are no longer in the local INCLUDE list.
+    # This is what cleans up deprecated artifacts (e.g. *_ot.* propositions-era
+    # files) when the schema changes. MANIFEST.json/README.md/.gitattributes
+    # are intentionally preserved — they're metadata, not corpus content.
+    if args.prune:
+        published_paths = {str(p.relative_to(ROOT)) for p in present}
+        keep_paths = published_paths | {"MANIFEST.json", "README.md", ".gitattributes"}
+        try:
+            remote_files = set(api.list_repo_files(repo_id, repo_type="dataset"))
+        except Exception as e:
+            print(f"[prune] could not list remote files: {e}")
+            remote_files = set()
+        stale = sorted(remote_files - keep_paths)
+        if stale:
+            print(f"[prune] deleting {len(stale)} remote file(s) not in current INCLUDE list:")
+            for rel in stale:
+                print(f"  - {rel}")
+                try:
+                    api.delete_file(
+                        path_in_repo=rel, repo_id=repo_id,
+                        repo_type="dataset", token=token,
+                    )
+                except Exception as e:
+                    print(f"    [warn] delete failed: {e}")
+        else:
+            print("[prune] no stale remote files — nothing to delete.")
 
     if args.tag:
         print(f"Creating tag: {args.tag}")

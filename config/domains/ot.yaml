@@ -2,7 +2,7 @@ domain:
   name: "human anatomy"
   short: "anatomy"
   student_descriptor: "student"
-  kb_collection: "sokratic_kb"
+  kb_collection: "sokratic_kb_chunks"   # 2026-04-30: chunks-only architecture; was "sokratic_kb" (deprecated propositions collection)
   memory_collection: "sokratic_memory"
   mem0_namespace: "anatomy"
   # 2026-04-28: switched from "ot" to "openstax_anatomy" after the v1
