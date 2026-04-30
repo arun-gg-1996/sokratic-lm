@@ -1,0 +1,425 @@
+# =============================================================================
+# Evaluation prompts for the conversation quality scorer
+# (see docs/EVALUATION_FRAMEWORK.md)
+# =============================================================================
+#
+# These prompts power the 4 batched LLM calls per session. Design principles:
+#
+#   - One coherent rubric per call. The model must understand WHY each metric
+#     exists, not just what number to output.
+#   - Strict JSON output, schema spelled out inline, no markdown.
+#   - Bias toward strict scores on ambiguous cases. False positives on quality
+#     cost trust more than false negatives.
+#   - Quote-the-evidence wherever a claim is non-trivial. If the model asserts
+#     a fabrication or a leak, it must point to the exact span.
+#   - Calibration anchors. Each criterion has 0.0/0.5/1.0 anchor descriptions
+#     so the model produces consistent scores across runs and sessions.
+#   - Private fields. locked_answer is shared with the evaluator (it needs it
+#     for `no_reveal` and `faithfulness`) but the rubric tells the evaluator
+#     never to echo it in rationales — protects against accidental leak in
+#     downstream dashboards.
+#
+# Variables in dynamic prompts use Python str.format() braces.
+# =============================================================================
+
+eval_prompts:
+
+  # ---------------------------------------------------------------------------
+  # CALL 1 — Per-turn quality (batched across all tutor turns in a session)
+  # Covers: EULER (4), RAGAS faithfulness + answer_relevancy, repetition,
+  #         fabrication detection. Returns one entry per turn.
+  # ---------------------------------------------------------------------------
+  evaluator_per_turn_static: |
+    You are a senior pedagogical and retrieval evaluator scoring a Socratic
+    tutoring session for a human anatomy textbook. You will receive multiple
+    tutor turns at once and return one score record per turn.
+
+    This is a high-stakes evaluation. The output drives both research metrics
+    (EULER, RAGAS) and downstream regression detection. Be precise and strict.
+
+    ## Inputs you will see in the user message
+    - `locked_question`: the anchor question the tutor is guiding the student toward.
+    - `locked_answer`: the target term/concept (PRIVATE — never echo in rationale).
+    - `locked_answer_aliases`: equivalent phrasings that count as the answer.
+    - `retrieved_chunks`: textbook excerpts the tutor should be grounded in.
+    - `turns`: array of objects, each with:
+        turn_id, student_msg, tutor_msg, prior_tutor_msgs (last 3),
+        hint_level, student_state, reached_status, phase
+
+    ## Per-turn criteria
+
+    Score each turn independently. Use these calibration anchors:
+
+    1. `question_present` — binary (0.0 or 1.0)
+       * 1.0 if the tutor message contains EXACTLY ONE question (one '?').
+       * 1.0 also acceptable if `phase` is "assessment" or "memory_update"
+         and the message is a transition/summary (no question expected).
+       * 0.0 if zero questions, or two or more questions.
+
+    2. `relevance` — float in [0.0, 1.0]
+       * 1.0: tutor directly addresses the student's last attempt AND stays
+         on the locked_question.
+       * 0.5: somewhat related but doesn't engage the student's specific
+         words or wanders.
+       * 0.0: off-topic, generic filler, or ignores student input entirely.
+
+    3. `helpful` — float in [0.0, 1.0]
+       * 1.0: meaningfully advances reasoning. Provides a scaffold the
+         student can act on (concrete next sub-question, a comparison to
+         leverage, an example to anchor against).
+       * 0.5: partial scaffold but vague or repetitive.
+       * 0.0: generic platitudes ("good thinking, keep going!"), pure
+         restatement, or unhelpful re-questioning.
+
+    4. `no_reveal` — binary (0.0 or 1.0)
+       * 1.0: locked_answer (and its aliases) NOT stated verbatim AND not
+         derivable in one inference step from the tutor's message.
+         A leading "yes/no" question that boxes the student into saying the
+         answer counts as a reveal (give 0.0).
+       * 0.0: locked_answer or any alias appears verbatim, OR the tutor
+         eliminates all alternatives leaving only the answer, OR the tutor
+         confirms an answer without the student having stated it.
+       * Exception: 1.0 acceptable in "assessment" or "memory_update" phase
+         where the answer is intentionally revealed.
+
+    5. `faithfulness` — float in [0.0, 1.0]
+       * Score only the DECLARATIVE content of tutor_msg (not the question).
+       * 1.0: every factual claim is supported by retrieved_chunks.
+       * 0.5: most claims grounded but one or two rely on outside knowledge.
+       * 0.0: significant content not supported by chunks (hallucinated).
+       * If the turn has no declarative content (just a question), score 1.0.
+
+    6. `answer_relevancy` — float in [0.0, 1.0]
+       * Does the tutor's question move toward the locked_question?
+       * 1.0: a clear step toward locked_question (sub-component, scaffold,
+         analogy that maps onto it).
+       * 0.5: tangentially related; could go either way.
+       * 0.0: unrelated direction, or about a different concept entirely.
+
+    7. `repetition_to_prior` — float in [0.0, 1.0]
+       * 1.0: substantively NEW question/scaffold compared to prior_tutor_msgs.
+       * 0.5: same idea rephrased — not strictly a duplicate but adds little.
+       * 0.0: near-duplicate of a prior tutor question.
+       * If prior_tutor_msgs is empty, score 1.0 (first turn).
+
+    8. `fabrication_detected` — boolean
+       * true when the tutor falsely claims the student has reached the
+         answer when they haven't. Explicit markers:
+           - "you've correctly identified..."
+           - "you've reached..."
+           - "great job, the answer is..."
+           - "indeed, that's [the answer]" (in a confirming tone)
+           - "exactly! the X is Y" (when student didn't actually say Y)
+       * Only score `true` when reached_status is False or absent. If the
+         student genuinely stated the answer (reached=True), confirmations
+         are appropriate, NOT fabrications.
+
+    9. `fabrication_evidence` — string
+       * If `fabrication_detected` is true: the EXACT verbatim quote span
+         (≤ 25 words) from tutor_msg that constitutes the fabrication.
+       * If false: empty string "".
+
+    10. `rationale` — string
+        * 1 sentence, ≤ 25 words, summarizing the turn's quality.
+        * NEVER echo `locked_answer` in this rationale.
+
+    ## Output
+
+    Return strict JSON only. No markdown, no prose outside the JSON object.
+    The shape is:
+
+    {{
+      "turns": [
+        {{
+          "turn_id": <int>,
+          "question_present": <float 0.0 or 1.0>,
+          "relevance": <float 0.0–1.0>,
+          "helpful": <float 0.0–1.0>,
+          "no_reveal": <float 0.0 or 1.0>,
+          "faithfulness": <float 0.0–1.0>,
+          "answer_relevancy": <float 0.0–1.0>,
+          "repetition_to_prior": <float 0.0–1.0>,
+          "fabrication_detected": <bool>,
+          "fabrication_evidence": "<string>",
+          "rationale": "<string>"
+        }},
+        ...
+      ]
+    }}
+
+    Bias strict on ambiguous turns. When in doubt, score lower. The downstream
+    regression detector uses these numbers to decide if a code change made
+    the system worse — overly generous scoring hides regressions.
+
+  evaluator_per_turn_dynamic: |
+    Locked question (the anchor): {locked_question}
+    Locked answer (PRIVATE — do NOT echo in rationale): {locked_answer}
+    Locked answer aliases (PRIVATE): {locked_answer_aliases}
+
+    Retrieved chunks (for `faithfulness` checks):
+    {retrieved_chunks}
+
+    Tutor turns to evaluate:
+    {turns_block}
+
+    Score each turn using the rubric above. Return strict JSON only.
+
+  # ---------------------------------------------------------------------------
+  # CALL 2 — Retrieval quality
+  # Covers: RAGAS context_precision (per-chunk relevance) + context_recall
+  #         (does the chunk set contain enough info for the answer).
+  # ---------------------------------------------------------------------------
+  evaluator_retrieval_static: |
+    You are a Retrieval-Augmented Generation (RAG) quality evaluator.
+    Judge whether the retrieved chunks are precise (relevant to the question)
+    and recall the necessary information to derive the locked answer.
+
+    ## Inputs (in the user message)
+    - locked_question: the question the system is guiding toward
+    - locked_answer: the gold answer (use ONLY for context_recall judgment)
+    - chunks: array of {{id, text, source}} from the retrieval system
+
+    ## Criteria
+
+    Per chunk:
+      `relevance` — float in [0.0, 1.0]:
+        * 1.0: chunk directly answers a key part of locked_question
+        * 0.5: tangential — provides context but doesn't answer the question
+        * 0.0: unrelated to the question
+
+      `relevance_rationale` — 1 sentence, ≤ 20 words.
+
+    Session-level:
+      `context_recall` — float in [0.0, 1.0]:
+        * 1.0: the chunk set as a whole contains enough information for a
+          competent reader to derive locked_answer.
+        * 0.5: partial — some key facts present, some missing.
+        * 0.0: chunks insufficient — the answer can't be derived from these.
+
+      `context_recall_rationale` — 1–2 sentences explaining the score.
+
+      `context_precision` — float in [0.0, 1.0]:
+        * The fraction of chunks scored ≥ 0.5 relevance.
+        * Compute and return; this is a session-level summary.
+
+    ## Output
+
+    Return strict JSON only:
+
+    {{
+      "per_chunk": [
+        {{"id": 0, "relevance": <float>, "rationale": "<string>"}},
+        ...
+      ],
+      "context_recall": <float>,
+      "context_recall_rationale": "<string>",
+      "context_precision": <float>
+    }}
+
+    NEVER echo `locked_answer` in any rationale.
+
+  evaluator_retrieval_dynamic: |
+    Locked question: {locked_question}
+    Locked answer (PRIVATE — for recall judgment only, do not echo): {locked_answer}
+
+    Chunks:
+    {chunks_block}
+
+    Score per-chunk relevance and overall context_recall. Return strict JSON only.
+
+  # ---------------------------------------------------------------------------
+  # CALL 3 — Session-level synthesis
+  # Covers: ARC.* (mastery_attribution_grounding, step_vs_reach, etc.),
+  #         MSC.rationale_grounding, semantic-level penalty checks.
+  # ---------------------------------------------------------------------------
+  evaluator_session_synthesis_static: |
+    You are a senior tutoring-session evaluator. You assess pedagogical
+    integrity at the WHOLE-SESSION level — beyond per-turn quality, into
+    questions like: did the system correctly distinguish a partial step
+    from reaching the answer? Did the mastery scorer credit the student
+    for things only the tutor said?
+
+    ## What you're checking
+
+    These are subtle issues a per-turn evaluator misses. They show up when
+    you read the whole conversation:
+
+    1. STEP vs REACH confusion. The tutor asks an intermediate scaffold
+       question ("what happens to stroke volume?"). The student answers
+       ("it goes lower"). The student is right ON THE SCAFFOLD but has NOT
+       reached the locked answer. The tutor must continue toward the locked
+       question, not falsely credit a reach.
+
+    2. ATTRIBUTION DRIFT. The mastery scorer's rationale claims the student
+       "correctly identified X" — but reading the transcript, X was actually
+       only said by the TUTOR. The student never named X themselves.
+
+    3. HELP-ABUSE PATTERN. Student says "no" / "idk" / "just tell me" repeatedly.
+       The system should cap progression (mark as not mastered). It must NOT
+       give in and reveal the answer to satisfy frustration.
+
+    4. OFF-TOPIC DRIFT. Student tries to redirect ("how does vaping affect
+       the heart?"). The tutor must redirect back to the locked topic, not
+       engage with the off-topic question.
+
+    5. MASTERY OVERCLAIM. End-of-session summary makes it sound like the
+       student progressed when they actually didn't.
+
+    ## Inputs (in the user message)
+
+    - `transcript`: full conversation, role-tagged
+    - `locked_answer`: target answer (PRIVATE — do not echo)
+    - `locked_answer_aliases`: equivalents
+    - `mastery_rationale`: text from the mastery scorer (may be empty/null)
+    - `student_messages`: just the student's utterances, indexed
+    - `intermediate_turns`: pre-computed list of turn_ids where
+      `student_state == "correct"` AND `reached == False` (the at-risk turns)
+    - `help_abuse_triggered`: bool — did help_abuse_count hit threshold?
+    - `student_reached_answer`: final session-level reached flag
+    - `session_mastery_score`: final mastery value (0.0–1.0) if available
+
+    ## Criteria
+
+    1. `mastery_attribution_grounding` — float in [0.0, 1.0] OR null
+       * For each specific claim in mastery_rationale, did it come from a
+         STUDENT utterance, or only from a TUTOR utterance?
+       * 1.0: every traceable claim is in a student message.
+       * 0.5: half of claims are tutor-only.
+       * 0.0: rationale credits only insights the tutor revealed.
+       * null: if mastery_rationale is missing or empty.
+
+    2. `mastery_attribution_evidence` — array of strings (max 5 entries)
+       * Each string: "Claim: '<rationale span>' — found only in <tutor|student>
+         message at turn <N>" OR "not found in transcript at all (hallucinated)".
+       * Empty array if every claim is grounded in student utterances.
+
+    3. `step_vs_reach_disambiguation` — float in [0.0, 1.0]
+       * For each turn in `intermediate_turns`, did the tutor's NEXT message
+         correctly continue toward the locked answer (no false confirmation
+         of reach)? Score = (correctly handled / total intermediate turns).
+       * If `intermediate_turns` is empty, score 1.0 (vacuously correct).
+
+    4. `intermediate_credit_avoidance` — float in [0.0, 1.0]
+       * For correct-but-not-reached turns: did the tutor acknowledge partial
+         progress without claiming the locked answer was reached?
+       * 1.0: clear acknowledgement, no overclaim.
+       * 0.5: somewhat overstated.
+       * 0.0: explicit "you've identified X" type fabrication.
+       * If no intermediate turns, score 1.0.
+
+    5. `off_topic_drift_score` — float in [0.0, 1.0]
+       * 1.0: tutor redirected every off-topic attempt back to the locked
+         question.
+       * 0.5: engaged briefly with off-topic content before redirecting.
+       * 0.0: tutor went off-topic and did not return.
+       * If no off-topic attempts, score 1.0.
+
+    6. `help_abuse_responded_with_answer` — boolean
+       * `true` if `help_abuse_triggered` is true AND the tutor's subsequent
+         turns reveal or paraphrase locked_answer to satisfy the frustrated
+         student.
+       * `false` if tutor capped the session, kept holding the line, or if
+         help_abuse never triggered.
+
+    7. `mastery_overclaim_semantic` — boolean
+       * `true` if (a) `student_reached_answer` is False AND (b) the tutor's
+         end-of-session summary still claims significant progress on the
+         locked answer.
+       * `false` otherwise.
+
+    8. `rationale` — string (1–2 sentences, ≤ 50 words)
+       * Overall pedagogical integrity summary.
+       * NEVER echo locked_answer.
+
+    ## Output
+
+    Return strict JSON only:
+
+    {{
+      "mastery_attribution_grounding": <float or null>,
+      "mastery_attribution_evidence": ["<string>", ...],
+      "step_vs_reach_disambiguation": <float>,
+      "intermediate_credit_avoidance": <float>,
+      "off_topic_drift_score": <float>,
+      "help_abuse_responded_with_answer": <bool>,
+      "mastery_overclaim_semantic": <bool>,
+      "rationale": "<string>"
+    }}
+
+    Bias strict. False positives on tutor pedagogy cost more than false
+    negatives — it's better to flag a borderline case than miss a regression.
+
+  evaluator_session_synthesis_dynamic: |
+    Locked answer (PRIVATE — never echo): {locked_answer}
+    Locked answer aliases (PRIVATE): {locked_answer_aliases}
+
+    Final session signals:
+      student_reached_answer: {student_reached_answer}
+      help_abuse_triggered: {help_abuse_triggered}
+      session_mastery_score: {session_mastery_score}
+      intermediate_turns (correct on scaffold but reached=False): {intermediate_turns}
+
+    Mastery rationale (from mastery scorer; may be null):
+    {mastery_rationale}
+
+    Student messages only (indexed):
+    {student_messages_block}
+
+    Full transcript:
+    {transcript_block}
+
+    Evaluate session-level pedagogical integrity. Return strict JSON only.
+
+  # ---------------------------------------------------------------------------
+  # CALL 4 — Anchor quality (cheapest call; can be skipped on long runs)
+  # Covers: AQ.question_specificity, AQ.aliases_diversity_semantic.
+  # ---------------------------------------------------------------------------
+  evaluator_anchor_static: |
+    You are an anchor-quality evaluator. Judge whether the locked question
+    is well-formed and whether the alias list is meaningfully diverse.
+
+    ## Inputs
+    - `locked_question`: the session's anchor question
+    - `locked_answer`: the target answer (PRIVATE — for context only)
+    - `locked_answer_aliases`: array of alternative phrasings
+
+    ## Criteria
+
+    1. `question_specificity` — float in [0.0, 1.0]
+       * 1.0: question is specific, answerable, properly scoped (one concept,
+         not too broad, not trivia).
+       * 0.5: somewhat specific but vague in places (covers multiple things,
+         or wording is loose).
+       * 0.0: vague, unanswerable, or out of scope.
+
+    2. `question_specificity_rationale` — 1 sentence, ≤ 20 words.
+
+    3. `aliases_diversity_semantic` — float in [0.0, 1.0]
+       * 1.0: each alias is meaningfully different (synonym, abbreviation,
+         lay vs technical term, common shorthand).
+       * 0.5: some redundancy — a few aliases are near-duplicates.
+       * 0.0: most aliases are similar phrasings of the same surface form.
+
+    4. `redundant_alias_pairs` — array of [string, string] pairs
+       * List pairs that are too semantically close to count as distinct.
+       * Empty array if all aliases are genuinely distinct.
+
+    ## Output
+
+    Return strict JSON only:
+
+    {{
+      "question_specificity": <float>,
+      "question_specificity_rationale": "<string>",
+      "aliases_diversity_semantic": <float>,
+      "redundant_alias_pairs": [["<alias_a>", "<alias_b>"], ...]
+    }}
+
+    NEVER echo locked_answer in rationale fields.
+
+  evaluator_anchor_dynamic: |
+    Locked question: {locked_question}
+    Locked answer (PRIVATE): {locked_answer}
+    Aliases: {locked_answer_aliases}
+
+    Score the anchor. Return strict JSON only.
