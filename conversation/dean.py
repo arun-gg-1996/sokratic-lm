@@ -39,70 +39,18 @@ from retrieval.topic_matcher import get_topic_matcher, TopicMatch, MatchResult
 # Sonnet pricing (per million tokens)
 _PRICE_IN = 3.0
 _PRICE_OUT = 15.0
-_BANNED_FILLER_PREFIXES = (
-    "i can see",
-    "i notice",
-    "i hear you",
-    "that's okay",
-    # Sonnet 4.6-specific opener patterns observed in 2026-05-01 runs.
-    # These soften the response with empathy/affirmation before the
-    # actual Socratic move, which sounds nice but inflates perceived
-    # correctness when the student was wrong or hedging.
-    "you're on the right",
-    "you're heading in the right",
-    "that's a thoughtful",
-    "great thinking",
-    "nice thinking",
-    "good intuition",
-    "you're thinking",
-    "good question",
-    "great question",
-    "interesting question",
-)
-_STRONG_AFFIRM_PATTERNS = (
-    r"\bexactly\b",
-    r"\bthat'?s right\b",
-    r"\byou got it\b",
-    r"\bcorrect\b",
-    r"\bperfect\b",
-    r"\byes[, ]+that'?s\b",
-    r"\byou'?re right\b",
-    # Patterns observed in real sessions where the tutor over-attributed
-    # reasoning the student didn't do (sessions 2026-04-30 nidhi runs).
-    r"\bexcellent\b",
-    r"\byou'?ve identified\b",
-    r"\byou'?ve named\b",
-    r"\byou'?ve correctly\b",
-    r"\byou'?ve connected\b",
-    r"\byou'?ve figured (out|it)\b",
-    r"\byou'?ve nailed\b",
-    r"\bspot on\b",
-    r"\bnice work\b",
-    r"\bgood reasoning\b",
-    # Sonnet 4.6 sycophancy patterns (observed 2026-05-01 antibody / CNS
-    # / cerebrum runs). Sonnet skews more empathic than Haiku 4.5 and
-    # produces these "soft affirmation" prefixes that bypass the older
-    # strict-affirmation regex. They tell the student they're "close" /
-    # "on track" / "partly right" without actually evaluating the
-    # answer's correctness — which is sycophancy by another name.
-    r"\bon (an|a|the) interesting track\b",
-    r"\bon (an|a|the) (right|good) track\b",
-    r"\bheading in the right direction\b",
-    r"\b(?:you'?re|you are) on the right path\b",
-    r"\bpartly (right|correct)\b",
-    r"\b(both|all) (?:the )?key concepts? in hand\b",
-    r"\b(both|all) (?:the )?(?:key |important )?(?:components|pieces|parts) (?:are )?in hand\b",
-    r"\byou'?re getting there\b",
-    r"\byou'?re close\b",
-    r"\bgetting closer\b",
-    r"\bclose to (?:the |a |an )?(?:right|correct) (?:answer|idea|direction)\b",
-    r"\bin the right neighborhood\b",
-    r"\b(?:nice|good|great)\s+(?:thinking|intuition|reasoning|approach|instinct)\b",
-    r"\byou'?ve started (?:to )?(?:see|grasp|connect|identify)\b",
-    # Patterns where the tutor narrates what the student "did right"
-    # before the student has actually done it. Common Sonnet move.
-    r"\byou'?ve (?:already )?(?:touched on|hinted at|gestured at|started toward|begun to)\b",
-)
+# 2026-05-01: _BANNED_FILLER_PREFIXES + _STRONG_AFFIRM_PATTERNS were
+# regex-based sycophancy / banned-opener detectors. Per the user's
+# "LLM-only QC" directive, both were replaced by
+# conversation/classifiers.haiku_sycophancy_check, which reads the draft
+# + student_state + reach_fired and returns a verdict. Validated 100%
+# accuracy on 27 hand-curated cases (15 sycophantic + 12 clean) — see
+# data/artifacts/classifiers/2026-05-01T21-03-51/report.md. The Haiku
+# classifier catches Sonnet 4.6's empathic soft-affirmation patterns
+# ("on an interesting track", "in the right neighborhood", "you've
+# touched on the answer") that the regex required ad-hoc maintenance to
+# track. Single source of truth = LLM judgment.
+
 _RETRIEVAL_NOISE_PATTERNS = (
     r"^\s*\d+\s*[\)\.\-:]\s*",
     r"^\s*(i think|i guess|maybe|honestly)\s+",
@@ -516,105 +464,17 @@ def _is_distinctive_anchor(token: str) -> bool:
     return False
 
 
-# Letter-hint / morphology / etymology / blank-completion patterns the
-# teacher LLM produces under "be direct without naming the answer"
-# pressure. The prompt forbids them but level-3 framing creates a strong
-# loophole. Observed in real sessions:
-#   - 2026-05-01 CNS: "The textbook uses a word that starts with 'n'"
-#   - 2026-05-01 Cerebrum: "what suffix completes 'comm-____'?"
-#   - 2026-05-01 Cerebrum: "comm-_______?"
-#   - 2026-05-01 Cerebrum: "from a Latin root meaning together"
-# All are covert reveals — they hand the student the term's morphology
-# even though they don't name the term outright.
-_LETTER_HINT_PATTERNS = (
-    # First-letter / last-letter / starts-with patterns
-    r"\bstarts? with\s+['\"`]?[a-z]['\"`]?(?:\b|[\s,.])",
-    r"\bbegins? with\s+['\"`]?[a-z]['\"`]?(?:\b|[\s,.])",
-    r"\bends? with\s+['\"`]?[a-z]+['\"`]?",
-    r"\bfirst letter (?:is\s+)?['\"`]?[a-z]['\"`]?",
-    r"\b(?:the|a) word (?:that\s+)?(?:starts|begins) with",
-    # Rhyme / sound-alike
-    r"\b(?:rhymes? with|sounds? like)\s+['\"`]?[a-z]+['\"`]?",
-    # Morphology / prefix / suffix hints
-    r"\bwhat\s+(?:suffix|prefix|root)\b",
-    r"\bsuffix\s+(?:meaning|that\s+means|completes?)\b",
-    r"\bprefix\s+(?:meaning|that\s+means|completes?)\b",
-    r"\b(?:add|combine)\s+(?:a\s+)?(?:suffix|prefix)\b",
-    r"\b(?:starts|begins|ends)\s+with\s+the\s+(?:prefix|suffix|root)\b",
-    # Etymology / Latin / Greek root (case-insensitive matches lowercased text)
-    r"\b(?:from|derived\s+from)\s+(?:a\s+)?(?:latin|greek|hebrew)\b",
-    r"\b(?:latin|greek)\s+(?:root|word|term)\s+(?:meaning|for)\b",
-    r"\b(?:latin|greek)-?based\s+(?:term|word|root)\b",
-    r"\betymolog(?:y|ical|ically)\b",
-    # Prefix/suffix used WITH the actual fragment in quotes:
-    #   "the prefix 'comm-' means together"
-    #   "the suffix '-ation' is for actions"
-    r"\b(?:prefix|suffix|root)\s+['\"`][a-z]+-?['\"`]?\s+means\b",
-    r"\b(?:prefix|suffix|root)\s+['\"`][a-z]+-?['\"`]?\s+(?:meaning|that\s+means)\b",
-    # The prefix/suffix XYZ means
-    r"\b(?:prefix|suffix|root)\b.{0,30}\bmeans\s+['\"`]?\w",
-    # Blank-completion / fill-in-the-blank patterns
-    r"-_+\b",                       # "comm-____"
-    r"\b_+",                         # "____foo"
-    r"\b\w+-_{2,}",                 # any letter+ - underscore underscore
-    r"\b_{2,}-\w+\b",               # "____-foo"
-    r"\bcompletes?\b.{0,20}\b['\"`]?\w+-_+",  # "completes ... 'comm-___'"
-    r"\bfill\s+in\s+the\s+blank\b",
-    # Component-by-component reveal
-    r"\bcombines?\s+(?:these\s+)?two\s+(?:ideas|words|terms)\b",
-    # Multiple-choice option lists. The LLM sometimes "asks" the student
-    # to pick from A/B/C/D options where one is the answer — that's a
-    # covert reveal because the student just selects, doesn't recall.
-    # Observed verbatim 2026-05-01 (Requirements for Human Life session):
-    #   "A) Glucose B) Oxygen C) Adenosine Triphosphate D) Lactic acid"
-    # Detection: 3+ option markers within text (a/b/c/d or 1/2/3) — the
-    # 3+ minimum avoids false-positives on legitimate "(a)…(b)…" used
-    # for ordered scaffolding like "(a) the start and (b) the end".
-    r"(?:^|[\s.,])[a-d]\)\s+\w+.*?[\s,.][a-d]\)\s+\w+.*?[\s,.][a-d]\)\s+\w+",
-    r"\(\s*[a-d]\s*\)\s*\w+.*?\(\s*[a-d]\s*\)\s*\w+.*?\(\s*[a-d]\s*\)\s*\w+",
-    r"\bmultiple[-\s]?choice\b",                    # "multiple-choice", "multiplechoice"
-    r"\bmcq\b",                                     # bare "mcq"
-    r"\bgive\s+you\s+(?:a\s+)?(?:multiple[-\s]?choice|mcq|hint\s+with\s+options)\b",
-    r"\b(?:choose|pick|select)\s+from\s+(?:the\s+|these\s+)?(?:options|choices|four|three)\b",
-    r"\bhere\s+are\s+(?:four|three)\s+options\b",
-    # Two/three-letter starts-with reveal (existing single-letter pattern at
-    # line ~423 misses ALL-CAPS abbreviations: "starts with 'SA'", "begins
-    # with 'RCA'"). Lowercased, so [a-z]{2,3} matches "sa", "rca", "atp".
-    # Risk of false-positive on natural English is low because Socratic
-    # teachers don't say "the answer starts with two letters" outside
-    # leak attempts.
-    r"\b(?:starts?|begins?)\s+with\s+['\"`]?[a-z]{2,3}['\"`]?(?:\b|[\s,.])",
-    r"\b(?:starts?|begins?|ends?)\s+with\s+(?:the\s+letters?\s+)?['\"`][a-z]{2,4}['\"`]",
-    # Acronym / initialism expansion reveal — "X stands for Y" / "abbreviated as Y"
-    # / "the acronym for Y". The teacher must not unfold an abbreviation
-    # for the student; that's the student's deductive work.
-    r"\bstands?\s+for\s+(?:the\s+|a\s+)?\w+\s+\w+",  # "stands for the X Y"
-    r"\babbreviated\s+(?:as|for)\b",
-    r"\b(?:acronym|initialism)\s+(?:for|of)\b",
-    # First-letters-of construction — "made up of the first letters of three
-    # words". Reveals the structure of an abbreviation.
-    r"\bfirst\s+letters?\s+(?:of|from)\s+(?:the\s+)?(?:three|four|five|two|several|each)\b",
-    r"\bmade\s+(?:up\s+)?(?:of|from)\s+the\s+first\s+letters?\b",
-    r"\beach\s+letter\s+(?:represents|stands\s+for|is)\b",
-    # Synonym-translation reveals — "the common English word for X is Y".
-    # When the locked answer is technical (e.g. epidermis), the teacher
-    # offering the layman synonym (skin) is a covert reveal.
-    r"\b(?:common|everyday|simple|plain|lay|layman'?s)\s+(?:english\s+)?(?:word|term|name)\s+for\b",
-    r"\bthe\s+(?:medical|technical|formal|scientific|anatomical|clinical)\s+(?:word|term|name)\s+for\b",
-    r"\b(?:in|using)\s+(?:everyday|simple|plain|lay)\s+(?:language|terms|words)\b",
-)
-
-
-def _has_letter_hint(text: str) -> bool:
-    """True if the draft contains a letter / morphology / etymology /
-    blank-completion / rhyme hint pattern. All of these are covert
-    reveals that hand the student answer-shape without naming it."""
-    lower = (text or "").lower()
-    for pat in _LETTER_HINT_PATTERNS:
-        if re.search(pat, lower):
-            return True
-    return False
-
+# 2026-05-01: _LETTER_HINT_PATTERNS + _has_letter_hint were the regex
+# detector for letter / blank / etymology / MCQ / synonym / acronym
+# leaks at hint-3. Per the user's "LLM-only QC" directive, replaced by
+# conversation/classifiers.haiku_hint_leak_check, which reads the draft
+# + locked_answer + aliases and returns a verdict. Validated 96.7% /
+# 100% leak precision on 30 hand-curated cases (see
+# data/artifacts/classifiers/2026-05-01T21-03-51/report.md). The
+# classifier catches novel phrasings the regex didn't list ("the
+# textbook uses a word starting with the letter f", "the medical word
+# for funny bone is...") and avoids false-firing on legitimate
+# Socratic scaffolding ("describe what property lets these cells...").
 
 def _sentence_count(text: str) -> int:
     parts = [p.strip() for p in re.split(r"[.!?]+", text or "") if p.strip()]
@@ -642,31 +502,10 @@ def _first_sentence(text: str) -> str:
     return (parts[0] or "").strip()
 
 
-def _has_strong_affirmation(text: str) -> bool:
-    """True if the first sentence contains a strong-affirmation pattern.
-
-    Tests both the raw lowercased text AND the normalized form. The raw
-    form preserves apostrophes (so patterns like `you'?re` work); the
-    normalized form has apostrophes replaced with spaces (so the same
-    intent expressed as `you re` is also caught after sentence-end
-    punctuation is stripped). Without the dual pass, contraction-based
-    patterns silently failed on real Anthropic output (verified
-    2026-05-01: `_has_strong_affirmation("You're right!")` returned
-    False under the old single-pass implementation).
-    """
-    sentence = _first_sentence(text)
-    if not sentence:
-        return False
-    raw = (sentence or "").strip().lower()
-    norm = _normalize_text(sentence)
-    if not raw and not norm:
-        return False
-    for pat in _STRONG_AFFIRM_PATTERNS:
-        if raw and re.search(pat, raw):
-            return True
-        if norm and re.search(pat, norm):
-            return True
-    return False
+# 2026-05-01: _has_strong_affirmation was the regex sycophancy
+# detector. Replaced by conversation/classifiers.haiku_sycophancy_check
+# which is state-aware (only flags affirmation when student wasn't
+# actually correct). Validated 100% accuracy on 27 cases.
 
 
 def _recent_tutor_questions(messages: list[dict], limit: int = 3) -> list[str]:
@@ -1395,16 +1234,34 @@ class DeanAgent:
                           f"fuzzy_score={(result.top.score if result.top else 0)}",
                           flush=True)
 
-                # Vague-query gate (added 2026-05-01):
-                # If the user typed a SHORT vague query (< 3 words) AND the
-                # fuzzy matcher couldn't strongly confirm the topic, do NOT
+                # Vague-query gate (added 2026-05-01, refined for e2e):
+                # If the user typed a SHORT vague query AND the fuzzy
+                # matcher couldn't strongly confirm the topic, do NOT
                 # commit to semantic_top — surface cards instead. The
-                # semantic vote is too eager on broad words: typing "brain"
-                # confidently picks "Requirements for Human Life" because
-                # one chunk mentions brain cells needing oxygen, even
-                # though the user clearly wants brain anatomy. Show options.
+                # semantic vote is too eager on broad words: typing
+                # "brain" alone confidently picks "Requirements for Human
+                # Life" because one chunk mentions brain cells needing
+                # oxygen, even though the user clearly wants brain
+                # anatomy. Show options.
+                #
+                # Refinement (2026-05-01 e2e bug A1): use the ORIGINAL
+                # student message word count, not fuzzy_query (which is
+                # the LLM-normalized condensed form like "heart"). A
+                # query like "What part of the heart starts the
+                # heartbeat?" (8 words) was being collapsed to "heart"
+                # (1 word) by the intent classifier and then the gate
+                # treated it as vague — showing random cards instead of
+                # locking to Conduction System of the Heart. We now
+                # require BOTH the original AND normalized forms to be
+                # short; if the user typed a specific question, even
+                # heavy normalization shouldn't trip the gate.
                 fuzzy_q_words = len((fuzzy_query or "").split())
-                vague_query = fuzzy_q_words < 3 and result.tier != "strong"
+                latest_q_words = len((latest_student or "").split())
+                vague_query = (
+                    fuzzy_q_words < 3
+                    and latest_q_words < 4
+                    and result.tier != "strong"
+                )
                 if vague_query and semantic_top is not None:
                     state["debug"]["turn_trace"].append({
                         "wrapper": "dean.vague_query_suppress_semantic_top",
@@ -1692,15 +1549,36 @@ class DeanAgent:
                 })
                 # Anchor extraction failed — unlock the topic and show fresh
                 # coverage-tested alternatives with an LLM-authored intro.
+                # Tier 1 #1.4 fix (e2e bug A1+G1+B1): use sample_related
+                # so the alternatives match what the student was actually
+                # asking about, not random teachable picks. Without this,
+                # "What part of the heart starts the heartbeat?" gets
+                # alternatives like "Pulmonary Circulation / Large
+                # Intestine / Sensory Pathways" — useless cards.
                 messages = list(state.get("messages", []))
                 matcher = get_topic_matcher()
                 rejected_set = set(state.get("rejected_topic_paths", []) or [])
                 failed_path = (state.get("locked_topic") or {}).get("path") or ""
                 if failed_path:
                     rejected_set.add(failed_path)
-                alternatives = matcher.sample_diverse(
-                    3, min_chunk_count=5, exclude_paths=rejected_set,
-                )
+                # Build a query for sample_related from the student's
+                # original topic input — fall back to the latest student
+                # message if topic_selection is empty.
+                related_query = str(state.get("topic_selection") or "").strip()
+                if not related_query:
+                    for m in reversed(state.get("messages", []) or []):
+                        if m.get("role") == "student":
+                            related_query = str(m.get("content", "") or "").strip()
+                            break
+                if related_query and self.retriever is not None:
+                    alternatives = matcher.sample_related(
+                        self.retriever, related_query, n=3,
+                        min_chunk_count=5, exclude_paths=rejected_set,
+                    )
+                else:
+                    alternatives = matcher.sample_diverse(
+                        3, min_chunk_count=5, exclude_paths=rejected_set,
+                    )
                 option_labels = [_format_topic_label(m) for m in alternatives]
                 option_meta = {
                     label: {
@@ -3137,6 +3015,13 @@ class DeanAgent:
 
         No LLM call. Robust to missing fields: degrades gracefully if any
         path component is empty (uses what's available, omits the rest).
+
+        Leak guard (Tier 1 #1.4 fix, e2e bug E1): when the subsection
+        title contains the locked_answer or any alias (e.g. subsection
+        "The Aorta" with locked_answer "aorta"), rendering the
+        subsection verbatim pre-reveals the answer. In that case,
+        fall back to section-level phrasing ("let's work on a topic
+        from Section X") which doesn't echo the answer.
         """
         locked_topic = state.get("locked_topic") or {}
         subsection = (
@@ -3157,6 +3042,31 @@ class DeanAgent:
             if m2:
                 chapter_num = m2.group(1)
 
+        # ---- Leak guard: subsection contains locked_answer ----
+        # If the subsection title would echo the locked answer, mask it.
+        # Compare normalized content tokens of the subsection vs the
+        # locked_answer + each alias — if any candidate's tokens are a
+        # subset of the subsection's tokens, that's a leak risk.
+        locked_answer_for_check = str(state.get("locked_answer") or "").strip()
+        aliases_for_check = list(state.get("locked_answer_aliases") or [])
+        masked = False
+        if subsection and locked_answer_for_check:
+            sub_tokens = set(_content_tokens(subsection))
+            for cand in [locked_answer_for_check] + aliases_for_check:
+                if not isinstance(cand, str):
+                    continue
+                cand_tokens = set(_content_tokens(cand))
+                if not cand_tokens:
+                    continue
+                # Only flag distinctive overlaps (avoid masking on common
+                # nouns like "system" / "muscle" alone). Use the existing
+                # _is_distinctive_anchor helper for the candidate.
+                if not _is_distinctive_anchor(cand):
+                    continue
+                if cand_tokens.issubset(sub_tokens):
+                    masked = True
+                    break
+
         # Build location clause defensively — only include parts we have.
         if chapter_num and section:
             location = f"from Chapter {chapter_num} → {section}"
@@ -3167,54 +3077,50 @@ class DeanAgent:
         else:
             location = ""
 
-        header = f"Got it — let's work on **{subsection}**"
-        if location:
-            header = f"{header} {location}"
-        header = header + "."
+        if masked:
+            # Mask the subsection — use a generic placeholder that doesn't
+            # leak the answer. Keep section/chapter context so the student
+            # still knows where they are.
+            if location:
+                header = f"Got it — let's work on a topic {location}."
+            else:
+                header = "Got it — let's work on this topic."
+        else:
+            header = f"Got it — let's work on **{subsection}**"
+            if location:
+                header = f"{header} {location}"
+            header = header + "."
 
         locked_question = str(state.get("locked_question") or "").strip()
         if not locked_question:
             # Defensive fallback: extremely rare since dean_node only sets
             # topic_just_locked=True after both anchors are populated. Still,
             # better to ask SOMETHING than nothing.
+            fallback_reference = "this topic" if masked else subsection
             locked_question = (
-                f"To get started: what do you already know about {subsection}?"
+                f"To get started: what do you already know about {fallback_reference}?"
             )
 
         return f"{header}\n\n{locked_question}"
 
     # ============================================================
-    # Change 4 (2026-04-30): off-domain detector + warning brief.
+    # Off-domain detector (Change 4, 2026-04-30; rewritten 2026-05-01).
     #
-    # The off-domain check is a fast deterministic keyword-based
-    # filter. It only activates when student_state is already
-    # "irrelevant" (i.e. dean's LLM classifier already decided the
-    # message is off-target). The keyword list covers the obvious
-    # off-domain categories (profanity, substance, sexual content,
-    # generic off-topic). If exploration_judge later decides the
-    # turn is actually domain-tangential (category B), the
-    # increment is a wasted strike but recovers on the next
-    # engaged turn.
+    # 2026-05-01: replaced the keyword regex (vape|smoke|alcohol|...)
+    # with a Haiku classifier (conversation/classifiers.haiku_off_domain_check)
+    # per the user's "LLM-only QC" directive. The classifier
+    # disambiguates clinical questions involving substances ("how does
+    # alcohol damage liver hepatocytes?") from off-domain chitchat
+    # ("let's just get drunk"). The regex couldn't make this distinction —
+    # both fired \balcohol\b. Validated 100% on 27 hand-curated cases.
     #
-    # NOT moved to LLM-judge despite the audit philosophy because:
-    #   - exploration_judge runs later in the same turn and will
-    #     contradict if needed
-    #   - a fast keyword check on irrelevant-classified turns is
-    #     just a pre-filter; the cost of being wrong is one strike,
-    #     and counters reset on engagement
+    # Activates only when student_state is already "irrelevant" (i.e.
+    # dean's LLM classifier already decided the message is off-target).
+    # The Haiku classifier then categorizes which kind of off-domain it
+    # is (substance / sexual / profanity / chitchat / jailbreak /
+    # answer_demand). Counter increments deterministic; only the
+    # classification step is LLM-driven.
     # ============================================================
-
-    _OFF_DOMAIN_REGEX = re.compile(
-        r"\b("
-        r"vape|vaping|smoke|smoking|weed|marijuana|alcohol|drunk|"
-        r"sex|sexual|porn|scissoring|gay|lesbian|bisexual|"
-        r"shit|fuck(?:er|ing)?|damn|bullshit|asshole|piss|"
-        r"politics|election|trump|biden|election|"
-        r"weather|sport|football|basketball|"
-        r"date|dating|girlfriend|boyfriend"
-        r")\b",
-        re.IGNORECASE,
-    )
 
     def _is_off_domain_judgment(self, state: TutorState) -> bool:
         """Fast deterministic check: is the latest student message off-DOMAIN
@@ -3232,7 +3138,27 @@ class DeanAgent:
                 break
         if not latest_student_msg:
             return False
-        return bool(self._OFF_DOMAIN_REGEX.search(latest_student_msg))
+        # Off-domain detection (replaces _OFF_DOMAIN_REGEX per 2026-05-01
+        # LLM-only directive). Haiku classifier disambiguates clinical
+        # questions involving substances ("how does alcohol damage liver")
+        # from off-domain chitchat ("let's get drunk"). Validated 100%
+        # accuracy on 27 hand-curated cases.
+        from conversation.classifiers import haiku_off_domain_check
+        try:
+            r = haiku_off_domain_check(latest_student_msg)
+        except Exception:
+            return False  # Fail-open: don't strike on classifier infra failure
+        try:
+            state["debug"]["turn_trace"].append({
+                "wrapper": "classifiers.haiku_off_domain",
+                "result": r.get("verdict", "clean"),
+                "category": r.get("category", ""),
+                "evidence": str(r.get("evidence", ""))[:160],
+                "elapsed_s": float(r.get("_elapsed_s", 0.0)),
+            })
+        except Exception:
+            pass
+        return r.get("verdict") == "off_domain"
 
     def _build_strike_warning_brief(self, state: TutorState) -> str:
         """Return a string to append to dean_critique on strike turns.
@@ -3695,12 +3621,60 @@ class DeanAgent:
                     reason_codes.append("reveal_risk_alias")
                     break
 
-        # Letter-hint patterns ("starts with 'n'", "begins with X", "rhymes
-        # with..."). The teacher prompt forbids these explicitly but the
-        # LLM occasionally produces them under pressure. Observed verbatim
-        # 2026-05-01: "The textbook uses a word that starts with 'n'".
-        if _has_letter_hint(text):
+        # Hint-leak detection (replaces _LETTER_HINT_PATTERNS regex per
+        # 2026-05-01 LLM-only directive). Haiku classifier reads the
+        # draft and decides if it contains a letter / blank / etymology
+        # / MCQ / synonym / acronym leak. State-aware via the locked
+        # answer + aliases passed in. Validated 96.7% accuracy / 100%
+        # leak precision on 30 hand-curated cases (see
+        # data/artifacts/classifiers/2026-05-01T21-03-51).
+        from conversation.classifiers import (
+            haiku_hint_leak_check, haiku_sycophancy_check,
+        )
+        # Build the args once; running both classifiers in parallel
+        # below to keep latency at max(individual) rather than sum.
+        hint_kwargs = {
+            "draft": text,
+            "locked_answer": state.get("locked_answer", "") or "",
+            "aliases": state.get("locked_answer_aliases") or [],
+        }
+        # Sycophancy classifier needs student_state + reach_fired so it
+        # can apply asymmetric stakes (affirmation is OK only when
+        # student is correct AND reach gate fired).
+        reach_fired_now = bool(state.get("student_reached_answer"))
+        sycoph_kwargs = {
+            "draft": text,
+            "student_state": student_state,
+            "reach_fired": reach_fired_now,
+        }
+        # Parallelize the two classifier calls — each is ~1.5–2s on
+        # Haiku 4.5; running back-to-back would add 3–4s/turn while
+        # parallel keeps it at ~2s/turn.
+        try:
+            from concurrent.futures import ThreadPoolExecutor
+            with ThreadPoolExecutor(max_workers=2) as _ex:
+                _hint_fut = _ex.submit(haiku_hint_leak_check, **hint_kwargs)
+                _sycoph_fut = _ex.submit(haiku_sycophancy_check, **sycoph_kwargs)
+                hint_result = _hint_fut.result()
+                sycoph_result = _sycoph_fut.result()
+        except Exception:
+            # Fail-open: if classifier infra falls over, don't block
+            # the draft on a phantom leak. The LLM Dean QC will still
+            # examine the draft.
+            hint_result = {"verdict": "clean", "evidence": "", "rationale": "classifier_error"}
+            sycoph_result = {"verdict": "clean", "evidence": "", "rationale": "classifier_error"}
+        if hint_result.get("verdict") == "leak":
             reason_codes.append("letter_hint")
+            try:
+                state["debug"]["turn_trace"].append({
+                    "wrapper": "classifiers.haiku_hint_leak",
+                    "result": "leak",
+                    "leak_type": hint_result.get("leak_type", ""),
+                    "evidence": str(hint_result.get("evidence", ""))[:160],
+                    "elapsed_s": float(hint_result.get("_elapsed_s", 0.0)),
+                })
+            except Exception:
+                pass
 
         # full_answer content-token leak: extract distinctive multi-char nouns
         # from the textbook full_answer and check if any appear word-bounded
@@ -3727,44 +3701,24 @@ class DeanAgent:
         if _sentence_count(text) > 4:
             reason_codes.append("verbosity")
 
-        # NOTE (2026-04-30 audit cleanup): generic_filler and a generic
-        # sycophancy_risk regex were removed because they false-positive on
-        # legitimate affirmations like "right, exactly".
-        # Re-introduced below (2026-05-01) with a TIGHTER condition that
-        # specifically catches the "tutor leaks anchor → student parrots →
-        # tutor crowns the parrot" pattern:
-        #   - student_state != "correct" (student didn't actually reach)
-        #   - student's last message is short (<5 content words; longer
-        #     answers indicate genuine attempt, not parroting)
-        #   - tutor's previous turn (i.e. the turn that preceded the
-        #     student's parrot) already contained an anchor or alias term
-        #   - draft begins with a strong-affirmation phrase
-        # All four together = high confidence sycophancy fire. This avoids
-        # the original false-positive while catching the real failure mode
-        # observed in 2026-04-30 nidhi sessions.
-        try:
-            student_msgs = [m for m in (state.get("messages") or []) if m.get("role") == "student"]
-            tutor_msgs = [m for m in (state.get("messages") or []) if m.get("role") == "tutor"]
-            last_student = (student_msgs[-1].get("content", "") if student_msgs else "")
-            last_tutor = (tutor_msgs[-1].get("content", "") if tutor_msgs else "")
-        except (IndexError, AttributeError):
-            last_student, last_tutor = "", ""
-        anchor_terms = []
-        if locked:
-            anchor_terms.append(locked)
-        anchor_terms.extend(_normalize_text(a) for a in (state.get("locked_answer_aliases") or []))
-        prior_turn_named_anchor = any(
-            term and _is_distinctive_anchor(term) and re.search(rf"\b{re.escape(term)}\b", _normalize_text(last_tutor))
-            for term in anchor_terms
-        )
-        student_short = len(_normalize_text(last_student).split()) < 5
-        if (
-            student_state != "correct"
-            and student_short
-            and prior_turn_named_anchor
-            and _has_strong_affirmation(text)
-        ):
+        # Sycophancy detection (replaces _STRONG_AFFIRM_PATTERNS regex
+        # per 2026-05-01 LLM-only directive). The Haiku classifier was
+        # already invoked above in parallel with the hint-leak check;
+        # we just consume its verdict here. State-aware: classifier
+        # only fires "sycophantic" when student_state is NOT correct
+        # OR reach gate did not fire. Validated 100% accuracy on 27
+        # hand-curated cases (15 sycophantic + 12 clean).
+        if sycoph_result.get("verdict") == "sycophantic":
             reason_codes.append("sycophancy_risk")
+            try:
+                state["debug"]["turn_trace"].append({
+                    "wrapper": "classifiers.haiku_sycophancy",
+                    "result": "sycophantic",
+                    "evidence": str(sycoph_result.get("evidence", ""))[:160],
+                    "elapsed_s": float(sycoph_result.get("_elapsed_s", 0.0)),
+                })
+            except Exception:
+                pass
 
         prior_questions = _recent_tutor_questions(state.get("messages", []), limit=3)
         repetition_threshold = float(
@@ -3854,9 +3808,32 @@ class DeanAgent:
                         reason_codes.append("no_reveal")
                     break
 
-        # Letter-hint patterns also forbidden in assessment.
-        if _has_letter_hint(text):
+        # Hint-leak detection (replaces _LETTER_HINT_PATTERNS regex per
+        # 2026-05-01 LLM-only directive). Same Haiku classifier as
+        # tutoring path. Single call here (no parallel partner —
+        # sycophancy isn't checked in assessment phase since the
+        # student is being graded, not coached).
+        from conversation.classifiers import haiku_hint_leak_check
+        try:
+            hint_result = haiku_hint_leak_check(
+                draft=text,
+                locked_answer=state.get("locked_answer", "") or "",
+                aliases=state.get("locked_answer_aliases") or [],
+            )
+        except Exception:
+            hint_result = {"verdict": "clean", "evidence": "", "rationale": "classifier_error"}
+        if hint_result.get("verdict") == "leak":
             reason_codes.append("letter_hint")
+            try:
+                state["debug"]["turn_trace"].append({
+                    "wrapper": "classifiers.haiku_hint_leak_assessment",
+                    "result": "leak",
+                    "leak_type": hint_result.get("leak_type", ""),
+                    "evidence": str(hint_result.get("evidence", ""))[:160],
+                    "elapsed_s": float(hint_result.get("_elapsed_s", 0.0)),
+                })
+            except Exception:
+                pass
 
         full_ans = _normalize_text(state.get("full_answer", "") or "")
         if full_ans:
