@@ -62,6 +62,10 @@ data/artifacts/proposition_model_comparison.json
 data/artifacts/raptor_section_summaries.jsonl
 data/artifacts/raptor_subsection_summaries.jsonl
 
+# Cache smoke test logs are small, durable, paper-relevant — keep tracked
+!data/artifacts/cache_smoke/
+!data/artifacts/cache_smoke/*.log
+
 # Per-student mastery store (private to each user; written at session end)
 data/student_state/
 
@@ -101,6 +105,7 @@ Thumbs.db
 
 # Logs
 *.log
+!data/artifacts/cache_smoke/*.log
 claude-ui.html
 
 # React/FastAPI scaffold local artifacts
