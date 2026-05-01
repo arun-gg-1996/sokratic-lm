@@ -66,6 +66,12 @@ data/artifacts/raptor_subsection_summaries.jsonl
 !data/artifacts/cache_smoke/
 !data/artifacts/cache_smoke/*.log
 
+# E2E test runs: keep markdown reports tracked (paper / regression
+# evidence), drop the heavy per-scenario JSONs to avoid bloat.
+data/artifacts/e2e/**/*.json
+!data/artifacts/e2e/
+!data/artifacts/e2e/**/*.md
+
 # Per-student mastery store (private to each user; written at session end)
 data/student_state/
 

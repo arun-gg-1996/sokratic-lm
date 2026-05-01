@@ -1,7 +1,7 @@
 {
   "turn_count": 0,
   "max_journal_turn": 10,
-  "last_prompt": "2026-05-01_19-59-27_tier1_1_3_multi_anchor_reach",
+  "last_prompt": "2026-05-01_20-07-56_tier1_1_4_e2e_framework",
   "assistant_turn_count": 0,
   "summary_prompt_every": 10,
   "summary_prompt_enabled": true,
