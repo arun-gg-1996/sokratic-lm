@@ -72,6 +72,12 @@ data/artifacts/e2e/**/*.json
 !data/artifacts/e2e/
 !data/artifacts/e2e/**/*.md
 
+# Classifier validation runs: keep markdown reports, drop heavy
+# per-classifier raw JSONs.
+data/artifacts/classifiers/**/*.json
+!data/artifacts/classifiers/
+!data/artifacts/classifiers/**/*.md
+
 # Per-student mastery store (private to each user; written at session end)
 data/student_state/
 

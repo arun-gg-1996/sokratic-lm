@@ -1,7 +1,7 @@
 {
   "turn_count": 0,
   "max_journal_turn": 10,
-  "last_prompt": "2026-05-01_20-07-56_tier1_1_4_e2e_framework",
+  "last_prompt": "2026-05-01_21-06-18_haiku_classifiers_poc",
   "assistant_turn_count": 0,
   "summary_prompt_every": 10,
   "summary_prompt_enabled": true,
