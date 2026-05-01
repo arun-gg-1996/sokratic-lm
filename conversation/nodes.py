@@ -169,6 +169,36 @@ def dean_node(state: TutorState, dean, teacher) -> dict:
     if not has_student_msg:
         return {}
 
+    # Tier 1 #1.4 fix (e2e bug G1): if the latest student message is
+    # whitespace-only or empty after stripping, do NOT route to the LLM
+    # graph — Anthropic returns a 400 ('messages: text content blocks
+    # must contain non-whitespace text'). Reply with a friendly nudge
+    # instead so the student can retry. This is the input-sanitization
+    # gap the e2e harness surfaced; before this guard, the suite
+    # crashed with BadRequestError.
+    latest_student_for_guard = ""
+    for _m in reversed(state.get("messages", []) or []):
+        if (_m or {}).get("role") == "student":
+            latest_student_for_guard = str(_m.get("content", "") or "")
+            break
+    if latest_student_for_guard and not latest_student_for_guard.strip():
+        msgs = list(state.get("messages", []))
+        msgs.append({
+            "role": "tutor",
+            "content": (
+                "Looks like your last message came through empty — "
+                "could you type your question or response again?"
+            ),
+        })
+        try:
+            state["debug"].setdefault("turn_trace", []).append({
+                "wrapper": "dean_node.whitespace_input_guard",
+                "result": "skipped_llm_path",
+            })
+        except Exception:
+            pass
+        return {"messages": msgs}
+
     # Archive the previous turn's trace (if any) into all_turn_traces before
     # wiping turn_trace. state.py declares all_turn_traces but nothing was
     # writing it — debug history was being lost. Cap to last 50 turns so

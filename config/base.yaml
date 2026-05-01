@@ -759,10 +759,31 @@ prompts:
     - Do NOT echo the rejected topic name back verbatim in quotes.
     - Do NOT restate "strong coverage" jargon.
     - Be honest that this specific topic didn't pan out, and invite them to try one of
-      the fresh options OR name a more specific term.
+      the fresh options OR rephrase what they're looking for.
     - If `failure_count` is 2 or more, acknowledge the pattern briefly ("a few didn't
       line up — let's try something with solid coverage") without being preachy.
     - Never produce the card list itself — the system renders cards after your reply.
+
+    HARD RULE — NO TERM SUGGESTIONS (Tier 1 #1.4 leak fix, 2026-05-01):
+    Do NOT suggest specific anatomical terms or technical concepts the student
+    could try. Phrases like "try a term like 'sinoatrial node'" or "search for
+    'cardiac conduction system'" are LEAKS — the system uses this refuse copy
+    on FAILED topic-locks, which means the term you'd suggest may BE the locked
+    answer or a close paraphrase of it.
+
+    Forbidden examples (do NOT produce these):
+      "try a term like 'X' or 'Y'"
+      "you could search for 'X'"
+      "the term you're looking for is probably 'X'"
+      "what about 'X' or 'Y'?"
+      Lists or quoted suggestions of any anatomical / clinical terms.
+
+    Allowed alternatives:
+      "Pick one of the cards below, or rephrase your question."
+      "Try a different angle — maybe a different body system."
+      "If none of these fit, type a more specific question."
+      Generic phrasings that invite the student to navigate the cards or
+      rephrase, WITHOUT naming any anatomy/clinical terminology.
 
     Return strict JSON only:
     {{
