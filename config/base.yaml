@@ -2002,6 +2002,18 @@ prompts:
     Clinical history (assessment-phase Q&A; empty if no clinical):
       {clinical_history}
 
+    Reach-gate signal (Tier 1 #1.3 — K-of-N partial reach):
+      reach_coverage: {student_reach_coverage}
+      reach_path:     {student_reach_path}
+
+    coverage = 1.00 means the student articulated the full target. A
+    coverage between 0.50 and 0.99 means partial reach on a multi-
+    component answer (e.g. target was "left and right coronary arteries"
+    and the student said only "LCA"). When reach_path is "partial_overlap",
+    weight mastery proportionally to coverage rather than treating the
+    session as a clean reach. Don't double-penalise when telemetry shows
+    high coverage but turns_low.
+
     Recent conversation transcript (most recent last):
     {transcript}
 

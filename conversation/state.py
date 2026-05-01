@@ -70,6 +70,17 @@ class TutorState(TypedDict):
 
     # --- Progress ---
     student_reached_answer: bool
+    # K-of-N partial-reach coverage (0.0 - 1.0). 1.0 on full reach, K/N on
+    # partial-reach for multi-component answers (e.g. "left and right
+    # coronary arteries" → student says only "LCA" → coverage=0.5).
+    # 0.0 when not reached. Surfaced to mastery scorer for partial credit.
+    student_reach_coverage: float
+    # Path that the reach gate took on the latest evaluation:
+    #   overlap | partial_overlap | paraphrase | hedge_block |
+    #   no_overlap_no_paraphrase | no_lock | llm_no_quote |
+    #   llm_parse_fail | llm_error | skipped_topic_just_locked |
+    #   skipped_no_msg_or_lock
+    student_reach_path: str
     # Confidence attached to the latest student answer classification (0.0 - 1.0).
     student_answer_confidence: float
     # Running mean confidence over session turns (0.0 - 1.0).
@@ -261,6 +272,8 @@ def initial_state(student_id: str, cfg) -> TutorState:
         turn_count=0,
         max_turns=cfg.session.max_turns,
         student_reached_answer=False,
+        student_reach_coverage=0.0,
+        student_reach_path="",
         student_answer_confidence=0.0,
         student_mastery_confidence=0.0,
         confidence_samples=0,

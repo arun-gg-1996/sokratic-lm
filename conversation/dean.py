@@ -403,6 +403,39 @@ def _has_hedge(msg_lower_raw: str) -> bool:
     return any(h in msg_lower_raw for h in _HEDGE_MARKERS)
 
 
+def _split_locked_answer(answer: str) -> list[str]:
+    """Split a multi-component locked_answer into its top-level noun-phrase
+    components. Single-component answers return a 1-element list.
+
+    Splits on conjunctions/separators commonly used to enumerate components:
+      - " and " / " or " (with surrounding spaces — won't split "android")
+      - "," / ";" with optional whitespace
+
+    Examples:
+      "skeletal muscle pump"
+        -> ["skeletal muscle pump"]                            (single)
+      "left and right coronary arteries"
+        -> ["left", "right coronary arteries"]                 (2-component)
+      "ingestion, propulsion, mechanical digestion, chemical digestion"
+        -> ["ingestion", "propulsion", "mechanical digestion",
+            "chemical digestion"]                              (4-component)
+      "pivot, hinge, condyloid, saddle, plane, ball-and-socket"
+        -> ["pivot", "hinge", "condyloid", "saddle", "plane",
+            "ball-and-socket"]                                 (6-component)
+
+    Note: 'ball-and-socket' is hyphenated so it's treated as one token,
+    not split by "and". Splitter operates on whitespace-padded "and" only.
+    """
+    if not answer or not answer.strip():
+        return []
+    # Lowercase for splitting; preserve original casing per component is
+    # not needed downstream (token-overlap uses _content_tokens which
+    # lowercases anyway).
+    parts = re.split(r"\s+and\s+|\s+or\s+|[,;]\s*", answer.lower())
+    parts = [p.strip() for p in parts if p.strip()]
+    return parts
+
+
 # Common short anatomy/biology nouns that frequently appear in legitimate
 # Socratic scaffolding ("the heart muscle...", "what nerve innervates...")
 # and would false-positive a single-word anchor leak check. When the
@@ -1859,10 +1892,17 @@ class DeanAgent:
                 "path": "skipped_no_msg_or_lock",
             }
         eval_result["student_reached_answer"] = bool(gate_result.get("reached", False))
+        # K-of-N partial reach support: capture coverage so the mastery
+        # scorer can apply partial credit. Defaults to 1.0 for full reach
+        # via legacy paths, 0.0 when not reached.
+        gate_coverage = float(gate_result.get("coverage", 1.0 if eval_result["student_reached_answer"] else 0.0))
+        gate_path_value = str(gate_result.get("path", "unknown"))
 
         # Apply eval results to state
         state["student_state"] = eval_result["student_state"]
         state["student_reached_answer"] = eval_result["student_reached_answer"]
+        state["student_reach_coverage"] = round(_clamp01(gate_coverage), 3)
+        state["student_reach_path"] = gate_path_value
         state["locked_answer"] = eval_result["locked_answer"] or state["locked_answer"]
         state["student_answer_confidence"] = confidence_score
 
@@ -1877,11 +1917,15 @@ class DeanAgent:
                 f"answer_conf={confidence_score:.3f}, "
                 f"mastery_conf={state['student_mastery_confidence']:.3f}, "
                 f"reached={state['student_reached_answer']} "
-                f"(gate_path={gate_result.get('path', 'unknown')})"
+                f"coverage={state['student_reach_coverage']:.2f} "
+                f"(gate_path={gate_path_value})"
             ),
             "locked_answer": state.get("locked_answer", ""),
-            "gate_path": gate_result.get("path", "unknown"),
+            "gate_path": gate_path_value,
             "gate_evidence": str(gate_result.get("evidence", ""))[:160],
+            "gate_coverage": state["student_reach_coverage"],
+            "gate_n_matched": gate_result.get("n_matched"),
+            "gate_n_total": gate_result.get("n_total"),
         })
 
         hint_before = int(state.get("hint_level", 0))
@@ -3247,60 +3291,147 @@ class DeanAgent:
         confidence_score >= 0.72 threshold which conflated step-correctness
         with answer-reach (the 'gravity counted as muscle pump' bug).
 
-        Two-step strategy:
+        Three-step strategy:
 
-          Step A — deterministic token-overlap (free, fast):
+          Step A.1 — deterministic full token-overlap (free, fast):
             If the message contains all content tokens of locked_answer or
-            any alias AND no hedge/denial marker is present, accept as
-            reached. Evidence is the matched candidate phrase.
+            any single alias AND no hedge marker is present, accept as
+            FULL reach (coverage=1.0). Evidence is the matched phrase.
+
+          Step A.2 — K-of-N partial reach (multi-component answers only):
+            For locked_answer like "left and right coronary arteries" or
+            "ingestion, propulsion, mechanical digestion, chemical
+            digestion", split into N >= 2 components. Count how many
+            components or aliases match by token overlap. If matches >=
+            ceil(N/2), accept as PARTIAL reach (coverage=K/N, path=
+            'partial_overlap' when K<N else 'overlap'). Closes the gap
+            where a student saying just "LCA" on a multi-component answer
+            was previously rejected.
 
           Step B — LLM paraphrase fallback (~one cheap call):
             Otherwise, ask the LLM whether the message paraphrases the
-            answer. The LLM must quote a verbatim substring of the student
-            message; quote-or-no-reach is enforced post-call so a
-            hallucinated quote forces reached=False.
+            answer. The LLM must quote a verbatim substring of the
+            student message; quote-or-no-reach is enforced post-call so
+            a hallucinated quote forces reached=False.
 
         Bias: reached=False on any ambiguity. False positives fabricate
         confirmations the student didn't earn — much worse than running
-        one extra hint turn.
+        one extra hint turn. Partial reach is a softer affirmation that
+        still routes to assessment so the student gets credit for what
+        they DID say without requiring full coverage of multi-component
+        answers.
 
         Returns: dict with keys
-          reached:  bool
-          evidence: str   (matched span or LLM quote, "" when not reached)
-          path:     str   (overlap | paraphrase | hedge_block |
-                          no_overlap_no_paraphrase | no_lock |
-                          llm_no_quote | llm_parse_fail | llm_error)
+          reached:    bool          (true on full or partial reach)
+          coverage:   float in [0,1] (1.0 on full, K/N on partial,
+                                      0.0 on no-reach paths)
+          evidence:   str           (matched span or LLM quote)
+          path:       str           (overlap | partial_overlap |
+                                    paraphrase | hedge_block |
+                                    no_overlap_no_paraphrase | no_lock |
+                                    llm_no_quote | llm_parse_fail |
+                                    llm_error)
+          n_matched:  int           (components matched, multi-component only)
+          n_total:    int           (total components, multi-component only)
         """
         locked_answer = (state.get("locked_answer") or "").strip()
         if not locked_answer:
-            return {"reached": False, "evidence": "", "path": "no_lock"}
+            return {"reached": False, "coverage": 0.0, "evidence": "", "path": "no_lock"}
 
         aliases = list(state.get("locked_answer_aliases") or [])
         msg_norm = _normalize_text(student_msg)
         msg_norm_tokens = set(msg_norm.split()) if msg_norm else set()
         msg_lower_raw = (student_msg or "").lower()
 
-        # ---- Step A: deterministic token overlap (skip on hedge) ----
+        # ---- Step A.1: deterministic full token overlap (skip on hedge) ----
         if not _has_hedge(msg_lower_raw):
-            for cand in [locked_answer] + aliases:
-                cand_tokens = _content_tokens(cand)
-                if not cand_tokens:
-                    continue
-                # Require ALL content tokens of the candidate to appear
-                # in the message. Set membership (order-independent) is
-                # fine — paraphrases like "the muscle pump (skeletal)"
-                # should still match locked_answer="skeletal muscle pump".
-                if all(tok in msg_norm_tokens for tok in cand_tokens):
+            components = _split_locked_answer(locked_answer)
+            multi = len(components) >= 2
+
+            # Always check full match against locked_answer itself.
+            locked_tokens = _content_tokens(locked_answer)
+            if locked_tokens and all(tok in msg_norm_tokens for tok in locked_tokens):
+                return {
+                    "reached": True,
+                    "coverage": 1.0,
+                    "evidence": locked_answer,
+                    "path": "overlap",
+                }
+
+            # Check full match against aliases ONLY when answer is single-
+            # component. For multi-component answers, aliases are per-
+            # component identifiers (the lock-anchor prompt produces e.g.
+            # ["LCA", "left coronary artery", "RCA", "right coronary
+            # artery"] for "left and right coronary arteries"). A single
+            # alias match would cheat the K-of-N partial-reach logic
+            # below — student says "LCA" and it'd count as full reach.
+            if not multi:
+                for cand in aliases:
+                    cand_tokens = _content_tokens(cand)
+                    if not cand_tokens:
+                        continue
+                    if all(tok in msg_norm_tokens for tok in cand_tokens):
+                        return {
+                            "reached": True,
+                            "coverage": 1.0,
+                            "evidence": cand,
+                            "path": "overlap",
+                        }
+
+            # ---- Step A.2: K-of-N partial reach for multi-component answers ----
+            if multi:
+                # Track distinct matches by sorted-content-token-tuple to
+                # avoid double-counting "LCA" + "left coronary artery"
+                # (two surface forms of the same component) as 2 hits.
+                matched_phrases: list[str] = []
+                seen_token_keys: set[tuple] = set()
+                for phrase in components + aliases:
+                    phrase_tokens = _content_tokens(phrase)
+                    if not phrase_tokens:
+                        continue
+                    if not all(tok in msg_norm_tokens for tok in phrase_tokens):
+                        continue
+                    key = tuple(sorted(phrase_tokens))
+                    if key in seen_token_keys:
+                        continue
+                    # Also dedup by subset/superset: if a longer match
+                    # already covers this one's tokens (or vice versa),
+                    # skip the shorter to avoid double-counting "left
+                    # coronary" + "left coronary artery" as 2 hits.
+                    skip = False
+                    for prior_key in seen_token_keys:
+                        prior_set = set(prior_key)
+                        cur_set = set(phrase_tokens)
+                        if cur_set.issubset(prior_set) or prior_set.issubset(cur_set):
+                            skip = True
+                            break
+                    if skip:
+                        continue
+                    seen_token_keys.add(key)
+                    matched_phrases.append(phrase)
+
+                n_matched = len(matched_phrases)
+                n_total = len(components)
+                threshold = max(1, (n_total + 1) // 2)  # ceil(n/2)
+                if n_matched >= threshold:
+                    is_full = (n_matched >= n_total)
                     return {
                         "reached": True,
-                        "evidence": cand,
-                        "path": "overlap",
+                        "coverage": min(1.0, n_matched / n_total) if n_total else 0.0,
+                        "evidence": ", ".join(matched_phrases[:3]),
+                        "path": "overlap" if is_full else "partial_overlap",
+                        "n_matched": n_matched,
+                        "n_total": n_total,
                     }
 
         # ---- Step B: LLM paraphrase fallback ----
-        return self._reached_check_llm(
+        result = self._reached_check_llm(
             state, student_msg, locked_answer, aliases, msg_norm
         )
+        # Ensure coverage key is present even on LLM path (binary 1.0 / 0.0).
+        if "coverage" not in result:
+            result["coverage"] = 1.0 if result.get("reached") else 0.0
+        return result
 
     def _reached_check_llm(
         self,

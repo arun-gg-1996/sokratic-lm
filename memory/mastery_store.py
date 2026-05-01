@@ -289,6 +289,18 @@ def score_session_llm(
     else:
         clinical_str = "(no clinical phase)"
 
+    # K-of-N partial reach coverage (Tier 1 #1.3). 1.0 on full reach,
+    # K/N on partial-reach for multi-component answers (e.g. student
+    # said "LCA" on a "left and right coronary arteries" lock → 0.5).
+    # The scorer can use this to award partial credit on multi-component
+    # answers where the student got a meaningful subset right.
+    reach_coverage_val = state.get("student_reach_coverage", None)
+    if reach_coverage_val is None:
+        # Backward-compat for state dicts written before #1.3 landed.
+        reach_coverage_val = 1.0 if state.get("student_reached_answer") else 0.0
+    reach_coverage_str = f"{float(reach_coverage_val):.2f}"
+    reach_path_str = str(state.get("student_reach_path", "") or "(unknown)")
+
     user_prompt = dynamic_template.format(
         subsection_title=subsection or "(unknown)",
         chapter_title=chapter or "(unknown)",
@@ -306,6 +318,8 @@ def score_session_llm(
         total_low_effort_turns=total_low_effort,
         total_off_topic_turns=total_off_topic,
         off_topic_terminated="yes" if off_topic_terminated else "no",
+        student_reach_coverage=reach_coverage_str,
+        student_reach_path=reach_path_str,
     )
 
     try:
