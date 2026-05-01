@@ -384,28 +384,66 @@ _COMMON_ANCHOR_FALSE_POSITIVES = frozenset({
 })
 
 
+# Curated short clinical / anatomical / biological abbreviations that are
+# DISTINCTIVE despite being below the 5-char floor. Without this set,
+# `_is_distinctive_anchor` rejects them (e.g. "sa", "rca", "atp") because
+# they're too short — but they're real anchors that need leak-protection.
+# Lowercased; matched after the caller's lowercase normalization.
+_DISTINCTIVE_SHORT_ABBREVIATIONS = frozenset({
+    # Cardiac
+    "sa", "av", "rca", "lca", "lad", "rcx", "lcx", "pda", "ivc", "svc",
+    # Neuro
+    "cn", "cns", "pns", "rem", "csf", "bbb",
+    # Biochem
+    "atp", "adp", "amp", "gtp", "gdp", "nad", "fad", "coa", "udp",
+    "dna", "rna", "mrna", "trna", "rrna",
+    "fc", "fab", "ig", "iga", "igg", "igm", "ige", "igd",
+    # Lipids & blood
+    "ldl", "hdl", "vldl", "rbc", "wbc", "cbc", "hb", "abg",
+    # Endocrine
+    "tsh", "fsh", "lh", "acth", "adh", "gh", "prl",
+    # Imaging / instruments
+    "ekg", "ecg", "eeg", "mri", "ct", "pet",
+    # Other clinical
+    "icu", "er", "or", "ot", "pt",
+})
+
+
 def _is_distinctive_anchor(token: str) -> bool:
     """True iff a single-word anchor is distinctive enough to safely
     block as a leak. Multi-word anchors are always considered distinctive
     (callers should special-case the multi-word path).
 
-    Rule: ≥5 chars AND not in the common-anatomy/biology stopword set.
-    Catches: nucleus, ganglion, pepsin, saliva, septum, nephron, alveolus,
-    hepatocyte, axillary, deltoid, etc.
-    Skips:   muscle, nerve, vein, bone, left, right (would false-positive).
+    Rules (any one suffices):
+      1. Multi-word phrase (always distinctive).
+      2. ≥5 chars AND not in the common-anatomy/biology stopword set.
+         Catches: nucleus, ganglion, pepsin, septum, nephron, alveolus,
+         hepatocyte, axillary, deltoid, etc.
+      3. ALL-CAPS short token (2-4 chars), case preserved (e.g. "SA",
+         "RCA", "ATP", "Fc"). Detected on raw input before lowercasing.
+      4. Lowercased token in the curated short-abbreviation set
+         (closes the gap when caller already lowercased).
+
+    Skips: muscle, nerve, vein, bone, left, right (would false-positive).
     """
-    t = (token or "").strip().lower()
-    if not t:
+    raw = (token or "").strip()
+    if not raw:
         return False
-    parts = t.split()
-    if len(parts) >= 2:
+    parts_raw = raw.split()
+    if len(parts_raw) >= 2:
         return True  # multi-word phrases are always distinctive enough
-    word = parts[0]
-    if len(word) < 5:
-        return False
-    if word in _COMMON_ANCHOR_FALSE_POSITIVES:
-        return False
-    return True
+    word_raw = parts_raw[0]
+    word = word_raw.lower()
+    # Standard ≥5-char path
+    if len(word) >= 5 and word not in _COMMON_ANCHOR_FALSE_POSITIVES:
+        return True
+    # ALL-CAPS short abbreviation — preserve original case detection
+    if 2 <= len(word_raw) <= 4 and word_raw.isupper():
+        return True
+    # Curated short-abbreviation set (case-insensitive)
+    if word in _DISTINCTIVE_SHORT_ABBREVIATIONS:
+        return True
+    return False
 
 
 # Letter-hint / morphology / etymology / blank-completion patterns the

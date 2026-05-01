@@ -1,7 +1,7 @@
 {
   "turn_count": 0,
   "max_journal_turn": 10,
-  "last_prompt": "2026-05-01_18-56-38_tier1_1_2a_letter_hint_extensions",
+  "last_prompt": "2026-05-01_18-59-18_tier1_1_2b_short_caps_anchors",
   "assistant_turn_count": 0,
   "summary_prompt_every": 10,
   "summary_prompt_enabled": true,
