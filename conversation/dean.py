@@ -469,6 +469,31 @@ _LETTER_HINT_PATTERNS = (
     r"\bgive\s+you\s+(?:a\s+)?(?:multiple[-\s]?choice|mcq|hint\s+with\s+options)\b",
     r"\b(?:choose|pick|select)\s+from\s+(?:the\s+|these\s+)?(?:options|choices|four|three)\b",
     r"\bhere\s+are\s+(?:four|three)\s+options\b",
+    # Two/three-letter starts-with reveal (existing single-letter pattern at
+    # line ~423 misses ALL-CAPS abbreviations: "starts with 'SA'", "begins
+    # with 'RCA'"). Lowercased, so [a-z]{2,3} matches "sa", "rca", "atp".
+    # Risk of false-positive on natural English is low because Socratic
+    # teachers don't say "the answer starts with two letters" outside
+    # leak attempts.
+    r"\b(?:starts?|begins?)\s+with\s+['\"`]?[a-z]{2,3}['\"`]?(?:\b|[\s,.])",
+    r"\b(?:starts?|begins?|ends?)\s+with\s+(?:the\s+letters?\s+)?['\"`][a-z]{2,4}['\"`]",
+    # Acronym / initialism expansion reveal — "X stands for Y" / "abbreviated as Y"
+    # / "the acronym for Y". The teacher must not unfold an abbreviation
+    # for the student; that's the student's deductive work.
+    r"\bstands?\s+for\s+(?:the\s+|a\s+)?\w+\s+\w+",  # "stands for the X Y"
+    r"\babbreviated\s+(?:as|for)\b",
+    r"\b(?:acronym|initialism)\s+(?:for|of)\b",
+    # First-letters-of construction — "made up of the first letters of three
+    # words". Reveals the structure of an abbreviation.
+    r"\bfirst\s+letters?\s+(?:of|from)\s+(?:the\s+)?(?:three|four|five|two|several|each)\b",
+    r"\bmade\s+(?:up\s+)?(?:of|from)\s+the\s+first\s+letters?\b",
+    r"\beach\s+letter\s+(?:represents|stands\s+for|is)\b",
+    # Synonym-translation reveals — "the common English word for X is Y".
+    # When the locked answer is technical (e.g. epidermis), the teacher
+    # offering the layman synonym (skin) is a covert reveal.
+    r"\b(?:common|everyday|simple|plain|lay|layman'?s)\s+(?:english\s+)?(?:word|term|name)\s+for\b",
+    r"\bthe\s+(?:medical|technical|formal|scientific|anatomical|clinical)\s+(?:word|term|name)\s+for\b",
+    r"\b(?:in|using)\s+(?:everyday|simple|plain|lay)\s+(?:language|terms|words)\b",
 )
 
 
