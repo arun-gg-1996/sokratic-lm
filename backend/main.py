@@ -17,8 +17,13 @@ context guarantees the warm-up runs before the server accepts
 requests.
 """
 from contextlib import asynccontextmanager
+from pathlib import Path
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+load_dotenv(Path(__file__).parent.parent / ".env", override=True)
 
 from backend.api import chat, mastery, memory, session, users
 from backend.dependencies import get_graph, get_memory_manager, get_retriever

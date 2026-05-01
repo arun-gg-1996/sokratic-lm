@@ -33,8 +33,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+# Retrieval calls OpenAI for query embeddings; .env must be loaded first.
+from dotenv import load_dotenv  # noqa: E402
+load_dotenv(ROOT / ".env", override=True)
+
 from config import cfg  # noqa: E402
-from retrieval.retriever import Retriever  # noqa: E402
+from retrieval.retriever import ChunkRetriever  # noqa: E402
 
 OUT_PATH = ROOT / "data" / "topic_index.json"
 
@@ -71,7 +75,7 @@ def main() -> None:
         entries_to_check = entries
 
     threshold = float(getattr(cfg.retrieval, "ood_cosine_threshold", 0.30))
-    retriever = Retriever()
+    retriever = ChunkRetriever()
 
     t_start = time.time()
     teachable_count = 0

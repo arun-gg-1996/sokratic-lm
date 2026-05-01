@@ -2,7 +2,7 @@
 langchain==0.3.25
 langgraph==0.2.60
 anthropic==0.52.2
-openai==1.76.0
+openai>=1.108.1
 
 # Retrieval
 # faiss-cpu removed — Qdrant replaces FAISS
@@ -18,7 +18,7 @@ scispacy==0.5.5
 spacy==3.7.5
 
 # Chunking / ingestion
-llama-index>=0.12.34
+llama-index>=0.14.21
 llama-index-core>=0.14.21
 pymupdf==1.25.5
 pdfplumber==0.11.6

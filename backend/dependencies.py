@@ -8,7 +8,7 @@ from typing import Any
 from conversation.dean import DeanAgent
 from conversation.graph import build_graph
 from memory.memory_manager import MemoryManager
-from retrieval.retriever import Retriever
+from retrieval.retriever import ChunkRetriever
 
 
 @dataclass
@@ -38,7 +38,7 @@ def get_retriever():
     """
     Use the single production retriever path only.
     """
-    return Retriever()
+    return ChunkRetriever()
 
 
 @lru_cache(maxsize=1)
