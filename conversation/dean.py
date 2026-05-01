@@ -44,6 +44,20 @@ _BANNED_FILLER_PREFIXES = (
     "i notice",
     "i hear you",
     "that's okay",
+    # Sonnet 4.6-specific opener patterns observed in 2026-05-01 runs.
+    # These soften the response with empathy/affirmation before the
+    # actual Socratic move, which sounds nice but inflates perceived
+    # correctness when the student was wrong or hedging.
+    "you're on the right",
+    "you're heading in the right",
+    "that's a thoughtful",
+    "great thinking",
+    "nice thinking",
+    "good intuition",
+    "you're thinking",
+    "good question",
+    "great question",
+    "interesting question",
 )
 _STRONG_AFFIRM_PATTERNS = (
     r"\bexactly\b",
@@ -65,6 +79,29 @@ _STRONG_AFFIRM_PATTERNS = (
     r"\bspot on\b",
     r"\bnice work\b",
     r"\bgood reasoning\b",
+    # Sonnet 4.6 sycophancy patterns (observed 2026-05-01 antibody / CNS
+    # / cerebrum runs). Sonnet skews more empathic than Haiku 4.5 and
+    # produces these "soft affirmation" prefixes that bypass the older
+    # strict-affirmation regex. They tell the student they're "close" /
+    # "on track" / "partly right" without actually evaluating the
+    # answer's correctness — which is sycophancy by another name.
+    r"\bon (an|a|the) interesting track\b",
+    r"\bon (an|a|the) (right|good) track\b",
+    r"\bheading in the right direction\b",
+    r"\b(?:you'?re|you are) on the right path\b",
+    r"\bpartly (right|correct)\b",
+    r"\b(both|all) (?:the )?key concepts? in hand\b",
+    r"\b(both|all) (?:the )?(?:key |important )?(?:components|pieces|parts) (?:are )?in hand\b",
+    r"\byou'?re getting there\b",
+    r"\byou'?re close\b",
+    r"\bgetting closer\b",
+    r"\bclose to (?:the |a |an )?(?:right|correct) (?:answer|idea|direction)\b",
+    r"\bin the right neighborhood\b",
+    r"\b(?:nice|good|great)\s+(?:thinking|intuition|reasoning|approach|instinct)\b",
+    r"\byou'?ve started (?:to )?(?:see|grasp|connect|identify)\b",
+    # Patterns where the tutor narrates what the student "did right"
+    # before the student has actually done it. Common Sonnet move.
+    r"\byou'?ve (?:already )?(?:touched on|hinted at|gestured at|started toward|begun to)\b",
 )
 _RETRIEVAL_NOISE_PATTERNS = (
     r"^\s*\d+\s*[\)\.\-:]\s*",
@@ -573,10 +610,30 @@ def _first_sentence(text: str) -> str:
 
 
 def _has_strong_affirmation(text: str) -> bool:
-    first = _normalize_text(_first_sentence(text))
-    if not first:
+    """True if the first sentence contains a strong-affirmation pattern.
+
+    Tests both the raw lowercased text AND the normalized form. The raw
+    form preserves apostrophes (so patterns like `you'?re` work); the
+    normalized form has apostrophes replaced with spaces (so the same
+    intent expressed as `you re` is also caught after sentence-end
+    punctuation is stripped). Without the dual pass, contraction-based
+    patterns silently failed on real Anthropic output (verified
+    2026-05-01: `_has_strong_affirmation("You're right!")` returned
+    False under the old single-pass implementation).
+    """
+    sentence = _first_sentence(text)
+    if not sentence:
         return False
-    return any(re.search(pat, first) for pat in _STRONG_AFFIRM_PATTERNS)
+    raw = (sentence or "").strip().lower()
+    norm = _normalize_text(sentence)
+    if not raw and not norm:
+        return False
+    for pat in _STRONG_AFFIRM_PATTERNS:
+        if raw and re.search(pat, raw):
+            return True
+        if norm and re.search(pat, norm):
+            return True
+    return False
 
 
 def _recent_tutor_questions(messages: list[dict], limit: int = 3) -> list[str]:
