@@ -296,6 +296,89 @@ class TopicMatcher:
         return pool[:n]
 
 
+    def sample_related(
+        self,
+        retriever,
+        query: str,
+        n: int = 3,
+        min_chunk_count: int = 3,
+        exclude_paths: set[str] | None = None,
+    ) -> list[TopicMatch]:
+        """
+        Pick `n` teachable topics SEMANTICALLY RELATED to `query` rather
+        than random. Uses the existing retriever to find chunks for the
+        query, votes the top results onto (chapter, section, subsection),
+        and returns the top-N teachable subsections that match.
+
+        Falls back to `sample_diverse(n)` only when retrieval surfaces
+        nothing related (true out-of-corpus query).
+
+        Why: previously `sample_diverse(3)` picked 3 random teachable
+        topics with no relation to what the student typed. Typing "brain"
+        returned cards like "DNA Replication" and "Compensation
+        Mechanisms" — useless. Now `sample_related` returns the topics
+        the corpus actually covers around the query.
+        """
+        if not self._entries or not retriever or not (query or "").strip():
+            return self.sample_diverse(n, exclude_paths=exclude_paths)
+
+        exclude_paths = exclude_paths or set()
+        try:
+            chunks = retriever.retrieve(query, top_k=12)
+        except Exception:
+            return self.sample_diverse(n, exclude_paths=exclude_paths)
+        if not chunks:
+            return self.sample_diverse(n, exclude_paths=exclude_paths)
+
+        # Vote chunks onto (chapter_num, section_title, subsection_title).
+        # Weight by 1/(rank+1) so earlier results dominate.
+        votes: dict[tuple, float] = {}
+        for rank, c in enumerate(chunks):
+            key = (
+                c.get("chapter_num", 0) or 0,
+                (c.get("section_title", "") or "").strip(),
+                (c.get("subsection_title", "") or "").strip(),
+            )
+            if not key[2]:
+                continue
+            votes[key] = votes.get(key, 0.0) + 1.0 / (rank + 1)
+
+        # Map vote keys back to TopicMatch entries (must be teachable + not excluded).
+        # Path format: subsection title is the unique key inside the index.
+        related: list[TopicMatch] = []
+        seen_paths: set[str] = set()
+        for key, _w in sorted(votes.items(), key=lambda kv: -kv[1]):
+            ch_num, section_title, subsection_title = key
+            for e in self._entries:
+                if not e.teachable:
+                    continue
+                if e.path in exclude_paths:
+                    continue
+                if e.path in seen_paths:
+                    continue
+                if (e.subsection or "").strip() == subsection_title and (
+                    not section_title or (e.section or "").strip() == section_title
+                ):
+                    if e.chunk_count < min_chunk_count:
+                        continue
+                    related.append(e)
+                    seen_paths.add(e.path)
+                    break
+            if len(related) >= n:
+                break
+
+        # If retrieval didn't surface enough teachable matches, top up
+        # from sample_diverse so we always return n cards.
+        if len(related) < n:
+            top_up = self.sample_diverse(
+                n - len(related),
+                exclude_paths=exclude_paths | seen_paths,
+            )
+            related.extend(top_up)
+
+        return related[:n]
+
+
 _matcher_singleton: TopicMatcher | None = None
 
 

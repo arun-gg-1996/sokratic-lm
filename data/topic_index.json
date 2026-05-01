@@ -6,7 +6,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 1: An Introduction to the Human Body > Anatomical Terminology > Body Cavities and Serous Membranes"
+    "path": "Chapter 1: An Introduction to the Human Body > Anatomical Terminology > Body Cavities and Serous Membranes",
+    "teachable": true,
+    "chapter_num": 1
   },
   {
     "chapter": "An Introduction to the Human Body",
@@ -15,7 +17,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 1: An Introduction to the Human Body > Anatomical Terminology > Body Planes"
+    "path": "Chapter 1: An Introduction to the Human Body > Anatomical Terminology > Body Planes",
+    "teachable": true,
+    "chapter_num": 1
   },
   {
     "chapter": "An Introduction to the Human Body",
@@ -24,7 +28,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 1: An Introduction to the Human Body > Anatomical Terminology > Directional Terms"
+    "path": "Chapter 1: An Introduction to the Human Body > Anatomical Terminology > Directional Terms",
+    "teachable": true,
+    "chapter_num": 1
   },
   {
     "chapter": "An Introduction to the Human Body",
@@ -33,7 +39,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 1: An Introduction to the Human Body > Homeostasis > Negative Feedback"
+    "path": "Chapter 1: An Introduction to the Human Body > Homeostasis > Negative Feedback",
+    "teachable": true,
+    "chapter_num": 1
   },
   {
     "chapter": "An Introduction to the Human Body",
@@ -42,7 +50,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 1: An Introduction to the Human Body > Homeostasis > Positive Feedback"
+    "path": "Chapter 1: An Introduction to the Human Body > Homeostasis > Positive Feedback",
+    "teachable": true,
+    "chapter_num": 1
   },
   {
     "chapter": "An Introduction to the Human Body",
@@ -51,7 +61,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 1: An Introduction to the Human Body > Medical Imaging > Modern Medical Imaging"
+    "path": "Chapter 1: An Introduction to the Human Body > Medical Imaging > Modern Medical Imaging",
+    "teachable": true,
+    "chapter_num": 1
   },
   {
     "chapter": "An Introduction to the Human Body",
@@ -60,7 +72,9 @@
     "difficulty": "easy",
     "chunk_count": 5,
     "limited": false,
-    "path": "Chapter 1: An Introduction to the Human Body > Overview of Anatomy and Physiology"
+    "path": "Chapter 1: An Introduction to the Human Body > Overview of Anatomy and Physiology",
+    "teachable": true,
+    "chapter_num": 1
   },
   {
     "chapter": "An Introduction to the Human Body",
@@ -69,7 +83,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 1: An Introduction to the Human Body > Requirements for Human Life > Narrow Range of Atmospheric Pressure"
+    "path": "Chapter 1: An Introduction to the Human Body > Requirements for Human Life > Narrow Range of Atmospheric Pressure",
+    "teachable": true,
+    "chapter_num": 1
   },
   {
     "chapter": "An Introduction to the Human Body",
@@ -78,7 +94,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 1: An Introduction to the Human Body > Requirements for Human Life > Narrow Range of Temperature"
+    "path": "Chapter 1: An Introduction to the Human Body > Requirements for Human Life > Narrow Range of Temperature",
+    "teachable": true,
+    "chapter_num": 1
   },
   {
     "chapter": "An Introduction to the Human Body",
@@ -87,7 +105,9 @@
     "difficulty": "easy",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 1: An Introduction to the Human Body > Structural Organization of the Human Body > The Levels of Organization"
+    "path": "Chapter 1: An Introduction to the Human Body > Structural Organization of the Human Body > The Levels of Organization",
+    "teachable": true,
+    "chapter_num": 1
   },
   {
     "chapter": "Anatomy of the Nervous System",
@@ -96,7 +116,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 13: Anatomy of the Nervous System > Circulation and the Central Nervous System > Blood Supply to the Brain"
+    "path": "Chapter 13: Anatomy of the Nervous System > Circulation and the Central Nervous System > Blood Supply to the Brain",
+    "teachable": true,
+    "chapter_num": 13
   },
   {
     "chapter": "Anatomy of the Nervous System",
@@ -105,7 +127,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 13: Anatomy of the Nervous System > Circulation and the Central Nervous System > Protective Coverings of the Brain and Spinal Cord"
+    "path": "Chapter 13: Anatomy of the Nervous System > Circulation and the Central Nervous System > Protective Coverings of the Brain and Spinal Cord",
+    "teachable": true,
+    "chapter_num": 13
   },
   {
     "chapter": "Anatomy of the Nervous System",
@@ -114,7 +138,9 @@
     "difficulty": "moderate",
     "chunk_count": 10,
     "limited": false,
-    "path": "Chapter 13: Anatomy of the Nervous System > Circulation and the Central Nervous System > The Ventricular System"
+    "path": "Chapter 13: Anatomy of the Nervous System > Circulation and the Central Nervous System > The Ventricular System",
+    "teachable": true,
+    "chapter_num": 13
   },
   {
     "chapter": "Anatomy of the Nervous System",
@@ -123,7 +149,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 13: Anatomy of the Nervous System > The Central Nervous System > Brain Stem"
+    "path": "Chapter 13: Anatomy of the Nervous System > The Central Nervous System > Brain Stem",
+    "teachable": true,
+    "chapter_num": 13
   },
   {
     "chapter": "Anatomy of the Nervous System",
@@ -132,7 +160,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 13: Anatomy of the Nervous System > The Central Nervous System > The Cerebellum"
+    "path": "Chapter 13: Anatomy of the Nervous System > The Central Nervous System > The Cerebellum",
+    "teachable": true,
+    "chapter_num": 13
   },
   {
     "chapter": "Anatomy of the Nervous System",
@@ -141,7 +171,9 @@
     "difficulty": "moderate",
     "chunk_count": 12,
     "limited": false,
-    "path": "Chapter 13: Anatomy of the Nervous System > The Central Nervous System > The Cerebrum"
+    "path": "Chapter 13: Anatomy of the Nervous System > The Central Nervous System > The Cerebrum",
+    "teachable": true,
+    "chapter_num": 13
   },
   {
     "chapter": "Anatomy of the Nervous System",
@@ -150,7 +182,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 13: Anatomy of the Nervous System > The Central Nervous System > The Spinal Cord"
+    "path": "Chapter 13: Anatomy of the Nervous System > The Central Nervous System > The Spinal Cord",
+    "teachable": true,
+    "chapter_num": 13
   },
   {
     "chapter": "Anatomy of the Nervous System",
@@ -159,7 +193,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 13: Anatomy of the Nervous System > The Embryologic Perspective > Primary Vesicles"
+    "path": "Chapter 13: Anatomy of the Nervous System > The Embryologic Perspective > Primary Vesicles",
+    "teachable": true,
+    "chapter_num": 13
   },
   {
     "chapter": "Anatomy of the Nervous System",
@@ -168,7 +204,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 13: Anatomy of the Nervous System > The Embryologic Perspective > Relating Embryonic Development to the Adult Brain"
+    "path": "Chapter 13: Anatomy of the Nervous System > The Embryologic Perspective > Relating Embryonic Development to the Adult Brain",
+    "teachable": true,
+    "chapter_num": 13
   },
   {
     "chapter": "Anatomy of the Nervous System",
@@ -177,7 +215,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 13: Anatomy of the Nervous System > The Embryologic Perspective > Secondary Vesicles"
+    "path": "Chapter 13: Anatomy of the Nervous System > The Embryologic Perspective > Secondary Vesicles",
+    "teachable": true,
+    "chapter_num": 13
   },
   {
     "chapter": "Anatomy of the Nervous System",
@@ -186,7 +226,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 13: Anatomy of the Nervous System > The Embryologic Perspective > The Neural Tube"
+    "path": "Chapter 13: Anatomy of the Nervous System > The Embryologic Perspective > The Neural Tube",
+    "teachable": true,
+    "chapter_num": 13
   },
   {
     "chapter": "Axial Skeleton",
@@ -195,7 +237,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 7: Axial Skeleton > Embryonic Development of the Axial Skeleton > Development of the Skull"
+    "path": "Chapter 7: Axial Skeleton > Embryonic Development of the Axial Skeleton > Development of the Skull",
+    "teachable": true,
+    "chapter_num": 7
   },
   {
     "chapter": "Axial Skeleton",
@@ -204,7 +248,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 7: Axial Skeleton > Embryonic Development of the Axial Skeleton > Development of the Vertebral Column and Thoracic cage"
+    "path": "Chapter 7: Axial Skeleton > Embryonic Development of the Axial Skeleton > Development of the Vertebral Column and Thoracic cage",
+    "teachable": true,
+    "chapter_num": 7
   },
   {
     "chapter": "Axial Skeleton",
@@ -213,7 +259,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 7: Axial Skeleton > The Skull > Anterior View of Skull"
+    "path": "Chapter 7: Axial Skeleton > The Skull > Anterior View of Skull",
+    "teachable": true,
+    "chapter_num": 7
   },
   {
     "chapter": "Axial Skeleton",
@@ -222,7 +270,9 @@
     "difficulty": "moderate",
     "chunk_count": 12,
     "limited": false,
-    "path": "Chapter 7: Axial Skeleton > The Skull > Bones of the Brain Case"
+    "path": "Chapter 7: Axial Skeleton > The Skull > Bones of the Brain Case",
+    "teachable": true,
+    "chapter_num": 7
   },
   {
     "chapter": "Axial Skeleton",
@@ -231,7 +281,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 7: Axial Skeleton > The Skull > Cranial Fossae"
+    "path": "Chapter 7: Axial Skeleton > The Skull > Cranial Fossae",
+    "teachable": true,
+    "chapter_num": 7
   },
   {
     "chapter": "Axial Skeleton",
@@ -240,7 +292,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 7: Axial Skeleton > The Skull > Facial Bones of the Skull"
+    "path": "Chapter 7: Axial Skeleton > The Skull > Facial Bones of the Skull",
+    "teachable": true,
+    "chapter_num": 7
   },
   {
     "chapter": "Axial Skeleton",
@@ -249,7 +303,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 7: Axial Skeleton > The Skull > Lateral View of Skull"
+    "path": "Chapter 7: Axial Skeleton > The Skull > Lateral View of Skull",
+    "teachable": true,
+    "chapter_num": 7
   },
   {
     "chapter": "Axial Skeleton",
@@ -258,7 +314,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 7: Axial Skeleton > The Skull > Paranasal Sinuses"
+    "path": "Chapter 7: Axial Skeleton > The Skull > Paranasal Sinuses",
+    "teachable": true,
+    "chapter_num": 7
   },
   {
     "chapter": "Axial Skeleton",
@@ -267,7 +325,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 7: Axial Skeleton > The Skull > Sutures of the Skull"
+    "path": "Chapter 7: Axial Skeleton > The Skull > Sutures of the Skull",
+    "teachable": true,
+    "chapter_num": 7
   },
   {
     "chapter": "Axial Skeleton",
@@ -276,7 +336,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 7: Axial Skeleton > The Skull > The Nasal Septum and Nasal Conchae"
+    "path": "Chapter 7: Axial Skeleton > The Skull > The Nasal Septum and Nasal Conchae",
+    "teachable": true,
+    "chapter_num": 7
   },
   {
     "chapter": "Axial Skeleton",
@@ -285,7 +347,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 7: Axial Skeleton > The Skull > The Orbit"
+    "path": "Chapter 7: Axial Skeleton > The Skull > The Orbit",
+    "teachable": true,
+    "chapter_num": 7
   },
   {
     "chapter": "Axial Skeleton",
@@ -294,7 +358,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 7: Axial Skeleton > The Vertebral Column > Curvatures of the Vertebral Column"
+    "path": "Chapter 7: Axial Skeleton > The Vertebral Column > Curvatures of the Vertebral Column",
+    "teachable": true,
+    "chapter_num": 7
   },
   {
     "chapter": "Axial Skeleton",
@@ -303,7 +369,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 7: Axial Skeleton > The Vertebral Column > General Structure of a Vertebra"
+    "path": "Chapter 7: Axial Skeleton > The Vertebral Column > General Structure of a Vertebra",
+    "teachable": true,
+    "chapter_num": 7
   },
   {
     "chapter": "Axial Skeleton",
@@ -312,7 +380,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 7: Axial Skeleton > The Vertebral Column > Intervertebral Discs and Ligaments of the Vertebral Column"
+    "path": "Chapter 7: Axial Skeleton > The Vertebral Column > Intervertebral Discs and Ligaments of the Vertebral Column",
+    "teachable": true,
+    "chapter_num": 7
   },
   {
     "chapter": "Axial Skeleton",
@@ -321,7 +391,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 7: Axial Skeleton > The Vertebral Column > Regional Modifications of Vertebrae"
+    "path": "Chapter 7: Axial Skeleton > The Vertebral Column > Regional Modifications of Vertebrae",
+    "teachable": true,
+    "chapter_num": 7
   },
   {
     "chapter": "Axial Skeleton",
@@ -330,7 +402,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 7: Axial Skeleton > The Vertebral Column > Regions of the Vertebral Column"
+    "path": "Chapter 7: Axial Skeleton > The Vertebral Column > Regions of the Vertebral Column",
+    "teachable": true,
+    "chapter_num": 7
   },
   {
     "chapter": "Bone Tissue and the Skeletal System",
@@ -339,7 +413,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Formation and Development > Bone Remodeling"
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Formation and Development > Bone Remodeling",
+    "teachable": true,
+    "chapter_num": 6
   },
   {
     "chapter": "Bone Tissue and the Skeletal System",
@@ -348,7 +424,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Formation and Development > Endochondral Ossification"
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Formation and Development > Endochondral Ossification",
+    "teachable": true,
+    "chapter_num": 6
   },
   {
     "chapter": "Bone Tissue and the Skeletal System",
@@ -357,7 +435,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Formation and Development > How Bones Grow in Length"
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Formation and Development > How Bones Grow in Length",
+    "teachable": true,
+    "chapter_num": 6
   },
   {
     "chapter": "Bone Tissue and the Skeletal System",
@@ -366,7 +446,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Formation and Development > Intramembranous Ossification"
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Formation and Development > Intramembranous Ossification",
+    "teachable": true,
+    "chapter_num": 6
   },
   {
     "chapter": "Bone Tissue and the Skeletal System",
@@ -375,7 +457,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Structure > Blood and Nerve Supply"
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Structure > Blood and Nerve Supply",
+    "teachable": true,
+    "chapter_num": 6
   },
   {
     "chapter": "Bone Tissue and the Skeletal System",
@@ -384,7 +468,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Structure > Bone Cells and Tissue"
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Structure > Bone Cells and Tissue",
+    "teachable": true,
+    "chapter_num": 6
   },
   {
     "chapter": "Bone Tissue and the Skeletal System",
@@ -393,7 +479,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Structure > Bone Markings"
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Structure > Bone Markings",
+    "teachable": true,
+    "chapter_num": 6
   },
   {
     "chapter": "Bone Tissue and the Skeletal System",
@@ -402,7 +490,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Structure > Compact and Spongy Bone"
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Structure > Compact and Spongy Bone",
+    "teachable": true,
+    "chapter_num": 6
   },
   {
     "chapter": "Bone Tissue and the Skeletal System",
@@ -411,7 +501,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Structure > Gross Anatomy of Bone"
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Bone Structure > Gross Anatomy of Bone",
+    "teachable": true,
+    "chapter_num": 6
   },
   {
     "chapter": "Bone Tissue and the Skeletal System",
@@ -420,7 +512,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 6: Bone Tissue and the Skeletal System > Exercise, Nutrition, Hormones, and Bone Tissue > Exercise and Bone Tissue"
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Exercise, Nutrition, Hormones, and Bone Tissue > Exercise and Bone Tissue",
+    "teachable": true,
+    "chapter_num": 6
   },
   {
     "chapter": "Bone Tissue and the Skeletal System",
@@ -429,7 +523,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 6: Bone Tissue and the Skeletal System > Exercise, Nutrition, Hormones, and Bone Tissue > Hormones and Bone Tissue"
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Exercise, Nutrition, Hormones, and Bone Tissue > Hormones and Bone Tissue",
+    "teachable": true,
+    "chapter_num": 6
   },
   {
     "chapter": "Bone Tissue and the Skeletal System",
@@ -438,7 +534,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 6: Bone Tissue and the Skeletal System > Exercise, Nutrition, Hormones, and Bone Tissue > Nutrition and Bone Tissue"
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Exercise, Nutrition, Hormones, and Bone Tissue > Nutrition and Bone Tissue",
+    "teachable": true,
+    "chapter_num": 6
   },
   {
     "chapter": "Bone Tissue and the Skeletal System",
@@ -447,7 +545,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 6: Bone Tissue and the Skeletal System > Fractures: Bone Repair > Bone Repair"
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Fractures: Bone Repair > Bone Repair",
+    "teachable": true,
+    "chapter_num": 6
   },
   {
     "chapter": "Bone Tissue and the Skeletal System",
@@ -456,7 +556,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 6: Bone Tissue and the Skeletal System > Fractures: Bone Repair > Types of Fractures"
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > Fractures: Bone Repair > Types of Fractures",
+    "teachable": true,
+    "chapter_num": 6
   },
   {
     "chapter": "Bone Tissue and the Skeletal System",
@@ -465,7 +567,9 @@
     "difficulty": "moderate",
     "chunk_count": 3,
     "limited": false,
-    "path": "Chapter 6: Bone Tissue and the Skeletal System > The Functions of the Skeletal System > Support, Movement, and Protection"
+    "path": "Chapter 6: Bone Tissue and the Skeletal System > The Functions of the Skeletal System > Support, Movement, and Protection",
+    "teachable": true,
+    "chapter_num": 6
   },
   {
     "chapter": "Development and Inheritance",
@@ -474,7 +578,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 28: Development and Inheritance > Adjustments of the Infant at Birth and Postnatal Stages > Circulatory Adjustments"
+    "path": "Chapter 28: Development and Inheritance > Adjustments of the Infant at Birth and Postnatal Stages > Circulatory Adjustments",
+    "teachable": false,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -483,7 +589,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 28: Development and Inheritance > Adjustments of the Infant at Birth and Postnatal Stages > Respiratory Adjustments"
+    "path": "Chapter 28: Development and Inheritance > Adjustments of the Infant at Birth and Postnatal Stages > Respiratory Adjustments",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -492,7 +600,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 28: Development and Inheritance > Adjustments of the Infant at Birth and Postnatal Stages > Thermoregulatory Adjustments"
+    "path": "Chapter 28: Development and Inheritance > Adjustments of the Infant at Birth and Postnatal Stages > Thermoregulatory Adjustments",
+    "teachable": false,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -501,7 +611,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 28: Development and Inheritance > Changes During Pregnancy, Labor, and Birth > Changes in Organ Systems During Pregnancy"
+    "path": "Chapter 28: Development and Inheritance > Changes During Pregnancy, Labor, and Birth > Changes in Organ Systems During Pregnancy",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -510,7 +622,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 28: Development and Inheritance > Changes During Pregnancy, Labor, and Birth > Effects of Hormones"
+    "path": "Chapter 28: Development and Inheritance > Changes During Pregnancy, Labor, and Birth > Effects of Hormones",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -519,7 +633,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 28: Development and Inheritance > Changes During Pregnancy, Labor, and Birth > Physiology of Labor"
+    "path": "Chapter 28: Development and Inheritance > Changes During Pregnancy, Labor, and Birth > Physiology of Labor",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -528,7 +644,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 28: Development and Inheritance > Changes During Pregnancy, Labor, and Birth > Stages of Childbirth"
+    "path": "Chapter 28: Development and Inheritance > Changes During Pregnancy, Labor, and Birth > Stages of Childbirth",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -537,7 +655,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 28: Development and Inheritance > Changes During Pregnancy, Labor, and Birth > Weight Gain"
+    "path": "Chapter 28: Development and Inheritance > Changes During Pregnancy, Labor, and Birth > Weight Gain",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -546,7 +666,9 @@
     "difficulty": "moderate",
     "chunk_count": 10,
     "limited": false,
-    "path": "Chapter 28: Development and Inheritance > Embryonic Development > Development of the Placenta"
+    "path": "Chapter 28: Development and Inheritance > Embryonic Development > Development of the Placenta",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -555,7 +677,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 28: Development and Inheritance > Embryonic Development > Embryonic Membranes"
+    "path": "Chapter 28: Development and Inheritance > Embryonic Development > Embryonic Membranes",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -564,7 +688,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 28: Development and Inheritance > Embryonic Development > Pre-implantation Embryonic Development"
+    "path": "Chapter 28: Development and Inheritance > Embryonic Development > Pre-implantation Embryonic Development",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -573,7 +699,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 28: Development and Inheritance > Fertilization > Contact Between Sperm and Oocyte"
+    "path": "Chapter 28: Development and Inheritance > Fertilization > Contact Between Sperm and Oocyte",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -582,7 +710,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 28: Development and Inheritance > Fertilization > The Zygote"
+    "path": "Chapter 28: Development and Inheritance > Fertilization > The Zygote",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -591,7 +721,9 @@
     "difficulty": "moderate",
     "chunk_count": 1,
     "limited": true,
-    "path": "Chapter 28: Development and Inheritance > Fertilization > Transit of Sperm"
+    "path": "Chapter 28: Development and Inheritance > Fertilization > Transit of Sperm",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -600,7 +732,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 28: Development and Inheritance > Fetal Development > Other Organ Systems"
+    "path": "Chapter 28: Development and Inheritance > Fetal Development > Other Organ Systems",
+    "teachable": false,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -609,7 +743,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 28: Development and Inheritance > Fetal Development > The Fetal Circulatory System"
+    "path": "Chapter 28: Development and Inheritance > Fetal Development > The Fetal Circulatory System",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -618,7 +754,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 28: Development and Inheritance > Lactation > Changes in the Composition of Breast Milk"
+    "path": "Chapter 28: Development and Inheritance > Lactation > Changes in the Composition of Breast Milk",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -627,7 +765,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 28: Development and Inheritance > Lactation > The Process of Lactation"
+    "path": "Chapter 28: Development and Inheritance > Lactation > The Process of Lactation",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -636,7 +776,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 28: Development and Inheritance > Patterns of Inheritance > Autosomal Dominant Inheritance"
+    "path": "Chapter 28: Development and Inheritance > Patterns of Inheritance > Autosomal Dominant Inheritance",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -645,7 +787,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 28: Development and Inheritance > Patterns of Inheritance > Autosomal Recessive Inheritance"
+    "path": "Chapter 28: Development and Inheritance > Patterns of Inheritance > Autosomal Recessive Inheritance",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -654,7 +798,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 28: Development and Inheritance > Patterns of Inheritance > From Genotype to Phenotype"
+    "path": "Chapter 28: Development and Inheritance > Patterns of Inheritance > From Genotype to Phenotype",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -663,7 +809,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 28: Development and Inheritance > Patterns of Inheritance > Mendel\u2019s Theory of Inheritance"
+    "path": "Chapter 28: Development and Inheritance > Patterns of Inheritance > Mendel\u2019s Theory of Inheritance",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -672,7 +820,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 28: Development and Inheritance > Patterns of Inheritance > Other Inheritance Patterns: Incomplete Dominance, Codominance, and Lethal Alleles"
+    "path": "Chapter 28: Development and Inheritance > Patterns of Inheritance > Other Inheritance Patterns: Incomplete Dominance, Codominance, and Lethal Alleles",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Development and Inheritance",
@@ -681,7 +831,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 28: Development and Inheritance > Patterns of Inheritance > X-linked Dominant or Recessive Inheritance"
+    "path": "Chapter 28: Development and Inheritance > Patterns of Inheritance > X-linked Dominant or Recessive Inheritance",
+    "teachable": true,
+    "chapter_num": 28
   },
   {
     "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
@@ -690,7 +842,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Acid-Base Balance > Buffer Systems in the Body"
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Acid-Base Balance > Buffer Systems in the Body",
+    "teachable": true,
+    "chapter_num": 26
   },
   {
     "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
@@ -699,7 +853,9 @@
     "difficulty": "hard",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Acid-Base Balance > Renal Regulation of Acid-Base Balance"
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Acid-Base Balance > Renal Regulation of Acid-Base Balance",
+    "teachable": true,
+    "chapter_num": 26
   },
   {
     "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
@@ -708,7 +864,9 @@
     "difficulty": "hard",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Acid-Base Balance > Respiratory Regulation of Acid-Base Balance"
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Acid-Base Balance > Respiratory Regulation of Acid-Base Balance",
+    "teachable": true,
+    "chapter_num": 26
   },
   {
     "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
@@ -717,7 +875,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Body Fluids and Fluid Compartments > Composition of Body Fluids"
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Body Fluids and Fluid Compartments > Composition of Body Fluids",
+    "teachable": true,
+    "chapter_num": 26
   },
   {
     "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
@@ -726,7 +886,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Body Fluids and Fluid Compartments > Fluid Compartments"
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Body Fluids and Fluid Compartments > Fluid Compartments",
+    "teachable": true,
+    "chapter_num": 26
   },
   {
     "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
@@ -735,7 +897,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Body Fluids and Fluid Compartments > Fluid Movement between Compartments"
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Body Fluids and Fluid Compartments > Fluid Movement between Compartments",
+    "teachable": true,
+    "chapter_num": 26
   },
   {
     "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
@@ -744,7 +908,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Body Fluids and Fluid Compartments > Solute Movement between Compartments"
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Body Fluids and Fluid Compartments > Solute Movement between Compartments",
+    "teachable": true,
+    "chapter_num": 26
   },
   {
     "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
@@ -753,7 +919,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Disorders of Acid-Base Balance > Compensation Mechanisms"
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Disorders of Acid-Base Balance > Compensation Mechanisms",
+    "teachable": true,
+    "chapter_num": 26
   },
   {
     "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
@@ -762,7 +930,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Disorders of Acid-Base Balance > Metabolic Acidosis: Primary Bicarbonate Deficiency"
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Disorders of Acid-Base Balance > Metabolic Acidosis: Primary Bicarbonate Deficiency",
+    "teachable": true,
+    "chapter_num": 26
   },
   {
     "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
@@ -771,7 +941,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Disorders of Acid-Base Balance > Metabolic Alkalosis: Primary Bicarbonate Excess"
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Disorders of Acid-Base Balance > Metabolic Alkalosis: Primary Bicarbonate Excess",
+    "teachable": true,
+    "chapter_num": 26
   },
   {
     "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
@@ -780,7 +952,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Electrolyte Balance > Regulation of Sodium and Potassium"
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Electrolyte Balance > Regulation of Sodium and Potassium",
+    "teachable": true,
+    "chapter_num": 26
   },
   {
     "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
@@ -789,7 +963,9 @@
     "difficulty": "hard",
     "chunk_count": 12,
     "limited": false,
-    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Electrolyte Balance > Roles of Electrolytes"
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Electrolyte Balance > Roles of Electrolytes",
+    "teachable": true,
+    "chapter_num": 26
   },
   {
     "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
@@ -798,7 +974,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Water Balance > Regulation of Water Intake"
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Water Balance > Regulation of Water Intake",
+    "teachable": true,
+    "chapter_num": 26
   },
   {
     "chapter": "Fluid, Electrolyte, and Acid-Base Balance",
@@ -807,7 +985,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Water Balance > Role of ADH"
+    "path": "Chapter 26: Fluid, Electrolyte, and Acid-Base Balance > Water Balance > Role of ADH",
+    "teachable": true,
+    "chapter_num": 26
   },
   {
     "chapter": "Joints",
@@ -816,7 +996,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Ankle and Foot Joints"
+    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Ankle and Foot Joints",
+    "teachable": true,
+    "chapter_num": 9
   },
   {
     "chapter": "Joints",
@@ -825,7 +1007,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Articulations of the Vertebral Column"
+    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Articulations of the Vertebral Column",
+    "teachable": true,
+    "chapter_num": 9
   },
   {
     "chapter": "Joints",
@@ -834,7 +1018,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Elbow Joint"
+    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Elbow Joint",
+    "teachable": true,
+    "chapter_num": 9
   },
   {
     "chapter": "Joints",
@@ -843,7 +1029,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Hip Joint"
+    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Hip Joint",
+    "teachable": true,
+    "chapter_num": 9
   },
   {
     "chapter": "Joints",
@@ -852,7 +1040,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Knee Joint"
+    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Knee Joint",
+    "teachable": true,
+    "chapter_num": 9
   },
   {
     "chapter": "Joints",
@@ -861,7 +1051,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Shoulder Joint"
+    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Shoulder Joint",
+    "teachable": true,
+    "chapter_num": 9
   },
   {
     "chapter": "Joints",
@@ -870,7 +1062,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Temporomandibular Joint"
+    "path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Temporomandibular Joint",
+    "teachable": true,
+    "chapter_num": 9
   },
   {
     "chapter": "Joints",
@@ -879,7 +1073,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 9: Joints > Classification of Joints > Functional Classification of Joints"
+    "path": "Chapter 9: Joints > Classification of Joints > Functional Classification of Joints",
+    "teachable": true,
+    "chapter_num": 9
   },
   {
     "chapter": "Joints",
@@ -888,7 +1084,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 9: Joints > Development of Joints"
+    "path": "Chapter 9: Joints > Development of Joints",
+    "teachable": true,
+    "chapter_num": 9
   },
   {
     "chapter": "Joints",
@@ -897,7 +1095,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 9: Joints > Synovial Joints > Additional Structures Associated with Synovial Joints"
+    "path": "Chapter 9: Joints > Synovial Joints > Additional Structures Associated with Synovial Joints",
+    "teachable": true,
+    "chapter_num": 9
   },
   {
     "chapter": "Joints",
@@ -906,7 +1106,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 9: Joints > Synovial Joints > Structural Features of Synovial Joints"
+    "path": "Chapter 9: Joints > Synovial Joints > Structural Features of Synovial Joints",
+    "teachable": true,
+    "chapter_num": 9
   },
   {
     "chapter": "Joints",
@@ -915,7 +1117,9 @@
     "difficulty": "moderate",
     "chunk_count": 12,
     "limited": false,
-    "path": "Chapter 9: Joints > Synovial Joints > Types of Synovial Joints"
+    "path": "Chapter 9: Joints > Synovial Joints > Types of Synovial Joints",
+    "teachable": true,
+    "chapter_num": 9
   },
   {
     "chapter": "Joints",
@@ -924,7 +1128,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 9: Joints > Types of Body Movements > Abduction and Adduction"
+    "path": "Chapter 9: Joints > Types of Body Movements > Abduction and Adduction",
+    "teachable": true,
+    "chapter_num": 9
   },
   {
     "chapter": "Joints",
@@ -933,7 +1139,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 9: Joints > Types of Body Movements > Flexion and Extension"
+    "path": "Chapter 9: Joints > Types of Body Movements > Flexion and Extension",
+    "teachable": true,
+    "chapter_num": 9
   },
   {
     "chapter": "Joints",
@@ -942,7 +1150,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 9: Joints > Types of Body Movements > Opposition and Reposition"
+    "path": "Chapter 9: Joints > Types of Body Movements > Opposition and Reposition",
+    "teachable": true,
+    "chapter_num": 9
   },
   {
     "chapter": "Joints",
@@ -951,7 +1161,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 9: Joints > Types of Body Movements > Superior Rotation and Inferior Rotation"
+    "path": "Chapter 9: Joints > Types of Body Movements > Superior Rotation and Inferior Rotation",
+    "teachable": true,
+    "chapter_num": 9
   },
   {
     "chapter": "Joints",
@@ -960,7 +1172,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 9: Joints > Types of Body Movements > Supination and Pronation"
+    "path": "Chapter 9: Joints > Types of Body Movements > Supination and Pronation",
+    "teachable": true,
+    "chapter_num": 9
   },
   {
     "chapter": "Metabolism and Nutrition",
@@ -969,7 +1183,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 24: Metabolism and Nutrition > Carbohydrate Metabolism > Krebs Cycle/Citric Acid Cycle/Tricarboxylic Acid Cycle"
+    "path": "Chapter 24: Metabolism and Nutrition > Carbohydrate Metabolism > Krebs Cycle/Citric Acid Cycle/Tricarboxylic Acid Cycle",
+    "teachable": true,
+    "chapter_num": 24
   },
   {
     "chapter": "Metabolism and Nutrition",
@@ -978,7 +1194,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 24: Metabolism and Nutrition > Carbohydrate Metabolism > Oxidative Phosphorylation and the Electron Transport Chain"
+    "path": "Chapter 24: Metabolism and Nutrition > Carbohydrate Metabolism > Oxidative Phosphorylation and the Electron Transport Chain",
+    "teachable": true,
+    "chapter_num": 24
   },
   {
     "chapter": "Metabolism and Nutrition",
@@ -987,7 +1205,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 24: Metabolism and Nutrition > Energy and Heat Balance > Mechanisms of Heat Exchange"
+    "path": "Chapter 24: Metabolism and Nutrition > Energy and Heat Balance > Mechanisms of Heat Exchange",
+    "teachable": true,
+    "chapter_num": 24
   },
   {
     "chapter": "Metabolism and Nutrition",
@@ -996,7 +1216,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 24: Metabolism and Nutrition > Lipid Metabolism > Ketone Body Oxidation"
+    "path": "Chapter 24: Metabolism and Nutrition > Lipid Metabolism > Ketone Body Oxidation",
+    "teachable": true,
+    "chapter_num": 24
   },
   {
     "chapter": "Metabolism and Nutrition",
@@ -1005,7 +1227,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 24: Metabolism and Nutrition > Metabolic States of the Body > The Absorptive State"
+    "path": "Chapter 24: Metabolism and Nutrition > Metabolic States of the Body > The Absorptive State",
+    "teachable": true,
+    "chapter_num": 24
   },
   {
     "chapter": "Metabolism and Nutrition",
@@ -1014,7 +1238,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 24: Metabolism and Nutrition > Metabolic States of the Body > The Postabsorptive State"
+    "path": "Chapter 24: Metabolism and Nutrition > Metabolic States of the Body > The Postabsorptive State",
+    "teachable": true,
+    "chapter_num": 24
   },
   {
     "chapter": "Metabolism and Nutrition",
@@ -1023,7 +1249,9 @@
     "difficulty": "hard",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 24: Metabolism and Nutrition > Nutrition and Diet > Food and Metabolism"
+    "path": "Chapter 24: Metabolism and Nutrition > Nutrition and Diet > Food and Metabolism",
+    "teachable": true,
+    "chapter_num": 24
   },
   {
     "chapter": "Metabolism and Nutrition",
@@ -1032,7 +1260,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 24: Metabolism and Nutrition > Overview of Metabolic Reactions > Catabolic Reactions"
+    "path": "Chapter 24: Metabolism and Nutrition > Overview of Metabolic Reactions > Catabolic Reactions",
+    "teachable": true,
+    "chapter_num": 24
   },
   {
     "chapter": "Metabolism and Nutrition",
@@ -1041,7 +1271,9 @@
     "difficulty": "hard",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 24: Metabolism and Nutrition > Overview of Metabolic Reactions > Hormonal Regulation of Metabolism"
+    "path": "Chapter 24: Metabolism and Nutrition > Overview of Metabolic Reactions > Hormonal Regulation of Metabolism",
+    "teachable": true,
+    "chapter_num": 24
   },
   {
     "chapter": "Metabolism and Nutrition",
@@ -1050,7 +1282,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 24: Metabolism and Nutrition > Protein Metabolism > Urea Cycle"
+    "path": "Chapter 24: Metabolism and Nutrition > Protein Metabolism > Urea Cycle",
+    "teachable": true,
+    "chapter_num": 24
   },
   {
     "chapter": "Muscle Tissue",
@@ -1059,7 +1293,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 10: Muscle Tissue > Exercise and Muscle Performance > Endurance Exercise"
+    "path": "Chapter 10: Muscle Tissue > Exercise and Muscle Performance > Endurance Exercise",
+    "teachable": true,
+    "chapter_num": 10
   },
   {
     "chapter": "Muscle Tissue",
@@ -1068,7 +1304,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 10: Muscle Tissue > Exercise and Muscle Performance > Performance-Enhancing Substances"
+    "path": "Chapter 10: Muscle Tissue > Exercise and Muscle Performance > Performance-Enhancing Substances",
+    "teachable": true,
+    "chapter_num": 10
   },
   {
     "chapter": "Muscle Tissue",
@@ -1077,7 +1315,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 10: Muscle Tissue > Exercise and Muscle Performance > Resistance Exercise"
+    "path": "Chapter 10: Muscle Tissue > Exercise and Muscle Performance > Resistance Exercise",
+    "teachable": true,
+    "chapter_num": 10
   },
   {
     "chapter": "Muscle Tissue",
@@ -1086,7 +1326,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 10: Muscle Tissue > Muscle Fiber Contraction and Relaxation > ATP and Muscle Contraction"
+    "path": "Chapter 10: Muscle Tissue > Muscle Fiber Contraction and Relaxation > ATP and Muscle Contraction",
+    "teachable": true,
+    "chapter_num": 10
   },
   {
     "chapter": "Muscle Tissue",
@@ -1095,7 +1337,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 10: Muscle Tissue > Muscle Fiber Contraction and Relaxation > Sources of ATP"
+    "path": "Chapter 10: Muscle Tissue > Muscle Fiber Contraction and Relaxation > Sources of ATP",
+    "teachable": true,
+    "chapter_num": 10
   },
   {
     "chapter": "Muscle Tissue",
@@ -1104,7 +1348,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 10: Muscle Tissue > Muscle Fiber Contraction and Relaxation > The Sliding Filament Model of Contraction"
+    "path": "Chapter 10: Muscle Tissue > Muscle Fiber Contraction and Relaxation > The Sliding Filament Model of Contraction",
+    "teachable": true,
+    "chapter_num": 10
   },
   {
     "chapter": "Muscle Tissue",
@@ -1113,7 +1359,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 10: Muscle Tissue > Nervous System Control of Muscle Tension > Motor Units"
+    "path": "Chapter 10: Muscle Tissue > Nervous System Control of Muscle Tension > Motor Units",
+    "teachable": true,
+    "chapter_num": 10
   },
   {
     "chapter": "Muscle Tissue",
@@ -1122,7 +1370,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 10: Muscle Tissue > Nervous System Control of Muscle Tension > Muscle Tone"
+    "path": "Chapter 10: Muscle Tissue > Nervous System Control of Muscle Tension > Muscle Tone",
+    "teachable": true,
+    "chapter_num": 10
   },
   {
     "chapter": "Muscle Tissue",
@@ -1131,7 +1381,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 10: Muscle Tissue > Nervous System Control of Muscle Tension > The Frequency of Motor Neuron Stimulation"
+    "path": "Chapter 10: Muscle Tissue > Nervous System Control of Muscle Tension > The Frequency of Motor Neuron Stimulation",
+    "teachable": true,
+    "chapter_num": 10
   },
   {
     "chapter": "Muscle Tissue",
@@ -1140,7 +1392,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 10: Muscle Tissue > Nervous System Control of Muscle Tension > The Length-Tension Range of a Sarcomere"
+    "path": "Chapter 10: Muscle Tissue > Nervous System Control of Muscle Tension > The Length-Tension Range of a Sarcomere",
+    "teachable": true,
+    "chapter_num": 10
   },
   {
     "chapter": "Muscle Tissue",
@@ -1149,7 +1403,9 @@
     "difficulty": "easy",
     "chunk_count": 3,
     "limited": false,
-    "path": "Chapter 10: Muscle Tissue > Overview of Muscle Tissues"
+    "path": "Chapter 10: Muscle Tissue > Overview of Muscle Tissues",
+    "teachable": true,
+    "chapter_num": 10
   },
   {
     "chapter": "Muscle Tissue",
@@ -1158,7 +1414,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 10: Muscle Tissue > Skeletal Muscle > Excitation-Contraction Coupling"
+    "path": "Chapter 10: Muscle Tissue > Skeletal Muscle > Excitation-Contraction Coupling",
+    "teachable": true,
+    "chapter_num": 10
   },
   {
     "chapter": "Muscle Tissue",
@@ -1167,7 +1425,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 10: Muscle Tissue > Skeletal Muscle > The Sarcomere"
+    "path": "Chapter 10: Muscle Tissue > Skeletal Muscle > The Sarcomere",
+    "teachable": true,
+    "chapter_num": 10
   },
   {
     "chapter": "Muscle Tissue",
@@ -1176,7 +1436,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 10: Muscle Tissue > Types of Muscle Fibers"
+    "path": "Chapter 10: Muscle Tissue > Types of Muscle Fibers",
+    "teachable": true,
+    "chapter_num": 10
   },
   {
     "chapter": "The Appendicular Skeleton",
@@ -1185,7 +1447,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 8: The Appendicular Skeleton > Bones of the Lower Limb > Arches of the Foot"
+    "path": "Chapter 8: The Appendicular Skeleton > Bones of the Lower Limb > Arches of the Foot",
+    "teachable": true,
+    "chapter_num": 8
   },
   {
     "chapter": "The Appendicular Skeleton",
@@ -1194,7 +1458,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 8: The Appendicular Skeleton > Bones of the Lower Limb > Metatarsal Bones"
+    "path": "Chapter 8: The Appendicular Skeleton > Bones of the Lower Limb > Metatarsal Bones",
+    "teachable": true,
+    "chapter_num": 8
   },
   {
     "chapter": "The Appendicular Skeleton",
@@ -1203,7 +1469,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 8: The Appendicular Skeleton > Bones of the Lower Limb > Tarsal Bones"
+    "path": "Chapter 8: The Appendicular Skeleton > Bones of the Lower Limb > Tarsal Bones",
+    "teachable": true,
+    "chapter_num": 8
   },
   {
     "chapter": "The Appendicular Skeleton",
@@ -1212,7 +1480,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 8: The Appendicular Skeleton > Bones of the Upper Limb > Carpal Bones"
+    "path": "Chapter 8: The Appendicular Skeleton > Bones of the Upper Limb > Carpal Bones",
+    "teachable": true,
+    "chapter_num": 8
   },
   {
     "chapter": "The Appendicular Skeleton",
@@ -1221,7 +1491,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 8: The Appendicular Skeleton > Bones of the Upper Limb > Metacarpal Bones"
+    "path": "Chapter 8: The Appendicular Skeleton > Bones of the Upper Limb > Metacarpal Bones",
+    "teachable": true,
+    "chapter_num": 8
   },
   {
     "chapter": "The Appendicular Skeleton",
@@ -1230,7 +1502,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 8: The Appendicular Skeleton > Development of the Appendicular Skeleton > Limb Growth"
+    "path": "Chapter 8: The Appendicular Skeleton > Development of the Appendicular Skeleton > Limb Growth",
+    "teachable": true,
+    "chapter_num": 8
   },
   {
     "chapter": "The Appendicular Skeleton",
@@ -1239,7 +1513,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 8: The Appendicular Skeleton > Development of the Appendicular Skeleton > Ossification of Appendicular Bones"
+    "path": "Chapter 8: The Appendicular Skeleton > Development of the Appendicular Skeleton > Ossification of Appendicular Bones",
+    "teachable": true,
+    "chapter_num": 8
   },
   {
     "chapter": "The Appendicular Skeleton",
@@ -1248,7 +1524,9 @@
     "difficulty": "moderate",
     "chunk_count": 12,
     "limited": false,
-    "path": "Chapter 8: The Appendicular Skeleton > The Pelvic Girdle and Pelvis > Hip Bone"
+    "path": "Chapter 8: The Appendicular Skeleton > The Pelvic Girdle and Pelvis > Hip Bone",
+    "teachable": true,
+    "chapter_num": 8
   },
   {
     "chapter": "The Autonomic Nervous System",
@@ -1257,7 +1535,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 15: The Autonomic Nervous System > Autonomic Reflexes and Homeostasis > Balance in Competing Autonomic Reflex Arcs"
+    "path": "Chapter 15: The Autonomic Nervous System > Autonomic Reflexes and Homeostasis > Balance in Competing Autonomic Reflex Arcs",
+    "teachable": true,
+    "chapter_num": 15
   },
   {
     "chapter": "The Autonomic Nervous System",
@@ -1266,7 +1546,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 15: The Autonomic Nervous System > Autonomic Reflexes and Homeostasis > The Structure of Reflexes"
+    "path": "Chapter 15: The Autonomic Nervous System > Autonomic Reflexes and Homeostasis > The Structure of Reflexes",
+    "teachable": true,
+    "chapter_num": 15
   },
   {
     "chapter": "The Autonomic Nervous System",
@@ -1275,7 +1557,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 15: The Autonomic Nervous System > Central Control > Forebrain Structures"
+    "path": "Chapter 15: The Autonomic Nervous System > Central Control > Forebrain Structures",
+    "teachable": true,
+    "chapter_num": 15
   },
   {
     "chapter": "The Autonomic Nervous System",
@@ -1284,7 +1568,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 15: The Autonomic Nervous System > Central Control > The Medulla"
+    "path": "Chapter 15: The Autonomic Nervous System > Central Control > The Medulla",
+    "teachable": true,
+    "chapter_num": 15
   },
   {
     "chapter": "The Autonomic Nervous System",
@@ -1293,7 +1579,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 15: The Autonomic Nervous System > Divisions of the Autonomic Nervous System > Chemical Signaling in the Autonomic Nervous System"
+    "path": "Chapter 15: The Autonomic Nervous System > Divisions of the Autonomic Nervous System > Chemical Signaling in the Autonomic Nervous System",
+    "teachable": true,
+    "chapter_num": 15
   },
   {
     "chapter": "The Autonomic Nervous System",
@@ -1302,7 +1590,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 15: The Autonomic Nervous System > Divisions of the Autonomic Nervous System > Parasympathetic Division of the Autonomic Nervous System"
+    "path": "Chapter 15: The Autonomic Nervous System > Divisions of the Autonomic Nervous System > Parasympathetic Division of the Autonomic Nervous System",
+    "teachable": true,
+    "chapter_num": 15
   },
   {
     "chapter": "The Autonomic Nervous System",
@@ -1311,7 +1601,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 15: The Autonomic Nervous System > Divisions of the Autonomic Nervous System > Sympathetic Division of the Autonomic Nervous System"
+    "path": "Chapter 15: The Autonomic Nervous System > Divisions of the Autonomic Nervous System > Sympathetic Division of the Autonomic Nervous System",
+    "teachable": true,
+    "chapter_num": 15
   },
   {
     "chapter": "The Autonomic Nervous System",
@@ -1320,7 +1612,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 15: The Autonomic Nervous System > Drugs that Affect the Autonomic System > Broad Autonomic Effects"
+    "path": "Chapter 15: The Autonomic Nervous System > Drugs that Affect the Autonomic System > Broad Autonomic Effects",
+    "teachable": true,
+    "chapter_num": 15
   },
   {
     "chapter": "The Autonomic Nervous System",
@@ -1329,7 +1623,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 15: The Autonomic Nervous System > Drugs that Affect the Autonomic System > Parasympathetic Effects"
+    "path": "Chapter 15: The Autonomic Nervous System > Drugs that Affect the Autonomic System > Parasympathetic Effects",
+    "teachable": true,
+    "chapter_num": 15
   },
   {
     "chapter": "The Autonomic Nervous System",
@@ -1338,7 +1634,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 15: The Autonomic Nervous System > Drugs that Affect the Autonomic System > Sympathetic Effect"
+    "path": "Chapter 15: The Autonomic Nervous System > Drugs that Affect the Autonomic System > Sympathetic Effect",
+    "teachable": true,
+    "chapter_num": 15
   },
   {
     "chapter": "The Cardiovascular System: Blood",
@@ -1347,7 +1645,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 18: The Cardiovascular System: Blood > An Overview of Blood > Blood Plasma"
+    "path": "Chapter 18: The Cardiovascular System: Blood > An Overview of Blood > Blood Plasma",
+    "teachable": true,
+    "chapter_num": 18
   },
   {
     "chapter": "The Cardiovascular System: Blood",
@@ -1356,7 +1656,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 18: The Cardiovascular System: Blood > An Overview of Blood > Characteristics of Blood"
+    "path": "Chapter 18: The Cardiovascular System: Blood > An Overview of Blood > Characteristics of Blood",
+    "teachable": true,
+    "chapter_num": 18
   },
   {
     "chapter": "The Cardiovascular System: Blood",
@@ -1365,7 +1667,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 18: The Cardiovascular System: Blood > An Overview of Blood > Composition of Blood"
+    "path": "Chapter 18: The Cardiovascular System: Blood > An Overview of Blood > Composition of Blood",
+    "teachable": true,
+    "chapter_num": 18
   },
   {
     "chapter": "The Cardiovascular System: Blood",
@@ -1374,7 +1678,9 @@
     "difficulty": "moderate",
     "chunk_count": 3,
     "limited": false,
-    "path": "Chapter 18: The Cardiovascular System: Blood > An Overview of Blood > Functions of Blood"
+    "path": "Chapter 18: The Cardiovascular System: Blood > An Overview of Blood > Functions of Blood",
+    "teachable": true,
+    "chapter_num": 18
   },
   {
     "chapter": "The Cardiovascular System: Blood",
@@ -1383,7 +1689,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 18: The Cardiovascular System: Blood > Blood Typing > ABO Transfusion Protocols"
+    "path": "Chapter 18: The Cardiovascular System: Blood > Blood Typing > ABO Transfusion Protocols",
+    "teachable": true,
+    "chapter_num": 18
   },
   {
     "chapter": "The Cardiovascular System: Blood",
@@ -1392,7 +1700,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 18: The Cardiovascular System: Blood > Blood Typing > Antigens, Antibodies, and Transfusion Reactions"
+    "path": "Chapter 18: The Cardiovascular System: Blood > Blood Typing > Antigens, Antibodies, and Transfusion Reactions",
+    "teachable": true,
+    "chapter_num": 18
   },
   {
     "chapter": "The Cardiovascular System: Blood",
@@ -1401,7 +1711,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 18: The Cardiovascular System: Blood > Blood Typing > Rh Blood Groups"
+    "path": "Chapter 18: The Cardiovascular System: Blood > Blood Typing > Rh Blood Groups",
+    "teachable": true,
+    "chapter_num": 18
   },
   {
     "chapter": "The Cardiovascular System: Blood",
@@ -1410,7 +1722,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 18: The Cardiovascular System: Blood > Blood Typing > The ABO Blood Group"
+    "path": "Chapter 18: The Cardiovascular System: Blood > Blood Typing > The ABO Blood Group",
+    "teachable": true,
+    "chapter_num": 18
   },
   {
     "chapter": "The Cardiovascular System: Blood",
@@ -1419,7 +1733,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 18: The Cardiovascular System: Blood > Erythrocytes > Disorders of Erythrocytes"
+    "path": "Chapter 18: The Cardiovascular System: Blood > Erythrocytes > Disorders of Erythrocytes",
+    "teachable": true,
+    "chapter_num": 18
   },
   {
     "chapter": "The Cardiovascular System: Blood",
@@ -1428,7 +1744,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 18: The Cardiovascular System: Blood > Erythrocytes > Lifecycle of Erythrocytes"
+    "path": "Chapter 18: The Cardiovascular System: Blood > Erythrocytes > Lifecycle of Erythrocytes",
+    "teachable": true,
+    "chapter_num": 18
   },
   {
     "chapter": "The Cardiovascular System: Blood",
@@ -1437,7 +1755,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 18: The Cardiovascular System: Blood > Erythrocytes > Shape and Structure of Erythrocytes"
+    "path": "Chapter 18: The Cardiovascular System: Blood > Erythrocytes > Shape and Structure of Erythrocytes",
+    "teachable": true,
+    "chapter_num": 18
   },
   {
     "chapter": "The Cardiovascular System: Blood",
@@ -1446,7 +1766,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 18: The Cardiovascular System: Blood > Hemostasis > Disorders of Clotting"
+    "path": "Chapter 18: The Cardiovascular System: Blood > Hemostasis > Disorders of Clotting",
+    "teachable": true,
+    "chapter_num": 18
   },
   {
     "chapter": "The Cardiovascular System: Blood",
@@ -1455,7 +1777,9 @@
     "difficulty": "moderate",
     "chunk_count": 10,
     "limited": false,
-    "path": "Chapter 18: The Cardiovascular System: Blood > Hemostasis > Formation of the Platelet Plug"
+    "path": "Chapter 18: The Cardiovascular System: Blood > Hemostasis > Formation of the Platelet Plug",
+    "teachable": true,
+    "chapter_num": 18
   },
   {
     "chapter": "The Cardiovascular System: Blood",
@@ -1464,7 +1788,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 18: The Cardiovascular System: Blood > Leukocytes and Platelets > Characteristics of Leukocytes"
+    "path": "Chapter 18: The Cardiovascular System: Blood > Leukocytes and Platelets > Characteristics of Leukocytes",
+    "teachable": true,
+    "chapter_num": 18
   },
   {
     "chapter": "The Cardiovascular System: Blood",
@@ -1473,7 +1799,9 @@
     "difficulty": "moderate",
     "chunk_count": 10,
     "limited": false,
-    "path": "Chapter 18: The Cardiovascular System: Blood > Leukocytes and Platelets > Classification of Leukocytes"
+    "path": "Chapter 18: The Cardiovascular System: Blood > Leukocytes and Platelets > Classification of Leukocytes",
+    "teachable": true,
+    "chapter_num": 18
   },
   {
     "chapter": "The Cardiovascular System: Blood",
@@ -1482,7 +1810,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 18: The Cardiovascular System: Blood > Leukocytes and Platelets > Disorders of Leukocytes"
+    "path": "Chapter 18: The Cardiovascular System: Blood > Leukocytes and Platelets > Disorders of Leukocytes",
+    "teachable": true,
+    "chapter_num": 18
   },
   {
     "chapter": "The Cardiovascular System: Blood",
@@ -1491,7 +1821,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 18: The Cardiovascular System: Blood > Leukocytes and Platelets > Disorders of Platelets"
+    "path": "Chapter 18: The Cardiovascular System: Blood > Leukocytes and Platelets > Disorders of Platelets",
+    "teachable": true,
+    "chapter_num": 18
   },
   {
     "chapter": "The Cardiovascular System: Blood",
@@ -1500,7 +1832,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 18: The Cardiovascular System: Blood > Production of the Formed Elements > Differentiation of Formed Elements from Stem Cells"
+    "path": "Chapter 18: The Cardiovascular System: Blood > Production of the Formed Elements > Differentiation of Formed Elements from Stem Cells",
+    "teachable": true,
+    "chapter_num": 18
   },
   {
     "chapter": "The Cardiovascular System: Blood",
@@ -1509,7 +1843,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 18: The Cardiovascular System: Blood > Production of the Formed Elements > Hemopoietic Growth Factors"
+    "path": "Chapter 18: The Cardiovascular System: Blood > Production of the Formed Elements > Hemopoietic Growth Factors",
+    "teachable": true,
+    "chapter_num": 18
   },
   {
     "chapter": "The Cardiovascular System: The Heart",
@@ -1518,7 +1854,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Cycle > Heart Sounds"
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Cycle > Heart Sounds",
+    "teachable": true,
+    "chapter_num": 19
   },
   {
     "chapter": "The Cardiovascular System: The Heart",
@@ -1527,7 +1865,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Cycle > Phases of the Cardiac Cycle"
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Cycle > Phases of the Cardiac Cycle",
+    "teachable": true,
+    "chapter_num": 19
   },
   {
     "chapter": "The Cardiovascular System: The Heart",
@@ -1536,7 +1876,9 @@
     "difficulty": "moderate",
     "chunk_count": 16,
     "limited": false,
-    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart"
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart",
+    "teachable": true,
+    "chapter_num": 19
   },
   {
     "chapter": "The Cardiovascular System: The Heart",
@@ -1545,7 +1887,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Structure of Cardiac Muscle"
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Structure of Cardiac Muscle",
+    "teachable": true,
+    "chapter_num": 19
   },
   {
     "chapter": "The Cardiovascular System: The Heart",
@@ -1554,7 +1898,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Physiology > Cardiovascular Centers"
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Physiology > Cardiovascular Centers",
+    "teachable": true,
+    "chapter_num": 19
   },
   {
     "chapter": "The Cardiovascular System: The Heart",
@@ -1563,7 +1909,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Physiology > Correlation Between Heart Rates and Cardiac Output"
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Physiology > Correlation Between Heart Rates and Cardiac Output",
+    "teachable": false,
+    "chapter_num": 19
   },
   {
     "chapter": "The Cardiovascular System: The Heart",
@@ -1572,7 +1920,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Physiology > Input to the Cardiovascular Center"
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Physiology > Input to the Cardiovascular Center",
+    "teachable": true,
+    "chapter_num": 19
   },
   {
     "chapter": "The Cardiovascular System: The Heart",
@@ -1581,7 +1931,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Physiology > Resting Cardiac Output"
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Physiology > Resting Cardiac Output",
+    "teachable": true,
+    "chapter_num": 19
   },
   {
     "chapter": "The Cardiovascular System: The Heart",
@@ -1590,7 +1942,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Physiology > Stroke Volume"
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Cardiac Physiology > Stroke Volume",
+    "teachable": true,
+    "chapter_num": 19
   },
   {
     "chapter": "The Cardiovascular System: The Heart",
@@ -1599,7 +1953,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 19: The Cardiovascular System: The Heart > Development of the Heart"
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Development of the Heart",
+    "teachable": true,
+    "chapter_num": 19
   },
   {
     "chapter": "The Cardiovascular System: The Heart",
@@ -1608,7 +1964,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 19: The Cardiovascular System: The Heart > Heart Anatomy > Chambers and Circulation through the Heart"
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Heart Anatomy > Chambers and Circulation through the Heart",
+    "teachable": true,
+    "chapter_num": 19
   },
   {
     "chapter": "The Cardiovascular System: The Heart",
@@ -1617,7 +1975,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 19: The Cardiovascular System: The Heart > Heart Anatomy > Coronary Circulation"
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Heart Anatomy > Coronary Circulation",
+    "teachable": true,
+    "chapter_num": 19
   },
   {
     "chapter": "The Cardiovascular System: The Heart",
@@ -1626,7 +1986,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 19: The Cardiovascular System: The Heart > Heart Anatomy > Internal Structure of the Heart"
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Heart Anatomy > Internal Structure of the Heart",
+    "teachable": true,
+    "chapter_num": 19
   },
   {
     "chapter": "The Cardiovascular System: The Heart",
@@ -1635,7 +1997,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 19: The Cardiovascular System: The Heart > Heart Anatomy > Location of the Heart"
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Heart Anatomy > Location of the Heart",
+    "teachable": true,
+    "chapter_num": 19
   },
   {
     "chapter": "The Cardiovascular System: The Heart",
@@ -1644,7 +2008,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 19: The Cardiovascular System: The Heart > Heart Anatomy > Membranes, Surface Features, and Layers"
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Heart Anatomy > Membranes, Surface Features, and Layers",
+    "teachable": true,
+    "chapter_num": 19
   },
   {
     "chapter": "The Cardiovascular System: The Heart",
@@ -1653,7 +2019,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 19: The Cardiovascular System: The Heart > Heart Anatomy > Shape and Size of the Heart"
+    "path": "Chapter 19: The Cardiovascular System: The Heart > Heart Anatomy > Shape and Size of the Heart",
+    "teachable": true,
+    "chapter_num": 19
   },
   {
     "chapter": "The Cellular Level of Organization",
@@ -1662,7 +2030,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 3: The Cellular Level of Organization > Cell Growth and Division > Cell Cycle Control"
+    "path": "Chapter 3: The Cellular Level of Organization > Cell Growth and Division > Cell Cycle Control",
+    "teachable": true,
+    "chapter_num": 3
   },
   {
     "chapter": "The Cellular Level of Organization",
@@ -1671,7 +2041,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 3: The Cellular Level of Organization > Cell Growth and Division > The Cell Cycle"
+    "path": "Chapter 3: The Cellular Level of Organization > Cell Growth and Division > The Cell Cycle",
+    "teachable": true,
+    "chapter_num": 3
   },
   {
     "chapter": "The Cellular Level of Organization",
@@ -1680,7 +2052,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 3: The Cellular Level of Organization > Cellular Differentiation > Stem Cells"
+    "path": "Chapter 3: The Cellular Level of Organization > Cellular Differentiation > Stem Cells",
+    "teachable": true,
+    "chapter_num": 3
   },
   {
     "chapter": "The Cellular Level of Organization",
@@ -1689,7 +2063,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 3: The Cellular Level of Organization > Protein Synthesis > From DNA to RNA: Transcription"
+    "path": "Chapter 3: The Cellular Level of Organization > Protein Synthesis > From DNA to RNA: Transcription",
+    "teachable": true,
+    "chapter_num": 3
   },
   {
     "chapter": "The Cellular Level of Organization",
@@ -1698,7 +2074,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 3: The Cellular Level of Organization > Protein Synthesis > From RNA to Protein: Translation"
+    "path": "Chapter 3: The Cellular Level of Organization > Protein Synthesis > From RNA to Protein: Translation",
+    "teachable": true,
+    "chapter_num": 3
   },
   {
     "chapter": "The Cellular Level of Organization",
@@ -1707,7 +2085,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 3: The Cellular Level of Organization > The Cell Membrane > Membrane Proteins"
+    "path": "Chapter 3: The Cellular Level of Organization > The Cell Membrane > Membrane Proteins",
+    "teachable": true,
+    "chapter_num": 3
   },
   {
     "chapter": "The Cellular Level of Organization",
@@ -1716,7 +2096,9 @@
     "difficulty": "moderate",
     "chunk_count": 3,
     "limited": false,
-    "path": "Chapter 3: The Cellular Level of Organization > The Cell Membrane > Structure and Composition of the Cell Membrane"
+    "path": "Chapter 3: The Cellular Level of Organization > The Cell Membrane > Structure and Composition of the Cell Membrane",
+    "teachable": true,
+    "chapter_num": 3
   },
   {
     "chapter": "The Cellular Level of Organization",
@@ -1725,7 +2107,9 @@
     "difficulty": "moderate",
     "chunk_count": 16,
     "limited": false,
-    "path": "Chapter 3: The Cellular Level of Organization > The Cell Membrane > Transport across the Cell Membrane"
+    "path": "Chapter 3: The Cellular Level of Organization > The Cell Membrane > Transport across the Cell Membrane",
+    "teachable": true,
+    "chapter_num": 3
   },
   {
     "chapter": "The Cellular Level of Organization",
@@ -1734,7 +2118,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 3: The Cellular Level of Organization > The Cytoplasm and Cellular Organelles > Organelles for Energy Production and Detoxification"
+    "path": "Chapter 3: The Cellular Level of Organization > The Cytoplasm and Cellular Organelles > Organelles for Energy Production and Detoxification",
+    "teachable": true,
+    "chapter_num": 3
   },
   {
     "chapter": "The Cellular Level of Organization",
@@ -1743,7 +2129,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 3: The Cellular Level of Organization > The Cytoplasm and Cellular Organelles > Organelles of the Endomembrane System"
+    "path": "Chapter 3: The Cellular Level of Organization > The Cytoplasm and Cellular Organelles > Organelles of the Endomembrane System",
+    "teachable": true,
+    "chapter_num": 3
   },
   {
     "chapter": "The Cellular Level of Organization",
@@ -1752,7 +2140,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 3: The Cellular Level of Organization > The Cytoplasm and Cellular Organelles > The Cytoskeleton"
+    "path": "Chapter 3: The Cellular Level of Organization > The Cytoplasm and Cellular Organelles > The Cytoskeleton",
+    "teachable": true,
+    "chapter_num": 3
   },
   {
     "chapter": "The Cellular Level of Organization",
@@ -1761,7 +2151,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 3: The Cellular Level of Organization > The Nucleus and DNA Replication > DNA Replication"
+    "path": "Chapter 3: The Cellular Level of Organization > The Nucleus and DNA Replication > DNA Replication",
+    "teachable": true,
+    "chapter_num": 3
   },
   {
     "chapter": "The Cellular Level of Organization",
@@ -1770,7 +2162,9 @@
     "difficulty": "easy",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 3: The Cellular Level of Organization > The Nucleus and DNA Replication > Organization of the Nucleus and Its DNA"
+    "path": "Chapter 3: The Cellular Level of Organization > The Nucleus and DNA Replication > Organization of the Nucleus and Its DNA",
+    "teachable": true,
+    "chapter_num": 3
   },
   {
     "chapter": "The Chemical Level of Organization",
@@ -1779,7 +2173,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 2: The Chemical Level of Organization > Chemical Bonds > Covalent Bonds"
+    "path": "Chapter 2: The Chemical Level of Organization > Chemical Bonds > Covalent Bonds",
+    "teachable": true,
+    "chapter_num": 2
   },
   {
     "chapter": "The Chemical Level of Organization",
@@ -1788,7 +2184,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 2: The Chemical Level of Organization > Chemical Bonds > Hydrogen Bonds"
+    "path": "Chapter 2: The Chemical Level of Organization > Chemical Bonds > Hydrogen Bonds",
+    "teachable": true,
+    "chapter_num": 2
   },
   {
     "chapter": "The Chemical Level of Organization",
@@ -1797,7 +2195,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 2: The Chemical Level of Organization > Chemical Bonds > Ions and Ionic Bonds"
+    "path": "Chapter 2: The Chemical Level of Organization > Chemical Bonds > Ions and Ionic Bonds",
+    "teachable": true,
+    "chapter_num": 2
   },
   {
     "chapter": "The Chemical Level of Organization",
@@ -1806,7 +2206,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 2: The Chemical Level of Organization > Chemical Reactions > Characteristics of Chemical Reactions"
+    "path": "Chapter 2: The Chemical Level of Organization > Chemical Reactions > Characteristics of Chemical Reactions",
+    "teachable": true,
+    "chapter_num": 2
   },
   {
     "chapter": "The Chemical Level of Organization",
@@ -1815,7 +2217,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 2: The Chemical Level of Organization > Chemical Reactions > Factors Influencing the Rate of Chemical Reactions"
+    "path": "Chapter 2: The Chemical Level of Organization > Chemical Reactions > Factors Influencing the Rate of Chemical Reactions",
+    "teachable": true,
+    "chapter_num": 2
   },
   {
     "chapter": "The Chemical Level of Organization",
@@ -1824,7 +2228,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 2: The Chemical Level of Organization > Chemical Reactions > The Role of Energy in Chemical Reactions"
+    "path": "Chapter 2: The Chemical Level of Organization > Chemical Reactions > The Role of Energy in Chemical Reactions",
+    "teachable": true,
+    "chapter_num": 2
   },
   {
     "chapter": "The Chemical Level of Organization",
@@ -1833,7 +2239,9 @@
     "difficulty": "moderate",
     "chunk_count": 10,
     "limited": false,
-    "path": "Chapter 2: The Chemical Level of Organization > Elements and Atoms: The Building Blocks of Matter > Atoms and Subatomic Particles"
+    "path": "Chapter 2: The Chemical Level of Organization > Elements and Atoms: The Building Blocks of Matter > Atoms and Subatomic Particles",
+    "teachable": true,
+    "chapter_num": 2
   },
   {
     "chapter": "The Chemical Level of Organization",
@@ -1842,7 +2250,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 2: The Chemical Level of Organization > Elements and Atoms: The Building Blocks of Matter > Elements and Compounds"
+    "path": "Chapter 2: The Chemical Level of Organization > Elements and Atoms: The Building Blocks of Matter > Elements and Compounds",
+    "teachable": true,
+    "chapter_num": 2
   },
   {
     "chapter": "The Chemical Level of Organization",
@@ -1851,7 +2261,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 2: The Chemical Level of Organization > Elements and Atoms: The Building Blocks of Matter > The Behavior of Electrons"
+    "path": "Chapter 2: The Chemical Level of Organization > Elements and Atoms: The Building Blocks of Matter > The Behavior of Electrons",
+    "teachable": true,
+    "chapter_num": 2
   },
   {
     "chapter": "The Chemical Level of Organization",
@@ -1860,7 +2272,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 2: The Chemical Level of Organization > Inorganic Compounds Essential to Human Functioning > Acids and Bases"
+    "path": "Chapter 2: The Chemical Level of Organization > Inorganic Compounds Essential to Human Functioning > Acids and Bases",
+    "teachable": true,
+    "chapter_num": 2
   },
   {
     "chapter": "The Chemical Level of Organization",
@@ -1869,7 +2283,9 @@
     "difficulty": "moderate",
     "chunk_count": 28,
     "limited": false,
-    "path": "Chapter 2: The Chemical Level of Organization > Organic Compounds Essential to Human Functioning > The Chemistry of Carbon"
+    "path": "Chapter 2: The Chemical Level of Organization > Organic Compounds Essential to Human Functioning > The Chemistry of Carbon",
+    "teachable": true,
+    "chapter_num": 2
   },
   {
     "chapter": "The Digestive System",
@@ -1878,7 +2294,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 23: The Digestive System > Accessory Organs in Digestion: The Liver, Pancreas, and Gallbladder > The Liver"
+    "path": "Chapter 23: The Digestive System > Accessory Organs in Digestion: The Liver, Pancreas, and Gallbladder > The Liver",
+    "teachable": true,
+    "chapter_num": 23
   },
   {
     "chapter": "The Digestive System",
@@ -1887,7 +2305,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 23: The Digestive System > Accessory Organs in Digestion: The Liver, Pancreas, and Gallbladder > The Pancreas"
+    "path": "Chapter 23: The Digestive System > Accessory Organs in Digestion: The Liver, Pancreas, and Gallbladder > The Pancreas",
+    "teachable": true,
+    "chapter_num": 23
   },
   {
     "chapter": "The Digestive System",
@@ -1896,7 +2316,9 @@
     "difficulty": "moderate",
     "chunk_count": 22,
     "limited": false,
-    "path": "Chapter 23: The Digestive System > Chemical Digestion and Absorption: A Closer Look > Chemical Digestion"
+    "path": "Chapter 23: The Digestive System > Chemical Digestion and Absorption: A Closer Look > Chemical Digestion",
+    "teachable": true,
+    "chapter_num": 23
   },
   {
     "chapter": "The Digestive System",
@@ -1905,7 +2327,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 23: The Digestive System > Digestive System Processes and Regulation > Digestive Processes"
+    "path": "Chapter 23: The Digestive System > Digestive System Processes and Regulation > Digestive Processes",
+    "teachable": true,
+    "chapter_num": 23
   },
   {
     "chapter": "The Digestive System",
@@ -1914,7 +2338,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 23: The Digestive System > Overview of the Digestive System > Blood Supply"
+    "path": "Chapter 23: The Digestive System > Overview of the Digestive System > Blood Supply",
+    "teachable": true,
+    "chapter_num": 23
   },
   {
     "chapter": "The Digestive System",
@@ -1923,7 +2349,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 23: The Digestive System > Overview of the Digestive System > Digestive System Organs"
+    "path": "Chapter 23: The Digestive System > Overview of the Digestive System > Digestive System Organs",
+    "teachable": true,
+    "chapter_num": 23
   },
   {
     "chapter": "The Digestive System",
@@ -1932,7 +2360,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 23: The Digestive System > Overview of the Digestive System > Histology of the Alimentary Canal"
+    "path": "Chapter 23: The Digestive System > Overview of the Digestive System > Histology of the Alimentary Canal",
+    "teachable": true,
+    "chapter_num": 23
   },
   {
     "chapter": "The Digestive System",
@@ -1941,7 +2371,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 23: The Digestive System > Overview of the Digestive System > Nerve Supply"
+    "path": "Chapter 23: The Digestive System > Overview of the Digestive System > Nerve Supply",
+    "teachable": false,
+    "chapter_num": 23
   },
   {
     "chapter": "The Digestive System",
@@ -1950,7 +2382,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 23: The Digestive System > Overview of the Digestive System > The Peritoneum"
+    "path": "Chapter 23: The Digestive System > Overview of the Digestive System > The Peritoneum",
+    "teachable": true,
+    "chapter_num": 23
   },
   {
     "chapter": "The Digestive System",
@@ -1959,7 +2393,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 23: The Digestive System > The Mouth, Pharynx, and Esophagus > The Esophagus"
+    "path": "Chapter 23: The Digestive System > The Mouth, Pharynx, and Esophagus > The Esophagus",
+    "teachable": true,
+    "chapter_num": 23
   },
   {
     "chapter": "The Digestive System",
@@ -1968,7 +2404,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 23: The Digestive System > The Mouth, Pharynx, and Esophagus > The Mouth"
+    "path": "Chapter 23: The Digestive System > The Mouth, Pharynx, and Esophagus > The Mouth",
+    "teachable": true,
+    "chapter_num": 23
   },
   {
     "chapter": "The Digestive System",
@@ -1977,7 +2415,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 23: The Digestive System > The Mouth, Pharynx, and Esophagus > The Pharynx"
+    "path": "Chapter 23: The Digestive System > The Mouth, Pharynx, and Esophagus > The Pharynx",
+    "teachable": true,
+    "chapter_num": 23
   },
   {
     "chapter": "The Digestive System",
@@ -1986,7 +2426,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 23: The Digestive System > The Mouth, Pharynx, and Esophagus > The Salivary Glands"
+    "path": "Chapter 23: The Digestive System > The Mouth, Pharynx, and Esophagus > The Salivary Glands",
+    "teachable": true,
+    "chapter_num": 23
   },
   {
     "chapter": "The Digestive System",
@@ -1995,7 +2437,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 23: The Digestive System > The Mouth, Pharynx, and Esophagus > The Teeth"
+    "path": "Chapter 23: The Digestive System > The Mouth, Pharynx, and Esophagus > The Teeth",
+    "teachable": true,
+    "chapter_num": 23
   },
   {
     "chapter": "The Digestive System",
@@ -2004,7 +2448,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 23: The Digestive System > The Mouth, Pharynx, and Esophagus > The Tongue"
+    "path": "Chapter 23: The Digestive System > The Mouth, Pharynx, and Esophagus > The Tongue",
+    "teachable": true,
+    "chapter_num": 23
   },
   {
     "chapter": "The Digestive System",
@@ -2013,7 +2459,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 23: The Digestive System > The Small and Large Intestines > The Large Intestine"
+    "path": "Chapter 23: The Digestive System > The Small and Large Intestines > The Large Intestine",
+    "teachable": true,
+    "chapter_num": 23
   },
   {
     "chapter": "The Digestive System",
@@ -2022,7 +2470,9 @@
     "difficulty": "moderate",
     "chunk_count": 14,
     "limited": false,
-    "path": "Chapter 23: The Digestive System > The Small and Large Intestines > The Small Intestine"
+    "path": "Chapter 23: The Digestive System > The Small and Large Intestines > The Small Intestine",
+    "teachable": true,
+    "chapter_num": 23
   },
   {
     "chapter": "The Digestive System",
@@ -2031,7 +2481,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 23: The Digestive System > The Stomach > Digestive Functions of the Stomach"
+    "path": "Chapter 23: The Digestive System > The Stomach > Digestive Functions of the Stomach",
+    "teachable": true,
+    "chapter_num": 23
   },
   {
     "chapter": "The Digestive System",
@@ -2040,7 +2492,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 23: The Digestive System > The Stomach > Gastric Secretion"
+    "path": "Chapter 23: The Digestive System > The Stomach > Gastric Secretion",
+    "teachable": true,
+    "chapter_num": 23
   },
   {
     "chapter": "The Endocrine System",
@@ -2049,7 +2503,9 @@
     "difficulty": "hard",
     "chunk_count": 3,
     "limited": false,
-    "path": "Chapter 17: The Endocrine System > An Overview of the Endocrine System > Neural and Endocrine Signaling"
+    "path": "Chapter 17: The Endocrine System > An Overview of the Endocrine System > Neural and Endocrine Signaling",
+    "teachable": true,
+    "chapter_num": 17
   },
   {
     "chapter": "The Endocrine System",
@@ -2058,7 +2514,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 17: The Endocrine System > An Overview of the Endocrine System > Other Types of Chemical Signaling"
+    "path": "Chapter 17: The Endocrine System > An Overview of the Endocrine System > Other Types of Chemical Signaling",
+    "teachable": true,
+    "chapter_num": 17
   },
   {
     "chapter": "The Endocrine System",
@@ -2067,7 +2525,9 @@
     "difficulty": "hard",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 17: The Endocrine System > An Overview of the Endocrine System > Structures of the Endocrine System"
+    "path": "Chapter 17: The Endocrine System > An Overview of the Endocrine System > Structures of the Endocrine System",
+    "teachable": true,
+    "chapter_num": 17
   },
   {
     "chapter": "The Endocrine System",
@@ -2076,7 +2536,9 @@
     "difficulty": "hard",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 17: The Endocrine System > Development and Aging of the Endocrine System"
+    "path": "Chapter 17: The Endocrine System > Development and Aging of the Endocrine System",
+    "teachable": true,
+    "chapter_num": 17
   },
   {
     "chapter": "The Endocrine System",
@@ -2085,7 +2547,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 17: The Endocrine System > Hormones > Factors Affecting Target Cell Response"
+    "path": "Chapter 17: The Endocrine System > Hormones > Factors Affecting Target Cell Response",
+    "teachable": true,
+    "chapter_num": 17
   },
   {
     "chapter": "The Endocrine System",
@@ -2094,7 +2558,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 17: The Endocrine System > Hormones > Pathways of Hormone Action"
+    "path": "Chapter 17: The Endocrine System > Hormones > Pathways of Hormone Action",
+    "teachable": true,
+    "chapter_num": 17
   },
   {
     "chapter": "The Endocrine System",
@@ -2103,7 +2569,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 17: The Endocrine System > Hormones > Regulation of Hormone Secretion"
+    "path": "Chapter 17: The Endocrine System > Hormones > Regulation of Hormone Secretion",
+    "teachable": true,
+    "chapter_num": 17
   },
   {
     "chapter": "The Endocrine System",
@@ -2112,7 +2580,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 17: The Endocrine System > Hormones > Types of Hormones"
+    "path": "Chapter 17: The Endocrine System > Hormones > Types of Hormones",
+    "teachable": true,
+    "chapter_num": 17
   },
   {
     "chapter": "The Endocrine System",
@@ -2121,7 +2591,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 17: The Endocrine System > Organs with Secondary Endocrine Functions > Adipose Tissue"
+    "path": "Chapter 17: The Endocrine System > Organs with Secondary Endocrine Functions > Adipose Tissue",
+    "teachable": true,
+    "chapter_num": 17
   },
   {
     "chapter": "The Endocrine System",
@@ -2130,7 +2602,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 17: The Endocrine System > Organs with Secondary Endocrine Functions > Gastrointestinal Tract"
+    "path": "Chapter 17: The Endocrine System > Organs with Secondary Endocrine Functions > Gastrointestinal Tract",
+    "teachable": true,
+    "chapter_num": 17
   },
   {
     "chapter": "The Endocrine System",
@@ -2139,7 +2613,9 @@
     "difficulty": "hard",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 17: The Endocrine System > The Adrenal Glands > Adrenal Cortex"
+    "path": "Chapter 17: The Endocrine System > The Adrenal Glands > Adrenal Cortex",
+    "teachable": true,
+    "chapter_num": 17
   },
   {
     "chapter": "The Endocrine System",
@@ -2148,7 +2624,9 @@
     "difficulty": "hard",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 17: The Endocrine System > The Adrenal Glands > Adrenal Medulla"
+    "path": "Chapter 17: The Endocrine System > The Adrenal Glands > Adrenal Medulla",
+    "teachable": true,
+    "chapter_num": 17
   },
   {
     "chapter": "The Endocrine System",
@@ -2157,7 +2635,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 17: The Endocrine System > The Endocrine Pancreas > Regulation of Blood Glucose Levels by Insulin and Glucagon"
+    "path": "Chapter 17: The Endocrine System > The Endocrine Pancreas > Regulation of Blood Glucose Levels by Insulin and Glucagon",
+    "teachable": true,
+    "chapter_num": 17
   },
   {
     "chapter": "The Endocrine System",
@@ -2166,7 +2646,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 17: The Endocrine System > The Pituitary Gland and Hypothalamus > Anterior Pituitary"
+    "path": "Chapter 17: The Endocrine System > The Pituitary Gland and Hypothalamus > Anterior Pituitary",
+    "teachable": true,
+    "chapter_num": 17
   },
   {
     "chapter": "The Endocrine System",
@@ -2175,7 +2657,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 17: The Endocrine System > The Pituitary Gland and Hypothalamus > Posterior Pituitary"
+    "path": "Chapter 17: The Endocrine System > The Pituitary Gland and Hypothalamus > Posterior Pituitary",
+    "teachable": true,
+    "chapter_num": 17
   },
   {
     "chapter": "The Endocrine System",
@@ -2184,7 +2668,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 17: The Endocrine System > The Thyroid Gland > Functions of Thyroid Hormones"
+    "path": "Chapter 17: The Endocrine System > The Thyroid Gland > Functions of Thyroid Hormones",
+    "teachable": true,
+    "chapter_num": 17
   },
   {
     "chapter": "The Endocrine System",
@@ -2193,7 +2679,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 17: The Endocrine System > The Thyroid Gland > Synthesis and Release of Thyroid Hormones"
+    "path": "Chapter 17: The Endocrine System > The Thyroid Gland > Synthesis and Release of Thyroid Hormones",
+    "teachable": true,
+    "chapter_num": 17
   },
   {
     "chapter": "The Integumentary System",
@@ -2202,7 +2690,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 5: The Integumentary System > Accessory Structures of the Skin > Sweat Glands"
+    "path": "Chapter 5: The Integumentary System > Accessory Structures of the Skin > Sweat Glands",
+    "teachable": true,
+    "chapter_num": 5
   },
   {
     "chapter": "The Integumentary System",
@@ -2211,7 +2701,9 @@
     "difficulty": "moderate",
     "chunk_count": 12,
     "limited": false,
-    "path": "Chapter 5: The Integumentary System > Diseases, Disorders, and Injuries of the Integumentary System > Skin Disorders"
+    "path": "Chapter 5: The Integumentary System > Diseases, Disorders, and Injuries of the Integumentary System > Skin Disorders",
+    "teachable": true,
+    "chapter_num": 5
   },
   {
     "chapter": "The Integumentary System",
@@ -2220,7 +2712,9 @@
     "difficulty": "moderate",
     "chunk_count": 10,
     "limited": false,
-    "path": "Chapter 5: The Integumentary System > Layers of the Skin > The Epidermis"
+    "path": "Chapter 5: The Integumentary System > Layers of the Skin > The Epidermis",
+    "teachable": true,
+    "chapter_num": 5
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2229,7 +2723,9 @@
     "difficulty": "moderate",
     "chunk_count": 1,
     "limited": true,
-    "path": "Chapter 21: The Lymphatic and Immune System > Anatomy of the Lymphatic and Immune Systems > Functions of the Lymphatic System"
+    "path": "Chapter 21: The Lymphatic and Immune System > Anatomy of the Lymphatic and Immune Systems > Functions of the Lymphatic System",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2238,7 +2734,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 21: The Lymphatic and Immune System > Anatomy of the Lymphatic and Immune Systems > Lymphocytes: B Cells, T Cells, Plasma Cells, and Natural Killer Cells"
+    "path": "Chapter 21: The Lymphatic and Immune System > Anatomy of the Lymphatic and Immune Systems > Lymphocytes: B Cells, T Cells, Plasma Cells, and Natural Killer Cells",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2247,7 +2745,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 21: The Lymphatic and Immune System > Anatomy of the Lymphatic and Immune Systems > Primary Lymphoid Organs and Lymphocyte Development"
+    "path": "Chapter 21: The Lymphatic and Immune System > Anatomy of the Lymphatic and Immune Systems > Primary Lymphoid Organs and Lymphocyte Development",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2256,7 +2756,9 @@
     "difficulty": "hard",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 21: The Lymphatic and Immune System > Anatomy of the Lymphatic and Immune Systems > Secondary Lymphoid Organs and their Roles in Active Immune Responses"
+    "path": "Chapter 21: The Lymphatic and Immune System > Anatomy of the Lymphatic and Immune Systems > Secondary Lymphoid Organs and their Roles in Active Immune Responses",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2265,7 +2767,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 21: The Lymphatic and Immune System > Anatomy of the Lymphatic and Immune Systems > Structure of the Lymphatic System"
+    "path": "Chapter 21: The Lymphatic and Immune System > Anatomy of the Lymphatic and Immune Systems > Structure of the Lymphatic System",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2274,7 +2778,9 @@
     "difficulty": "hard",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 21: The Lymphatic and Immune System > Anatomy of the Lymphatic and Immune Systems > The Organization of Immune Function"
+    "path": "Chapter 21: The Lymphatic and Immune System > Anatomy of the Lymphatic and Immune Systems > The Organization of Immune Function",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2283,7 +2789,9 @@
     "difficulty": "hard",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 21: The Lymphatic and Immune System > Barrier Defenses and the Innate Immune Response > Cells of the Innate Immune Response"
+    "path": "Chapter 21: The Lymphatic and Immune System > Barrier Defenses and the Innate Immune Response > Cells of the Innate Immune Response",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2292,7 +2800,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 21: The Lymphatic and Immune System > Barrier Defenses and the Innate Immune Response > Inflammatory Response"
+    "path": "Chapter 21: The Lymphatic and Immune System > Barrier Defenses and the Innate Immune Response > Inflammatory Response",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2301,7 +2811,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 21: The Lymphatic and Immune System > Barrier Defenses and the Innate Immune Response > Recognition of Pathogens"
+    "path": "Chapter 21: The Lymphatic and Immune System > Barrier Defenses and the Innate Immune Response > Recognition of Pathogens",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2310,7 +2822,9 @@
     "difficulty": "hard",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 21: The Lymphatic and Immune System > Barrier Defenses and the Innate Immune Response > Soluble Mediators of the Innate Immune Response"
+    "path": "Chapter 21: The Lymphatic and Immune System > Barrier Defenses and the Innate Immune Response > Soluble Mediators of the Innate Immune Response",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2319,7 +2833,9 @@
     "difficulty": "hard",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 21: The Lymphatic and Immune System > Diseases Associated with Depressed or Overactive Immune Responses > Autoimmune Responses"
+    "path": "Chapter 21: The Lymphatic and Immune System > Diseases Associated with Depressed or Overactive Immune Responses > Autoimmune Responses",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2328,7 +2844,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > Active versus Passive Immunity"
+    "path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > Active versus Passive Immunity",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2337,7 +2855,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > Antibody Structure"
+    "path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > Antibody Structure",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2346,7 +2866,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation"
+    "path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2355,7 +2877,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > T cell-dependent versus T cell-independent Antigens"
+    "path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > T cell-dependent versus T cell-independent Antigens",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2364,7 +2888,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 21: The Lymphatic and Immune System > The Immune Response against Pathogens > Defenses against Viruses"
+    "path": "Chapter 21: The Lymphatic and Immune System > The Immune Response against Pathogens > Defenses against Viruses",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2373,7 +2899,9 @@
     "difficulty": "hard",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 21: The Lymphatic and Immune System > The Immune Response against Pathogens > Evasion of the Immune System by Pathogens"
+    "path": "Chapter 21: The Lymphatic and Immune System > The Immune Response against Pathogens > Evasion of the Immune System by Pathogens",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2382,7 +2910,9 @@
     "difficulty": "hard",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 21: The Lymphatic and Immune System > Transplantation and Cancer Immunology > Immune Responses Against Cancer"
+    "path": "Chapter 21: The Lymphatic and Immune System > Transplantation and Cancer Immunology > Immune Responses Against Cancer",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2391,7 +2921,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 21: The Lymphatic and Immune System > Transplantation and Cancer Immunology > The Rh Factor"
+    "path": "Chapter 21: The Lymphatic and Immune System > Transplantation and Cancer Immunology > The Rh Factor",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Lymphatic and Immune System",
@@ -2400,7 +2932,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 21: The Lymphatic and Immune System > Transplantation and Cancer Immunology > Tissue Transplantation"
+    "path": "Chapter 21: The Lymphatic and Immune System > Transplantation and Cancer Immunology > Tissue Transplantation",
+    "teachable": true,
+    "chapter_num": 21
   },
   {
     "chapter": "The Muscular System",
@@ -2409,7 +2943,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 11: The Muscular System > Appendicular Muscles of the Pelvic Girdle and Lower Limbs > Muscles That Move the Feet and Toes"
+    "path": "Chapter 11: The Muscular System > Appendicular Muscles of the Pelvic Girdle and Lower Limbs > Muscles That Move the Feet and Toes",
+    "teachable": true,
+    "chapter_num": 11
   },
   {
     "chapter": "The Muscular System",
@@ -2418,7 +2954,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 11: The Muscular System > Appendicular Muscles of the Pelvic Girdle and Lower Limbs > Muscles of the Thigh"
+    "path": "Chapter 11: The Muscular System > Appendicular Muscles of the Pelvic Girdle and Lower Limbs > Muscles of the Thigh",
+    "teachable": true,
+    "chapter_num": 11
   },
   {
     "chapter": "The Muscular System",
@@ -2427,7 +2965,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 11: The Muscular System > Axial Muscles of the Abdominal Wall, and Thorax > Muscles of the Abdomen"
+    "path": "Chapter 11: The Muscular System > Axial Muscles of the Abdominal Wall, and Thorax > Muscles of the Abdomen",
+    "teachable": true,
+    "chapter_num": 11
   },
   {
     "chapter": "The Muscular System",
@@ -2436,7 +2976,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 11: The Muscular System > Axial Muscles of the Abdominal Wall, and Thorax > Muscles of the Pelvic Floor and Perineum"
+    "path": "Chapter 11: The Muscular System > Axial Muscles of the Abdominal Wall, and Thorax > Muscles of the Pelvic Floor and Perineum",
+    "teachable": true,
+    "chapter_num": 11
   },
   {
     "chapter": "The Muscular System",
@@ -2445,7 +2987,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 11: The Muscular System > Axial Muscles of the Abdominal Wall, and Thorax > Muscles of the Thorax"
+    "path": "Chapter 11: The Muscular System > Axial Muscles of the Abdominal Wall, and Thorax > Muscles of the Thorax",
+    "teachable": true,
+    "chapter_num": 11
   },
   {
     "chapter": "The Muscular System",
@@ -2454,7 +2998,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 11: The Muscular System > Axial Muscles of the Head, Neck, and Back > Muscles That Create Facial Expression"
+    "path": "Chapter 11: The Muscular System > Axial Muscles of the Head, Neck, and Back > Muscles That Create Facial Expression",
+    "teachable": true,
+    "chapter_num": 11
   },
   {
     "chapter": "The Muscular System",
@@ -2463,7 +3009,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 11: The Muscular System > Axial Muscles of the Head, Neck, and Back > Muscles That Move the Eyes"
+    "path": "Chapter 11: The Muscular System > Axial Muscles of the Head, Neck, and Back > Muscles That Move the Eyes",
+    "teachable": true,
+    "chapter_num": 11
   },
   {
     "chapter": "The Muscular System",
@@ -2472,7 +3020,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 11: The Muscular System > Axial Muscles of the Head, Neck, and Back > Muscles That Move the Head"
+    "path": "Chapter 11: The Muscular System > Axial Muscles of the Head, Neck, and Back > Muscles That Move the Head",
+    "teachable": true,
+    "chapter_num": 11
   },
   {
     "chapter": "The Muscular System",
@@ -2481,7 +3031,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 11: The Muscular System > Axial Muscles of the Head, Neck, and Back > Muscles That Move the Lower Jaw"
+    "path": "Chapter 11: The Muscular System > Axial Muscles of the Head, Neck, and Back > Muscles That Move the Lower Jaw",
+    "teachable": true,
+    "chapter_num": 11
   },
   {
     "chapter": "The Muscular System",
@@ -2490,7 +3042,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 11: The Muscular System > Axial Muscles of the Head, Neck, and Back > Muscles of the Anterior Neck"
+    "path": "Chapter 11: The Muscular System > Axial Muscles of the Head, Neck, and Back > Muscles of the Anterior Neck",
+    "teachable": true,
+    "chapter_num": 11
   },
   {
     "chapter": "The Muscular System",
@@ -2499,7 +3053,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 11: The Muscular System > Axial Muscles of the Head, Neck, and Back > Muscles of the Posterior Neck and the Back"
+    "path": "Chapter 11: The Muscular System > Axial Muscles of the Head, Neck, and Back > Muscles of the Posterior Neck and the Back",
+    "teachable": true,
+    "chapter_num": 11
   },
   {
     "chapter": "The Muscular System",
@@ -2508,7 +3064,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 11: The Muscular System > Muscles of the Pectoral Girdle and Upper Limbs > Muscles That Move the Humerus"
+    "path": "Chapter 11: The Muscular System > Muscles of the Pectoral Girdle and Upper Limbs > Muscles That Move the Humerus",
+    "teachable": true,
+    "chapter_num": 11
   },
   {
     "chapter": "The Muscular System",
@@ -2517,7 +3075,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 11: The Muscular System > Muscles of the Pectoral Girdle and Upper Limbs > Muscles That Move the Wrist, Hand, and Fingers"
+    "path": "Chapter 11: The Muscular System > Muscles of the Pectoral Girdle and Upper Limbs > Muscles That Move the Wrist, Hand, and Fingers",
+    "teachable": true,
+    "chapter_num": 11
   },
   {
     "chapter": "The Muscular System",
@@ -2526,7 +3086,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 11: The Muscular System > Muscles of the Pectoral Girdle and Upper Limbs > Muscles That Position the Pectoral Girdle"
+    "path": "Chapter 11: The Muscular System > Muscles of the Pectoral Girdle and Upper Limbs > Muscles That Position the Pectoral Girdle",
+    "teachable": true,
+    "chapter_num": 11
   },
   {
     "chapter": "The Muscular System",
@@ -2535,7 +3097,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 11: The Muscular System > Naming Skeletal Muscles"
+    "path": "Chapter 11: The Muscular System > Naming Skeletal Muscles",
+    "teachable": true,
+    "chapter_num": 11
   },
   {
     "chapter": "The Nervous System and Nervous Tissue",
@@ -2544,7 +3108,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 12: The Nervous System and Nervous Tissue > Basic Structure and Function of the Nervous System > Functional Divisions of the Nervous System"
+    "path": "Chapter 12: The Nervous System and Nervous Tissue > Basic Structure and Function of the Nervous System > Functional Divisions of the Nervous System",
+    "teachable": true,
+    "chapter_num": 12
   },
   {
     "chapter": "The Nervous System and Nervous Tissue",
@@ -2553,7 +3119,9 @@
     "difficulty": "hard",
     "chunk_count": 7,
     "limited": false,
-    "path": "Chapter 12: The Nervous System and Nervous Tissue > Basic Structure and Function of the Nervous System > The Central and Peripheral Nervous Systems"
+    "path": "Chapter 12: The Nervous System and Nervous Tissue > Basic Structure and Function of the Nervous System > The Central and Peripheral Nervous Systems",
+    "teachable": true,
+    "chapter_num": 12
   },
   {
     "chapter": "The Nervous System and Nervous Tissue",
@@ -2562,7 +3130,9 @@
     "difficulty": "moderate",
     "chunk_count": 18,
     "limited": false,
-    "path": "Chapter 12: The Nervous System and Nervous Tissue > Communication Between Neurons > Graded Potentials"
+    "path": "Chapter 12: The Nervous System and Nervous Tissue > Communication Between Neurons > Graded Potentials",
+    "teachable": true,
+    "chapter_num": 12
   },
   {
     "chapter": "The Nervous System and Nervous Tissue",
@@ -2571,7 +3141,9 @@
     "difficulty": "moderate",
     "chunk_count": 10,
     "limited": false,
-    "path": "Chapter 12: The Nervous System and Nervous Tissue > Nervous Tissue > Glial Cells"
+    "path": "Chapter 12: The Nervous System and Nervous Tissue > Nervous Tissue > Glial Cells",
+    "teachable": true,
+    "chapter_num": 12
   },
   {
     "chapter": "The Nervous System and Nervous Tissue",
@@ -2580,7 +3152,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 12: The Nervous System and Nervous Tissue > The Action Potential > Electrically Active Cell Membranes"
+    "path": "Chapter 12: The Nervous System and Nervous Tissue > The Action Potential > Electrically Active Cell Membranes",
+    "teachable": true,
+    "chapter_num": 12
   },
   {
     "chapter": "The Nervous System and Nervous Tissue",
@@ -2589,7 +3163,9 @@
     "difficulty": "moderate",
     "chunk_count": 14,
     "limited": false,
-    "path": "Chapter 12: The Nervous System and Nervous Tissue > The Action Potential > The Membrane Potential"
+    "path": "Chapter 12: The Nervous System and Nervous Tissue > The Action Potential > The Membrane Potential",
+    "teachable": true,
+    "chapter_num": 12
   },
   {
     "chapter": "The Neurological Exam",
@@ -2598,7 +3174,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 16: The Neurological Exam > Overview of the Neurological Exam > Causes of Neurological Deficits"
+    "path": "Chapter 16: The Neurological Exam > Overview of the Neurological Exam > Causes of Neurological Deficits",
+    "teachable": true,
+    "chapter_num": 16
   },
   {
     "chapter": "The Neurological Exam",
@@ -2607,7 +3185,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 16: The Neurological Exam > Overview of the Neurological Exam > Neuroanatomy and the Neurological Exam"
+    "path": "Chapter 16: The Neurological Exam > Overview of the Neurological Exam > Neuroanatomy and the Neurological Exam",
+    "teachable": true,
+    "chapter_num": 16
   },
   {
     "chapter": "The Neurological Exam",
@@ -2616,7 +3196,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 16: The Neurological Exam > The Coordination and Gait Exams > Coordination and Alternating Movement"
+    "path": "Chapter 16: The Neurological Exam > The Coordination and Gait Exams > Coordination and Alternating Movement",
+    "teachable": true,
+    "chapter_num": 16
   },
   {
     "chapter": "The Neurological Exam",
@@ -2625,7 +3207,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 16: The Neurological Exam > The Coordination and Gait Exams > Location and Connections of the Cerebellum"
+    "path": "Chapter 16: The Neurological Exam > The Coordination and Gait Exams > Location and Connections of the Cerebellum",
+    "teachable": true,
+    "chapter_num": 16
   },
   {
     "chapter": "The Neurological Exam",
@@ -2634,7 +3218,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 16: The Neurological Exam > The Coordination and Gait Exams > Posture and Gait"
+    "path": "Chapter 16: The Neurological Exam > The Coordination and Gait Exams > Posture and Gait",
+    "teachable": true,
+    "chapter_num": 16
   },
   {
     "chapter": "The Neurological Exam",
@@ -2643,7 +3229,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 16: The Neurological Exam > The Cranial Nerve Exam > Gaze Control"
+    "path": "Chapter 16: The Neurological Exam > The Cranial Nerve Exam > Gaze Control",
+    "teachable": true,
+    "chapter_num": 16
   },
   {
     "chapter": "The Neurological Exam",
@@ -2652,7 +3240,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 16: The Neurological Exam > The Cranial Nerve Exam > Motor Nerves of the Neck"
+    "path": "Chapter 16: The Neurological Exam > The Cranial Nerve Exam > Motor Nerves of the Neck",
+    "teachable": true,
+    "chapter_num": 16
   },
   {
     "chapter": "The Neurological Exam",
@@ -2661,7 +3251,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 16: The Neurological Exam > The Cranial Nerve Exam > Nerves of the Face and Oral Cavity"
+    "path": "Chapter 16: The Neurological Exam > The Cranial Nerve Exam > Nerves of the Face and Oral Cavity",
+    "teachable": true,
+    "chapter_num": 16
   },
   {
     "chapter": "The Neurological Exam",
@@ -2670,7 +3262,9 @@
     "difficulty": "moderate",
     "chunk_count": 10,
     "limited": false,
-    "path": "Chapter 16: The Neurological Exam > The Cranial Nerve Exam > Sensory Nerves"
+    "path": "Chapter 16: The Neurological Exam > The Cranial Nerve Exam > Sensory Nerves",
+    "teachable": true,
+    "chapter_num": 16
   },
   {
     "chapter": "The Neurological Exam",
@@ -2679,7 +3273,9 @@
     "difficulty": "moderate",
     "chunk_count": 16,
     "limited": false,
-    "path": "Chapter 16: The Neurological Exam > The Mental Status Exam > Cognitive Abilities"
+    "path": "Chapter 16: The Neurological Exam > The Mental Status Exam > Cognitive Abilities",
+    "teachable": true,
+    "chapter_num": 16
   },
   {
     "chapter": "The Neurological Exam",
@@ -2688,7 +3284,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 16: The Neurological Exam > The Mental Status Exam > Functions of the Cerebral Cortex"
+    "path": "Chapter 16: The Neurological Exam > The Mental Status Exam > Functions of the Cerebral Cortex",
+    "teachable": true,
+    "chapter_num": 16
   },
   {
     "chapter": "The Neurological Exam",
@@ -2697,7 +3295,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 16: The Neurological Exam > The Sensory and Motor Exams > Muscle Strength and Voluntary Movement"
+    "path": "Chapter 16: The Neurological Exam > The Sensory and Motor Exams > Muscle Strength and Voluntary Movement",
+    "teachable": true,
+    "chapter_num": 16
   },
   {
     "chapter": "The Neurological Exam",
@@ -2706,7 +3306,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 16: The Neurological Exam > The Sensory and Motor Exams > Sensory Modalities and Location"
+    "path": "Chapter 16: The Neurological Exam > The Sensory and Motor Exams > Sensory Modalities and Location",
+    "teachable": true,
+    "chapter_num": 16
   },
   {
     "chapter": "The Reproductive System",
@@ -2715,7 +3317,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > External Female Genitals"
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > External Female Genitals",
+    "teachable": true,
+    "chapter_num": 27
   },
   {
     "chapter": "The Reproductive System",
@@ -2724,7 +3328,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > Hormonal Birth Control"
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > Hormonal Birth Control",
+    "teachable": true,
+    "chapter_num": 27
   },
   {
     "chapter": "The Reproductive System",
@@ -2733,7 +3339,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > The Breasts"
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > The Breasts",
+    "teachable": true,
+    "chapter_num": 27
   },
   {
     "chapter": "The Reproductive System",
@@ -2742,7 +3350,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > The Menstrual Cycle"
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > The Menstrual Cycle",
+    "teachable": true,
+    "chapter_num": 27
   },
   {
     "chapter": "The Reproductive System",
@@ -2751,7 +3361,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > The Ovarian Cycle"
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > The Ovarian Cycle",
+    "teachable": true,
+    "chapter_num": 27
   },
   {
     "chapter": "The Reproductive System",
@@ -2760,7 +3372,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > The Uterine Tubes"
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > The Uterine Tubes",
+    "teachable": true,
+    "chapter_num": 27
   },
   {
     "chapter": "The Reproductive System",
@@ -2769,7 +3383,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > The Uterus and Cervix"
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Ovarian Reproductive System > The Uterus and Cervix",
+    "teachable": true,
+    "chapter_num": 27
   },
   {
     "chapter": "The Reproductive System",
@@ -2778,7 +3394,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Testicular Reproductive System > Sperm Transport"
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Testicular Reproductive System > Sperm Transport",
+    "teachable": true,
+    "chapter_num": 27
   },
   {
     "chapter": "The Reproductive System",
@@ -2787,7 +3405,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Testicular Reproductive System > Structure of Formed Sperm"
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Testicular Reproductive System > Structure of Formed Sperm",
+    "teachable": true,
+    "chapter_num": 27
   },
   {
     "chapter": "The Reproductive System",
@@ -2796,7 +3416,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Testicular Reproductive System > The Penis"
+    "path": "Chapter 27: The Reproductive System > Anatomy and Physiology of the Testicular Reproductive System > The Penis",
+    "teachable": true,
+    "chapter_num": 27
   },
   {
     "chapter": "The Reproductive System",
@@ -2805,7 +3427,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 27: The Reproductive System > Development of the Male and Female Reproductive Systems > Development of the Sexual Organs in the Embryo and Fetus"
+    "path": "Chapter 27: The Reproductive System > Development of the Male and Female Reproductive Systems > Development of the Sexual Organs in the Embryo and Fetus",
+    "teachable": true,
+    "chapter_num": 27
   },
   {
     "chapter": "The Reproductive System",
@@ -2814,7 +3438,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 27: The Reproductive System > Development of the Male and Female Reproductive Systems > Further Sexual Development Occurs at Puberty"
+    "path": "Chapter 27: The Reproductive System > Development of the Male and Female Reproductive Systems > Further Sexual Development Occurs at Puberty",
+    "teachable": true,
+    "chapter_num": 27
   },
   {
     "chapter": "The Respiratory System",
@@ -2823,7 +3449,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 22: The Respiratory System > Embryonic Development of the Respiratory System > Fetal \u201cBreathing\u201d"
+    "path": "Chapter 22: The Respiratory System > Embryonic Development of the Respiratory System > Fetal \u201cBreathing\u201d",
+    "teachable": true,
+    "chapter_num": 22
   },
   {
     "chapter": "The Respiratory System",
@@ -2832,7 +3460,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 22: The Respiratory System > Embryonic Development of the Respiratory System > Time Line"
+    "path": "Chapter 22: The Respiratory System > Embryonic Development of the Respiratory System > Time Line",
+    "teachable": false,
+    "chapter_num": 22
   },
   {
     "chapter": "The Respiratory System",
@@ -2841,7 +3471,9 @@
     "difficulty": "moderate",
     "chunk_count": 16,
     "limited": false,
-    "path": "Chapter 22: The Respiratory System > Gas Exchange > Gas Exchange"
+    "path": "Chapter 22: The Respiratory System > Gas Exchange > Gas Exchange",
+    "teachable": true,
+    "chapter_num": 22
   },
   {
     "chapter": "The Respiratory System",
@@ -2850,7 +3482,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 22: The Respiratory System > Modifications in Respiratory Functions > High Altitude Effects"
+    "path": "Chapter 22: The Respiratory System > Modifications in Respiratory Functions > High Altitude Effects",
+    "teachable": true,
+    "chapter_num": 22
   },
   {
     "chapter": "The Respiratory System",
@@ -2859,7 +3493,9 @@
     "difficulty": "moderate",
     "chunk_count": 13,
     "limited": false,
-    "path": "Chapter 22: The Respiratory System > Organs and Structures of the Respiratory System > Conducting Zone"
+    "path": "Chapter 22: The Respiratory System > Organs and Structures of the Respiratory System > Conducting Zone",
+    "teachable": true,
+    "chapter_num": 22
   },
   {
     "chapter": "The Respiratory System",
@@ -2868,7 +3504,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 22: The Respiratory System > Organs and Structures of the Respiratory System > Respiratory Zone"
+    "path": "Chapter 22: The Respiratory System > Organs and Structures of the Respiratory System > Respiratory Zone",
+    "teachable": true,
+    "chapter_num": 22
   },
   {
     "chapter": "The Respiratory System",
@@ -2877,7 +3515,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 22: The Respiratory System > The Lungs > Blood Supply and Nervous Innervation of the Lungs"
+    "path": "Chapter 22: The Respiratory System > The Lungs > Blood Supply and Nervous Innervation of the Lungs",
+    "teachable": true,
+    "chapter_num": 22
   },
   {
     "chapter": "The Respiratory System",
@@ -2886,7 +3526,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 22: The Respiratory System > The Lungs > Gross Anatomy of the Lungs"
+    "path": "Chapter 22: The Respiratory System > The Lungs > Gross Anatomy of the Lungs",
+    "teachable": true,
+    "chapter_num": 22
   },
   {
     "chapter": "The Respiratory System",
@@ -2895,7 +3537,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 22: The Respiratory System > The Lungs > Pleura of the Lungs"
+    "path": "Chapter 22: The Respiratory System > The Lungs > Pleura of the Lungs",
+    "teachable": true,
+    "chapter_num": 22
   },
   {
     "chapter": "The Respiratory System",
@@ -2904,7 +3548,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 22: The Respiratory System > The Process of Breathing > Pulmonary Ventilation"
+    "path": "Chapter 22: The Respiratory System > The Process of Breathing > Pulmonary Ventilation",
+    "teachable": true,
+    "chapter_num": 22
   },
   {
     "chapter": "The Respiratory System",
@@ -2913,7 +3559,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 22: The Respiratory System > The Process of Breathing > Respiratory Rate and Control of Ventilation"
+    "path": "Chapter 22: The Respiratory System > The Process of Breathing > Respiratory Rate and Control of Ventilation",
+    "teachable": true,
+    "chapter_num": 22
   },
   {
     "chapter": "The Respiratory System",
@@ -2922,7 +3570,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 22: The Respiratory System > The Process of Breathing > Respiratory Volumes and Capacities"
+    "path": "Chapter 22: The Respiratory System > The Process of Breathing > Respiratory Volumes and Capacities",
+    "teachable": true,
+    "chapter_num": 22
   },
   {
     "chapter": "The Respiratory System",
@@ -2931,7 +3581,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 22: The Respiratory System > Transport of Gases > Carbon Dioxide Transport in the Blood"
+    "path": "Chapter 22: The Respiratory System > Transport of Gases > Carbon Dioxide Transport in the Blood",
+    "teachable": true,
+    "chapter_num": 22
   },
   {
     "chapter": "The Respiratory System",
@@ -2940,7 +3592,9 @@
     "difficulty": "moderate",
     "chunk_count": 10,
     "limited": false,
-    "path": "Chapter 22: The Respiratory System > Transport of Gases > Oxygen Transport in the Blood"
+    "path": "Chapter 22: The Respiratory System > Transport of Gases > Oxygen Transport in the Blood",
+    "teachable": true,
+    "chapter_num": 22
   },
   {
     "chapter": "The Somatic Nervous System",
@@ -2949,7 +3603,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 14: The Somatic Nervous System > Central Processing > Cortical Processing"
+    "path": "Chapter 14: The Somatic Nervous System > Central Processing > Cortical Processing",
+    "teachable": true,
+    "chapter_num": 14
   },
   {
     "chapter": "The Somatic Nervous System",
@@ -2958,7 +3614,9 @@
     "difficulty": "moderate",
     "chunk_count": 14,
     "limited": false,
-    "path": "Chapter 14: The Somatic Nervous System > Central Processing > Sensory Pathways"
+    "path": "Chapter 14: The Somatic Nervous System > Central Processing > Sensory Pathways",
+    "teachable": true,
+    "chapter_num": 14
   },
   {
     "chapter": "The Somatic Nervous System",
@@ -2967,7 +3625,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 14: The Somatic Nervous System > Motor Responses > Cortical Responses"
+    "path": "Chapter 14: The Somatic Nervous System > Motor Responses > Cortical Responses",
+    "teachable": true,
+    "chapter_num": 14
   },
   {
     "chapter": "The Somatic Nervous System",
@@ -2976,7 +3636,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 14: The Somatic Nervous System > Motor Responses > Descending Pathways"
+    "path": "Chapter 14: The Somatic Nervous System > Motor Responses > Descending Pathways",
+    "teachable": true,
+    "chapter_num": 14
   },
   {
     "chapter": "The Somatic Nervous System",
@@ -2985,7 +3647,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 14: The Somatic Nervous System > Motor Responses > Extrapyramidal Controls"
+    "path": "Chapter 14: The Somatic Nervous System > Motor Responses > Extrapyramidal Controls",
+    "teachable": true,
+    "chapter_num": 14
   },
   {
     "chapter": "The Somatic Nervous System",
@@ -2994,7 +3658,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 14: The Somatic Nervous System > Motor Responses > Ventral Horn Output"
+    "path": "Chapter 14: The Somatic Nervous System > Motor Responses > Ventral Horn Output",
+    "teachable": true,
+    "chapter_num": 14
   },
   {
     "chapter": "The Somatic Nervous System",
@@ -3003,7 +3669,9 @@
     "difficulty": "moderate",
     "chunk_count": 12,
     "limited": false,
-    "path": "Chapter 14: The Somatic Nervous System > Sensory Perception > Sensory Modalities"
+    "path": "Chapter 14: The Somatic Nervous System > Sensory Perception > Sensory Modalities",
+    "teachable": true,
+    "chapter_num": 14
   },
   {
     "chapter": "The Somatic Nervous System",
@@ -3012,7 +3680,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 14: The Somatic Nervous System > Sensory Perception > Sensory Nerves"
+    "path": "Chapter 14: The Somatic Nervous System > Sensory Perception > Sensory Nerves",
+    "teachable": true,
+    "chapter_num": 14
   },
   {
     "chapter": "The Somatic Nervous System",
@@ -3021,7 +3691,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 14: The Somatic Nervous System > Sensory Perception > Sensory Receptors"
+    "path": "Chapter 14: The Somatic Nervous System > Sensory Perception > Sensory Receptors",
+    "teachable": true,
+    "chapter_num": 14
   },
   {
     "chapter": "The Tissue Level of Organization",
@@ -3030,7 +3702,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 4: The Tissue Level of Organization > Connective Tissue Supports and Protects > Classification of Connective Tissues"
+    "path": "Chapter 4: The Tissue Level of Organization > Connective Tissue Supports and Protects > Classification of Connective Tissues",
+    "teachable": true,
+    "chapter_num": 4
   },
   {
     "chapter": "The Tissue Level of Organization",
@@ -3039,7 +3713,9 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 4: The Tissue Level of Organization > Connective Tissue Supports and Protects > Connective Tissue Proper"
+    "path": "Chapter 4: The Tissue Level of Organization > Connective Tissue Supports and Protects > Connective Tissue Proper",
+    "teachable": true,
+    "chapter_num": 4
   },
   {
     "chapter": "The Tissue Level of Organization",
@@ -3048,7 +3724,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 4: The Tissue Level of Organization > Connective Tissue Supports and Protects > Supportive Connective Tissues"
+    "path": "Chapter 4: The Tissue Level of Organization > Connective Tissue Supports and Protects > Supportive Connective Tissues",
+    "teachable": true,
+    "chapter_num": 4
   },
   {
     "chapter": "The Tissue Level of Organization",
@@ -3057,7 +3735,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 4: The Tissue Level of Organization > Epithelial Tissue > Cell to Cell Junctions"
+    "path": "Chapter 4: The Tissue Level of Organization > Epithelial Tissue > Cell to Cell Junctions",
+    "teachable": true,
+    "chapter_num": 4
   },
   {
     "chapter": "The Tissue Level of Organization",
@@ -3066,7 +3746,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 4: The Tissue Level of Organization > Epithelial Tissue > Classification of Epithelial Tissues"
+    "path": "Chapter 4: The Tissue Level of Organization > Epithelial Tissue > Classification of Epithelial Tissues",
+    "teachable": true,
+    "chapter_num": 4
   },
   {
     "chapter": "The Tissue Level of Organization",
@@ -3075,7 +3757,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 4: The Tissue Level of Organization > Epithelial Tissue > Glandular Epithelium"
+    "path": "Chapter 4: The Tissue Level of Organization > Epithelial Tissue > Glandular Epithelium",
+    "teachable": true,
+    "chapter_num": 4
   },
   {
     "chapter": "The Tissue Level of Organization",
@@ -3084,7 +3768,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 4: The Tissue Level of Organization > Tissue Injury and Aging > Tissue Injury and Repair"
+    "path": "Chapter 4: The Tissue Level of Organization > Tissue Injury and Aging > Tissue Injury and Repair",
+    "teachable": true,
+    "chapter_num": 4
   },
   {
     "chapter": "The Tissue Level of Organization",
@@ -3093,7 +3779,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 4: The Tissue Level of Organization > Tissue Injury and Aging > Tissue and Aging"
+    "path": "Chapter 4: The Tissue Level of Organization > Tissue Injury and Aging > Tissue and Aging",
+    "teachable": true,
+    "chapter_num": 4
   },
   {
     "chapter": "The Tissue Level of Organization",
@@ -3102,7 +3790,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 4: The Tissue Level of Organization > Types of Tissues > Embryonic Origin of Tissues"
+    "path": "Chapter 4: The Tissue Level of Organization > Types of Tissues > Embryonic Origin of Tissues",
+    "teachable": false,
+    "chapter_num": 4
   },
   {
     "chapter": "The Tissue Level of Organization",
@@ -3111,7 +3801,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 4: The Tissue Level of Organization > Types of Tissues > Tissue Membranes"
+    "path": "Chapter 4: The Tissue Level of Organization > Types of Tissues > Tissue Membranes",
+    "teachable": true,
+    "chapter_num": 4
   },
   {
     "chapter": "The Urinary System",
@@ -3120,7 +3812,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 25: The Urinary System > Endocrine Regulation of Kidney Function > Antidiuretic Hormone (ADH)"
+    "path": "Chapter 25: The Urinary System > Endocrine Regulation of Kidney Function > Antidiuretic Hormone (ADH)",
+    "teachable": true,
+    "chapter_num": 25
   },
   {
     "chapter": "The Urinary System",
@@ -3129,7 +3823,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 25: The Urinary System > Endocrine Regulation of Kidney Function > Natriuretic Hormones"
+    "path": "Chapter 25: The Urinary System > Endocrine Regulation of Kidney Function > Natriuretic Hormones",
+    "teachable": true,
+    "chapter_num": 25
   },
   {
     "chapter": "The Urinary System",
@@ -3138,7 +3834,9 @@
     "difficulty": "hard",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 25: The Urinary System > Gross Anatomy of the Kidney > Renal Hilum"
+    "path": "Chapter 25: The Urinary System > Gross Anatomy of the Kidney > Renal Hilum",
+    "teachable": true,
+    "chapter_num": 25
   },
   {
     "chapter": "The Urinary System",
@@ -3147,7 +3845,9 @@
     "difficulty": "moderate",
     "chunk_count": 10,
     "limited": false,
-    "path": "Chapter 25: The Urinary System > Microscopic Anatomy of the Kidney > Nephrons: The Functional Unit"
+    "path": "Chapter 25: The Urinary System > Microscopic Anatomy of the Kidney > Nephrons: The Functional Unit",
+    "teachable": true,
+    "chapter_num": 25
   },
   {
     "chapter": "The Urinary System",
@@ -3156,7 +3856,9 @@
     "difficulty": "moderate",
     "chunk_count": 9,
     "limited": false,
-    "path": "Chapter 25: The Urinary System > Physical Characteristics of Urine"
+    "path": "Chapter 25: The Urinary System > Physical Characteristics of Urine",
+    "teachable": true,
+    "chapter_num": 25
   },
   {
     "chapter": "The Urinary System",
@@ -3165,7 +3867,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 25: The Urinary System > Physiology of Urine Formation > Glomerular Filtration Rate (GFR)"
+    "path": "Chapter 25: The Urinary System > Physiology of Urine Formation > Glomerular Filtration Rate (GFR)",
+    "teachable": true,
+    "chapter_num": 25
   },
   {
     "chapter": "The Urinary System",
@@ -3174,7 +3878,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 25: The Urinary System > Physiology of Urine Formation > Net Filtration Pressure (NFP)"
+    "path": "Chapter 25: The Urinary System > Physiology of Urine Formation > Net Filtration Pressure (NFP)",
+    "teachable": true,
+    "chapter_num": 25
   },
   {
     "chapter": "The Urinary System",
@@ -3183,7 +3889,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 25: The Urinary System > Regulation of Fluid Volume and Composition > Diuretics and Fluid Volume"
+    "path": "Chapter 25: The Urinary System > Regulation of Fluid Volume and Composition > Diuretics and Fluid Volume",
+    "teachable": true,
+    "chapter_num": 25
   },
   {
     "chapter": "The Urinary System",
@@ -3192,7 +3900,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 25: The Urinary System > Regulation of Fluid Volume and Composition > Volume-sensing Mechanisms"
+    "path": "Chapter 25: The Urinary System > Regulation of Fluid Volume and Composition > Volume-sensing Mechanisms",
+    "teachable": true,
+    "chapter_num": 25
   },
   {
     "chapter": "The Urinary System",
@@ -3201,7 +3911,9 @@
     "difficulty": "moderate",
     "chunk_count": 6,
     "limited": false,
-    "path": "Chapter 25: The Urinary System > Regulation of Renal Blood Flow > Sympathetic Nerves"
+    "path": "Chapter 25: The Urinary System > Regulation of Renal Blood Flow > Sympathetic Nerves",
+    "teachable": true,
+    "chapter_num": 25
   },
   {
     "chapter": "The Urinary System",
@@ -3210,7 +3922,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 25: The Urinary System > The Urinary System and Homeostasis > Blood Pressure Regulation"
+    "path": "Chapter 25: The Urinary System > The Urinary System and Homeostasis > Blood Pressure Regulation",
+    "teachable": true,
+    "chapter_num": 25
   },
   {
     "chapter": "The Urinary System",
@@ -3219,7 +3933,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 25: The Urinary System > The Urinary System and Homeostasis > Vitamin D Synthesis"
+    "path": "Chapter 25: The Urinary System > The Urinary System and Homeostasis > Vitamin D Synthesis",
+    "teachable": true,
+    "chapter_num": 25
   },
   {
     "chapter": "The Urinary System",
@@ -3228,7 +3944,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 25: The Urinary System > Tubular Reabsorption > Collecting Ducts and Recovery of Water"
+    "path": "Chapter 25: The Urinary System > Tubular Reabsorption > Collecting Ducts and Recovery of Water",
+    "teachable": true,
+    "chapter_num": 25
   },
   {
     "chapter": "The Urinary System",
@@ -3237,7 +3955,9 @@
     "difficulty": "moderate",
     "chunk_count": 4,
     "limited": false,
-    "path": "Chapter 25: The Urinary System > Tubular Reabsorption > Mechanisms of Recovery"
+    "path": "Chapter 25: The Urinary System > Tubular Reabsorption > Mechanisms of Recovery",
+    "teachable": false,
+    "chapter_num": 25
   },
   {
     "chapter": "The Urinary System",
@@ -3246,7 +3966,9 @@
     "difficulty": "moderate",
     "chunk_count": 2,
     "limited": true,
-    "path": "Chapter 25: The Urinary System > Tubular Reabsorption > Reabsorption and Secretion in the Distal Convoluted Tubule"
+    "path": "Chapter 25: The Urinary System > Tubular Reabsorption > Reabsorption and Secretion in the Distal Convoluted Tubule",
+    "teachable": true,
+    "chapter_num": 25
   },
   {
     "chapter": "The Urinary System",
@@ -3255,7 +3977,9 @@
     "difficulty": "moderate",
     "chunk_count": 10,
     "limited": false,
-    "path": "Chapter 25: The Urinary System > Tubular Reabsorption > Reabsorption and Secretion in the Loop of Henle"
+    "path": "Chapter 25: The Urinary System > Tubular Reabsorption > Reabsorption and Secretion in the Loop of Henle",
+    "teachable": true,
+    "chapter_num": 25
   },
   {
     "chapter": "The Urinary System",
@@ -3264,6 +3988,8 @@
     "difficulty": "moderate",
     "chunk_count": 8,
     "limited": false,
-    "path": "Chapter 25: The Urinary System > Tubular Reabsorption > Reabsorption and Secretion in the PCT"
+    "path": "Chapter 25: The Urinary System > Tubular Reabsorption > Reabsorption and Secretion in the PCT",
+    "teachable": true,
+    "chapter_num": 25
   }
 ]

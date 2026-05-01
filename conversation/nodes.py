@@ -525,6 +525,30 @@ def assessment_node(state: TutorState, dean, teacher) -> dict:
             if not follow_up:
                 follow_up = dean._assessment_clinical_followup_fallback(state)
             follow_up = _strip_banned_prefixes(follow_up, state)
+            # Post-filter the feedback_message through the same deterministic
+            # leak check used for assessment-phase teacher drafts. The
+            # _clinical_turn_call's feedback_message is a separate LLM
+            # output that was previously not screened — observed in the
+            # 2026-04-30 nidhi clinical session leaking "right coronary
+            # artery, not the left" and citing `[7] and [10]`. If the
+            # check fails, swap in a non-revealing redirect prompt.
+            try:
+                det = dean._deterministic_assessment_check(state, follow_up)
+                if not det.get("pass", True):
+                    state["debug"].setdefault("turn_trace", []).append({
+                        "wrapper": "nodes.clinical_followup_leak_filter",
+                        "result": f"FAIL: {det.get('reason_codes', [])}",
+                        "original_excerpt": follow_up[:160],
+                    })
+                    follow_up = dean._assessment_clinical_followup_fallback(state)
+                    # Re-strip + re-check the fallback (paranoid: if the
+                    # fallback itself leaks, we accept it but log the issue).
+                    follow_up = _strip_banned_prefixes(follow_up, state)
+            except Exception as _e:
+                state["debug"].setdefault("turn_trace", []).append({
+                    "wrapper": "nodes.clinical_followup_leak_filter",
+                    "result": f"check_error: {type(_e).__name__}",
+                })
             messages.append({"role": "tutor", "content": follow_up, "phase": "assessment"})
             return {
                 "messages": messages,
@@ -616,12 +640,13 @@ def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
                 fire_activity("Scoring concept mastery")
                 ms = MasteryStore()
                 priors = ms.recent_rationales(student_id, locked_path, limit=3)
-                client = anthropic.Anthropic()
+                from conversation.llm_client import make_anthropic_client, resolve_model
+                client = make_anthropic_client()
                 judgment = score_session_llm(
                     state,
                     prior_rationales=priors,
                     client=client,
-                    model=_cfg.models.dean,
+                    model=resolve_model(_cfg.models.dean),
                 )
                 if judgment is None:
                     mastery_status = "llm_scorer_failed_skipped_update"

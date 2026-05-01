@@ -386,10 +386,11 @@ class Retriever:
             return _HYDE_CACHE[q_key]
 
         try:
-            import anthropic  # local import — keeps Retriever construction lightweight
-            client = anthropic.Anthropic()
+            from conversation.llm_client import make_anthropic_client, resolve_model
+            client = make_anthropic_client()
             model = getattr(getattr(cfg, "models", object()), "summarizer", None) \
                 or getattr(getattr(cfg, "models", object()), "teacher", "claude-haiku-4-5-20251001")
+            model = resolve_model(model)
             prompt_tmpl = getattr(getattr(cfg, "prompts", object()), "hyde_reformulate", "")
             if not prompt_tmpl:
                 return ""

@@ -39,6 +39,7 @@ from typing import Callable, Optional
 import anthropic
 from conversation.state import TutorState
 from conversation.rendering import render_history
+from conversation.llm_client import beta_headers
 from config import cfg
 
 
@@ -178,6 +179,58 @@ def _apply_domain_vars(text: str) -> str:
     return rendered
 
 
+def _build_forbidden_tokens(state: dict) -> str:
+    """
+    Build a comma-separated list of forbidden tokens for the teacher.
+
+    Combines locked_answer + aliases + distinctive content tokens from
+    full_answer. The teacher's prompt warns against using any of these —
+    Cluster 2 fix to drop the 90% dean override rate by giving the
+    teacher upstream awareness of what NOT to say (rather than relying
+    on the dean's post-hoc QC to scrub leaks).
+    """
+    import re as _re
+
+    items: list[str] = []
+    seen: set[str] = set()
+
+    def _add(s: str) -> None:
+        s = (s or "").strip()
+        if not s:
+            return
+        low = s.lower()
+        if low in seen:
+            return
+        if len(s) > 60:  # tokenize anything weirdly long
+            return
+        seen.add(low)
+        items.append(s)
+
+    locked = str(state.get("locked_answer", "") or "").strip()
+    if locked:
+        _add(locked)
+    for a in (state.get("locked_answer_aliases") or []):
+        if isinstance(a, str):
+            _add(a)
+    # Distinctive content tokens from full_answer (top 6, ≥5 chars, non-stopword)
+    full_ans = str(state.get("full_answer", "") or "").strip().lower()
+    if full_ans:
+        STOPS = {"the", "a", "an", "of", "and", "or", "to", "in", "on", "at",
+                 "for", "with", "by", "from", "is", "are", "as", "into",
+                 "that", "this", "these", "those", "their", "its", "may",
+                 "can", "also", "such", "than", "then", "more", "less",
+                 "very", "much", "most", "some", "many", "while"}
+        toks = _re.sub(r"[^a-z0-9\s]+", " ", full_ans).split()
+        for t in toks:
+            if len(t) >= 5 and t not in STOPS:
+                _add(t)
+            if len(items) >= 12:
+                break
+    if not items:
+        return "(none — no lock established)"
+    return ", ".join(items)
+
+
 def _cached_system(
     role_base: str,
     wrapper_delta: str,
@@ -238,8 +291,9 @@ def _trace_input_hash(system_text: str, messages: list[dict]) -> str:
 
 class TeacherAgent:
     def __init__(self):
-        self.client = anthropic.Anthropic()
-        self.model = cfg.models.teacher
+        from conversation.llm_client import make_anthropic_client, resolve_model
+        self.client = make_anthropic_client()
+        self.model = resolve_model(cfg.models.teacher)
 
     def draft_rapport(
         self,
@@ -400,6 +454,7 @@ class TeacherAgent:
             max_hints=state.get("max_hints", 3),
             locked_question=state.get("locked_question", ""),
             hint_plan_active=hint_plan_active,
+            forbidden_tokens=_build_forbidden_tokens(state),
             conversation_history=conversation_history,
             **_domain_prompt_vars(),
         )
@@ -445,6 +500,7 @@ class TeacherAgent:
             chunks=cfg.prompts.teacher_clinical_chunks.format(retrieved_chunks=chunks_str),
             turn_deltas=cfg.prompts.teacher_clinical_dynamic.format(
                 locked_answer=state.get("locked_answer", ""),
+                forbidden_tokens=_build_forbidden_tokens(state),
                 dean_critique=dean_critique or state.get("dean_critique", ""),
                 **_domain_prompt_vars(),
             ),
@@ -519,7 +575,7 @@ class TeacherAgent:
                 max_tokens=220,
                 system=system_blocks,
                 messages=messages,
-                extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"},
+                extra_headers=beta_headers(),
             ) as stream:
                 for text in stream.text_stream:
                     if not text:
@@ -557,7 +613,7 @@ class TeacherAgent:
                 max_tokens=220,
                 system=system_blocks,
                 messages=messages,
-                extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"},
+                extra_headers=beta_headers(),
             )
             response_text = resp.content[0].text if resp.content else ""
         elapsed = time.time() - t0

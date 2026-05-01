@@ -40,17 +40,25 @@ load_dotenv()
 # Client + model
 # =============================================================================
 
-def _client() -> anthropic.Anthropic:
-    return anthropic.Anthropic()
+def _client():
+    from conversation.llm_client import make_anthropic_client
+    return make_anthropic_client()
 
 
 def _model() -> str:
     """Use cfg.models.evaluator. Override via SOKRATIC_EVAL_MODEL env var
-    (e.g. for one-shot Sonnet adjudication passes)."""
+    (e.g. for one-shot Sonnet adjudication passes). Resolves Bedrock IDs
+    when SOKRATIC_USE_BEDROCK=1."""
+    from conversation.llm_client import resolve_model
     override = os.environ.get("SOKRATIC_EVAL_MODEL")
     if override:
-        return override
-    return getattr(cfg.models, "evaluator", None) or getattr(cfg.models, "dean", None) or "claude-haiku-4-5-20251001"
+        return resolve_model(override)
+    name = (
+        getattr(cfg.models, "evaluator", None)
+        or getattr(cfg.models, "dean", None)
+        or "claude-haiku-4-5-20251001"
+    )
+    return resolve_model(name)
 
 
 # =============================================================================

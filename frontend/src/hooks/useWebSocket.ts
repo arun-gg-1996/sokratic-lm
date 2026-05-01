@@ -6,6 +6,16 @@ import type { ClientMessage, ServerMessage } from "../types";
 export function useWebSocket(threadId: string | null) {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectRef = useRef<number | null>(null);
+  // Guards the auto-reconnect on ws.onclose. When the threadId changes
+  // (user clicked "+ New chat"), the React cleanup fires before
+  // ws.onclose — so onclose's captured threadId is stale, and its
+  // setTimeout(() => connect(), 1200) reconnects to the dead old
+  // thread. The disposed flag tells onclose "this hook is gone, do
+  // not reconnect." Without it the backend ends up with two active
+  // WebSockets per session and student messages route to the old
+  // thread that's already in phase=memory_update — observed as
+  // "Session complete" appearing immediately on every new chat.
+  const disposedRef = useRef<boolean>(false);
 
   const setPendingChoice = useSessionStore((s) => s.setPendingChoice);
   const setDebug = useSessionStore((s) => s.setDebug);
@@ -21,6 +31,7 @@ export function useWebSocket(threadId: string | null) {
 
   const connect = useCallback(() => {
     if (!threadId) return;
+    if (disposedRef.current) return;  // hook unmounted / threadId changed; don't reconnect
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
 
     const ws = new WebSocket(wsUrl(threadId));
@@ -111,7 +122,21 @@ export function useWebSocket(threadId: string | null) {
     };
 
     ws.onclose = () => {
+      // Identity check: only reconnect if THIS ws is still the active
+      // socket. If the threadId changed (user clicked +New Chat), the
+      // cleanup function will have replaced wsRef.current with null and
+      // a new ws is being opened. We must NOT auto-reconnect because:
+      //   - the captured threadId in this closure is stale
+      //   - reconnecting creates a zombie ws to the dead old thread
+      //   - student messages then route to a session already in
+      //     phase=memory_update, producing immediate "Session complete"
+      //
+      // Using ws-instance identity (not a boolean flag) avoids the
+      // race where useEffect re-runs and resets the flag BEFORE the
+      // old ws's async onclose has fired.
+      if (wsRef.current !== ws) return;
       wsRef.current = null;
+      if (disposedRef.current) return;
       if (!threadId) return;
       reconnectRef.current = window.setTimeout(() => connect(), 1200);
     };
@@ -128,11 +153,27 @@ export function useWebSocket(threadId: string | null) {
   ]);
 
   useEffect(() => {
+    disposedRef.current = false;  // fresh effect run = active again
     connect();
     return () => {
-      if (reconnectRef.current) window.clearTimeout(reconnectRef.current);
-      wsRef.current?.close();
-      wsRef.current = null;
+      disposedRef.current = true;
+      if (reconnectRef.current) {
+        window.clearTimeout(reconnectRef.current);
+        reconnectRef.current = null;
+      }
+      const old = wsRef.current;
+      wsRef.current = null;  // detach BEFORE closing — onclose's identity
+                             // check will then bail (wsRef.current !== old)
+      if (old) {
+        // Belt-and-suspenders: also null out the handlers so the old ws
+        // cannot fire ANY React state updates after cleanup. Without
+        // this, an onclose firing after a fresh effect run might re-set
+        // wsRef.current = null and trigger spurious reconnects.
+        old.onclose = null;
+        old.onmessage = null;
+        old.onerror = null;
+        old.close();
+      }
     };
   }, [connect]);
 

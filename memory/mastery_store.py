@@ -266,6 +266,29 @@ def score_session_llm(
         and total_off_topic >= int(getattr(getattr(cfg, "dean", object()), "off_topic_threshold", 4))
     )
 
+    # Surface in-scope material explicitly so the scorer knows what
+    # counts vs what was tutor-introduced extension. Without these the
+    # scorer would penalise the student for failing on content the
+    # tutor itself introduced beyond the locked anchor (P0-G fix).
+    aliases_list = state.get("locked_answer_aliases") or []
+    aliases_str = ", ".join(a for a in aliases_list if isinstance(a, str)) or "(none)"
+    full_answer_str = (
+        str(state.get("full_answer", "") or "").strip()
+        or str(state.get("locked_answer", "") or "")
+        or "(none)"
+    )
+    clinical_hist = state.get("clinical_history") or []
+    if clinical_hist:
+        clinical_lines = []
+        for i, h in enumerate(clinical_hist[:6], start=1):
+            q = str(h.get("clinical_question", "") or "")[:200]
+            a = str(h.get("student_answer", "") or "")[:200]
+            cls = str(h.get("classification", "") or "")
+            clinical_lines.append(f"  Q{i}: {q}\n  A{i}: {a}  [classified: {cls}]")
+        clinical_str = "\n".join(clinical_lines)
+    else:
+        clinical_str = "(no clinical phase)"
+
     user_prompt = dynamic_template.format(
         subsection_title=subsection or "(unknown)",
         chapter_title=chapter or "(unknown)",
@@ -275,6 +298,9 @@ def score_session_llm(
         max_hints=int(state.get("max_hints", 3) or 3),
         locked_question=locked_q or "(no anchor question recorded)",
         locked_answer=locked_a or "(no target answer recorded)",
+        locked_answer_aliases=aliases_str,
+        full_answer=full_answer_str,
+        clinical_history=clinical_str,
         transcript=transcript,
         prior_rationales=prior,
         total_low_effort_turns=total_low_effort,

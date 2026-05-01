@@ -53,6 +53,18 @@ _STRONG_AFFIRM_PATTERNS = (
     r"\bperfect\b",
     r"\byes[, ]+that'?s\b",
     r"\byou'?re right\b",
+    # Patterns observed in real sessions where the tutor over-attributed
+    # reasoning the student didn't do (sessions 2026-04-30 nidhi runs).
+    r"\bexcellent\b",
+    r"\byou'?ve identified\b",
+    r"\byou'?ve named\b",
+    r"\byou'?ve correctly\b",
+    r"\byou'?ve connected\b",
+    r"\byou'?ve figured (out|it)\b",
+    r"\byou'?ve nailed\b",
+    r"\bspot on\b",
+    r"\bnice work\b",
+    r"\bgood reasoning\b",
 )
 _RETRIEVAL_NOISE_PATTERNS = (
     r"^\s*\d+\s*[\)\.\-:]\s*",
@@ -241,8 +253,11 @@ def _timed_create(client, state: dict, wrapper_name: str, **kwargs):
             })
 
     t0 = time.time()
+    from conversation.llm_client import beta_headers
     extra_headers = kwargs.pop("extra_headers", {})
-    extra_headers["anthropic-beta"] = "prompt-caching-2024-07-31"
+    # beta_headers() returns {"anthropic-beta": "..."} for Direct API,
+    # empty dict for Bedrock (which rejects the header).
+    extra_headers.update(beta_headers())
     resp = client.messages.create(extra_headers=extra_headers, **kwargs)
     elapsed = time.time() - t0
 
@@ -349,6 +364,123 @@ def _content_tokens(s: str) -> list[str]:
 def _has_hedge(msg_lower_raw: str) -> bool:
     """True if the message contains any hedge/denial marker."""
     return any(h in msg_lower_raw for h in _HEDGE_MARKERS)
+
+
+# Common short anatomy/biology nouns that frequently appear in legitimate
+# Socratic scaffolding ("the heart muscle...", "what nerve innervates...")
+# and would false-positive a single-word anchor leak check. When the
+# locked_answer is one of these, we don't block the teacher from
+# mentioning it — too high a false-positive rate.
+_COMMON_ANCHOR_FALSE_POSITIVES = frozenset({
+    # Generic anatomy
+    "muscle", "nerve", "bone", "artery", "vein", "vessel", "tissue",
+    "organ", "cell", "wall", "layer", "cavity", "chamber", "fluid",
+    "blood", "skin", "joint", "system", "region", "branch", "trunk",
+    # Generic biology
+    "protein", "enzyme", "hormone", "molecule", "structure", "function",
+    # Generic descriptors that might end up as a one-word anchor
+    "left", "right", "anterior", "posterior", "superior", "inferior",
+    "medial", "lateral", "deep", "central", "peripheral",
+})
+
+
+def _is_distinctive_anchor(token: str) -> bool:
+    """True iff a single-word anchor is distinctive enough to safely
+    block as a leak. Multi-word anchors are always considered distinctive
+    (callers should special-case the multi-word path).
+
+    Rule: ≥5 chars AND not in the common-anatomy/biology stopword set.
+    Catches: nucleus, ganglion, pepsin, saliva, septum, nephron, alveolus,
+    hepatocyte, axillary, deltoid, etc.
+    Skips:   muscle, nerve, vein, bone, left, right (would false-positive).
+    """
+    t = (token or "").strip().lower()
+    if not t:
+        return False
+    parts = t.split()
+    if len(parts) >= 2:
+        return True  # multi-word phrases are always distinctive enough
+    word = parts[0]
+    if len(word) < 5:
+        return False
+    if word in _COMMON_ANCHOR_FALSE_POSITIVES:
+        return False
+    return True
+
+
+# Letter-hint / morphology / etymology / blank-completion patterns the
+# teacher LLM produces under "be direct without naming the answer"
+# pressure. The prompt forbids them but level-3 framing creates a strong
+# loophole. Observed in real sessions:
+#   - 2026-05-01 CNS: "The textbook uses a word that starts with 'n'"
+#   - 2026-05-01 Cerebrum: "what suffix completes 'comm-____'?"
+#   - 2026-05-01 Cerebrum: "comm-_______?"
+#   - 2026-05-01 Cerebrum: "from a Latin root meaning together"
+# All are covert reveals — they hand the student the term's morphology
+# even though they don't name the term outright.
+_LETTER_HINT_PATTERNS = (
+    # First-letter / last-letter / starts-with patterns
+    r"\bstarts? with\s+['\"`]?[a-z]['\"`]?(?:\b|[\s,.])",
+    r"\bbegins? with\s+['\"`]?[a-z]['\"`]?(?:\b|[\s,.])",
+    r"\bends? with\s+['\"`]?[a-z]+['\"`]?",
+    r"\bfirst letter (?:is\s+)?['\"`]?[a-z]['\"`]?",
+    r"\b(?:the|a) word (?:that\s+)?(?:starts|begins) with",
+    # Rhyme / sound-alike
+    r"\b(?:rhymes? with|sounds? like)\s+['\"`]?[a-z]+['\"`]?",
+    # Morphology / prefix / suffix hints
+    r"\bwhat\s+(?:suffix|prefix|root)\b",
+    r"\bsuffix\s+(?:meaning|that\s+means|completes?)\b",
+    r"\bprefix\s+(?:meaning|that\s+means|completes?)\b",
+    r"\b(?:add|combine)\s+(?:a\s+)?(?:suffix|prefix)\b",
+    r"\b(?:starts|begins|ends)\s+with\s+the\s+(?:prefix|suffix|root)\b",
+    # Etymology / Latin / Greek root (case-insensitive matches lowercased text)
+    r"\b(?:from|derived\s+from)\s+(?:a\s+)?(?:latin|greek|hebrew)\b",
+    r"\b(?:latin|greek)\s+(?:root|word|term)\s+(?:meaning|for)\b",
+    r"\b(?:latin|greek)-?based\s+(?:term|word|root)\b",
+    r"\betymolog(?:y|ical|ically)\b",
+    # Prefix/suffix used WITH the actual fragment in quotes:
+    #   "the prefix 'comm-' means together"
+    #   "the suffix '-ation' is for actions"
+    r"\b(?:prefix|suffix|root)\s+['\"`][a-z]+-?['\"`]?\s+means\b",
+    r"\b(?:prefix|suffix|root)\s+['\"`][a-z]+-?['\"`]?\s+(?:meaning|that\s+means)\b",
+    # The prefix/suffix XYZ means
+    r"\b(?:prefix|suffix|root)\b.{0,30}\bmeans\s+['\"`]?\w",
+    # Blank-completion / fill-in-the-blank patterns
+    r"-_+\b",                       # "comm-____"
+    r"\b_+",                         # "____foo"
+    r"\b\w+-_{2,}",                 # any letter+ - underscore underscore
+    r"\b_{2,}-\w+\b",               # "____-foo"
+    r"\bcompletes?\b.{0,20}\b['\"`]?\w+-_+",  # "completes ... 'comm-___'"
+    r"\bfill\s+in\s+the\s+blank\b",
+    # Component-by-component reveal
+    r"\bcombines?\s+(?:these\s+)?two\s+(?:ideas|words|terms)\b",
+    # Multiple-choice option lists. The LLM sometimes "asks" the student
+    # to pick from A/B/C/D options where one is the answer — that's a
+    # covert reveal because the student just selects, doesn't recall.
+    # Observed verbatim 2026-05-01 (Requirements for Human Life session):
+    #   "A) Glucose B) Oxygen C) Adenosine Triphosphate D) Lactic acid"
+    # Detection: 3+ option markers within text (a/b/c/d or 1/2/3) — the
+    # 3+ minimum avoids false-positives on legitimate "(a)…(b)…" used
+    # for ordered scaffolding like "(a) the start and (b) the end".
+    r"(?:^|[\s.,])[a-d]\)\s+\w+.*?[\s,.][a-d]\)\s+\w+.*?[\s,.][a-d]\)\s+\w+",
+    r"\(\s*[a-d]\s*\)\s*\w+.*?\(\s*[a-d]\s*\)\s*\w+.*?\(\s*[a-d]\s*\)\s*\w+",
+    r"\bmultiple[-\s]?choice\b",                    # "multiple-choice", "multiplechoice"
+    r"\bmcq\b",                                     # bare "mcq"
+    r"\bgive\s+you\s+(?:a\s+)?(?:multiple[-\s]?choice|mcq|hint\s+with\s+options)\b",
+    r"\b(?:choose|pick|select)\s+from\s+(?:the\s+|these\s+)?(?:options|choices|four|three)\b",
+    r"\bhere\s+are\s+(?:four|three)\s+options\b",
+)
+
+
+def _has_letter_hint(text: str) -> bool:
+    """True if the draft contains a letter / morphology / etymology /
+    blank-completion / rhyme hint pattern. All of these are covert
+    reveals that hand the student answer-shape without naming it."""
+    lower = (text or "").lower()
+    for pat in _LETTER_HINT_PATTERNS:
+        if re.search(pat, lower):
+            return True
+    return False
 
 
 def _sentence_count(text: str) -> int:
@@ -559,11 +691,21 @@ def _sanitize_locked_answer(
     word_count = len(cand_norm.split())
     if word_count > 15:
         return prior_norm, "wiped_too_long"
+    # Reject "and"-joined anchors. The lock prompt explicitly forbids this
+    # ("no 'and' joining multiple ideas") because the gate is a single-utterance
+    # token-overlap matcher — joined anchors like "left and right coronary
+    # arteries" never match what students actually say. The repair path picks
+    # up an empty result and re-prompts for a single umbrella term plus
+    # per-component aliases. Note: we test for ' and ' with spaces, so the
+    # hyphenated "ball-and-socket" anatomical term isn't false-positive.
+    if " and " in cand_norm:
+        return prior_norm, "wiped_and_joined"
     # Also reject anchors that are clearly sentences (contain verbs like "innervates",
     # "arises", "branches", "passes", "courses", etc.), even if short enough.
     sentence_markers = (
         "innervates", "innervate", "arises", "branches", "passes", "courses",
         "supplies", "controls", "causes", "results", "from the", "through the",
+        "superior to", "inferior to", "above the", "below the", "near the",
     )
     if any(marker in cand_norm for marker in sentence_markers):
         return prior_norm, "wiped_sentence_like"
@@ -716,9 +858,15 @@ def _retrieval_trace_payload(query: str, chunks: list[dict], top_n: int = 7) -> 
     }
 
 
-def _coverage_gate(state: TutorState) -> dict | None:
+def _coverage_gate(state: TutorState, retriever=None) -> dict | None:
     """
     Check whether retrieved_chunks actually cover the locked TOC node.
+
+    Args:
+        state: tutor state.
+        retriever: optional retriever for picking SEMANTICALLY-RELATED
+            alternative cards via sample_related. Without it, falls back
+            to sample_diverse (random teachable picks).
 
     Returns None on pass. On fail, returns metadata for the caller (run_turn)
     to build a refuse turn with an LLM-authored intro + card list. Shape:
@@ -741,14 +889,28 @@ def _coverage_gate(state: TutorState) -> dict | None:
 
     def _refuse(reason: str) -> dict:
         matcher = get_topic_matcher()
-        # Exclude topics already rejected this session so we stop offering the
-        # same dead-end cards in a loop. Threshold scales with prior failures —
-        # more failures → ask for higher-coverage topics only.
         failure_count = len(rejected_set)
         min_chunks = 5 if failure_count < 2 else 8
-        alternatives = matcher.sample_diverse(
-            3, min_chunk_count=min_chunks, exclude_paths=rejected_set
+        # Prefer SEMANTICALLY-RELATED alternatives via sample_related when
+        # we have a retriever. Falls back to sample_diverse if retriever
+        # is unavailable or returns nothing related. Without this,
+        # students typing "brain" got cards like "DNA Replication" —
+        # technically teachable but unrelated to the query.
+        query_for_related = (
+            state.get("topic_selection")
+            or topic_label
+            or _latest_student_message(state.get("messages", []))
+            or ""
         )
+        if retriever is not None and query_for_related:
+            alternatives = matcher.sample_related(
+                retriever, query_for_related, 3,
+                min_chunk_count=min_chunks, exclude_paths=rejected_set,
+            )
+        else:
+            alternatives = matcher.sample_diverse(
+                3, min_chunk_count=min_chunks, exclude_paths=rejected_set,
+            )
         option_labels = [_format_topic_label(m) for m in alternatives]
         option_meta = {
             label: {
@@ -828,8 +990,9 @@ class DeanAgent:
             memory_client:  PersistentMemory instance (memory/persistent_memory.py)
         Note: no embed_fn — correctness checking done by LLM, not cosine similarity.
         """
-        self.client = anthropic.Anthropic()
-        self.model = cfg.models.dean
+        from conversation.llm_client import make_anthropic_client, resolve_model
+        self.client = make_anthropic_client()
+        self.model = resolve_model(cfg.models.dean)
         self.retriever = retriever
         self.memory_client = memory_client
         save_tool_definitions()
@@ -1079,6 +1242,27 @@ class DeanAgent:
                           f"fuzzy_score={(result.top.score if result.top else 0)}",
                           flush=True)
 
+                # Vague-query gate (added 2026-05-01):
+                # If the user typed a SHORT vague query (< 3 words) AND the
+                # fuzzy matcher couldn't strongly confirm the topic, do NOT
+                # commit to semantic_top — surface cards instead. The
+                # semantic vote is too eager on broad words: typing "brain"
+                # confidently picks "Requirements for Human Life" because
+                # one chunk mentions brain cells needing oxygen, even
+                # though the user clearly wants brain anatomy. Show options.
+                fuzzy_q_words = len((fuzzy_query or "").split())
+                vague_query = fuzzy_q_words < 3 and result.tier != "strong"
+                if vague_query and semantic_top is not None:
+                    state["debug"]["turn_trace"].append({
+                        "wrapper": "dean.vague_query_suppress_semantic_top",
+                        "result": (
+                            f"query={fuzzy_query!r} (words={fuzzy_q_words}, "
+                            f"fuzzy_tier={result.tier}); semantic_top "
+                            f"{semantic_top.path!r} suppressed in favor of cards"
+                        ),
+                    })
+                    semantic_top = None
+
                 if semantic_top is not None:
                     picked_topic = semantic_top
                 elif result.tier == "strong" and result.top is not None:
@@ -1088,10 +1272,22 @@ class DeanAgent:
                     if result.tier == "borderline":
                         candidates = [m for m in result.matches if m.path not in rejected_set][:3]
                         if not candidates:
-                            candidates = matcher.sample_diverse(3, exclude_paths=rejected_set)
+                            # Prefer semantically related to the user's query
+                            # over random teachable picks.
+                            candidates = matcher.sample_related(
+                                self.retriever, query_for_match, 3,
+                                exclude_paths=rejected_set,
+                            )
                         refuse_reason = "borderline_unresolved"
                     else:
-                        candidates = matcher.sample_diverse(3, exclude_paths=rejected_set)
+                        # No-match path: query was too vague or off-domain.
+                        # Use sample_related so the cards are at least
+                        # semantically near the user's typed query (e.g.
+                        # "brain" → cerebrum/brainstem, not random anatomy).
+                        candidates = matcher.sample_related(
+                            self.retriever, query_for_match, 3,
+                            exclude_paths=rejected_set,
+                        )
                         refuse_reason = "no_match"
 
                     new_options = [_format_topic_label(c) for c in candidates]
@@ -1188,10 +1384,17 @@ class DeanAgent:
             state["topic_options"] = []
             state["topic_question"] = ""
             state["pending_user_choice"] = {}
-            # Retrieval is single-fire per session. If it already fired earlier,
-            # keep existing chunks instead of clearing and re-querying.
-            if int(state.get("debug", {}).get("retrieval_calls", 0)) <= 0:
-                state["retrieved_chunks"] = []
+            # Re-fire retrieval whenever the topic changes. The earlier
+            # "single-fire per session" optimisation kept chunks around even
+            # when the student picked a different card after the coverage
+            # gate refused — so the gate then ran against chunks for the
+            # PREVIOUS topic and refused again, producing the runaway loop
+            # observed in nidhi sessions 2026-04-30 (P0-A from the handoff).
+            # Resetting retrieval_calls here lets _retrieve_on_topic_lock
+            # fire again with the new card's section filter.
+            state["retrieved_chunks"] = []
+            if "debug" in state and isinstance(state["debug"], dict):
+                state["debug"]["retrieval_calls"] = 0
             state["locked_question"] = ""
             state["locked_answer"] = ""
             state["hint_level"] = 0
@@ -1221,9 +1424,51 @@ class DeanAgent:
             # refuse instead of teaching from parametric knowledge or from
             # chunks that drifted off-topic (this is what caused the
             # liver→spinal-cord bug in the 2026-04-21 live session).
-            gate = _coverage_gate(state)
+            gate = _coverage_gate(state, retriever=self.retriever)
             if gate is not None:
                 messages = list(state.get("messages", []))
+                # Safety cap: after N=4 consecutive coverage-gate rejections
+                # in the same session, abandon the card-rejection loop and
+                # ask the student to freeform what they want to learn. This
+                # is the P0-A "triple2_s1 runaway" fix from the handoff —
+                # without it, students hit 14+ rejections before the session
+                # ends. coverage_gap_events counts refusals across the whole
+                # session, so we read its prospective post-increment value.
+                cgap_after = int(state["debug"].get("coverage_gap_events", 0)) + 1
+                rejected = list(state.get("rejected_topic_paths", []) or [])
+                rejected_path = gate.get("rejected_path") or ""
+                if rejected_path and rejected_path not in rejected:
+                    rejected.append(rejected_path)
+                if cgap_after >= 4:
+                    state["debug"]["coverage_gap_events"] = cgap_after
+                    state["debug"]["turn_trace"].append({
+                        "wrapper": "dean.coverage_gate_freeform_fallback",
+                        "result": f"refused {cgap_after}x; switching to freeform",
+                    })
+                    fallback_msg = (
+                        "I'm having trouble finding a strong textbook anchor for the "
+                        "topics we've tried. Rather than keep cycling through cards, "
+                        "let's go freeform: in your own words, what specifically about "
+                        "anatomy do you want to work on right now? Be as concrete as "
+                        "you can (a structure, a process, a clinical scenario)."
+                    )
+                    messages.append({"role": "tutor", "content": fallback_msg})
+                    return {
+                        "messages": messages,
+                        "topic_confirmed": False,
+                        "topic_options": [],
+                        "topic_question": "",
+                        "topic_selection": "",
+                        "locked_topic": None,
+                        "pending_user_choice": {},
+                        "retrieved_chunks": [],
+                        "locked_question": "",
+                        "locked_answer": "",
+                        "hint_level": 0,
+                        "student_state": "question",
+                        "rejected_topic_paths": rejected,
+                        "debug": state["debug"],
+                    }
                 # LLM-authored intro; deterministic-render the card list.
                 refuse = self._prelock_refuse_call(
                     state,
@@ -1245,14 +1490,7 @@ class DeanAgent:
                     "result": gate["reason"],
                     "locked_topic": state.get("locked_topic"),
                 })
-                coverage_gap_events = int(state["debug"].get("coverage_gap_events", 0)) + 1
-                state["debug"]["coverage_gap_events"] = coverage_gap_events
-                # Persist the rejected TOC path so sample_diverse never re-offers
-                # it this session — kills the 2026-04-22 card-loop bug.
-                rejected = list(state.get("rejected_topic_paths", []) or [])
-                rejected_path = gate.get("rejected_path") or ""
-                if rejected_path and rejected_path not in rejected:
-                    rejected.append(rejected_path)
+                state["debug"]["coverage_gap_events"] = cgap_after
                 return {
                     "messages": messages,
                     "topic_confirmed": False,
@@ -1696,12 +1934,22 @@ class DeanAgent:
             # Narration brief: the dean's pre-flight critique (fed to
             # teacher.draft_socratic) tells the LLM to PHRASE the
             # transition. Not hardcoded — the LLM picks the wording.
+            # IMPORTANT: re-assert the no-leak rule explicitly here. The
+            # earlier version of this brief said "deliver the new hint"
+            # without that guard, and the LLM caved under stonewalling
+            # pressure — observed verbatim leak "The structure combines
+            # 'coronary' + 'sinus'" at the cap turn (session 2026-04-30).
+            # The brief now forbids naming any anchor or alias term.
             state["_dean_warning_brief_pending"] = (
                 f"The student has been unable to engage with hint level {prev_hint} "
                 f"(four consecutive low-effort responses). On this turn, naturally "
                 f"acknowledge the lack of progress and announce that you're moving "
                 f"to a more direct hint (level {new_hint}). Keep it brief, supportive, "
-                f"non-shaming. Then deliver the new hint."
+                f"non-shaming. Then deliver the new hint as a non-revealing direct "
+                f"probe — do NOT name any component of the locked answer, any of its "
+                f"aliases, or any distinctive noun from the textbook full_answer. "
+                f"Asking the question more pointedly is allowed; revealing answer "
+                f"terms (or spelling them as 'X + Y, put together') is not."
             )
 
         # off_topic strike 4 → terminate WHOLE session
@@ -2452,19 +2700,36 @@ class DeanAgent:
         seen_lower: set[str] = set()
         locked_answer_aliases: list[str] = []
         locked_lower = locked_answer.lower().strip() if locked_answer else ""
+
+        def _push_alias(a_clean: str) -> bool:
+            """Add a single alias if it passes filters. Returns True iff added.
+            Hard cap on individual alias length: 50 chars (longer = LLM
+            smuggled in a sentence, not a phrase)."""
+            a_low = a_clean.lower()
+            if not a_clean or a_low == locked_lower or a_low in seen_lower:
+                return False
+            if len(a_clean) > 50:
+                return False
+            seen_lower.add(a_low)
+            locked_answer_aliases.append(a_clean)
+            return True
+
         for a in raw_aliases:
             if not isinstance(a, str):
                 continue
             a_clean = a.strip()
-            a_lower = a_clean.lower()
-            if not a_clean or a_lower == locked_lower or a_lower in seen_lower:
-                continue
-            # Hard cap on individual alias length: 50 chars (longer = LLM
-            # smuggled in a sentence, not a phrase).
-            if len(a_clean) > 50:
-                continue
-            seen_lower.add(a_lower)
-            locked_answer_aliases.append(a_clean)
+            # Defensive: the lock prompt forbids "and"-joined aliases
+            # ("LCA and RCA" matches no real student utterance), but LLMs
+            # occasionally violate it. Split such entries on ' and ' and admit
+            # each piece as its own alias — that's what the prompt asked for.
+            if " and " in a_clean.lower():
+                pieces = [p.strip() for p in re.split(r"\s+and\s+", a_clean, flags=re.IGNORECASE) if p.strip()]
+                for piece in pieces:
+                    _push_alias(piece)
+                    if len(locked_answer_aliases) >= 5:
+                        break
+            else:
+                _push_alias(a_clean)
             if len(locked_answer_aliases) >= 5:
                 break
         # Optional debug trace (toggleable via SOKRATIC_TOPIC_DEBUG env var).
@@ -2507,6 +2772,13 @@ class DeanAgent:
                         "locked_answer must be 1-5 words, a SINGLE noun phrase (like "
                         "'axillary nerve' or 'quadrangular space'). NO lists, NO verbs, "
                         "NO cord origins, NO supporting facts — only the target term. "
+                        "**HARD RULE: never use 'and' to join two ideas.** If the "
+                        "question is about TWO components (e.g. 'left and right coronary "
+                        "arteries'), pick a single umbrella term ('coronary arteries') "
+                        "for locked_answer and put each component as a SEPARATE alias "
+                        "(e.g. aliases=['left coronary artery', 'right coronary artery', "
+                        "'LCA', 'RCA']). The umbrella covers the gate; aliases match "
+                        "what the student actually says. "
                         "Keep rationale to <=15 words and aliases to 4 short phrases so the "
                         "JSON fits well within max_tokens."
                     ),
@@ -2569,6 +2841,50 @@ class DeanAgent:
                                 break
                         if rebuilt:
                             locked_answer_aliases = rebuilt
+
+        # Final fallback (added 2026-05-01): if both the original lock and the
+        # repair attempt produced "and"-joined answers (Haiku frequently does
+        # this for "two of X" questions despite explicit prompt rules), accept
+        # the raw answer rather than dead-ending the lock. The alias splitter
+        # above has already converted joined aliases into per-component
+        # aliases — those will match what students actually say. The
+        # locked_answer itself being a sentence-shape phrase only means the
+        # gate's literal-match path won't fire on it; aliases cover the gap.
+        # Without this fallback, the user sees a card-rejection loop instead
+        # of getting their topic locked (regression observed 2026-05-01).
+        if not locked_answer:
+            fallback_raw = locked_answer_raw or ""
+            if " and " in fallback_raw.lower() and len(fallback_raw.split()) <= 15:
+                # Try to derive an umbrella. Heuristic: "X and Y NOUN(S)" → "NOUN(S)".
+                # Split on " and ", take the LONGEST part, drop leading modifiers
+                # ("left", "right", "anterior", etc.). If that fails, use the longer part.
+                parts = [p.strip() for p in re.split(r"\s+and\s+", fallback_raw, flags=re.IGNORECASE) if p.strip()]
+                modifiers = {"left", "right", "anterior", "posterior", "superior",
+                             "inferior", "upper", "lower", "medial", "lateral",
+                             "deep", "superficial", "internal", "external"}
+                # Longest-suffix umbrella attempt: from the longer part, strip
+                # leading modifier tokens.
+                longer = max(parts, key=lambda s: len(s.split())) if parts else fallback_raw
+                tokens = longer.split()
+                while tokens and tokens[0].lower() in modifiers:
+                    tokens = tokens[1:]
+                umbrella = " ".join(tokens) if tokens else longer
+                # If the umbrella is too short (1 word) or empty, fall back to the
+                # full longer part.
+                if not umbrella or len(umbrella.split()) < 2:
+                    umbrella = longer
+                locked_answer = umbrella
+                # Add each split part as an alias (deduped against locked_answer).
+                for p in parts:
+                    if p and p.lower() != locked_answer.lower():
+                        if not any(p.lower() == a.lower() for a in locked_answer_aliases):
+                            if len(locked_answer_aliases) < 5 and len(p) <= 50:
+                                locked_answer_aliases.append(p)
+                state["debug"]["turn_trace"].append({
+                    "wrapper": "dean._lock_anchors_call.and_join_fallback",
+                    "result": f"raw={fallback_raw!r} → umbrella={locked_answer!r}",
+                })
+
         # If the lock prompt didn't produce a full_answer, fall back to
         # locked_answer for backward compat — but flag it so we know
         # this session has a degraded full_answer.
@@ -3106,35 +3422,98 @@ class DeanAgent:
         elif q_count > 1:
             reason_codes.append("multi_question")
 
-        # Word-boundary reveal check. Raw substring match (previously used)
-        # had two failure modes:
-        #   - Single-word anchors ("latissimus") fire on any incidental mention
-        #     in a legitimate Socratic probe.
-        #   - Multi-word anchors mis-flag descriptive uses ("axillary nerve
-        #     territory" flagged when locked = "axillary nerve").
-        # Require the locked term to be at least 2 words AND appear as a
-        # whole-phrase match (word-bounded).
-        if locked and len(locked.split()) >= 2:
+        # Word-boundary reveal check. Use _is_distinctive_anchor so that
+        # single-word distinctive anchors like "nucleus", "ganglion",
+        # "pepsin" are checked too — previously the >=2 words filter
+        # excluded them entirely (observed 2026-05-01 nidhi CNS session
+        # where "nucleus" leaked verbatim through Hint 1, 2, and 3).
+        # Common short anatomy nouns ("muscle", "nerve", "vein") still
+        # skipped to avoid false-positives on legitimate scaffolding.
+        if locked and _is_distinctive_anchor(locked):
             if re.search(rf"\b{re.escape(locked)}\b", lowered):
                 reason_codes.append("reveal_risk")
+
+        # Extended reveal check on aliases. Same distinctive-anchor rule:
+        # single-word aliases like "ganglion" (the PNS counterpart to
+        # "nucleus") get checked when distinctive.
+        aliases = state.get("locked_answer_aliases") or []
+        for alias in aliases:
+            alias_norm = _normalize_text(alias or "")
+            if alias_norm and _is_distinctive_anchor(alias_norm):
+                if re.search(rf"\b{re.escape(alias_norm)}\b", lowered):
+                    reason_codes.append("reveal_risk_alias")
+                    break
+
+        # Letter-hint patterns ("starts with 'n'", "begins with X", "rhymes
+        # with..."). The teacher prompt forbids these explicitly but the
+        # LLM occasionally produces them under pressure. Observed verbatim
+        # 2026-05-01: "The textbook uses a word that starts with 'n'".
+        if _has_letter_hint(text):
+            reason_codes.append("letter_hint")
+
+        # full_answer content-token leak: extract distinctive multi-char nouns
+        # from the textbook full_answer and check if any appear word-bounded
+        # in the teacher draft. We require 2+ such tokens to fire (one stray
+        # term might be incidental scaffolding; two together is a leak).
+        full_ans = _normalize_text(state.get("full_answer", "") or "")
+        if full_ans:
+            STOPS = {"the", "a", "an", "of", "and", "or", "to", "in", "on", "at",
+                     "for", "with", "by", "from", "is", "are", "as", "into",
+                     "that", "this", "these", "those", "their", "its"}
+            distinctive = [
+                t for t in full_ans.split()
+                if len(t) >= 5 and t not in STOPS
+            ]
+            # Cap to top-8 distinctive tokens to keep the regex cost bounded.
+            distinctive = distinctive[:8]
+            hits = sum(
+                1 for t in distinctive
+                if re.search(rf"\b{re.escape(t)}\b", lowered)
+            )
+            if hits >= 2:
+                reason_codes.append("reveal_risk_full_answer")
 
         if _sentence_count(text) > 4:
             reason_codes.append("verbosity")
 
-        # NOTE (2026-04-30 audit cleanup): generic_filler and
-        # sycophancy_risk used to be detected here via brittle regex /
-        # keyword lists (`_BANNED_FILLER_PREFIXES`, `_has_strong_affirmation`).
-        # Both are semantic judgments better handled by the LLM
-        # quality-check call (`_quality_check_call`) which already
-        # evaluates these criteria with full context. Removing them from
-        # the deterministic pre-flight reduces false positives (legitimate
-        # affirmations like "right, exactly" got flagged) without losing
-        # safety — if the LLM detects them on the actual draft, it
-        # returns reason_codes and the dean retries.
-        # Keeping deterministic: missing_question, multi_question,
-        # reveal_risk, verbosity, question_repetition — these are
-        # structural signals (counts, exact-match leaks, similarity
-        # thresholds), not semantic judgments.
+        # NOTE (2026-04-30 audit cleanup): generic_filler and a generic
+        # sycophancy_risk regex were removed because they false-positive on
+        # legitimate affirmations like "right, exactly".
+        # Re-introduced below (2026-05-01) with a TIGHTER condition that
+        # specifically catches the "tutor leaks anchor → student parrots →
+        # tutor crowns the parrot" pattern:
+        #   - student_state != "correct" (student didn't actually reach)
+        #   - student's last message is short (<5 content words; longer
+        #     answers indicate genuine attempt, not parroting)
+        #   - tutor's previous turn (i.e. the turn that preceded the
+        #     student's parrot) already contained an anchor or alias term
+        #   - draft begins with a strong-affirmation phrase
+        # All four together = high confidence sycophancy fire. This avoids
+        # the original false-positive while catching the real failure mode
+        # observed in 2026-04-30 nidhi sessions.
+        try:
+            student_msgs = [m for m in (state.get("messages") or []) if m.get("role") == "student"]
+            tutor_msgs = [m for m in (state.get("messages") or []) if m.get("role") == "tutor"]
+            last_student = (student_msgs[-1].get("content", "") if student_msgs else "")
+            last_tutor = (tutor_msgs[-1].get("content", "") if tutor_msgs else "")
+        except (IndexError, AttributeError):
+            last_student, last_tutor = "", ""
+        anchor_terms = []
+        if locked:
+            anchor_terms.append(locked)
+        anchor_terms.extend(_normalize_text(a) for a in (state.get("locked_answer_aliases") or []))
+        prior_turn_named_anchor = any(
+            term and _is_distinctive_anchor(term) and re.search(rf"\b{re.escape(term)}\b", _normalize_text(last_tutor))
+            for term in anchor_terms
+        )
+        student_short = len(_normalize_text(last_student).split()) < 5
+        if (
+            student_state != "correct"
+            and student_short
+            and prior_turn_named_anchor
+            and _has_strong_affirmation(text)
+        ):
+            reason_codes.append("sycophancy_risk")
 
         prior_questions = _recent_tutor_questions(state.get("messages", []), limit=3)
         repetition_threshold = float(
@@ -3158,17 +3537,22 @@ class DeanAgent:
             "missing_question": "End with exactly one concrete Socratic question.",
             "multi_question": "Ask only one question total in the final sentence.",
             "reveal_risk": "Remove answer mentions and ask a non-revealing probe question.",
+            "reveal_risk_alias": "Remove the alias term you mentioned and ask the student to articulate it themselves.",
+            "reveal_risk_full_answer": "Remove the textbook nouns from the draft; probe with non-revealing language.",
             "verbosity": "Cut to at most 4 short sentences.",
             "generic_filler": "Replace generic empathy with a specific reasoning step.",
             "sycophancy_risk": "Do not strongly affirm; acknowledge uncertainty and probe reasoning.",
             "question_repetition": "Use a new angle that is not a near-duplicate of recent questions.",
+            "letter_hint": "Do NOT use letter hints, first-letter clues, or rhyme hints. Ask about a property or relationship instead.",
         }
         primary = reason_codes[0]
         critique = f"Deterministic checks failed: {', '.join(reason_codes)}."
         return {
             "pass": False,
             "critique": critique,
-            "leak_detected": "reveal_risk" in reason_codes,
+            "leak_detected": any(c in reason_codes for c in (
+                "reveal_risk", "reveal_risk_alias", "reveal_risk_full_answer", "letter_hint"
+            )),
             "reason_codes": reason_codes,
             "rewrite_instruction": instruction_map.get(primary, "Improve clarity and ask one specific question."),
             "revised_teacher_draft": "",
@@ -3187,6 +3571,93 @@ class DeanAgent:
             f"rewrite_instruction={instruction}\n"
             f"critique={critique}"
         )
+
+    def _deterministic_assessment_check(self, state: TutorState, draft: str) -> dict:
+        """
+        Pre-LLM deterministic checks for assessment-phase drafts.
+
+        Catches three classes of leak/violation that the LLM QC was
+        observed to miss in the 2026-04-30 nidhi clinical session:
+          1. Locked-answer or alias mentioned verbatim (whole-phrase, ≥2 tokens).
+          2. Two or more distinctive nouns from full_answer recited.
+          3. Internal chunk-citation patterns ([6], passage [7], reference 3).
+
+        Returns the same shape as `_deterministic_tutoring_check` so it
+        can short-circuit `_quality_check_call` for assessment.
+        """
+        text = draft or ""
+        lowered = _normalize_text(text)
+        reason_codes: list[str] = []
+
+        locked = _normalize_text(state.get("locked_answer", ""))
+        if locked and _is_distinctive_anchor(locked):
+            if re.search(rf"\b{re.escape(locked)}\b", lowered):
+                reason_codes.append("no_reveal")
+
+        aliases = state.get("locked_answer_aliases") or []
+        for alias in aliases:
+            alias_norm = _normalize_text(alias or "")
+            if alias_norm and _is_distinctive_anchor(alias_norm):
+                if re.search(rf"\b{re.escape(alias_norm)}\b", lowered):
+                    if "no_reveal" not in reason_codes:
+                        reason_codes.append("no_reveal")
+                    break
+
+        # Letter-hint patterns also forbidden in assessment.
+        if _has_letter_hint(text):
+            reason_codes.append("letter_hint")
+
+        full_ans = _normalize_text(state.get("full_answer", "") or "")
+        if full_ans:
+            STOPS = {"the", "a", "an", "of", "and", "or", "to", "in", "on", "at",
+                     "for", "with", "by", "from", "is", "are", "as", "into",
+                     "that", "this", "these", "those", "their", "its"}
+            distinctive = [
+                t for t in full_ans.split()
+                if len(t) >= 5 and t not in STOPS
+            ][:8]
+            hits = sum(
+                1 for t in distinctive
+                if re.search(rf"\b{re.escape(t)}\b", lowered)
+            )
+            if hits >= 2 and "no_reveal" not in reason_codes:
+                reason_codes.append("no_reveal")
+
+        # Chunk-citation patterns. These are internal artifacts that must
+        # never surface to the student. Observed: "from passage [6] and
+        # [10]", "reference [7] and [10]", "according to passage 3".
+        chunk_cite_patterns = [
+            r"\bpassage\s*\[?\d+\]?",
+            r"\breference\s*\[?\d+\]?",
+            r"\[\s*\d+\s*\]\s*(?:and\s*\[\s*\d+\s*\])?",
+            r"\bchunk\s*\d+",
+        ]
+        for pat in chunk_cite_patterns:
+            if re.search(pat, text, flags=re.IGNORECASE):
+                reason_codes.append("chunk_citation")
+                break
+
+        if not reason_codes:
+            return {
+                "pass": True, "critique": "", "leak_detected": False,
+                "reason_codes": [], "rewrite_instruction": "",
+                "revised_teacher_draft": "", "parse_ok": True,
+            }
+
+        instruction_map = {
+            "no_reveal": "Remove answer terms / aliases / full_answer nouns and ask the student to reason from prior dialog instead.",
+            "chunk_citation": "Do NOT cite internal chunk numbers like [6] or 'passage [7]' — these are internal artifacts and must never reach the student.",
+            "letter_hint": "Do NOT use letter hints, first-letter clues, or rhyme hints. Probe a property or relationship instead.",
+        }
+        primary = reason_codes[0]
+        critique = f"Deterministic checks failed: {', '.join(reason_codes)}."
+        return {
+            "pass": False, "critique": critique,
+            "leak_detected": "no_reveal" in reason_codes or "letter_hint" in reason_codes,
+            "reason_codes": reason_codes,
+            "rewrite_instruction": instruction_map.get(primary, "Tighten the draft and remove the flagged content."),
+            "revised_teacher_draft": "", "parse_ok": True,
+        }
 
     def _teacher_preflight_brief(self, state: TutorState) -> str:
         """
@@ -3238,6 +3709,26 @@ class DeanAgent:
         Returns:
             dict: {"pass": bool, "critique": str, "leak_detected": bool}
         """
+        # Deterministic pre-check for ASSESSMENT phase. Catches the most
+        # common leak patterns (alias mention, chunk citation, multi-noun
+        # full_answer recitation) before spending an LLM call. Mirrors the
+        # tutoring-phase check but tuned for clinical drafts which are
+        # 2-5 sentences (vs 1-3 for tutoring) and may legitimately
+        # discuss anatomy in scenario form.
+        # Observed in nidhi session 2026-04-30: "the RIGHT coronary artery"
+        # + "passage [6] and [10]" leaked through because the assessment QC
+        # prompt was both more permissive AND missing the alias / full_answer
+        # context. This check runs FIRST so those don't ship.
+        if phase == "assessment":
+            det = self._deterministic_assessment_check(state, teacher_draft)
+            state["debug"].setdefault("turn_trace", []).append({
+                "wrapper": "dean._deterministic_assessment_check",
+                "result": "PASS" if det["pass"] else f"FAIL: {det['critique']}",
+                "reason_codes": det.get("reason_codes", []),
+            })
+            if not det["pass"]:
+                return det
+
         last_student_msg = ""
         for msg in reversed(state.get("messages", [])):
             if msg.get("role") == "student":
@@ -3250,8 +3741,11 @@ class DeanAgent:
                 getattr(cfg.prompts, "dean_quality_check_assessment_delta", "")
                 or cfg.prompts.dean_quality_check_assessment_static
             )
+            aliases_for_qc = state.get("locked_answer_aliases") or []
             dynamic_prompt = cfg.prompts.dean_quality_check_assessment_dynamic.format(
                 locked_answer=state.get("locked_answer", ""),
+                locked_answer_aliases=", ".join(aliases_for_qc) if aliases_for_qc else "(none)",
+                full_answer=state.get("full_answer", "") or state.get("locked_answer", ""),
                 last_student_message=last_student_msg,
                 teacher_draft=teacher_draft,
                 conversation_history=conversation_history,
@@ -3267,8 +3761,11 @@ class DeanAgent:
             # checker's rewrite_instruction is targeted at the actual failure
             # mode, not generic. Empty on the first eval; populated on retry.
             prior_critique = str(state.get("dean_critique", "") or "").strip()
+            aliases_for_qc = state.get("locked_answer_aliases") or []
             dynamic_prompt = cfg.prompts.dean_quality_check_dynamic.format(
                 locked_answer=state.get("locked_answer", ""),
+                locked_answer_aliases=", ".join(aliases_for_qc) if aliases_for_qc else "(none)",
+                full_answer=state.get("full_answer", "") or state.get("locked_answer", ""),
                 last_student_message=last_student_msg,
                 teacher_draft=teacher_draft,
                 prior_preflight_critique=prior_critique,
@@ -3395,6 +3892,8 @@ class DeanAgent:
             ),
         ).format(
             locked_answer=state.get("locked_answer", ""),
+            locked_answer_aliases=", ".join(state.get("locked_answer_aliases") or []) or "(none)",
+            full_answer=state.get("full_answer", "") or state.get("locked_answer", ""),
             clinical_turn_count=state.get("clinical_turn_count", 0) + 1,
             clinical_max_turns=state.get("clinical_max_turns", 3),
             last_tutor_message=last_tutor_msg,
@@ -3521,6 +4020,8 @@ class DeanAgent:
         dynamic_prompt = cfg.prompts.dean_close_session_dynamic.format(
             outcome=outcome,
             locked_answer=state.get("locked_answer", ""),
+            locked_answer_aliases=", ".join(state.get("locked_answer_aliases") or []) or "(none)",
+            full_answer=state.get("full_answer", "") or state.get("locked_answer", ""),
             topic_selection=topic_selection,
             student_reached_answer=state.get("student_reached_answer", False),
             hint_level=state.get("hint_level", 0),
@@ -3597,6 +4098,42 @@ class DeanAgent:
             fallback = self._close_session_fallback_payload(state, parse_error=True)
             dedupe_store["dean._close_session_call"] = {"fingerprint": fingerprint, "result": fallback}
             return fallback
+
+        # Post-filter the close-session output for chunk-citation patterns
+        # only. Anchor mentions ARE allowed at closure — that's the proper
+        # place to give the student the answer they didn't reach so they
+        # know what to study (P1-D textbook-grounded summary). What's NEVER
+        # ok at closure: internal chunk numbers like `[6]`, `passage [7]`.
+        # Those are internal artifacts that should never reach the student
+        # at any phase.
+        chunk_cite_patterns = [
+            r"\bpassage\s*\[?\d+\]?",
+            r"\breference\s*\[?\d+\]?",
+            r"\[\s*\d+\s*\]\s*(?:and\s*\[\s*\d+\s*\])?",
+            r"\bchunk\s*\d+",
+        ]
+        for field_name, field_value in (
+            ("student_facing_message", student_msg),
+            ("grading_rationale", grading_rationale),
+        ):
+            for pat in chunk_cite_patterns:
+                if re.search(pat, field_value, flags=re.IGNORECASE):
+                    state["debug"].setdefault("turn_trace", []).append({
+                        "wrapper": f"dean._close_session_call.chunk_cite_filter.{field_name}",
+                        "result": "stripped chunk citation",
+                        "original_excerpt": field_value[:200],
+                    })
+                    # Strip the citation pattern in-place rather than
+                    # falling back to the whole hand-written close — keeps
+                    # the LLM's substantive content while removing the
+                    # internal artifact.
+                    cleaned = re.sub(pat, "", field_value, flags=re.IGNORECASE)
+                    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+                    if field_name == "student_facing_message":
+                        student_msg = cleaned
+                    elif field_name == "grading_rationale":
+                        grading_rationale = cleaned
+                    field_value = cleaned
         for entry in reversed(state["debug"]["turn_trace"]):
             if entry.get("wrapper") == "dean._close_session_call":
                 entry["result"] = "close_session_json_ok"

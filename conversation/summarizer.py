@@ -62,7 +62,8 @@ def maybe_summarize(messages: list[dict]) -> list[dict]:
         formatted_parts.append(f"{role}: {content}")
     formatted_old_turns = "\n".join(formatted_parts)
 
-    client = anthropic.Anthropic()
+    from conversation.llm_client import make_anthropic_client
+    client = make_anthropic_client()
     # D.6b-2: split the prompt into a stable instruction prefix +
     # per-call old_turns block so the prefix is cache-eligible. Even
     # though our current summarizer prompt is short (~50 tokens, below
@@ -92,8 +93,9 @@ def maybe_summarize(messages: list[dict]) -> list[dict]:
     conversation_block_text = formatted_old_turns + (suffix or "")
     system_blocks.append({"type": "text", "text": conversation_block_text})
 
+    from conversation.llm_client import resolve_model
     resp = client.messages.create(
-        model=cfg.models.summarizer,
+        model=resolve_model(cfg.models.summarizer),
         max_tokens=300,
         system=system_blocks,
         messages=[{"role": "user", "content": "Summarize the conversation above."}],
