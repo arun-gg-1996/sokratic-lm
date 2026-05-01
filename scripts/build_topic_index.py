@@ -33,15 +33,27 @@ sys.path.insert(0, str(ROOT))
 from config import cfg  # noqa: E402
 
 STRUCTURE_PATH = ROOT / getattr(cfg.paths, "textbook_structure", "data/textbook_structure.json")
-CHUNKS_PATH = ROOT / getattr(cfg.paths, "chunks_ot", "data/processed/chunks_ot.jsonl")
+CHUNKS_PATH = ROOT / getattr(
+    cfg.paths,
+    "chunks_openstax_anatomy",
+    getattr(cfg.paths, "chunks_ot", "data/processed/chunks_openstax_anatomy.jsonl"),
+)
 OUT_PATH = ROOT / "data" / "topic_index.json"
 
 CHAPTER_PREFIX_RE = re.compile(r"^Chapter\s+\d+\s*:\s*", re.IGNORECASE)
+CHAPTER_NUM_RE = re.compile(r"^Chapter\s+(\d+)\s*:", re.IGNORECASE)
 SECTION_NUM_PREFIX_RE = re.compile(r"^\d+(?:\.\d+)*\s+")
 
 
 def _strip_chapter_prefix(name: str) -> str:
     return CHAPTER_PREFIX_RE.sub("", name).strip()
+
+
+def _extract_chapter_num(chapter_key: str) -> int | None:
+    """Pull the integer chapter number from a structure key like
+    'Chapter 20: The Cardiovascular System...'. Returns None if no match."""
+    m = CHAPTER_NUM_RE.match(chapter_key.strip())
+    return int(m.group(1)) if m else None
 
 
 def _strip_section_num(name: str) -> str:
@@ -73,11 +85,19 @@ def _count_chunks() -> dict[tuple[str, str, str], int]:
     Return counts keyed by (chapter_norm, section_norm, subsection_norm).
     subsection_norm is "" when the chunk has no subsection.
 
-    Normalization rules (based on actual chunk schema):
-      - chapter: chunk.chapter_title verbatim (no prefix in chunks).
-      - section/subsection: chunk.section_title has the form
-          "<section_num> <section_name>[ — <subsection_name>]"
-        so we split on " — " and strip section_num from the left half.
+    Schema notes (post-2026-04-29 chunks_openstax_anatomy.jsonl):
+      Each chunk has SEPARATE fields:
+        - chapter_title:    e.g. "An Introduction to the Human Body"
+                            (NO "Chapter N:" prefix in chunks)
+        - section_title:    e.g. "Overview of Anatomy and Physiology"
+                            (no section-number prefix, no em-dash)
+        - subsection_title: e.g. "Body Cavities and Serous Membranes"
+                            (empty when chunk lives at section root)
+
+    Earlier chunks (chunks_ot.jsonl, propositions era) joined section
+    and subsection with " — " into a single section_title field. We
+    fall back to that legacy split if no separate subsection_title is
+    present, so the script works on both schemas.
     """
     counts: dict[tuple[str, str, str], int] = {}
     with open(CHUNKS_PATH, "r") as f:
@@ -90,12 +110,20 @@ def _count_chunks() -> dict[tuple[str, str, str], int]:
             section_raw = (c.get("section_title") or "").strip()
             if not chapter or not section_raw:
                 continue
-            if " — " in section_raw:
+            sub_explicit = (c.get("subsection_title") or "").strip()
+            if sub_explicit:
+                # New schema: separate fields, section_title is clean.
+                section_norm = _strip_section_num(section_raw)
+                sub_norm = sub_explicit
+            elif " — " in section_raw:
+                # Legacy schema: section + " — " + subsection joined.
                 section_part, sub_part = section_raw.split(" — ", 1)
+                section_norm = _strip_section_num(section_part)
+                sub_norm = sub_part.strip()
             else:
-                section_part, sub_part = section_raw, ""
-            section_norm = _strip_section_num(section_part)
-            sub_norm = sub_part.strip()
+                # Section-level chunk, no subsection.
+                section_norm = _strip_section_num(section_raw)
+                sub_norm = ""
             key = (chapter, section_norm, sub_norm)
             counts[key] = counts.get(key, 0) + 1
     return counts
@@ -133,6 +161,7 @@ def build_index() -> list[dict]:
         if not isinstance(chapter_node, dict):
             continue
         chapter_name = _strip_chapter_prefix(chapter_key)
+        chapter_num = _extract_chapter_num(chapter_key)
         if _is_junk(chapter_name, patterns, suffixes):
             dropped_junk += 1
             continue
@@ -147,6 +176,7 @@ def build_index() -> list[dict]:
                 continue
             entries.append({
                 "chapter": chapter_name,
+                "chapter_num": chapter_num,
                 "section": "",
                 "subsection": "",
                 "difficulty": chapter_difficulty,
@@ -172,6 +202,7 @@ def build_index() -> list[dict]:
                     continue
                 entries.append({
                     "chapter": chapter_name,
+                    "chapter_num": chapter_num,
                     "section": section_name,
                     "subsection": "",
                     "difficulty": section_difficulty,
@@ -194,6 +225,7 @@ def build_index() -> list[dict]:
                     continue
                 entries.append({
                     "chapter": chapter_name,
+                    "chapter_num": chapter_num,
                     "section": section_name,
                     "subsection": sub_name,
                     "difficulty": sub_difficulty,

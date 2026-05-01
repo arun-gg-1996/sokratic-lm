@@ -1,7 +1,7 @@
 {
   "turn_count": 0,
   "max_journal_turn": 10,
-  "last_prompt": "2026-05-01_19-09-20_tier1_1_2d_sonnet_sycophancy",
+  "last_prompt": "2026-05-01_19-49-06_x1_x2_corpus_fixes",
   "assistant_turn_count": 0,
   "summary_prompt_every": 10,
   "summary_prompt_enabled": true,
