@@ -1,8 +1,8 @@
 {
-  "turn_count": 19,
+  "turn_count": 0,
   "max_journal_turn": 10,
-  "last_prompt": "2026-04-19_14-18-05_conversation_issue_topic_cards_domain_hardcoding",
-  "assistant_turn_count": 19,
+  "last_prompt": "2026-05-01_08-35-36_handoff_takeover_setup_and_round1_fixes",
+  "assistant_turn_count": 0,
   "summary_prompt_every": 10,
   "summary_prompt_enabled": true,
   "summary_prompt_mode": "manual_in_chat",
