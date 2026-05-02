@@ -37,7 +37,29 @@ from dotenv import load_dotenv  # noqa: E402
 load_dotenv(ROOT / ".env", override=True)
 
 CHUNKS_PATH = ROOT / "data" / "processed" / "chunks_openstax_anatomy.jsonl"
+# Original target (X2 round): the 6 chunks renamed from "Diseases of the…"
+# Extended (Tier 1 #1.4 e2e bug A1.2): also drop callout chunks whose
+# subsection_title matches OpenStax's pedagogical-sidebar patterns. The
+# topic_index junk filter keeps these out of the teachable surface, but
+# they were still in JSONL+Qdrant and could be picked up by dean.py's
+# vote-based lock. Found 40 chunks across 3 subsections.
 TARGET_SUBSECTION = "Disorders of the Cardiovascular System"
+JUNK_SUBSECTION_PATTERNS = (
+    "aging and",                  # "Aging and Muscle Tissue", etc.
+    "tissue and aging",
+    "disorders of the",
+    "interactive link",
+    "career connection",
+    "everyday connection",
+    "homeostatic imbalances",     # "Cancer Arises from Homeostatic Imbalances"
+)
+
+
+def _is_junk_subsection(sub: str) -> bool:
+    if not sub:
+        return False
+    s = sub.lower()
+    return any(p in s for p in JUNK_SUBSECTION_PATTERNS)
 
 
 def main():
@@ -51,6 +73,8 @@ def main():
     drop_ids: list[str] = []
     out_lines: list[str] = []
     n_in = 0
+    n_target = 0
+    n_junk_pattern = 0
     with open(CHUNKS_PATH, "r") as f:
         for line in f:
             line = line.rstrip("\n")
@@ -61,8 +85,14 @@ def main():
             sub = (c.get("subsection_title") or "").strip()
             if sub == TARGET_SUBSECTION:
                 drop_ids.append(c.get("chunk_id", "?"))
+                n_target += 1
+                continue
+            if _is_junk_subsection(sub):
+                drop_ids.append(c.get("chunk_id", "?"))
+                n_junk_pattern += 1
                 continue
             out_lines.append(line)
+    print(f"  by category: target_subsection={n_target}, junk_pattern={n_junk_pattern}")
 
     print(f"Input chunks:  {n_in}")
     print(f"Drop count:    {len(drop_ids)}")
