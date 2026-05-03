@@ -29,6 +29,7 @@ from retrieval.topic_mapper_llm import (
     build_abbreviations_block,
     build_prompt,
     build_toc_block,
+    build_toc_block_compact,
     clear_caches,
     map_topic,
 )
@@ -213,6 +214,40 @@ def test_toc_block_caches_by_path(topic_index_path, raptor_summaries_path):
     # Cached call still returns original content
     b = build_toc_block(topic_index_path, raptor_summaries_path)
     assert a == b
+
+
+def test_toc_block_compact_includes_paths_and_labels_only(topic_index_path):
+    """Compact variant per AUDIT_PROMPT_OPTIMIZATION step 1 — paths +
+    labels, no summaries. Should be substantially smaller than the full
+    TOC block on the same fixture."""
+    compact = build_toc_block_compact(topic_index_path, use_cache=False)
+    # Paths present
+    assert "Muscle Tissue > Skeletal Muscle > Sarcomere Structure" in compact
+    # display_label present (after the colon)
+    assert ": Sarcomere Structure" in compact
+    # NO summary text present (summaries are excluded by design)
+    assert "summary:" not in compact
+    assert "Sarcomeres are the contractile units" not in compact
+
+
+def test_toc_block_compact_smaller_than_full(topic_index_path, raptor_summaries_path):
+    full = build_toc_block(topic_index_path, raptor_summaries_path, use_cache=False)
+    compact = build_toc_block_compact(topic_index_path, use_cache=False)
+    # Compact must be strictly smaller — summaries are gone, formatting
+    # collapsed onto one line per entry.
+    assert len(compact) < len(full)
+
+
+def test_toc_block_compact_caches_independently_of_full(topic_index_path, raptor_summaries_path):
+    full_a = build_toc_block(topic_index_path, raptor_summaries_path)
+    compact_a = build_toc_block_compact(topic_index_path)
+    # Mutating the underlying file shouldn't change either cached value
+    topic_index_path.write_text(json.dumps([]))
+    full_b = build_toc_block(topic_index_path, raptor_summaries_path)
+    compact_b = build_toc_block_compact(topic_index_path)
+    assert full_a == full_b
+    assert compact_a == compact_b
+    assert full_a != compact_a   # different shapes
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -112,6 +112,7 @@ class TopicMapperResult:
 # ─────────────────────────────────────────────────────────────────────────────
 
 _TOC_BLOCK_CACHE: dict[str, str] = {}        # keyed by topic_index path
+_TOC_COMPACT_CACHE: dict[str, str] = {}      # keyed by topic_index path (compact variant)
 _ABBREVS_BLOCK_CACHE: dict[str, str] = {}    # keyed by curated_abbrevs path
 
 
@@ -178,6 +179,52 @@ def build_toc_block(
     block = "\n".join(lines)
     if use_cache:
         _TOC_BLOCK_CACHE[cache_key] = block
+    return block
+
+
+def build_toc_block_compact(
+    topic_index_path: Path,
+    *,
+    use_cache: bool = True,
+) -> str:
+    """Compact TOC variant — paths + display_labels only, no raptor summaries.
+
+    Per docs/AUDIT_PROMPT_OPTIMIZATION.md (deferred-to-last):
+      ~25K tokens for the full anatomy index → ~5-6K tokens compact.
+      4-5x smaller. Suitable for cached system blocks on per-turn calls
+      where the full TOC's summaries aren't needed (e.g.
+      classifiers.haiku_off_domain — needs to know what's in scope, not
+      the per-leaf summary).
+
+    Format:
+        - <chapter> > <section> > <subsection>: <display_label>
+
+    Caller is expected to wrap this in a cache_control:ephemeral block
+    so the per-turn injection cost amortizes via the Bedrock prompt
+    cache.
+
+    A/B test target (per the audit's Step 2): run scripts/compare_topic_
+    resolvers.py with this variant against the full TOC; if accuracy
+    parity holds, ship as L9 default. Until then, this function exists
+    for opportunistic injection sites only.
+    """
+    cache_key = str(topic_index_path.resolve())
+    if use_cache and cache_key in _TOC_COMPACT_CACHE:
+        return _TOC_COMPACT_CACHE[cache_key]
+
+    entries = _load_topic_index(topic_index_path)
+    lines: list[str] = []
+    for e in entries:
+        ch = e.get("chapter") or e.get("chapter_title") or ""
+        sec = e.get("section") or e.get("section_title") or ""
+        sub = e.get("subsection") or e.get("subsection_title") or ""
+        label = e.get("display_label") or sub
+        if not (ch and sec and sub):
+            continue
+        lines.append(f"- {ch} > {sec} > {sub}: {label}")
+    block = "\n".join(lines)
+    if use_cache:
+        _TOC_COMPACT_CACHE[cache_key] = block
     return block
 
 
@@ -476,6 +523,7 @@ def map_topic(
 def clear_caches() -> None:
     """Drop the TOC + abbreviation caches (useful for tests + after corpus rebuild)."""
     _TOC_BLOCK_CACHE.clear()
+    _TOC_COMPACT_CACHE.clear()
     _ABBREVS_BLOCK_CACHE.clear()
 
 def build_cached_message_blocks(
