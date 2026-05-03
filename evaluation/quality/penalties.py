@@ -34,11 +34,27 @@ def compute_penalties(
     # ---------------------------------------------- LEAK_DETECTED (Critical)
     # Source: per-turn LLM saying no_reveal=0, OR our deterministic regex
     # matching a leak.
+    #
+    # L39 — skip LEAK_DETECTED on the final close-out turn for sessions
+    # that ended via the turn-25 graceful close, off-domain cap, or
+    # abandoned_no_lock paths. By design those closes don't reveal the
+    # answer (per L26 / L56 / L22) and the LLM judge sometimes
+    # mis-classifies the close prose as a partial reveal. Reach-path
+    # closes (where the student DID reach) are NOT exempted — those
+    # legitimately confirm the answer per L65.
+    final_turn_id = view.turns[-1].turn_id if view.turns else 0
+    is_no_reveal_close = (view.status in {
+        "ended_off_domain", "ended_turn_limit", "abandoned_no_lock",
+    })
     if llm_per_turn and llm_per_turn.get("turns"):
         for t in llm_per_turn["turns"]:
             no_reveal = t.get("no_reveal")
             if no_reveal is not None and no_reveal < 0.5:
                 tid = t.get("turn_id")
+                if is_no_reveal_close and tid == final_turn_id:
+                    # Graceful close turn — answer reveal is by-design absent;
+                    # skip the leak penalty to avoid false-positive criticals.
+                    continue
                 # Find the actual turn for evidence
                 tutor_msg = ""
                 for vt in view.turns:
@@ -160,10 +176,24 @@ def compute_verdict(
     primary: dict[str, Any],
     dimensions: dict[str, dict[str, Any]],
     penalties: list[dict],
+    *,
+    status: str = "",
 ) -> str:
     """Combine the three signals into a single verdict string.
-    Possible values: 'passed' | 'warning' | 'failed_critical_penalty' | 'failed_threshold'
+
+    Possible values:
+      'passed' | 'warning' | 'failed_critical_penalty' | 'failed_threshold'
+      'no_lock'        — session ended pre-lock (L21 abandoned_no_lock); not gradable
+      'in_progress'    — session is still open (L21 in_progress); skip scoring
+
+    L39 — status-aware short-circuit. Pre-lock-terminated and in-progress
+    sessions can't meaningfully be scored on tutoring-quality dimensions,
+    so we return a distinct verdict instead of failing the rubric.
     """
+    if status == "in_progress":
+        return "in_progress"
+    if status == "abandoned_no_lock":
+        return "no_lock"
     if any(p.get("severity") == CRITICAL for p in penalties):
         return "failed_critical_penalty"
 

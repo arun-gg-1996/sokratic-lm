@@ -49,6 +49,19 @@ class TutorTurn:
     revised_draft_applied: bool = False   # teacher draft was rewritten
     fabrication_keyword_match: list[str] = field(default_factory=list)
 
+    # L39 — v2 stack signals (populated when SOKRATIC_USE_V2_FLOW=1).
+    # Empty / default values for legacy sessions so existing scorers
+    # keep working without code changes downstream.
+    preflight_fired: bool = False
+    preflight_category: str = ""             # help_abuse | off_domain | deflection | none
+    turn_plan_mode: str = ""                 # socratic | clinical | rapport | opt_in | redirect | nudge | confirm_end | honest_close
+    turn_plan_tone: str = ""                 # encouraging | firm | neutral | honest
+    dean_v2_used_fallback: bool = False
+    retry_final_attempt: int = 0             # 1-3 normal, 4 = safe-generic-probe
+    retry_used_safe_probe: bool = False
+    retry_used_dean_replan: bool = False
+    retry_n_attempts: int = 0
+
 
 @dataclass
 class SessionView:
@@ -79,6 +92,13 @@ class SessionView:
     max_hints: int = 3
     final_turn_count: int = 0
     max_turns: int = 25
+
+    # L21 + L39 — session lifecycle status from the SQL row. Drives
+    # scorer behavior: in_progress → skip; abandoned_no_lock → no-lock
+    # verdict (don't critical-penalize); ended_off_domain / ended_turn_limit
+    # → don't apply LEAK_DETECTED on the close turn (no answer reveal by
+    # design).
+    status: str = ""                      # in_progress | completed | ended_off_domain | ended_by_student | ended_turn_limit | abandoned_no_lock
 
     # Debug rollups (from state["debug"])
     api_calls: int = 0
@@ -270,6 +290,10 @@ def _view_from_state(state: dict) -> SessionView:
     view.max_hints = int(state.get("max_hints") or 3)
     view.final_turn_count = int(state.get("turn_count") or 0)
     view.max_turns = int(state.get("max_turns") or 25)
+    # L39 — session lifecycle status. Production exports may carry this
+    # at the top level of `state` (set by memory_update_node) or under
+    # debug. Default empty so legacy sessions don't break.
+    view.status = str(state.get("status") or (state.get("debug") or {}).get("status") or "")
     view.student_mastery_confidence_last = float(state.get("student_mastery_confidence") or 0.0)
 
     # Debug rollups
@@ -341,6 +365,36 @@ def _enrich_turns_from_traces(view: SessionView, debug: dict) -> None:
                         t.student_answer_confidence = float(m.group(1))
                     except ValueError:
                         pass
+            elif wrap == "dean.reached_answer_gate":
+                # L39 + Track 4.7g — v2 dean_node_v2 stamps reach gate
+                # results under this wrapper name (replaces the legacy
+                # `dean.confidence_score` "reached=..." string parsing).
+                t.gate_path = entry.get("path")
+                t.gate_evidence = str(entry.get("evidence") or "")
+                if "reached" in entry:
+                    t.student_reached_answer = bool(entry.get("reached"))
+            elif wrap == "preflight":
+                # L39 — v2 pre-flight Haiku trio. category in {help_abuse,
+                # off_domain, deflection, none}. When fired, the v2 path
+                # short-circuits Dean and Teacher renders a redirect; the
+                # scorer should not penalize "no chunk grounding" on these
+                # turns because no retrieval fires.
+                t.preflight_fired = bool(entry.get("fired", False))
+                t.preflight_category = str(entry.get("category") or "")
+            elif wrap == "dean_v2.plan":
+                # L39 — v2 Dean planning result. Captures mode + tone so
+                # downstream dimension scorers can adjust expectations
+                # (clinical-mode turns aren't graded as Socratic).
+                t.turn_plan_mode = str(entry.get("mode") or "")
+                t.turn_plan_tone = str(entry.get("tone") or "")
+                t.dean_v2_used_fallback = bool(entry.get("used_fallback", False))
+            elif wrap == "retry_orchestrator.run_turn":
+                # L39 — v2 retry loop telemetry. Records how many
+                # Teacher attempts + checks ran before final text shipped.
+                t.retry_final_attempt = int(entry.get("final_attempt") or 0)
+                t.retry_used_safe_probe = bool(entry.get("used_safe_generic_probe", False))
+                t.retry_used_dean_replan = bool(entry.get("used_dean_replan", False))
+                t.retry_n_attempts = int(entry.get("n_attempts") or 0)
             elif wrap == "dean._setup_call":
                 # _setup_call writes turn classification result. Look for
                 # the `result` summary which has the form

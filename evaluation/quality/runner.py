@@ -108,8 +108,12 @@ def evaluate_session(
     # ---- Step 6: penalties
     pens = penalties_mod.compute_penalties(view, det, llm_per_turn, llm_synthesis)
 
-    # ---- Step 7: verdict
-    verdict = penalties_mod.compute_verdict(primary_block, dims, pens)
+    # ---- Step 7: verdict — pass session status (L39) so abandoned_no_lock
+    # / in_progress sessions return their distinct verdicts instead of
+    # being false-failed by the dimension thresholds.
+    verdict = penalties_mod.compute_verdict(
+        primary_block, dims, pens, status=view.status,
+    )
 
     # ---- Step 8: assemble report
     report = {
@@ -137,6 +141,9 @@ def evaluate_session(
             "api_calls": view.api_calls,
             "input_tokens": view.input_tokens,
             "output_tokens": view.output_tokens,
+            # L39 — surface lifecycle status so external batch summaries
+            # can group / filter by "completed vs no_lock vs in_progress".
+            "status": view.status,
             "n_tutoring_turns": det.get("det_trq_n_tutoring_turns", 0),
             "n_intermediate_turns": det.get("det_arc_n_intermediate_turns", 0),
             "n_fabrication_turns": det.get("det_arc_n_fabrication_turns", 0),
