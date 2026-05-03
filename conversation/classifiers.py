@@ -624,3 +624,307 @@ def haiku_off_domain_check(student_msg: str) -> dict:
         "_raw": raw,
         "_error": error,
     }
+
+
+# ─────────────────────────────────────────────────────────────────────
+#                  CLASSIFIER 4 — SHAPE CHECK (L48 #3, L59)
+# ─────────────────────────────────────────────────────────────────────
+
+_SHAPE_CHECK_SYSTEM = """\
+You are a teaching-quality reviewer for a Socratic tutor. Your sole task
+is to verify that a draft tutor response respects FIVE shape constraints:
+
+  1. LENGTH      — draft has at most {max_sentences} sentences (count
+                   complete sentences; questions count as sentences).
+  2. SINGLE_QUESTION — draft contains EXACTLY one question (when
+                   exactly_one_question=true). Multiple questions = fail.
+                   Zero questions = fail. Rhetorical questions count.
+  3. BANNED_PREFIX — draft does NOT start with empty praise:
+                   "Great!", "Excellent!", "Perfect!", "You got it!",
+                   "Wonderful!", "Awesome!", "Nice!", "Right!",
+                   "Exactly!", "Correct!", or close variants.
+  4. HINT_LEVEL_ALIGNMENT — directness is consistent with the current
+                   hint_level:
+                     level 0 = no hint, pure question
+                     level 1 = oblique hint (think category, not specifics)
+                     level 2 = moderate (mention adjacent concept)
+                     level 3 = direct (almost gives the structural answer)
+                   The draft should match this level. When ambiguous,
+                   bias toward PASS (level 4 swap is offline; live false
+                   positives hurt more than rare misses).
+  5. NO_REPETITION — draft is not substantively the same question as
+                   the previous tutor turns. Paraphrases of the same
+                   question = fail. New angle on the same topic = pass.
+
+Output STRICT JSON only — no markdown, no preamble:
+{{
+  "pass": true | false,
+  "reason": "<short explanation if pass=false; empty if pass>",
+  "evidence": "<verbatim substring of draft that triggered failure; empty if pass>",
+  "checks": {{
+    "length": true | false,
+    "single_question": true | false,
+    "banned_prefix": true | false,
+    "hint_level_alignment": true | false,
+    "no_repetition": true | false
+  }}
+}}
+
+The draft passes overall iff ALL five sub-checks pass.
+"""
+
+
+_SHAPE_CHECK_USER_TEMPLATE = """\
+SHAPE CONSTRAINTS:
+  max_sentences: {max_sentences}
+  exactly_one_question: {exactly_one_question}
+  hint_level: {hint_level}
+  intended hint_text from Dean: {hint_text}
+
+PREVIOUS TUTOR TURNS (for repetition check, most recent first):
+{prior_questions}
+
+DRAFT TO CHECK:
+{draft}
+"""
+
+
+def haiku_shape_check(
+    draft: str,
+    *,
+    shape_spec: dict | None = None,
+    hint_level: int = 0,
+    hint_text: str = "",
+    prior_tutor_questions: list[str] | None = None,
+) -> dict:
+    """L48 #3 + L59 — five sub-checks in ONE Haiku call, no regex.
+
+    Returns dict with universal L61 schema (pass/reason/evidence) plus
+    a `checks` sub-dict for fine-grained failure attribution.
+
+    Safe defaults on error: pass=True (don't false-fire on parser
+    issues; downstream Haiku checks will catch real problems).
+    """
+    t0 = time.time()
+    if not draft:
+        return {
+            "pass": True, "reason": "empty draft", "evidence": "",
+            "checks": {}, "_elapsed_s": 0.0, "_raw": "", "_error": "empty_draft",
+        }
+
+    spec = shape_spec or {"max_sentences": 4, "exactly_one_question": True}
+    max_sentences = int(spec.get("max_sentences", 4))
+    exactly_one_question = bool(spec.get("exactly_one_question", True))
+    prior = "\n".join(f"- {q}" for q in (prior_tutor_questions or [])[:2]) or "(none)"
+
+    system_text = _SHAPE_CHECK_SYSTEM.format(max_sentences=max_sentences)
+    user_text = _SHAPE_CHECK_USER_TEMPLATE.format(
+        max_sentences=max_sentences,
+        exactly_one_question=str(exactly_one_question).lower(),
+        hint_level=hint_level,
+        hint_text=hint_text or "(none)",
+        prior_questions=prior,
+        draft=draft,
+    )
+
+    try:
+        raw = _haiku_call(_cached_system_block(system_text), user_text)
+    except Exception as e:
+        return {
+            "pass": True, "reason": "", "evidence": "",
+            "checks": {}, "_elapsed_s": round(time.time() - t0, 3),
+            "_raw": "", "_error": f"haiku_error: {type(e).__name__}",
+        }
+    elapsed = round(time.time() - t0, 3)
+    parsed = _extract_json(raw)
+    if parsed is None:
+        return {
+            "pass": True, "reason": "json_parse_fail", "evidence": "",
+            "checks": {}, "_elapsed_s": elapsed,
+            "_raw": raw, "_error": "parse_fail",
+        }
+    passed = bool(parsed.get("pass"))
+    reason = str(parsed.get("reason", "") or "")[:240]
+    evidence = str(parsed.get("evidence", "") or "")[:240]
+    checks = parsed.get("checks") if isinstance(parsed.get("checks"), dict) else {}
+    error = ""
+    if not passed and evidence and not _validate_evidence(evidence, draft):
+        # Hallucinated evidence → downgrade to pass per the same rule
+        # as haiku_hint_leak_check
+        passed = True
+        reason = ""
+        evidence = ""
+        error = "evidence_invalid"
+    return {
+        "pass": passed,
+        "reason": reason,
+        "evidence": evidence,
+        "checks": checks,
+        "_elapsed_s": elapsed,
+        "_raw": raw,
+        "_error": error,
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────
+#                  CLASSIFIER 5 — PEDAGOGY CHECK (L48 #4, L60)
+# ─────────────────────────────────────────────────────────────────────
+
+_PEDAGOGY_CHECK_SYSTEM = """\
+You are a teaching-quality reviewer for a Socratic tutor. Your sole task
+is to verify TWO pedagogy criteria from the EULER rubric:
+
+  1. RELEVANCE — does the draft address content within the locked
+                 subsection / locked anchor question scope? A draft that
+                 wanders to a different topic, even an adjacent one,
+                 fails this. Tangential tutoring on its own is fine
+                 EXCEPT when the locked anchor is open and unanswered.
+
+  2. HELPFUL   — does the draft advance reasoning toward the answer?
+                 A draft that just restates the locked question without
+                 introducing a new angle, hint, or scaffolding, fails.
+                 A draft that introduces a leading sub-question or a
+                 chunk-grounded fact-piece, passes.
+
+Output STRICT JSON only — no markdown, no preamble:
+{{
+  "pass": true | false,
+  "reason": "<short explanation if pass=false; empty if pass>",
+  "evidence": "<verbatim substring of draft that triggered failure; empty if pass>",
+  "checks": {{
+    "relevance": true | false,
+    "helpful": true | false
+  }}
+}}
+
+The draft passes overall iff BOTH sub-checks pass.
+"""
+
+
+_PEDAGOGY_CHECK_USER_TEMPLATE = """\
+LOCKED SUBSECTION: {locked_subsection}
+LOCKED ANCHOR QUESTION: {locked_question}
+
+DRAFT TO CHECK:
+{draft}
+"""
+
+
+def haiku_pedagogy_check(
+    draft: str,
+    *,
+    locked_subsection: str = "",
+    locked_question: str = "",
+) -> dict:
+    """L48 #4 + L60 — verifies EULER relevance + helpful in ONE Haiku call.
+
+    Returns dict with universal L61 schema (pass/reason/evidence) plus
+    a `checks` sub-dict.
+
+    Safe defaults on error: pass=True (avoid false-firing).
+    """
+    t0 = time.time()
+    if not draft:
+        return {
+            "pass": True, "reason": "empty draft", "evidence": "",
+            "checks": {}, "_elapsed_s": 0.0, "_raw": "", "_error": "empty_draft",
+        }
+
+    user_text = _PEDAGOGY_CHECK_USER_TEMPLATE.format(
+        locked_subsection=locked_subsection or "(unspecified)",
+        locked_question=locked_question or "(unspecified)",
+        draft=draft,
+    )
+    try:
+        raw = _haiku_call(_cached_system_block(_PEDAGOGY_CHECK_SYSTEM), user_text)
+    except Exception as e:
+        return {
+            "pass": True, "reason": "", "evidence": "",
+            "checks": {}, "_elapsed_s": round(time.time() - t0, 3),
+            "_raw": "", "_error": f"haiku_error: {type(e).__name__}",
+        }
+    elapsed = round(time.time() - t0, 3)
+    parsed = _extract_json(raw)
+    if parsed is None:
+        return {
+            "pass": True, "reason": "json_parse_fail", "evidence": "",
+            "checks": {}, "_elapsed_s": elapsed,
+            "_raw": raw, "_error": "parse_fail",
+        }
+    passed = bool(parsed.get("pass"))
+    reason = str(parsed.get("reason", "") or "")[:240]
+    evidence = str(parsed.get("evidence", "") or "")[:240]
+    checks = parsed.get("checks") if isinstance(parsed.get("checks"), dict) else {}
+    error = ""
+    if not passed and evidence and not _validate_evidence(evidence, draft):
+        passed = True
+        reason = ""
+        evidence = ""
+        error = "evidence_invalid"
+    return {
+        "pass": passed,
+        "reason": reason,
+        "evidence": evidence,
+        "checks": checks,
+        "_elapsed_s": elapsed,
+        "_raw": raw,
+        "_error": error,
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────
+#                  UNIVERSAL ADAPTER (L61)
+# ─────────────────────────────────────────────────────────────────────
+
+
+def to_universal_check_result(
+    legacy_result: dict,
+    *,
+    check_name: str,
+) -> dict:
+    """Normalize any classifier output to the L61 universal schema.
+
+    Per L61 every Haiku check (4 self-policing + 3 pre-flight) reports:
+      {pass: bool, reason: str, evidence: str}
+    The 3 pre-existing classifiers (haiku_hint_leak_check,
+    haiku_sycophancy_check, haiku_off_domain_check) use a verdict-string
+    schema instead. This adapter maps both shapes to the same canonical
+    one so the L62 retry feedback loop can iterate uniformly.
+
+    Adds `_check_name` so trace consumers know which check fired without
+    having to inspect call shape.
+    """
+    # Already in the universal shape? (haiku_shape_check / haiku_pedagogy_check)
+    if "pass" in legacy_result:
+        return {
+            "_check_name": check_name,
+            "pass": bool(legacy_result.get("pass")),
+            "reason": str(legacy_result.get("reason", "") or "")[:240],
+            "evidence": str(legacy_result.get("evidence", "") or "")[:240],
+            # Keep checks + diagnostics for downstream consumers
+            "checks": legacy_result.get("checks") if isinstance(legacy_result.get("checks"), dict) else {},
+            "_elapsed_s": legacy_result.get("_elapsed_s"),
+            "_error": legacy_result.get("_error", ""),
+        }
+
+    # Verdict-string shape (haiku_hint_leak_check / sycophancy / off_domain)
+    verdict = str(legacy_result.get("verdict", "") or "").lower()
+    # Map per-check verdict → pass/fail
+    fail_verdicts = {
+        "haiku_leak_check":       {"leak"},
+        "haiku_sycophancy_check": {"sycophantic"},
+        "haiku_off_domain_check": {"substance", "chitchat", "jailbreak", "answer_demand"},
+    }
+    fail_set = fail_verdicts.get(check_name, set())
+    is_fail = verdict in fail_set
+    rationale = str(legacy_result.get("rationale", "") or "")[:240]
+    evidence = str(legacy_result.get("evidence", "") or "")[:240]
+    return {
+        "_check_name": check_name,
+        "pass": not is_fail,
+        "reason": rationale if is_fail else "",
+        "evidence": evidence if is_fail else "",
+        "_verdict": verdict,  # preserve original verdict string for trace
+        "_elapsed_s": legacy_result.get("_elapsed_s"),
+        "_error": legacy_result.get("_error", ""),
+    }
