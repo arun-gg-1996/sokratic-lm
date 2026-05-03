@@ -74,6 +74,11 @@ const DOT_CLASS: Record<MasteryColor, string> = {
   grey: "text-muted",
 };
 
+// L80.g — color threshold tooltip on hover; same text everywhere so
+// students can learn the legend just by hovering one row.
+const COLOR_LEGEND =
+  "Green ≥ 75% mastery · Yellow 50–75% · Red < 50% · Grey untouched";
+
 const BORDER_CLASS: Record<MasteryColor, string> = {
   green: "border-l-2 border-l-emerald-500",
   yellow: "border-l-2 border-l-amber-500",
@@ -95,7 +100,11 @@ function sortKey(score: number | null | undefined): number {
 
 function Dot({ color }: { color: MasteryColor }) {
   return (
-    <span className={`shrink-0 ${DOT_CLASS[color]}`} aria-hidden>
+    <span
+      className={`shrink-0 ${DOT_CLASS[color]}`}
+      aria-hidden
+      title={COLOR_LEGEND}
+    >
       ●
     </span>
   );

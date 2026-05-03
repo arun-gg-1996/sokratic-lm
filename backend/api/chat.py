@@ -237,6 +237,11 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
             debug_payload["clinical_low_effort_count"] = int(new_state.get("clinical_low_effort_count", 0) or 0)
             debug_payload["clinical_off_topic_count"] = int(new_state.get("clinical_off_topic_count", 0) or 0)
             debug_payload["clinical_strike_threshold"] = int(getattr(cfg.dean, "clinical_strike_threshold", 2))
+            # L80.a — clinical phase turn counter (separate from tutoring's
+            # turn_count per L67). Surfaced so the sidebar can render
+            # phase-contextual counters during the clinical loop.
+            debug_payload["clinical_turn_count"] = int(new_state.get("clinical_turn_count", 0) or 0)
+            debug_payload["clinical_max_turns"] = int(new_state.get("clinical_max_turns", 7) or 7)
 
             payload = {
                 "type": "message_complete",

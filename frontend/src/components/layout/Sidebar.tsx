@@ -1,76 +1,116 @@
+/**
+ * Sidebar — phase badge + phase-contextual counters + tooltips
+ * (L80.a + L80.c + L80.h from the UX polish pass)
+ *
+ * Counter strategy per L80.a:
+ *   - Pre-lock (topic not confirmed): show prelock_loop_count/7 only
+ *   - Tutoring (topic locked, phase=tutoring): turn_count, hint_level,
+ *     conversation-health strike pills as they accumulate
+ *   - Clinical (phase=assessment, assessment_turn>=2): clinical_turn_count
+ *     plus the same strike pills (counters tick during clinical per L70
+ *     but do not escalate)
+ *   - memory_update / wrap-up: counters fade out
+ *
+ * Phase badge per L80.c renders at the top of the sidebar with a
+ * color-coded label so the student always knows what mode they're in.
+ *
+ * Tooltips per L80.h are attached to every counter pill via the
+ * native `title` attribute (no extra dependencies). Each tooltip
+ * explains what the counter measures + what triggers escalation.
+ */
 import { Link, useNavigate } from "react-router-dom";
 import { useSessionStore } from "../../stores/sessionStore";
 import { useUserStore } from "../../stores/userStore";
 import { AccountPopover } from "../account/AccountPopover";
 
+type DebugRecord = Record<string, unknown> | null;
+
+function num(d: DebugRecord, key: string, fallback: number): number {
+  const v = d?.[key];
+  return typeof v === "number" ? v : fallback;
+}
+
+function str(d: DebugRecord, key: string, fallback = ""): string {
+  const v = d?.[key];
+  return typeof v === "string" ? v : fallback;
+}
+
+function bool(d: DebugRecord, key: string): boolean {
+  return Boolean(d?.[key]);
+}
+
+type PhaseKind = "rapport" | "tutoring" | "clinical" | "wrap";
+
+const PHASE_LABEL: Record<PhaseKind, string> = {
+  rapport: "Rapport",
+  tutoring: "Tutoring",
+  clinical: "Clinical",
+  wrap: "Wrapping up",
+};
+
+const PHASE_BADGE_CLASS: Record<PhaseKind, string> = {
+  rapport: "bg-blue-500/15 text-blue-300 border-blue-500/30",
+  tutoring: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+  clinical: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+  wrap: "bg-muted/15 text-muted border-border",
+};
+
+function derivePhase(d: DebugRecord, topicConfirmed: boolean, assessmentTurn: number): PhaseKind {
+  const phase = str(d, "phase");
+  if (phase === "memory_update") return "wrap";
+  if (phase === "assessment" && assessmentTurn >= 2) return "clinical";
+  // assessment_turn 0/1 = opt-in flow; show as tutoring-tail rather than
+  // a separate badge so the transition feels smooth.
+  if (topicConfirmed) return "tutoring";
+  return "rapport";
+}
+
 export function Sidebar() {
   const navigate = useNavigate();
   const studentId = useUserStore((s) => s.studentId);
   const resetSession = useSessionStore((s) => s.reset);
-  const debug = useSessionStore((s) => s.debug);
-  const turnCount =
-    typeof (debug as Record<string, unknown> | null)?.turn_count === "number"
-      ? ((debug as Record<string, unknown>).turn_count as number)
-      : 0;
-  const hintLevel =
-    typeof (debug as Record<string, unknown> | null)?.hint_level === "number"
-      ? ((debug as Record<string, unknown>).hint_level as number)
-      : 0;
-  const maxTurns =
-    typeof (debug as Record<string, unknown> | null)?.max_turns === "number"
-      ? ((debug as Record<string, unknown>).max_turns as number)
-      : 25;
-  const maxHints =
-    typeof (debug as Record<string, unknown> | null)?.max_hints === "number"
-      ? ((debug as Record<string, unknown>).max_hints as number)
-      : 3;
+  const debug = useSessionStore((s) => s.debug) as DebugRecord;
+
+  const turnCount = num(debug, "turn_count", 0);
+  const maxTurns = num(debug, "max_turns", 25);
+  const hintLevel = num(debug, "hint_level", 0);
+  const maxHints = num(debug, "max_hints", 3);
   const displayHint = Math.min(hintLevel, maxHints);
   const hintsExhausted = hintLevel > maxHints;
-  const topicConfirmed = Boolean((debug as Record<string, unknown> | null)?.topic_confirmed);
-  const prelockLoopCount =
-    typeof (debug as Record<string, unknown> | null)?.prelock_loop_count === "number"
-      ? ((debug as Record<string, unknown>).prelock_loop_count as number)
-      : 0;
-  const topicSelection =
-    typeof (debug as Record<string, unknown> | null)?.topic_selection === "string"
-      ? String((debug as Record<string, unknown>).topic_selection)
-      : "";
-
-  // Pull chapter / section / subsection from locked_topic so the UI can show
-  // the full path in a collapsible (the previous one-line truncated display
-  // was hard to read on long topic names). Falls back to topic_selection
-  // when locked_topic isn't populated yet.
-  const lockedTopic = (debug as Record<string, unknown> | null)?.locked_topic;
-  const lockedTopicObj = typeof lockedTopic === "object" && lockedTopic !== null
-    ? (lockedTopic as Record<string, unknown>)
+  const topicConfirmed = bool(debug, "topic_confirmed");
+  const assessmentTurn = num(debug, "assessment_turn", 0);
+  const prelockLoopCount = num(debug, "prelock_loop_count", 0);
+  const clinicalTurnCount = num(debug, "clinical_turn_count", 0);
+  const clinicalMaxTurns = num(debug, "clinical_max_turns", 7);
+  const topicSelection = str(debug, "topic_selection");
+  const lockedTopicObj = (debug?.locked_topic && typeof debug.locked_topic === "object")
+    ? (debug.locked_topic as Record<string, unknown>)
     : null;
-  const chapterName = typeof lockedTopicObj?.chapter === "string"
-    ? String(lockedTopicObj.chapter) : "";
-  const sectionName = typeof lockedTopicObj?.section === "string"
-    ? String(lockedTopicObj.section) : "";
-  const subsectionName = typeof lockedTopicObj?.subsection === "string"
-    ? String(lockedTopicObj.subsection) : topicSelection;
-  const lockedQuestionText = typeof (debug as Record<string, unknown> | null)?.locked_question === "string"
-    ? String((debug as Record<string, unknown>).locked_question) : "";
+  const chapterName = str(lockedTopicObj as DebugRecord, "chapter");
+  const sectionName = str(lockedTopicObj as DebugRecord, "section");
+  const subsectionName = str(lockedTopicObj as DebugRecord, "subsection") || topicSelection;
+  const lockedQuestionText = str(debug, "locked_question");
 
-  // Change 4 / 5.1 (2026-04-30): conversation-health counters surfaced
-  // for debug. Goes amber at strike >= threshold-2, red at threshold-1.
-  // Tooltip explains the threshold action (advance hint vs terminate).
-  const dbg = (debug as Record<string, unknown> | null) ?? null;
-  const helpAbuseCount = typeof dbg?.help_abuse_count === "number" ? (dbg.help_abuse_count as number) : 0;
-  const helpAbuseThreshold = typeof dbg?.help_abuse_threshold === "number" ? (dbg.help_abuse_threshold as number) : 4;
-  const offTopicCount = typeof dbg?.off_topic_count === "number" ? (dbg.off_topic_count as number) : 0;
-  const offTopicThreshold = typeof dbg?.off_topic_threshold === "number" ? (dbg.off_topic_threshold as number) : 4;
-  const totalLowEffort = typeof dbg?.total_low_effort_turns === "number" ? (dbg.total_low_effort_turns as number) : 0;
-  const totalOffTopic = typeof dbg?.total_off_topic_turns === "number" ? (dbg.total_off_topic_turns as number) : 0;
-  const showStrikePills = topicConfirmed && (
-    helpAbuseCount > 0 || offTopicCount > 0 || totalLowEffort > 0 || totalOffTopic > 0
-  );
+  // Conversation-health counters
+  const helpAbuseCount = num(debug, "help_abuse_count", 0);
+  const helpAbuseThreshold = num(debug, "help_abuse_threshold", 4);
+  const offTopicCount = num(debug, "off_topic_count", 0);
+  const offTopicThreshold = num(debug, "off_topic_threshold", 4);
+  const totalLowEffort = num(debug, "total_low_effort_turns", 0);
+  const totalOffTopic = num(debug, "total_off_topic_turns", 0);
 
-  const strikeColor = (count: number, threshold: number): string => {
-    if (count >= threshold) return "text-red-500";
-    if (count >= threshold - 1) return "text-amber-400";
-    if (count >= threshold - 2 && threshold >= 3) return "text-amber-300";
+  const phase = derivePhase(debug, topicConfirmed, assessmentTurn);
+  const showStrikePills =
+    (phase === "tutoring" || phase === "clinical") &&
+    (helpAbuseCount > 0 || offTopicCount > 0 || totalLowEffort > 0 || totalOffTopic > 0);
+
+  // Color escalation: green (default muted) → amber → red as cap nears.
+  const counterColor = (count: number, max: number): string => {
+    if (max <= 0) return "text-muted";
+    const ratio = count / max;
+    if (ratio >= 1) return "text-red-500";
+    if (ratio >= 0.75) return "text-amber-400";
+    if (ratio >= 0.5) return "text-amber-300";
     return "text-muted";
   };
 
@@ -87,6 +127,14 @@ export function Sidebar() {
           <div className="text-2xl font-semibold">Sokratic</div>
         </div>
 
+        {/* L80.c — prominent phase badge */}
+        <div
+          className={`rounded-card border px-3 py-2 text-center text-sm font-semibold tracking-wide uppercase transition-colors duration-300 ${PHASE_BADGE_CLASS[phase]}`}
+          title={`Current session phase: ${PHASE_LABEL[phase]}`}
+        >
+          {PHASE_LABEL[phase]}
+        </div>
+
         <button
           onClick={startNew}
           className="w-full rounded-card border border-border bg-bg px-4 py-2 text-left hover:border-accent transition"
@@ -95,16 +143,6 @@ export function Sidebar() {
         </button>
 
         <nav className="flex flex-col gap-1 text-sm">
-          {/*
-            "Session overview" was a legacy weak/strong-topic page
-            built before /mastery existed — it reads the stub
-            weak_topics state field which is never populated since
-            we replaced it with the per-concept MasteryStore. The
-            route is left registered in App.tsx in case we want to
-            repurpose the file later (e.g. as a chats history
-            list), but hidden from nav so users don't land on the
-            "Unknown topic" placeholder cards.
-          */}
           <Link className="rounded-lg px-3 py-2 hover:bg-bg transition" to="/chat">
             Chats
           </Link>
@@ -113,15 +151,59 @@ export function Sidebar() {
           </Link>
         </nav>
 
-        <div className="rounded-card border border-border bg-bg px-3 py-3 space-y-1 text-sm">
-          <div className="text-muted">
-            {topicConfirmed ? `Turn ${turnCount}/${maxTurns}` : `Pre-lock ${prelockLoopCount}/7`}
-          </div>
-          <div className="text-muted">
-            {hintsExhausted ? "Hints exhausted" : `Hints ${displayHint}/${maxHints}`}
-          </div>
-          {topicConfirmed && (subsectionName || topicSelection) && (
-            <details className="text-muted text-xs group">
+        {/* L80.a — phase-contextual counter panel */}
+        <div className="rounded-card border border-border bg-bg px-3 py-3 space-y-2 text-sm transition-opacity duration-300">
+          {phase === "rapport" && (
+            <div
+              className={`text-sm ${counterColor(prelockLoopCount, 7)}`}
+              title="After 7 attempts to pick a topic, a guided picker appears. Currently at this many attempts."
+            >
+              Pre-lock: {prelockLoopCount}/7
+            </div>
+          )}
+
+          {phase === "tutoring" && (
+            <>
+              <div
+                className={`text-sm ${counterColor(turnCount, maxTurns)}`}
+                title={`Tutoring sessions are capped at ${maxTurns} turns. Currently at this many turns.`}
+              >
+                Turn: {turnCount}/{maxTurns}
+              </div>
+              <div
+                className="text-sm text-muted"
+                title="Hints get more direct as the level rises. Cap is 3."
+              >
+                {hintsExhausted ? "Hints exhausted" : `Hint: ${displayHint}/${maxHints}`}
+              </div>
+            </>
+          )}
+
+          {phase === "clinical" && (
+            <>
+              <div
+                className={`text-sm ${counterColor(clinicalTurnCount, clinicalMaxTurns)}`}
+                title={`Clinical phase is capped at ${clinicalMaxTurns} turns. Counter ticks then closes naturally.`}
+              >
+                Clinical turn: {clinicalTurnCount}/{clinicalMaxTurns}
+              </div>
+              <div
+                className="text-xs text-muted/70"
+                title="Tutoring complete; clinical scenario is the bonus phase."
+              >
+                Tutoring done at turn {turnCount}
+              </div>
+            </>
+          )}
+
+          {phase === "wrap" && (
+            <div className="text-xs text-muted/70" title="Session wrapping up — saving memory + scoring mastery.">
+              Wrapping up — saving session
+            </div>
+          )}
+
+          {topicConfirmed && (subsectionName || topicSelection) && phase !== "wrap" && (
+            <details className="text-muted text-xs group pt-1">
               <summary className="cursor-pointer list-none flex items-center gap-1 hover:text-fg transition">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -151,23 +233,20 @@ export function Sidebar() {
             </details>
           )}
 
-          {/* Change 4 / 5.1 (2026-04-30): conversation-health debug pills.
-              Hidden until the student has actually accumulated some
-              strikes; counters reset on engaged turns so this section
-              comes and goes naturally. The total_* counters never reset
-              and feed the mastery scorer. */}
+          {/* Conversation-health pills (visible when strikes accumulate
+              during tutoring / clinical). L80.h tooltips. */}
           {showStrikePills && (
             <div className="pt-2 mt-2 border-t border-border space-y-1">
               <div className="text-xs text-muted/70">Conversation health</div>
               <div
-                className={`text-xs ${strikeColor(helpAbuseCount, helpAbuseThreshold)}`}
-                title={`Consecutive low-effort turns. At ${helpAbuseThreshold} the dean advances the hint level (with narrated transition). Counter resets on any genuine attempt.`}
+                className={`text-xs ${counterColor(helpAbuseCount, helpAbuseThreshold)}`}
+                title={`Consecutive low-effort turns. At ${helpAbuseThreshold}, the dean advances the hint level (with narrated transition). Counter resets on any genuine attempt.`}
               >
-                Help-abuse: {helpAbuseCount}/{helpAbuseThreshold}
+                Low-effort: {helpAbuseCount}/{helpAbuseThreshold}
               </div>
               <div
-                className={`text-xs ${strikeColor(offTopicCount, offTopicThreshold)}`}
-                title={`Consecutive off-DOMAIN turns (NOT counting in-domain tangents). At ${offTopicThreshold} the session terminates with a polite farewell. Counter resets on any engaged turn.`}
+                className={`text-xs ${counterColor(offTopicCount, offTopicThreshold)}`}
+                title={`Consecutive off-DOMAIN turns (in-domain tangents don't count). At ${offTopicThreshold}, the session ends gracefully. Counter resets on any engaged turn.`}
               >
                 Off-topic: {offTopicCount}/{offTopicThreshold}
               </div>
