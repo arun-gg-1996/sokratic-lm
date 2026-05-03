@@ -48,6 +48,35 @@ domain:
   assessment_dimension: "clinical application"
   assessment_dimension_examples: "exam findings, function, or intervention planning"
 
+  # ─── L78 / L9 / L77 / L74 / L19 — per-domain config slots ────────────────
+  # Curated abbreviation list (per L9 — input to topic_mapper_llm).
+  # Format: see data/curated_abbrevs_ot.json for schema.
+  curated_abbrevs_path: "data/curated_abbrevs_ot.json"
+
+  # VLM (image upload) configuration — per L77 / L78. When enabled=true the
+  # frontend shows the upload affordance and the backend accepts image input
+  # routed through Sonnet vision. When false the upload UI is hidden and the
+  # backend rejects image uploads (defense in depth).
+  vlm:
+    enabled: true
+    prompt_template: |
+      Identify all anatomical structures visible in this image. For each
+      structure: name it precisely, give its location, and a confidence
+      score 0-1. If the image is a diagram or labeled figure, transcribe
+      visible labels verbatim. Output structured JSON.
+    image_types: [x-ray, diagram, histology, gross_anatomy, model, other]
+    per_structure_confidence_threshold: 0.7
+    top_level_confidence_threshold: 0.7
+
+  # Clinical scenario framing (per L74 / L78). Dean's clinical-scenario
+  # generation prompt receives this string so the same pipeline produces
+  # domain-appropriate scenarios.
+  clinical_scenario_style: "patient case with symptoms, examination findings, and a clinical question"
+
+  # Display-label rewrite tone (per L19 / L78). The display_label batch
+  # prompt uses this for domain-aware phrasing.
+  display_label_style: "concise student-friendly anatomical phrasing"
+
 # Topic-index (TOC-grounded topic menu) configuration.
 # Mechanism: scripts/build_topic_index.py walks textbook_structure.json,
 # drops junk nodes matching any pattern below, and enriches remaining nodes

@@ -200,6 +200,37 @@ paths:
   simulations: "data/simulations"
   artifacts: "data/artifacts"
 
+  # ─── Per-domain artifact paths (per L78) ─────────────────────────────────
+  # Naming convention: {kind}_{retrieval_domain}. Code that needs a
+  # domain-specific path resolves via cfg.paths[f"{kind}_{cfg.domain.retrieval_domain}"].
+  # Today's chunks_openstax_anatomy.jsonl is the post-2026-04-28 v1 corpus
+  # (chunks-only, no propositions). The legacy chunks_ot path above is kept
+  # for back-compat with any code still pointing at the pre-rebuild file.
+
+  # Chunks (post-rebuild)
+  chunks_openstax_anatomy: "data/processed/chunks_openstax_anatomy.jsonl"
+  bm25_openstax_anatomy: "data/indexes/bm25_chunks_openstax_anatomy.pkl"
+
+  # Topic index (per L9 + L19)
+  topic_index_openstax_anatomy: "data/topic_index.json"
+  topic_index_physics: "data/topic_index_physics.json"
+
+  # Textbook structure (per-domain — currently single shared file for ot;
+  # physics will get its own when the corpus is built)
+  textbook_structure_openstax_anatomy: "data/textbook_structure.json"
+  textbook_structure_physics: "data/textbook_structure_physics.json"
+
+  # Raptor subsection summaries (per L38)
+  raptor_subsection_summaries_openstax_anatomy: "data/artifacts/raptor_subsection_summaries.jsonl"
+  raptor_subsection_summaries_physics: "data/artifacts/raptor_subsection_summaries_physics.jsonl"
+
+  # Curated abbreviations (per L9)
+  curated_abbrevs_openstax_anatomy: "data/curated_abbrevs_ot.json"
+  curated_abbrevs_physics: "data/curated_abbrevs_physics.json"
+
+  # LLM-synthesized subsection audit log (per L76)
+  llm_synthesized_subsections_dir: "data/artifacts/llm_synthesized_subsections"
+
 qdrant:
   vector_size: 3072
   distance: "Cosine"

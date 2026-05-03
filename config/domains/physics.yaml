@@ -40,3 +40,19 @@ domain:
   # Drives post-answer assessment framing
   assessment_dimension: "real-world application"
   assessment_dimension_examples: "problem-solving, physical phenomena, or engineering context"
+
+  # ─── L78 / L9 / L77 / L74 / L19 — per-domain config slots ────────────────
+  # Curated abbreviation list (per L9). Physics seed list — extend as needed.
+  curated_abbrevs_path: "data/curated_abbrevs_physics.json"
+
+  # VLM (image upload) — DISABLED for physics (per user, 2026-05-02).
+  # Frontend hides the upload button; backend rejects image upload requests.
+  vlm:
+    enabled: false
+
+  # Clinical scenario framing (per L74 / L78). Physics gets engineering /
+  # apparatus framing rather than patient-case framing.
+  clinical_scenario_style: "engineering problem, lab apparatus, or measurement scenario with a quantitative question"
+
+  # Display-label rewrite tone (per L19 / L78).
+  display_label_style: "concise student-friendly physics phrasing"

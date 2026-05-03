@@ -18,6 +18,20 @@ env/
 .env.*
 !.env.example
 
+# Cloud-provider credential exports (never commit)
+*accessKeys*.csv
+*credentials*.csv
+*_aws_keys*.csv
+
+# Local rollback backups (created by data-prep scripts before destructive writes)
+*.bak
+*.pre_*.bak
+
+# Data-prep run logs (regenerable; useful locally but not history-worthy)
+data/artifacts/l76_run_*.log
+data/artifacts/l19_l38_run*.log
+data/artifacts/reindex*.log
+
 # Data — raw PDFs and large processed files (too big for git)
 data/raw/
 data/processed/
