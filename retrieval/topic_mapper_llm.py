@@ -433,11 +433,18 @@ def map_topic(
     domain_short: Optional[str] = None,
     max_tokens: int = 1200,
     temperature: float = 0.0,
+    use_compact_toc: bool = False,
 ) -> TopicMapperResult:
     """Single Haiku call → TopicMapperResult.
 
     All `*_path` and `domain_*` args default to the active domain's config
     (per L78), so production callers just pass `client + model + query`.
+
+    `use_compact_toc=True` swaps the full TOC (paths + display_label +
+    raptor summary, ~25K tokens) for the compact variant (paths +
+    display_label only, ~5-6K tokens) per
+    docs/AUDIT_PROMPT_OPTIMIZATION.md Step 2. Default False until the
+    A/B test confirms accuracy parity.
     """
     if topic_index_path is None or raptor_summaries_path is None or curated_abbrevs_path is None:
         ti, rs, ca = _resolve_paths_from_cfg()
@@ -450,7 +457,10 @@ def map_topic(
         domain_name = domain_name or _cfg.domain.name
         domain_short = domain_short or _cfg.domain.short
 
-    toc_block = build_toc_block(topic_index_path, raptor_summaries_path)
+    if use_compact_toc:
+        toc_block = build_toc_block_compact(topic_index_path)
+    else:
+        toc_block = build_toc_block(topic_index_path, raptor_summaries_path)
     abbrevs_block = build_abbreviations_block(curated_abbrevs_path)
     # Multi-block content marks the heavy TOC + abbreviations block as
     # ephemeral-cached so Bedrock's prompt cache hits on every call after

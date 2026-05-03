@@ -100,9 +100,9 @@ def run_legacy(query: str) -> dict:
     }
 
 
-def run_l9(query: str, *, client, model) -> dict:
+def run_l9(query: str, *, client, model, use_compact_toc: bool = False) -> dict:
     t0 = time.time()
-    r = map_topic(query, client=client, model=model)
+    r = map_topic(query, client=client, model=model, use_compact_toc=use_compact_toc)
     elapsed_ms = int((time.time() - t0) * 1000)
     top = r.best_match()
     return {
@@ -148,6 +148,11 @@ def main():
                     help="Optional: file with one query per line (overrides default fixture).")
     ap.add_argument("--save", type=Path, default=None,
                     help="Save full JSON report to this path.")
+    ap.add_argument("--variant", choices=["full", "compact", "ab"], default="full",
+                    help="Which TOC variant to feed L9: full (default, ~25K tokens) | "
+                         "compact (paths+labels only, ~5-6K tokens per "
+                         "AUDIT_PROMPT_OPTIMIZATION step 1) | ab (run BOTH per query "
+                         "and compare agreement).")
     args = ap.parse_args()
 
     queries = (
@@ -159,20 +164,41 @@ def main():
     clear_caches()
     client = make_anthropic_client()
     model = resolve_model("claude-haiku-4-5-20251001")
-    print(f"Comparing {len(queries)} queries against legacy + L9 (model={model})\n", flush=True)
+    print(f"Comparing {len(queries)} queries against legacy + L9 "
+          f"(model={model}, variant={args.variant})\n", flush=True)
 
     rows: list[dict] = []
     for q in queries:
         legacy = run_legacy(q)
-        l9 = run_l9(q, client=client, model=model)
+        if args.variant == "ab":
+            # AUDIT_PROMPT_OPTIMIZATION step 2: A/B compact vs full per query.
+            l9 = run_l9(q, client=client, model=model, use_compact_toc=False)
+            l9_compact = run_l9(q, client=client, model=model, use_compact_toc=True)
+            ab_agreement = (
+                "ab_same_path" if l9["top_path"] == l9_compact["top_path"]
+                else "ab_different_paths"
+            )
+        else:
+            l9 = run_l9(q, client=client, model=model,
+                        use_compact_toc=(args.variant == "compact"))
+            l9_compact = None
+            ab_agreement = None
         agreement = classify_agreement(legacy, l9)
-        rows.append({"query": q, "legacy": legacy, "l9": l9, "agreement": agreement})
+        row = {"query": q, "legacy": legacy, "l9": l9, "agreement": agreement}
+        if l9_compact is not None:
+            row["l9_compact"] = l9_compact
+            row["ab_agreement"] = ab_agreement
+        rows.append(row)
         print(f"{q!r}", flush=True)
-        print(f"  legacy:  tier={legacy.get('tier','?')} score={legacy.get('top_score',0):.0f} "
+        print(f"  legacy:    tier={legacy.get('tier','?')} score={legacy.get('top_score',0):.0f} "
               f"path={legacy.get('top_path','(none)')[:80]!r}", flush=True)
-        print(f"  L9:      {l9.get('verdict','?'):>10s} conf={l9.get('confidence',0):.2f} "
+        print(f"  L9 full:   {l9.get('verdict','?'):>10s} conf={l9.get('confidence',0):.2f} "
               f"route={l9.get('route','?'):<25s} path={l9.get('top_path','(none)')[:80]!r}", flush=True)
-        print(f"  AGREEMENT: {agreement}", flush=True)
+        if l9_compact is not None:
+            print(f"  L9 compact: {l9_compact.get('verdict','?'):>9s} conf={l9_compact.get('confidence',0):.2f} "
+                  f"route={l9_compact.get('route','?'):<25s} path={l9_compact.get('top_path','(none)')[:80]!r}", flush=True)
+            print(f"  AB AGREE: {ab_agreement}", flush=True)
+        print(f"  AGREEMENT (L9 full vs legacy): {agreement}", flush=True)
         print(flush=True)
 
     # Aggregate
