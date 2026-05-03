@@ -653,6 +653,7 @@ def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
     # update (logged in turn_trace) — degrades visibly rather than
     # silently substituting a worse signal.
     mastery_status = "skipped"
+    judgment: dict | None = None  # captured for SQLite dual-write below
     if student_id:
         try:
             from memory.mastery_store import MasteryStore, score_session_llm
@@ -705,6 +706,16 @@ def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
     state["debug"]["turn_trace"].append({
         "wrapper": "mastery_store.update",
         "result": mastery_status,
+    })
+
+    # L21 + L1/L2/L3: dual-write the session-end row + subsection_mastery
+    # into the per-domain SQLite store. This populates the new data layer
+    # alongside the legacy JSON MasteryStore. Reads switch to SQLite in
+    # the next commit (track 1.9). Best-effort — never blocks return.
+    sqlite_status = _persist_session_end_to_sqlite(state, judgment)
+    state["debug"]["turn_trace"].append({
+        "wrapper": "sqlite_store.session_end",
+        "result": sqlite_status,
     })
 
     return {
@@ -962,3 +973,98 @@ def _upsert_weak_topic(weak_topics: list[dict], topic_name: str, difficulty: str
         "failure_count": int(max(bump, 1)),
     })
     return out
+
+def _persist_session_end_to_sqlite(
+    state: TutorState,
+    judgment: dict | None,
+) -> str:
+    """Update the L21 SQLite session row + upsert subsection_mastery (per L1, L2, L3).
+
+    Coexists with the legacy MasteryStore JSON write — dual-write phase. The
+    next commit (track 1.9) flips reads to SQLite and drops the JSON path.
+
+    Returns a short status string for turn_trace.
+    """
+    thread_id = state.get("thread_id") or ""
+    student_id = state.get("student_id") or ""
+    if not thread_id or not student_id:
+        return "skipped_no_thread_or_student"
+
+    try:
+        from memory.sqlite_store import (
+            SQLiteStore,
+            normalize_subsection_path,
+            score_to_tier,
+        )
+    except Exception as e:
+        return f"sqlite_import_error: {type(e).__name__}: {str(e)[:80]}"
+
+    # --- Resolve final session metadata from state ---
+    locked = state.get("locked_topic") or {}
+    if not locked:
+        locked = (state.get("debug") or {}).get("locked_topic_snapshot") or {}
+    legacy_path = str(locked.get("path") or "")
+    canonical_path = normalize_subsection_path(legacy_path) if legacy_path else ""
+    locked_question = state.get("locked_question") or None
+    locked_answer = state.get("locked_answer") or None
+    full_answer = state.get("full_answer") or None
+
+    # Determine status (per L21 enum). Heuristics — L43-L62 tutor refactor
+    # will tighten these with explicit termination signals.
+    reach = state.get("student_reached_answer")
+    turn_count = len([m for m in (state.get("messages") or []) if m.get("role") == "student"])
+    if not canonical_path:
+        status = "abandoned_no_lock"
+    elif reach is True:
+        status = "completed"
+    elif state.get("session_ended_off_domain"):
+        status = "ended_off_domain"
+    elif state.get("session_ended_by_student"):
+        status = "ended_by_student"
+    elif turn_count >= 25:
+        status = "ended_turn_limit"
+    else:
+        status = "completed"
+
+    # Mastery tier projection from the LLM judgment (if scoring ran).
+    score = float(judgment["mastery"]) if judgment and "mastery" in judgment else None
+    tier = score_to_tier(score) if score is not None else "not_assessed"
+
+    # --- Write the session row + upsert subsection_mastery ---
+    try:
+        store = SQLiteStore()
+        store.update_session(
+            thread_id,
+            ended_at=None and None,  # sentinel: end_session sets ended_at via utc_now
+        )
+        # Use end_session as one atomic UPDATE that sets all final fields.
+        store.end_session(
+            thread_id,
+            status=status,
+            locked_topic_path=canonical_path or None,
+            locked_subsection_path=canonical_path or None,
+            locked_question=locked_question,
+            locked_answer=locked_answer,
+            full_answer=full_answer,
+            reach_status=bool(reach) if reach is not None else None,
+            mastery_tier=tier,
+            core_mastery_tier=tier,
+            clinical_mastery_tier="not_assessed",
+            core_score=score,
+            clinical_score=None,
+            hint_level_final=int(state.get("hint_level") or 0),
+            turn_count=turn_count,
+        )
+        if canonical_path and score is not None:
+            outcome = "reached" if reach else (
+                "partial" if (state.get("student_reach_coverage") or 0.0) > 0 else "not_reached"
+            )
+            store.upsert_subsection_mastery(
+                student_id,
+                canonical_path,
+                fresh_score=score,
+                outcome=outcome,
+            )
+        return f"sqlite_session_end ok status={status} score={score} path_set={bool(canonical_path)}"
+    except Exception as e:
+        return f"sqlite_write_error: {type(e).__name__}: {str(e)[:120]}"

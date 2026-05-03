@@ -535,3 +535,49 @@ def test_omit_kwarg_skips_column(store):
     row = store.get_session("t1")
     assert row["locked_topic_path"] == "X"  # still there
     assert row["turn_count"] == 11
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Path normalization (legacy "Ch20|Section|Subsection" → canonical L4 form)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_normalize_subsection_path_canonical_passthrough():
+    from memory.sqlite_store import normalize_subsection_path
+    p = "The Cardiovascular System: Blood Vessels and Circulation > Sec > Sub"
+    assert normalize_subsection_path(p) == p
+
+
+def test_normalize_subsection_path_legacy_to_canonical():
+    from memory.sqlite_store import normalize_subsection_path
+    lookup = {20: "The Cardiovascular System: Blood Vessels and Circulation"}
+    out = normalize_subsection_path("Ch20|Capillary Exchange|Bulk Flow", lookup)
+    assert out == "The Cardiovascular System: Blood Vessels and Circulation > Capillary Exchange > Bulk Flow"
+
+
+def test_normalize_subsection_path_unknown_chapter_passes_through():
+    from memory.sqlite_store import normalize_subsection_path
+    p = "Ch99|Section|Subsection"
+    assert normalize_subsection_path(p, {}) == p
+
+
+def test_normalize_subsection_path_garbage_passes_through():
+    from memory.sqlite_store import normalize_subsection_path
+    assert normalize_subsection_path("not_a_path") == "not_a_path"
+    assert normalize_subsection_path("") == ""
+
+
+def test_load_chapter_title_lookup_from_real_structure(tmp_path):
+    """Smoke test against a tiny structure dict written to a temp file."""
+    from memory.sqlite_store import load_chapter_title_lookup
+    p = tmp_path / "structure.json"
+    p.write_text(json.dumps({
+        "Chapter 1: Foo": {"sections": {}},
+        "Chapter 20: The Cardiovascular System: Blood Vessels and Circulation": {"sections": {}},
+        "garbage_key": {},
+        "Chapter NaN: Bad": {},
+    }))
+    out = load_chapter_title_lookup(p)
+    assert out == {
+        1: "Foo",
+        20: "The Cardiovascular System: Blood Vessels and Circulation",
+    }

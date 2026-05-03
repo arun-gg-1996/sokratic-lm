@@ -176,10 +176,25 @@ async def start_session(req: StartSessionRequest):
         )
 
     thread_id = f"{sid}_{uuid.uuid4().hex[:8]}"
+    # L21: insert session row at session start (status='in_progress',
+    # ended_at=NULL). Best-effort — never block session creation on a
+    # SQLite failure. The row gets UPDATEd at session end by
+    # memory_update_node with the final status + mastery breakdown.
+    try:
+        from memory.sqlite_store import SQLiteStore
+        SQLiteStore().start_session(thread_id, sid)
+    except Exception:
+        pass
+
     graph = get_graph()
     runtime = get_runtime_store()
 
     state = initial_state(sid, cfg)
+    # Stash thread_id on state so downstream nodes (memory_update_node)
+    # can update the L21 SQLite session row at end without needing the
+    # LangGraph RunnableConfig threaded through.
+    state["thread_id"] = thread_id
+
     # Apply per-session memory toggle from the request. Default True is set
     # by initial_state; we only override when the client passes False so
     # demo mode can show fresh-student behavior on demand.

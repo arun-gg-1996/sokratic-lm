@@ -708,3 +708,73 @@ class SQLiteStore:
             )
 
         return {"chapters": out_chapters}
+
+def normalize_subsection_path(
+    path: str,
+    chapter_lookup: Optional[dict[int, str]] = None,
+) -> str:
+    """Convert a runtime path string to the canonical L4 format.
+
+    Accepts both legacy (`Ch20|Section|Subsection`) and canonical
+    (`<full chapter title> > Section > Subsection`) input. Returns
+    canonical form. Idempotent on already-canonical input.
+
+    For legacy input the chapter shorthand is resolved via
+    `chapter_lookup` (build via `load_chapter_title_lookup()` once per
+    process). Returns the input unchanged if the chapter number can't
+    be resolved — caller decides how to handle.
+    """
+    if " > " in path and "|" not in path:
+        return path  # already canonical
+    if "|" not in path:
+        return path  # unrecognized shape; pass through
+
+    parts = path.split("|", 2)
+    if len(parts) != 3:
+        return path
+    head, section, subsection = parts
+    if not (head.startswith("Ch") and head[2:].isdigit()):
+        return path
+    ch_num = int(head[2:])
+
+    if chapter_lookup is None:
+        chapter_lookup = load_chapter_title_lookup()
+    full_title = chapter_lookup.get(ch_num)
+    if not full_title:
+        return path
+    return f"{full_title} > {section} > {subsection}"
+
+
+_CHAPTER_LOOKUP_CACHE: Optional[dict[int, str]] = None
+
+
+def load_chapter_title_lookup(structure_path: Optional[Path] = None) -> dict[int, str]:
+    """Return {chapter_num: full_chapter_title}, cached at module level.
+
+    Reads textbook_structure.json once per process. Pass an explicit
+    `structure_path` for tests / per-domain swaps.
+    """
+    global _CHAPTER_LOOKUP_CACHE
+    if structure_path is None and _CHAPTER_LOOKUP_CACHE is not None:
+        return _CHAPTER_LOOKUP_CACHE
+    p = structure_path or (REPO / "data" / "textbook_structure.json")
+    if not p.exists():
+        return {}
+    try:
+        structure = json.loads(p.read_text())
+    except (OSError, json.JSONDecodeError):
+        return {}
+    out: dict[int, str] = {}
+    for key in (structure or {}).keys():
+        # "Chapter 20: The Cardiovascular System: Blood Vessels and Circulation"
+        if not key.startswith("Chapter "):
+            continue
+        try:
+            after = key[len("Chapter "):]
+            num_str, title = after.split(":", 1)
+            out[int(num_str.strip())] = title.strip()
+        except (ValueError, IndexError):
+            continue
+    if structure_path is None:
+        _CHAPTER_LOOKUP_CACHE = out
+    return out
