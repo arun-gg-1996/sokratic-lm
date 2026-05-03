@@ -19,6 +19,12 @@ import { useWebSocket } from "./useWebSocket";
 //   first student message and the dean resolves topic the usual
 //   way — historically prone to mis-locking on short queries.
 const REVISIT_TOPIC_PATH = "sokratic_revisit_topic_path";
+// L77 — image-initiated session. /api/vlm/upload result stashed here
+// before the bootstrap fires; useSession reads + clears it then passes
+// the VLM JSON to startSession, which seeds state.image_context AND
+// auto-routes the description through the v2 topic mapper for an
+// image-driven first turn.
+const IMAGE_CONTEXT_KEY = "sokratic_pending_image_context";
 const REVISIT_KEY = "sokratic_revisit_topic";
 
 export function useSession() {
@@ -66,9 +72,29 @@ export function useSession() {
     } catch {
       prelockedPath = null;
     }
+    // L77 — pending image context from a prior /api/vlm/upload call.
+    // Same pattern as the prelocked-topic path: read, clear, then pass
+    // through. Cleared on read so a subsequent fresh-chat doesn't
+    // inherit a stale upload.
+    let imageContext: Record<string, unknown> | null = null;
+    try {
+      const raw = localStorage.getItem(IMAGE_CONTEXT_KEY);
+      if (raw) {
+        localStorage.removeItem(IMAGE_CONTEXT_KEY);
+        try {
+          imageContext = JSON.parse(raw);
+        } catch {
+          imageContext = null;
+        }
+      }
+    } catch {
+      imageContext = null;
+    }
     const bootstrap = (async () => {
       try {
-        const session = await startSession(studentId, memoryEnabled, prelockedPath);
+        const session = await startSession(
+          studentId, memoryEnabled, prelockedPath, imageContext,
+        );
         // Ignore stale bootstrap responses (prevents duplicate greetings/threads).
         if (bootstrapSeqRef.current !== seq) return;
         if (useSessionStore.getState().threadId) return;

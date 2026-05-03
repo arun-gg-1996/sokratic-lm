@@ -224,6 +224,35 @@ async def start_session(req: StartSessionRequest):
             state["locked_question"] = ""
             state["locked_answer"] = ""
 
+    # L77 — image-initiated session. The client uploaded an image first
+    # via /api/vlm/upload and is now starting a session with the VLM
+    # JSON attached. We stash it on state so v2 nodes (Dean, Teacher)
+    # can ground responses in identified structures + the description,
+    # and we synthesize a kickoff student message from best_topic_guess
+    # / description so the v2 topic mapper resolves to the right TOC
+    # node on the first student turn — no extra typing required.
+    if req.image_context and isinstance(req.image_context, dict):
+        state["image_context"] = req.image_context
+        state["is_multimodal"] = True
+        structures = req.image_context.get("identified_structures") or []
+        if isinstance(structures, list):
+            state["image_structures"] = [
+                str(s.get("name", "") or "")
+                for s in structures
+                if isinstance(s, dict) and s.get("name")
+            ]
+        # Seed an initial student message so the v2 topic-mapper can
+        # immediately resolve to the right subsection. Prefer the
+        # `best_topic_guess` (short, mapper-friendly) and fall back to
+        # the description if the guess is empty.
+        best = str(req.image_context.get("best_topic_guess") or "").strip()
+        desc = str(req.image_context.get("description") or "").strip()
+        kickoff = best or desc
+        if kickoff:
+            messages = list(state.get("messages") or [])
+            messages.append({"role": "student", "content": kickoff})
+            state["messages"] = messages
+
     config = {"configurable": {"thread_id": thread_id}}
     state = graph.invoke(state, config=config)
     state.setdefault("debug", {}).setdefault("all_turn_traces", [])

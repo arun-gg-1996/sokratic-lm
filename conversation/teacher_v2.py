@@ -213,6 +213,18 @@ CONVERSATION HISTORY (most recent last):
 {history}
 """
 
+# L77 — image-driven session. Surfaced into socratic/clinical mode
+# prompts when TurnPlan.image_context is populated. Lets Teacher
+# scaffold around what's actually visible in the student's image
+# instead of generic textbook-recall questions.
+_PROMPT_IMAGE_BLOCK = """\
+
+IMAGE CONTEXT (student uploaded an image — ground identification questions in what's visible):
+  Description: {description}
+  Identified structures: {structures}
+  Image type: {image_type}
+"""
+
 _PROMPT_FOOTER = """\
 
 Output ONLY the message you want to send to the student. No preamble,
@@ -312,6 +324,21 @@ def build_teacher_prompt(turn_plan: TurnPlan, inputs: TeacherPromptInputs) -> st
     if turn_plan.mode in _MODES_USING_HISTORY and inputs.history:
         parts.append(_PROMPT_HISTORY_BLOCK.format(
             history=_format_history(inputs.history),
+        ))
+    # L77 — surface image context when present and the mode is one that
+    # benefits from grounding in visual structures (socratic + clinical).
+    if (turn_plan.image_context
+            and turn_plan.mode in {"socratic", "clinical"}):
+        ic = turn_plan.image_context
+        structs = ic.get("identified_structures") or []
+        struct_names = ", ".join(
+            str((s or {}).get("name", "")) for s in structs[:8]
+            if isinstance(s, dict) and s.get("name")
+        ) or "(none identified)"
+        parts.append(_PROMPT_IMAGE_BLOCK.format(
+            description=str(ic.get("description") or "(no description)"),
+            structures=struct_names,
+            image_type=str(ic.get("image_type") or "other"),
         ))
 
     parts.append(_PROMPT_FOOTER)

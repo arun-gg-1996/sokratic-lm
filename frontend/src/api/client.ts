@@ -23,7 +23,8 @@ export async function listUsers(): Promise<User[]> {
 export async function startSession(
   studentId: string,
   memoryEnabled: boolean = true,
-  prelockedTopic: string | null = null
+  prelockedTopic: string | null = null,
+  imageContext: Record<string, unknown> | null = null,
 ): Promise<SessionStartResponse> {
   // D.6b-5: send the user's local hour so rapport's "Good morning/
   // afternoon/evening" comes from their clock, not the server's tz.
@@ -33,18 +34,59 @@ export async function startSession(
   // by the /mastery page's Revisit buttons (where we already know
   // exactly which subsection the user wants). Falls back to normal
   // free-text flow when null.
+  // L77 imageContext: when set, the backend stashes it on
+  // state.image_context AND seeds best_topic_guess/description as the
+  // first student message so the v2 topic mapper resolves to the
+  // right TOC node automatically.
   const body: Record<string, unknown> = {
     student_id: studentId,
     memory_enabled: memoryEnabled,
     client_hour: clientHour,
   };
   if (prelockedTopic) body.prelocked_topic = prelockedTopic;
+  if (imageContext) body.image_context = imageContext;
   const res = await fetch(`${API_BASE}/api/session/start`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error("Failed to start session");
+  return res.json();
+}
+
+export interface VlmUploadResponse {
+  thread_id: string;
+  image_id: string;
+  image_path: string;
+  identified_structures: Array<{
+    name: string;
+    location: string;
+    confidence: number;
+  }>;
+  image_type: string;
+  description: string;
+  best_topic_guess: string;
+  confidence: number;
+  route_decision: "lock_immediately" | "show_top_matches" | "refuse";
+  elapsed_ms: number;
+  error: string;
+}
+
+export async function uploadVlmImage(
+  threadId: string,
+  file: File,
+): Promise<VlmUploadResponse> {
+  const form = new FormData();
+  form.append("thread_id", threadId);
+  form.append("file", file);
+  const res = await fetch(`${API_BASE}/api/vlm/upload`, {
+    method: "POST",
+    body: form,
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`VLM upload failed (${res.status}): ${detail.slice(0, 160)}`);
+  }
   return res.json();
 }
 

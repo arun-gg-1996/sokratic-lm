@@ -31,6 +31,14 @@ class StartSessionRequest(BaseModel):
     # dean._lock_anchors_call so the anchor question is ready before
     # the first student message.
     prelocked_topic: str | None = None
+    # L77 — VLM JSON from a prior /api/vlm/upload call. When present,
+    # the backend stashes it on state["image_context"] AND uses
+    # `description` as the first student message (auto-routed through
+    # the v2 topic mapper) so the session opens with image-driven
+    # topic resolution. Schema mirrors vlm/extract.py output:
+    #   {identified_structures: [...], image_type, description,
+    #    best_topic_guess, confidence}
+    image_context: dict | None = None
 
 
 class StartSessionResponse(BaseModel):

@@ -25,7 +25,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv(Path(__file__).parent.parent / ".env", override=True)
 
-from backend.api import chat, mastery, memory, session, users
+from backend.api import chat, mastery, memory, session, users, vlm
 from backend.dependencies import get_graph, get_memory_manager, get_retriever
 
 
@@ -58,6 +58,8 @@ app.include_router(users.router, prefix="/api")
 app.include_router(session.router, prefix="/api")
 app.include_router(memory.router, prefix="/api")
 app.include_router(mastery.router, prefix="/api")
+# L77 — VLM upload endpoint (gated by cfg.domain.vlm.enabled).
+app.include_router(vlm.router)
 app.include_router(chat.router)
 
 

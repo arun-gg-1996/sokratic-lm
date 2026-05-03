@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useSessionStore } from "../../stores/sessionStore";
 import { useTTS } from "../../hooks/useTTS";
 import { ActivityFeed } from "./ActivityFeed";
+import { ImageUploadCard } from "./ImageUploadCard";
 import { MessageBubble } from "./MessageBubble";
 import { ThinkingIndicator } from "./ThinkingIndicator";
 
@@ -40,6 +41,14 @@ export function MessageList() {
   // can fade out (we hide it once streaming has any content).
   const showActivity =
     isWaiting && activityLog.length > 0 && streaming.length === 0;
+  // L77 — image upload affordance. Only shown on a fresh chat
+  // (rapport phase: at most the rapport opener has been rendered, no
+  // student messages yet). Hidden as soon as the student types or
+  // picks a topic card.
+  const showImageUpload = (
+    !isWaiting
+    && messages.filter((m) => m.role === "student").length === 0
+  );
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -47,6 +56,7 @@ export function MessageList() {
         {messages.map((m) => (
           <MessageBubble key={m.id} message={m} />
         ))}
+        {showImageUpload && <ImageUploadCard />}
         {showActivity && <ActivityFeed labels={activityLog} mode="live" />}
         {streaming && (
           <div className="rounded-card bg-panel border border-border px-4 py-3">

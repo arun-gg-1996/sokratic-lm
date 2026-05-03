@@ -396,10 +396,20 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
             if len(prior_qs) >= 2:
                 break
 
+    # L77 — propagate session-level image_context onto the TurnPlan so
+    # Teacher's prompt builder can ground in identified structures. Dean
+    # may have populated it itself (when re-planning); we set it from
+    # state when Dean left it None so image-initiated sessions don't
+    # lose the image context across turns.
+    final_plan = plan_result.turn_plan
+    session_image_context = state.get("image_context")
+    if session_image_context and not final_plan.image_context:
+        final_plan.image_context = session_image_context
+
     turn_result = run_turn(
         teacher=teacher_v2,
         dean=dean_v2,
-        turn_plan=plan_result.turn_plan,
+        turn_plan=final_plan,
         teacher_inputs=inputs,
         dean_state=state,
         dean_chunks=chunks,
