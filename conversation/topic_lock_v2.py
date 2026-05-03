@@ -55,6 +55,11 @@ def run_topic_lock_v2(
     prelock_count = min(PRELOCK_CAP, prior_count + 1)
     pending = state.get("pending_user_choice") or {}
 
+    # NOTE: nodes_v2.dean_node_v2 already fires "Reading your message"
+    # before delegating here, so do NOT fire it again — that produced
+    # a visible duplicate row in the activity feed.
+    from conversation.teacher import fire_activity
+
     trace.append({
         "wrapper": "topic_lock_v2.entry",
         "prelock_loop_count": prelock_count,
@@ -111,8 +116,10 @@ def run_topic_lock_v2(
         # Non-selection text falls through to the L9 mapper.
 
     if prelock_count >= PRELOCK_CAP:
+        fire_activity("Showing a guided picker")
         return _render_guided_pick(state, messages, retriever, latest_student, prelock_count)
 
+    fire_activity("Resolving topic to the textbook")
     result = _map_topic(latest_student, trace)
     decision = result.route_decision()
     trace.append({
@@ -188,6 +195,9 @@ def _lock_topic(
     source: str,
 ) -> dict:
     """Lock a chosen TOC topic, run retrieval + coverage + anchors, then ack."""
+    from conversation.teacher import fire_activity
+    fire_activity(f"Topic locked: {selected_label}")
+
     if source in {"topic_card", "guided_pick", "confirm_topic"}:
         messages = _replace_latest_student_message(messages, selected_label)
 
@@ -215,6 +225,7 @@ def _lock_topic(
         "prelock_loop_count": prelock_count,
     })
 
+    fire_activity("Loading textbook context")
     try:
         dean._retrieve_on_topic_lock(state)
     except Exception as e:
@@ -230,6 +241,7 @@ def _lock_topic(
             gate=gate, prelock_count=prelock_count,
         )
 
+    fire_activity("Setting up the anchor question")
     try:
         anchors = dean._lock_anchors_call(state)
     except Exception as e:

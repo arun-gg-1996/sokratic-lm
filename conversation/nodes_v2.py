@@ -132,6 +132,11 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
     debug_trace = state["debug"]["turn_trace"]
     t0 = time.time()
 
+    # Live activity feed — first signal to the UI that we received the
+    # message and are starting work. Mirrors v1 dean.py:fire_activity.
+    from conversation.teacher import fire_activity
+    fire_activity("Reading your message")
+
     # If topic isn't locked yet, Track 4.7d owns the v2 pre-lock path:
     # L9 topic_mapper_llm, L10 confirm-and-lock, L11 prelock counter,
     # and L22 guided-pick at cap 7.
@@ -197,6 +202,7 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         })
 
     # ── 1. Pre-flight Haiku layer ────────────────────────────────────────
+    fire_activity("Checking message intent")
     preflight = run_preflight(state, latest_student, locked_topic=locked)
     debug_trace.append({
         "wrapper": "preflight",
@@ -243,6 +249,12 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
             domain_short=getattr(_cfg.domain, "short", "subject"),
             student_descriptor=getattr(_cfg.domain, "student_descriptor", "student"),
         )
+        fire_activity({
+            "redirect": "Redirecting back to the topic",
+            "nudge": "Nudging back on topic",
+            "confirm_end": "Confirming session end",
+            "honest_close": "Closing the session",
+        }.get(preflight.suggested_mode, "Drafting response"))
         draft = teacher_v2.draft(plan, inputs)
         debug_trace.append({
             "wrapper": "teacher_v2.draft",
@@ -306,6 +318,7 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
     from config import cfg as _cfg
 
     # Fetch chunks for this turn — reuse existing retriever
+    fire_activity("Searching textbook for context")
     try:
         chunks = retriever.retrieve(latest_student) if retriever else []
     except Exception as e:
@@ -357,6 +370,7 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
 
     # Plan the turn — Track 4.7f mem0 carryover + L78 domain-aware
     # clinical scenario style passed through to Dean's prompt.
+    fire_activity("Planning the next question")
     plan_result = dean_v2.plan(
         state, chunks,
         carryover_notes=carryover_combined,
@@ -406,6 +420,7 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
     if session_image_context and not final_plan.image_context:
         final_plan.image_context = session_image_context
 
+    fire_activity("Drafting tutoring question")
     turn_result = run_turn(
         teacher=teacher_v2,
         dean=dean_v2,
@@ -435,6 +450,8 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
             for a in turn_result.attempts
         ],
     })
+
+    fire_activity("Reviewing draft for accuracy")
 
     # Append the final text to messages
     msgs = list(state.get("messages", []))

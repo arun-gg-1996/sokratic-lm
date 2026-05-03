@@ -32,16 +32,18 @@ from typing import Any, Literal, Optional
 # Locked enum values per L46 (Codex round-2 fix #3)
 # ─────────────────────────────────────────────────────────────────────────────
 
-# `mode` selects which Teacher prompt path to render — one of these 8.
+# `mode` selects which Teacher prompt path to render.
 MODES = {
-    "socratic",       # standard tutoring turn (Q + chunk-grounded scaffolding)
-    "clinical",       # clinical-phase turn (uses cfg.domain.clinical_scenario_style)
-    "rapport",        # opening greeting (rapport_node only)
-    "opt_in",         # clinical opt-in prompt (yes/no after core answer reached)
-    "redirect",       # pre-flight redirect (off-domain / help-abuse / deflection)
-    "nudge",          # ultra-light prompt — student needs minor poke, not a hint
-    "confirm_end",    # student requested end-of-session — confirm
-    "honest_close",   # session-end summary message after assessment phase
+    "socratic",                # standard tutoring turn (Q + chunk-grounded scaffolding)
+    "clinical",                # clinical-phase turn
+    "rapport",                 # opening greeting (rapport_node only)
+    "opt_in",                  # clinical opt-in prompt (yes/no after core answer reached)
+    "redirect",                # pre-flight redirect (off-domain / help-abuse / deflection)
+    "nudge",                   # ultra-light prompt — student needs minor poke
+    "confirm_end",             # student requested end-of-session — confirm
+    "honest_close",            # session-end after FAILURE / disengagement (B2: NOT for reach path)
+    "reach_close",             # session-end after student REACHED + declined bonus (B2 fix)
+    "clinical_natural_close",  # session-end after clinical phase hit turn cap (B2 fix)
 }
 
 # `tone` shapes phrasing — orthogonal to mode.

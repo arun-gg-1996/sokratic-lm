@@ -574,17 +574,19 @@ def _render_reach_close(
     locked_q = (state.get("locked_question") or "").strip()
     locked_a = (state.get("locked_answer") or state.get("full_answer") or "").strip()
 
-    # Use honest_close mode for the prose — but feed it the reach context
-    # via hint_text so Teacher can confirm the answer naturally.
+    # B2 fix: use the dedicated reach_close mode (was honest_close which
+    # is hardcoded for the failure path and produced "we didn't get to
+    # cover X" even when reached=True). hint_text carries the textbook
+    # answer for warm confirmation.
     confirmation_hint = (
         f"Student reached the core answer for: '{locked_q}'. "
-        f"Confirm what they got right and the textbook answer "
-        f"({locked_a or 'see textbook'}) before closing. Brief and warm."
+        f"Textbook answer: {locked_a or 'see textbook'}. "
+        f"Confirm what they got right and close warmly."
     )
     plan = TurnPlan(
         scenario="opt_in_no_reach_confirm_close",
         hint_text=confirmation_hint,
-        mode="honest_close",
+        mode="reach_close",
         tone="encouraging",
         forbidden_terms=[],
         permitted_terms=[],
@@ -748,7 +750,9 @@ def _render_clinical_close(
             "Clinical phase wrap: acknowledge the work done, no answer reveal, "
             "brief and warm. Route is memory_update next."
         ),
-        mode="honest_close",
+        # B2 fix: clinical_natural_close mode (was honest_close, which
+        # produced "didn't engage" prose despite the student engaging).
+        mode="clinical_natural_close",
         tone="neutral",
         forbidden_terms=[],
         permitted_terms=[],
@@ -848,6 +852,24 @@ def _safe_teacher_draft(
     trace: list[dict],
 ) -> str:
     """Call teacher_v2.draft() with a deterministic fallback on failure."""
+    # Live activity feed — surface the drafting + reviewing stages to the
+    # UI so the student sees what's happening while Teacher composes the
+    # turn. Mirrors v1 dean.py:fire_activity calls.
+    from conversation.teacher import fire_activity
+    _MODE_DRAFTING_LABEL = {
+        "socratic": "Drafting tutoring question",
+        "clinical": "Drafting clinical scenario",
+        "rapport": "Drafting greeting",
+        "opt_in": "Offering clinical bonus",
+        "redirect": "Redirecting back to topic",
+        "nudge": "Nudging back on topic",
+        "confirm_end": "Confirming session end",
+        "honest_close": "Closing the session",
+        "reach_close": "Wrapping up the session",
+        "clinical_natural_close": "Wrapping up the clinical phase",
+    }
+    fire_activity(_MODE_DRAFTING_LABEL.get(plan.mode, "Drafting response"))
+
     try:
         result = teacher_v2.draft(plan, inputs)
         text = (getattr(result, "text", "") or "").strip()
@@ -857,6 +879,7 @@ def _safe_teacher_draft(
                 "mode": plan.mode,
             })
             return fallback_text
+        fire_activity("Reviewing response")
         return text
     except Exception as e:
         trace.append({

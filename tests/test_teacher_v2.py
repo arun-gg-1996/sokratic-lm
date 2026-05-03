@@ -252,6 +252,47 @@ def test_honest_close_prompt_no_question():
     assert "honestly" in p
     assert "Conduction System" in p  # locked_subsection injected
     assert "No closing question" in p
+    # B2 fix: honest_close must explicitly mean "did NOT reach" so it
+    # never gets reused for the success path again
+    assert "did NOT reach" in p
+    assert "Do NOT congratulate" in p
+
+
+def test_reach_close_prompt_celebrates_reach():
+    """B2 fix: reach_close is the success-path close — must explicitly
+    NOT contain failure phrasing.
+    """
+    plan = TurnPlan(
+        scenario="reach_close_success",
+        hint_text="Student reached: clonal deletion. Confirm warmly.",
+        mode="reach_close", tone="encouraging",
+    )
+    p = build_teacher_prompt(plan, _inputs())
+    assert "SUCCESSFULLY reached" in p
+    assert "Conduction System" in p     # locked_subsection injected
+    assert "they reached it" in p       # explicit anti-B2 reminder
+    assert "No closing question" in p
+    # The mode must NOT inherit honest_close's "didn't engage" framing
+    assert "didn't fully engage" not in p
+    assert "didn't engage" not in p
+
+
+def test_clinical_natural_close_prompt_acknowledges_engagement():
+    """B2 fix: clinical_natural_close is for clinical-phase turn-cap;
+    student DID engage.
+    """
+    plan = TurnPlan(
+        scenario="clinical_phase_natural_close",
+        hint_text="Clinical wrap.",
+        mode="clinical_natural_close", tone="neutral",
+    )
+    p = build_teacher_prompt(plan, _inputs())
+    assert "engaged with the clinical" in p
+    assert "they did engage" in p
+    # The phrase 'didn't engage' only appears in the explicit anti-B2
+    # rule reminder ("Do NOT say they 'didn't engage'") — not as the
+    # top-line framing.
+    assert "Do NOT say they" in p
 
 
 def test_unknown_mode_raises():

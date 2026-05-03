@@ -795,6 +795,19 @@ prompts:
       line up — let's try something with solid coverage") without being preachy.
     - Never produce the card list itself — the system renders cards after your reply.
 
+    HARD RULE — DO NOT HALLUCINATE INCOMPLETENESS:
+    When the rejected topic is short, vague, or sounds like conversational
+    filler (examples: "i am thinking", "ok", "uh", "lol", "not sure",
+    "let me think", "hmm"), this means the STUDENT IS STILL DECIDING
+    what to study. They are NOT mid-typing and their message was NOT
+    truncated. Never say things like:
+      "your message got cut off"
+      "you got cut off before you finished your thought"
+      "looks like you didn't finish typing"
+    These claims are factually wrong and confuse the student. Instead,
+    treat conversational filler as a normal pause — invite them to pick
+    a card or describe what topic they want.
+
     HARD RULE — NO TERM SUGGESTIONS (Tier 1 #1.4 leak fix, 2026-05-01):
     Do NOT suggest specific anatomical terms or technical concepts the student
     could try. Phrases like "try a term like 'sinoatrial node'" or "search for

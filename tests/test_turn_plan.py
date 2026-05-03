@@ -31,10 +31,16 @@ from conversation.turn_plan import (
 # ─────────────────────────────────────────────────────────────────────────────
 
 def test_modes_match_l46_spec():
-    """L46 + Codex round-2 fix #3: 8 modes covering every situation."""
+    """L46 + Codex round-2 fix #3 + B2 fix:
+    8 original modes + 2 close-variant modes (reach_close,
+    clinical_natural_close) added to fix B2 false-negative closeout
+    where honest_close was being reused for paths where the student
+    actually reached the answer / engaged with the clinical bonus.
+    """
     assert MODES == {
         "socratic", "clinical", "rapport", "opt_in",
         "redirect", "nudge", "confirm_end", "honest_close",
+        "reach_close", "clinical_natural_close",
     }
 
 
