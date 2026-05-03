@@ -37,6 +37,16 @@ def build_graph(retriever, memory_manager):
     """
     Build and compile the LangGraph StateGraph.
 
+    Routes the dean_node slot to either the LEGACY implementation
+    (conversation.nodes.dean_node) or the NEW v2 stack
+    (conversation.nodes_v2.dean_node_v2) based on the SOKRATIC_USE_V2_FLOW
+    env var (Track 4.7c). Default OFF — production stays on legacy until
+    flag is flipped.
+
+    The v2 dean_node_v2 itself falls back to the legacy dean_node for
+    UNLOCKED-topic turns (per the Track 4.7b scope), so the flag only
+    materially affects locked-topic per-turn tutoring behavior.
+
     Args:
         retriever:       Retriever or MockRetriever instance
         memory_manager:  MemoryManager instance (loads/flushes mem0)
@@ -44,6 +54,8 @@ def build_graph(retriever, memory_manager):
     Returns:
         Compiled LangGraph runnable (with MemorySaver checkpointer).
     """
+    from conversation.nodes_v2 import dean_node_v2, use_v2_flow
+
     # Compatibility: real MemoryManager exposes `.persistent`, while the current
     # stubbed manager may not. Dean accepts either and currently does not depend
     # on persistence-specific methods.
@@ -54,7 +66,18 @@ def build_graph(retriever, memory_manager):
     graph = StateGraph(TutorState)
 
     graph.add_node("rapport_node", partial(rapport_node, teacher=teacher, memory_manager=memory_manager))
-    graph.add_node("dean_node", partial(dean_node, dean=dean, teacher=teacher))
+
+    # Per Track 4.7c: feature-flagged dispatch on the dean_node slot.
+    # When SOKRATIC_USE_V2_FLOW=1, dean_node_v2 owns the locked-topic
+    # path; it still defers to legacy dean_node for unlocked-topic turns.
+    if use_v2_flow():
+        graph.add_node(
+            "dean_node",
+            partial(dean_node_v2, dean=dean, teacher=teacher, retriever=retriever),
+        )
+    else:
+        graph.add_node("dean_node", partial(dean_node, dean=dean, teacher=teacher))
+
     graph.add_node("assessment_node", partial(assessment_node, dean=dean, teacher=teacher))
     graph.add_node("memory_update_node", partial(memory_update_node, dean=dean, memory_manager=memory_manager))
 
