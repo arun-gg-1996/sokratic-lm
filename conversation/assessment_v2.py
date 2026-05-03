@@ -305,7 +305,10 @@ def _enter_clinical_phase(
         # Mark state so Dean's prompt context indicates we're entering clinical.
         # DeanV2.plan() infers mode from context; the marker steers it.
         state["_clinical_scenario_request"] = True
-        plan_result = dean_v2.plan(state, chunks)
+        plan_result = dean_v2.plan(
+            state, chunks,
+            **_dean_domain_kwargs(),
+        )
     except Exception as e:
         state["debug"]["turn_trace"].append({
             "wrapper": "assessment_v2.clinical_scenario_gen_error",
@@ -439,7 +442,10 @@ def _run_clinical_turn(
         # in conversation history + state, evaluates student's response,
         # and emits next clinical TurnPlan.
         state["_clinical_continuation"] = True
-        plan_result = dean_v2.plan(state, chunks)
+        plan_result = dean_v2.plan(
+            state, chunks,
+            **_dean_domain_kwargs(),
+        )
         state.pop("_clinical_continuation", None)
         clinical_plan = getattr(plan_result, "turn_plan", None)
         if clinical_plan is None:
@@ -778,8 +784,10 @@ def _teacher_inputs(
 ) -> TeacherPromptInputs:
     """Build TeacherPromptInputs from state. Defaults sourced from
     state where possible; safe fallbacks otherwise."""
-    domain_name = "human anatomy"
-    domain_short = "anatomy"
+    # L78 — generic fallbacks so a missing cfg.domain.* slot still yields
+    # a parseable prompt; production callers always override via cfg.
+    domain_name = "this subject"
+    domain_short = "subject"
     try:
         from config import cfg as _cfg
         domain_name = getattr(_cfg.domain, "name", domain_name)
@@ -847,6 +855,24 @@ def _latest_student(messages: list[dict]) -> str:
         if (m or {}).get("role") == "student":
             return str((m or {}).get("content", "") or "")
     return ""
+
+
+def _dean_domain_kwargs() -> dict:
+    """Per L78 — pull domain-aware kwargs (name, short, clinical_scenario_style)
+    from the active cfg so Dean's prompt is rendered in domain-appropriate
+    framing. Returns generic fallbacks if cfg is missing so unit tests
+    that bypass cfg keep working."""
+    try:
+        from config import cfg as _cfg
+        return {
+            "domain_name": getattr(_cfg.domain, "name", "this subject"),
+            "domain_short": getattr(_cfg.domain, "short", "subject"),
+            "clinical_scenario_style": getattr(
+                _cfg.domain, "clinical_scenario_style", "",
+            ),
+        }
+    except Exception:
+        return {"domain_name": "this subject", "domain_short": "subject"}
 
 
 def _last_scenario_from_history(state: dict) -> str:

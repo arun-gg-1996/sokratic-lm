@@ -149,7 +149,7 @@ CURRENT TURN CONTEXT
   Hint level: {hint_level}
   Turn number: {turn_count}
   Phase: {phase}
-
+{clinical_style_block}
 CARRYOVER NOTES (mem0 — empty if cold-start):
 {carryover_notes}
 
@@ -160,6 +160,13 @@ CONVERSATION HISTORY (most recent last):
 {history}
 {prior_failures_block}
 Output the TurnPlan JSON object only.
+"""
+
+
+_CLINICAL_STYLE_BLOCK = """\
+
+CLINICAL SCENARIO STYLE (when emitting mode="clinical"):
+  {clinical_scenario_style}
 """
 
 
@@ -289,8 +296,9 @@ class DeanV2:
         chunks: list[dict],
         *,
         carryover_notes: str = "",
-        domain_name: str = "human anatomy",
-        domain_short: str = "anatomy",
+        domain_name: str = "this subject",
+        domain_short: str = "subject",
+        clinical_scenario_style: str = "",
         prior_attempts: Optional[list[str]] = None,
         prior_failures: Optional[list[dict]] = None,
     ) -> DeanPlanResult:
@@ -298,10 +306,20 @@ class DeanV2:
 
         On parse failure: re-prompt once with a stricter instruction.
         On second parse failure: emit TurnPlan.minimal_fallback() per L46.
+
+        Per L78 the `domain_name` / `domain_short` defaults are
+        intentionally generic ("this subject" / "subject") so a missing
+        cfg.domain.* slot still yields a parseable prompt — but a real
+        production caller passes from cfg. `clinical_scenario_style`
+        comes from cfg.domain.clinical_scenario_style and is injected
+        into the user prompt only when non-empty so Dean's clinical-mode
+        scenarios stay domain-appropriate (patient case for medical /
+        anatomy, engineering problem for physics, etc.) per L74.
         """
         system_prompt = _DEAN_SYSTEM.format(domain_name=domain_name)
         user_prompt = self._build_user_prompt(
             state, chunks, carryover_notes,
+            clinical_scenario_style=clinical_scenario_style,
             prior_attempts=prior_attempts, prior_failures=prior_failures,
         )
 
@@ -414,6 +432,7 @@ class DeanV2:
         chunks: list[dict],
         carryover_notes: str,
         *,
+        clinical_scenario_style: str = "",
         prior_attempts: Optional[list[str]] = None,
         prior_failures: Optional[list[dict]] = None,
     ) -> str:
@@ -421,6 +440,14 @@ class DeanV2:
         if not locked:
             locked = (state.get("debug") or {}).get("locked_topic_snapshot") or {}
         aliases = state.get("locked_answer_aliases") or []
+        # L78 — surface the per-domain clinical scenario style only when
+        # the cfg slot is populated. Empty → block is empty (no wasted
+        # prompt tokens for domains where clinical isn't applicable).
+        clinical_block = ""
+        if (clinical_scenario_style or "").strip():
+            clinical_block = _CLINICAL_STYLE_BLOCK.format(
+                clinical_scenario_style=clinical_scenario_style.strip(),
+            )
         return _DEAN_USER_TEMPLATE.format(
             locked_subsection=locked.get("subsection") or "(unspecified)",
             locked_question=state.get("locked_question") or "(unspecified)",
@@ -431,6 +458,7 @@ class DeanV2:
                 1 for m in (state.get("messages") or []) if m.get("role") == "student"
             ),
             phase=state.get("phase") or "tutoring",
+            clinical_style_block=clinical_block,
             carryover_notes=carryover_notes or "(none)",
             chunks=_format_chunks(chunks),
             history=_format_history(state.get("messages") or []),

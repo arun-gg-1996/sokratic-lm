@@ -248,8 +248,8 @@ class TeacherPromptInputs:
     history: list[dict]               # conversation messages (newest last)
     locked_subsection: str = ""
     locked_question: str = ""
-    domain_name: str = "human anatomy"
-    domain_short: str = "anatomy"
+    domain_name: str = "this subject"
+    domain_short: str = "subject"
     student_descriptor: str = "student"
     time_of_day: str = "afternoon"    # for rapport mode greeting
 

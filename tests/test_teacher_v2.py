@@ -74,6 +74,11 @@ def _inputs(**overrides) -> TeacherPromptInputs:
         ],
         locked_subsection="Conduction System of the Heart",
         locked_question="What initiates the heartbeat?",
+        # Set explicit domain so the test isn't coupled to the
+        # dataclass default (which changed under L78 to "subject"
+        # so a missing cfg surfaces loudly in production).
+        domain_name="human anatomy",
+        domain_short="anatomy",
     )
     base.update(overrides)
     return TeacherPromptInputs(**base)

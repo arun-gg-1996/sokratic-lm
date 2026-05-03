@@ -239,8 +239,8 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
             history=state.get("messages", []),
             locked_subsection=locked.get("subsection") or "",
             locked_question=state.get("locked_question") or "",
-            domain_name=getattr(_cfg.domain, "name", "human anatomy"),
-            domain_short=getattr(_cfg.domain, "short", "anatomy"),
+            domain_name=getattr(_cfg.domain, "name", "this subject"),
+            domain_short=getattr(_cfg.domain, "short", "subject"),
             student_descriptor=getattr(_cfg.domain, "student_descriptor", "student"),
         )
         draft = teacher_v2.draft(plan, inputs)
@@ -355,12 +355,16 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         carryover_topic_lock, carryover_hint_advance,
     )
 
-    # Plan the turn
+    # Plan the turn — Track 4.7f mem0 carryover + L78 domain-aware
+    # clinical scenario style passed through to Dean's prompt.
     plan_result = dean_v2.plan(
         state, chunks,
         carryover_notes=carryover_combined,
-        domain_name=getattr(_cfg.domain, "name", "human anatomy"),
-        domain_short=getattr(_cfg.domain, "short", "anatomy"),
+        domain_name=getattr(_cfg.domain, "name", "this subject"),
+        domain_short=getattr(_cfg.domain, "short", "subject"),
+        clinical_scenario_style=getattr(
+            _cfg.domain, "clinical_scenario_style", "",
+        ),
     )
     debug_trace.append({
         "wrapper": "dean_v2.plan",
@@ -380,8 +384,8 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         history=state.get("messages", []),
         locked_subsection=locked.get("subsection") or "",
         locked_question=state.get("locked_question") or "",
-        domain_name=getattr(_cfg.domain, "name", "human anatomy"),
-        domain_short=getattr(_cfg.domain, "short", "anatomy"),
+        domain_name=getattr(_cfg.domain, "name", "this subject"),
+        domain_short=getattr(_cfg.domain, "short", "subject"),
         student_descriptor=getattr(_cfg.domain, "student_descriptor", "student"),
     )
     aliases = state.get("locked_answer_aliases") or []

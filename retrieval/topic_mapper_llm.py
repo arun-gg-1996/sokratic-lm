@@ -258,8 +258,8 @@ You will receive:
          summary: <one-line subsection summary>
   3. A short list of common abbreviations students use. This list is
      NOT exhaustive — apply your own {domain_short} knowledge to expand
-     other shortcuts (e.g. anatomical, physiological, common medical
-     abbreviations beyond what's listed).
+     other shortcuts (e.g. domain-standard abbreviations and field-
+     specific shorthand beyond what's listed).
 
 Your job: decide which (if any) TOC entries the student is asking about,
 how confident you are, and return strict JSON.
