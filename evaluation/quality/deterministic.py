@@ -129,11 +129,26 @@ def _intermediate_turns(view: SessionView) -> list[int]:
 
 def _fabrication_turns(view: SessionView) -> list[dict]:
     """Turns where the tutor message contains a fabrication keyword AND
-    the gate said reached=False. These are critical-penalty candidates."""
+    the gate said reached=False. These are critical-penalty candidates.
+
+    L39 #6 — uses session-level reach in addition to per-turn reach.
+    The reach-path close turn (L65) legitimately confirms the textbook
+    answer + Teacher's wrap prose can naturally include fabrication
+    keywords ("the answer is…"). We only flag fabrication when the
+    student NEVER reached the answer in the session AND the per-turn
+    reach gate said False. Sessions that reached in any turn get a
+    free pass on the very last turn.
+    """
     out = []
+    final_turn_id = view.turns[-1].turn_id if view.turns else 0
+    session_reached = bool(view.final_student_reached_answer)
     for t in view.turns:
         if t.student_reached_answer:
             # Confirmation when student actually reached is fine.
+            continue
+        # L39 #6 — session-level pass on the final turn for sessions
+        # where reach happened in any earlier turn (close-out prose).
+        if session_reached and t.turn_id == final_turn_id:
             continue
         m = _FABRICATION_KEYWORDS_REGEX.search(t.tutor_msg or "")
         if m:
