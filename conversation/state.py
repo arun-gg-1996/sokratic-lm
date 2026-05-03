@@ -243,6 +243,15 @@ class TutorState(TypedDict):
     # --- Multimodal ---
     is_multimodal: bool
     image_structures: list[str]     # structure names from Vision model
+    # L77 — full VLM JSON output stash. Populated at upload time by the
+    # /api/upload-image endpoint (Sonnet vision call). Carried through
+    # the session so Dean's lock_anchors_call + Teacher's per-turn draft
+    # can ground responses in identified structures + description.
+    # None when the session was not image-initiated. Schema mirrors the
+    # L77 spec — see docs/AUDIT_2026-05-02.md L77 "VLM output JSON schema".
+    # Populated by the rapport-phase upload flow only; mid-tutoring
+    # uploads are deferred per L77 "Not mid-tutoring".
+    image_context: Optional[dict]
 
     # --- Debug tracking (per-session, shown in Streamlit debug panel) ---
     # Updated after every Anthropic API call and every tool call.
@@ -335,6 +344,7 @@ def initial_state(student_id: str, cfg) -> TutorState:
         client_hour=None,
         is_multimodal=False,
         image_structures=[],
+        image_context=None,
         debug={
             "api_calls": 0,
             "input_tokens": 0,
