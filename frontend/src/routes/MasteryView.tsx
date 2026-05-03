@@ -1,207 +1,222 @@
 /**
- * MasteryView — `/mastery` route
- * ===============================
- * Three-section dashboard backed by GET /api/mastery/{student_id}:
+ * MasteryView — `/mastery` route (Track 5 — L29-L34)
+ * ===================================================
+ * SQLite-backed accordion tree per the v2 mastery design.
  *
- *   1. Header  — 3 stat cards (touched / mastered / avg mastery)
- *   2. Sessions list — chronological log of past sessions, each with
- *                      a Revisit button when mastery < 0.5
- *   3. Chapter tree — collapsible, all concepts grouped by chapter
+ * Uses GET /api/mastery/v2/{student_id}/tree which returns the FULL
+ * TOC tree with mastery overlay (touched + untouched). Untouched
+ * nodes report score=null, color="grey" so the tree renders as a
+ * visual heat map of student progress over the corpus.
  *
- * The "Revisit" button on a session card navigates to /chat with the
- * subsection name in localStorage so ChatView's session-bootstrap can
- * pick it up and auto-send it as the first student message after
- * rapport. We use localStorage rather than URL params or location
- * state so the value survives the React reset that happens when
- * studentId changes (the bootstrap useEffect re-fires).
+ * Layout per L29:
+ *   - In-place accordion at chapter / section / subsection level
+ *   - Multiple chapters can be open at once
+ *   - Color rendering via node.color (green/yellow/red/grey dot)
+ *
+ * Subsection row per L30:
+ *   - Color dot
+ *   - display_label (LLM-rewritten friendly name from L19)
+ *   - Numeric EWMA score
+ *   - Last session date
+ *   - Action button: "Start" (attempt_count == 0) or "Revisit"
+ *     (attempt_count > 0). "Revisit" wires through localStorage to
+ *     ChatView's session bootstrap so /api/session/start sends the
+ *     locked subsection path as `prelocked_topic` (skipping the
+ *     dean's free-text resolution).
+ *
+ * UI per L34:
+ *   - Single "Sort by mastery" toggle (lowest-mastery-first when on)
+ *   - No search, no filter chips, no breadcrumbs — tree IS the nav
+ *   - Empty state = full tree, all greys (informative + inviting)
+ *
+ * Replaces the legacy view that consumed /api/mastery/{student_id}.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppShell } from "../components/layout/AppShell";
-import { getMastery } from "../api/client";
+import { getMasteryTree } from "../api/client";
 import { useUserStore } from "../stores/userStore";
 import { useSessionStore } from "../stores/sessionStore";
 import type {
-  MasteryChapterRow,
-  MasteryConcept,
-  MasteryDashboardResponse,
-  MasteryHeader,
-  MasterySessionEntry,
+  MasteryChapterNode,
+  MasteryColor,
+  MasterySectionNode,
+  MasterySubsectionNode,
+  MasteryTreeResponse,
 } from "../types";
 
-// Two keys, in priority order:
-//   REVISIT_TOPIC_PATH — preferred; the canonical "ChN|sec|sub" path.
-//     When present the bootstrap calls /api/session/start with
-//     prelocked_topic, skipping the dean's free-text resolution.
-//   REVISIT_KEY — legacy; subsection title only. Older session cards
-//     without path metadata fall back to this.
+// localStorage keys consumed by ChatView's session-bootstrap. The path
+// version is preferred — when present, /api/session/start receives
+// `prelocked_topic` and the dean skips topic resolution entirely.
 const REVISIT_TOPIC_PATH = "sokratic_revisit_topic_path";
 const REVISIT_KEY = "sokratic_revisit_topic";
 
-// "Mastered" requires BOTH a high mastery score AND enough evidence
-// (confidence). See memory/mastery_store.py docstring for the rationale
-// — extends classical BKT with a coverage signal so a 1-session
-// perfect answer doesn't prematurely badge a subsection as mastered.
-const MASTERED_THRESHOLD = 0.80;
-const CONFIDENCE_THRESHOLD = 0.60;
-const WEAK_THRESHOLD = 0.50;
+// ─────────────────────────────────────────────────────────────────────────────
+// Formatting helpers
+// ─────────────────────────────────────────────────────────────────────────────
 
-function pct(x: number): string {
-  return `${Math.round(x * 100)}%`;
+function pct(score: number | null | undefined): string {
+  if (score == null || Number.isNaN(score)) return "—";
+  return `${Math.round(score * 100)}%`;
 }
 
-function confidenceLabel(c: number | undefined): string {
-  const v = c ?? 0;
-  if (v >= 0.6) return "high confidence";
-  if (v >= 0.3) return "medium confidence";
-  return "low confidence";
+function fmtDate(iso: string | null | undefined): string {
+  if (!iso) return "";
+  // Trim to YYYY-MM-DD if we got a full ISO timestamp.
+  const m = /^(\d{4}-\d{2}-\d{2})/.exec(iso);
+  return m ? m[1] : iso;
 }
 
-function isMastered(c: { mastery: number; confidence?: number }): boolean {
+const DOT_CLASS: Record<MasteryColor, string> = {
+  green: "text-emerald-500",
+  yellow: "text-amber-500",
+  red: "text-red-500",
+  grey: "text-muted",
+};
+
+const BORDER_CLASS: Record<MasteryColor, string> = {
+  green: "border-l-2 border-l-emerald-500",
+  yellow: "border-l-2 border-l-amber-500",
+  red: "border-l-2 border-l-red-500",
+  grey: "border-l-2 border-l-border",
+};
+
+// Treat anything past the score threshold as effectively "for sort".
+// Untouched (null) sorts to the bottom when sort-by-mastery is on,
+// so weak (red) nodes float to the top — matches L34's intent.
+function sortKey(score: number | null | undefined): number {
+  if (score == null) return 1.5; // past 1.0 → after green when ascending
+  return score;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Atomic UI bits
+// ─────────────────────────────────────────────────────────────────────────────
+
+function Dot({ color }: { color: MasteryColor }) {
   return (
-    c.mastery >= MASTERED_THRESHOLD &&
-    (c.confidence ?? 0) >= CONFIDENCE_THRESHOLD
+    <span className={`shrink-0 ${DOT_CLASS[color]}`} aria-hidden>
+      ●
+    </span>
   );
 }
 
-function isWeak(c: { mastery: number }): boolean {
-  return c.mastery < WEAK_THRESHOLD;
-}
-
-function MasteryBar({
-  value,
-  className = "",
-}: {
-  value: number;
-  className?: string;
-}) {
-  const w = Math.max(0, Math.min(1, value)) * 100;
+function MasteryBar({ value }: { value: number | null }) {
+  const w = value == null ? 0 : Math.max(0, Math.min(1, value)) * 100;
   return (
     <div
-      className={`h-1 w-full rounded-full bg-border overflow-hidden ${className}`}
+      className="h-1 w-full rounded-full bg-border overflow-hidden"
       role="progressbar"
       aria-valuenow={Math.round(w)}
       aria-valuemin={0}
       aria-valuemax={100}
+      aria-label="mastery score"
     >
-      <div
-        className="h-full bg-accent transition-[width] duration-300"
-        style={{ width: `${w}%` }}
-      />
+      {value != null && (
+        <div
+          className="h-full bg-accent transition-[width] duration-300"
+          style={{ width: `${w}%` }}
+        />
+      )}
     </div>
   );
 }
 
-function HeaderStats({ header }: { header: MasteryHeader }) {
-  return (
-    <div className="grid grid-cols-3 gap-3">
-      <div className="rounded-card border border-border bg-panel px-4 py-3">
-        <div className="text-xs text-muted uppercase tracking-wide">Touched</div>
-        <div className="mt-1 text-3xl font-semibold">{header.touched}</div>
-        <div className="text-xs text-muted">subsections</div>
-      </div>
-      <div className="rounded-card border border-border bg-panel px-4 py-3">
-        <div className="text-xs text-muted uppercase tracking-wide">Mastered</div>
-        <div className="mt-1 text-3xl font-semibold">{header.mastered}</div>
-        <div className="text-xs text-muted">at 80%+</div>
-      </div>
-      <div className="rounded-card border border-border bg-panel px-4 py-3">
-        <div className="text-xs text-muted uppercase tracking-wide">Avg mastery</div>
-        <div className="mt-1 text-3xl font-semibold">{pct(header.avg_mastery)}</div>
-        <div className="text-xs text-muted">across touched</div>
-      </div>
-    </div>
-  );
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// Subsection row (leaf — has the action button per L30)
+// ─────────────────────────────────────────────────────────────────────────────
 
-function SessionCard({
-  session,
-  onRevisit,
+function SubsectionRow({
+  sub,
+  onAction,
 }: {
-  session: MasterySessionEntry;
-  onRevisit: (subsectionTitle: string, path: string) => void;
+  sub: MasterySubsectionNode;
+  onAction: (sub: MasterySubsectionNode) => void;
 }) {
-  const reached = session.outcome === "reached";
-  const hasMastery = typeof session.mastery === "number";
-  const showRevisit = hasMastery && (session.mastery as number) < WEAK_THRESHOLD;
-  const masteryLabel = hasMastery ? pct(session.mastery as number) : "—";
-
+  const isStart = sub.attempt_count === 0;
+  const buttonLabel = isStart ? "Start" : "Revisit";
+  const dateText = sub.last_session_at
+    ? `last session ${fmtDate(sub.last_session_at)}`
+    : "untouched";
   return (
-    <div className="rounded-card border border-border bg-panel px-4 py-3 space-y-2">
-      <div className="flex items-baseline justify-between gap-3">
-        <div className="text-xs text-muted">{session.session_date}</div>
-        <div className="text-xs text-muted">
-          Ch{session.chapter_num} · {reached ? "Reached" : "Not reached"}
+    <div
+      className={`pl-12 pr-4 py-2 flex items-center gap-3 ${BORDER_CLASS[sub.color]}`}
+    >
+      <Dot color={sub.color} />
+      <div className="flex-1 min-w-0">
+        <div className="text-sm truncate">
+          {sub.display_label || sub.subsection || "Unknown"}
         </div>
+        <div className="text-xs text-muted">{dateText}</div>
       </div>
-      <div className="font-medium">
-        {session.subsection_title || session.section_title || "Unknown topic"}
+      <div className="w-24 shrink-0">
+        <MasteryBar value={sub.score} />
       </div>
-      {session.summary_text && (
-        <div className="text-sm text-muted line-clamp-2">{session.summary_text}</div>
-      )}
-      {hasMastery && (
-        <div className="flex items-center gap-3">
-          <MasteryBar value={session.mastery as number} className="flex-1" />
-          <div className="text-xs text-muted shrink-0">{masteryLabel}</div>
-        </div>
-      )}
-      {showRevisit && (
-        <div className="pt-1">
-          <button
-            onClick={() =>
-              onRevisit(
-                session.subsection_title || session.section_title,
-                session.subsection_path,
-              )
-            }
-            className="rounded-lg border border-border px-3 py-1.5 text-sm hover:border-accent transition"
-          >
-            Revisit →
-          </button>
-        </div>
-      )}
+      <div className="text-xs text-muted w-10 text-right shrink-0">
+        {pct(sub.score)}
+      </div>
+      <button
+        onClick={() => onAction(sub)}
+        className="rounded-lg border border-border px-2 py-1 text-xs hover:border-accent transition shrink-0"
+        title={`${buttonLabel} a session on this topic`}
+      >
+        {buttonLabel}
+      </button>
     </div>
   );
 }
 
-function ChapterRow({
-  chapter,
+// ─────────────────────────────────────────────────────────────────────────────
+// Section row (mid-level accordion)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function SectionRow({
+  section,
   expanded,
   onToggle,
-  onRevisit,
+  sortByMastery,
+  onAction,
 }: {
-  chapter: MasteryChapterRow;
+  section: MasterySectionNode;
   expanded: boolean;
   onToggle: () => void;
-  onRevisit: (subsectionTitle: string, path: string) => void;
+  sortByMastery: boolean;
+  onAction: (sub: MasterySubsectionNode) => void;
 }) {
+  const subs = useMemo(() => {
+    if (!sortByMastery) return section.subsections;
+    return [...section.subsections].sort(
+      (a, b) => sortKey(a.score) - sortKey(b.score),
+    );
+  }, [section.subsections, sortByMastery]);
+
   return (
-    <div className="rounded-card border border-border bg-panel">
+    <div className={`${BORDER_CLASS[section.color]}`}>
       <button
         onClick={onToggle}
-        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-bg transition text-left"
+        className="w-full pl-8 pr-4 py-2 flex items-center gap-3 hover:bg-bg transition text-left"
         aria-expanded={expanded}
       >
         <span className="text-muted text-sm w-4">{expanded ? "▾" : "▸"}</span>
-        <span className="font-medium">
-          Ch{chapter.chapter_num} {chapter.chapter_title || ""}
+        <Dot color={section.color} />
+        <span className="font-medium text-sm">
+          {section.section || "Unknown section"}
         </span>
         <span className="flex-1" />
         <span className="text-xs text-muted shrink-0">
-          {chapter.n_subsections_touched} touched
+          {section.touched}/{section.total}
         </span>
         <div className="w-24 shrink-0">
-          <MasteryBar value={chapter.avg_mastery} />
+          <MasteryBar value={section.score} />
         </div>
         <span className="text-xs text-muted shrink-0 w-10 text-right">
-          {pct(chapter.avg_mastery)}
+          {pct(section.score)}
         </span>
       </button>
       {expanded && (
-        <div className="border-t border-border divide-y divide-border">
-          {chapter.concepts.map((c) => (
-            <ConceptRow key={c.path} concept={c} onRevisit={onRevisit} />
+        <div className="border-t border-border/50 divide-y divide-border/50">
+          {subs.map((sub) => (
+            <SubsectionRow key={sub.path} sub={sub} onAction={onAction} />
           ))}
         </div>
       )}
@@ -209,69 +224,104 @@ function ChapterRow({
   );
 }
 
-function ConceptRow({
-  concept,
-  onRevisit,
+// ─────────────────────────────────────────────────────────────────────────────
+// Chapter row (top-level accordion)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ChapterRow({
+  chapter,
+  expanded,
+  onToggle,
+  expandedSections,
+  onToggleSection,
+  sortByMastery,
+  onAction,
 }: {
-  concept: MasteryConcept;
-  onRevisit: (subsectionTitle: string, path: string) => void;
+  chapter: MasteryChapterNode;
+  expanded: boolean;
+  onToggle: () => void;
+  expandedSections: Set<string>;
+  onToggleSection: (key: string) => void;
+  sortByMastery: boolean;
+  onAction: (sub: MasterySubsectionNode) => void;
 }) {
-  const mastered = isMastered(concept);
-  const weak = isWeak(concept);
-  const dotClass = mastered
-    ? "text-accent"
-    : weak
-      ? "text-red-500"
-      : "text-muted";
+  const sections = useMemo(() => {
+    if (!sortByMastery) return chapter.sections;
+    return [...chapter.sections].sort(
+      (a, b) => sortKey(a.score) - sortKey(b.score),
+    );
+  }, [chapter.sections, sortByMastery]);
+
   return (
-    <div className="px-4 py-2 flex items-center gap-3">
-      <span className={`shrink-0 ${dotClass}`} aria-hidden>
-        ●
-      </span>
-      <div className="flex-1 min-w-0">
-        <div className="text-sm truncate">{concept.subsection_title}</div>
-        <div className="text-xs text-muted">
-          {concept.sessions} session{concept.sessions === 1 ? "" : "s"} ·
-          {" "}{confidenceLabel(concept.confidence)} ·
-          last seen {concept.last_seen || "—"}
+    <div className={`rounded-card border border-border bg-panel ${BORDER_CLASS[chapter.color]}`}>
+      <button
+        onClick={onToggle}
+        className="w-full px-4 py-3 flex items-center gap-3 hover:bg-bg transition text-left"
+        aria-expanded={expanded}
+      >
+        <span className="text-muted text-sm w-4">{expanded ? "▾" : "▸"}</span>
+        <Dot color={chapter.color} />
+        <span className="font-medium">
+          {chapter.chapter_num != null ? `Ch${chapter.chapter_num} ` : ""}
+          {chapter.chapter || ""}
+        </span>
+        <span className="flex-1" />
+        <span className="text-xs text-muted shrink-0">
+          {chapter.touched}/{chapter.total} subsections
+        </span>
+        <div className="w-24 shrink-0">
+          <MasteryBar value={chapter.score} />
         </div>
-      </div>
-      <div className="w-24 shrink-0">
-        <MasteryBar value={concept.mastery} />
-      </div>
-      <div className="text-xs text-muted w-10 text-right shrink-0">
-        {pct(concept.mastery)}
-      </div>
-      {weak && (
-        <button
-          onClick={() => onRevisit(concept.subsection_title, concept.path)}
-          className="rounded-lg border border-border px-2 py-1 text-xs hover:border-accent transition shrink-0"
-          title="Start a session on this topic"
-        >
-          Revisit
-        </button>
+        <span className="text-xs text-muted shrink-0 w-10 text-right">
+          {pct(chapter.score)}
+        </span>
+      </button>
+      {expanded && (
+        <div className="border-t border-border divide-y divide-border">
+          {sections.map((section) => {
+            const key = `${chapter.chapter}::${section.section}`;
+            return (
+              <SectionRow
+                key={key}
+                section={section}
+                expanded={expandedSections.has(key)}
+                onToggle={() => onToggleSection(key)}
+                sortByMastery={sortByMastery}
+                onAction={onAction}
+              />
+            );
+          })}
+        </div>
       )}
     </div>
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Page
+// ─────────────────────────────────────────────────────────────────────────────
+
 export function MasteryView() {
   const studentId = useUserStore((s) => s.studentId);
   const resetSession = useSessionStore((s) => s.reset);
   const navigate = useNavigate();
-  const [data, setData] = useState<MasteryDashboardResponse | null>(null);
+  const [data, setData] = useState<MasteryTreeResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [expandedChapters, setExpandedChapters] = useState<Set<number>>(
-    new Set()
+  const [expandedChapters, setExpandedChapters] = useState<Set<string>>(
+    new Set(),
   );
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(
+    new Set(),
+  );
+  const [sortByMastery, setSortByMastery] = useState(false);
 
   const load = useCallback(async () => {
     if (!studentId) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await getMastery(studentId);
+      const res = await getMasteryTree(studentId);
       setData(res);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
@@ -284,37 +334,48 @@ export function MasteryView() {
     void load();
   }, [load]);
 
-  const toggleChapter = (n: number) => {
+  const toggleChapter = (key: string) => {
     setExpandedChapters((prev) => {
       const next = new Set(prev);
-      if (next.has(n)) next.delete(n);
-      else next.add(n);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   };
 
-  const handleRevisit = (subsectionTitle: string, path: string) => {
-    if (!subsectionTitle && !path) return;
-    // Prefer the path-based prelock — it's the path mastery cards
-    // already carry, and the backend uses it to skip topic resolution
-    // entirely (avoids the mis-lock seen on short queries like
-    // "Conduction System of the Heart" resolving to a different
-    // chapter via vote noise). Fall back to the legacy title-only
-    // key when path isn't available (e.g. older session cards).
+  const toggleSection = (key: string) => {
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const handleAction = (sub: MasterySubsectionNode) => {
+    // Per L33 — clicking Start/Revisit pre-locks the subsection. We
+    // hand off via localStorage so the value survives ChatView's
+    // bootstrap re-mount when studentId resolves.
     try {
-      if (path) {
-        localStorage.setItem(REVISIT_TOPIC_PATH, path);
+      if (sub.path) {
+        localStorage.setItem(REVISIT_TOPIC_PATH, sub.path);
         localStorage.removeItem(REVISIT_KEY);
-      } else {
-        localStorage.setItem(REVISIT_KEY, subsectionTitle);
+      } else if (sub.subsection) {
+        localStorage.setItem(REVISIT_KEY, sub.subsection);
         localStorage.removeItem(REVISIT_TOPIC_PATH);
       }
     } catch {
-      // ignore — user without localStorage just won't get the auto-send
+      // ignore — user without localStorage just won't get the auto-prelock
     }
     resetSession();
     navigate("/chat");
   };
+
+  const chapters = useMemo(() => {
+    if (!data) return [];
+    if (!sortByMastery) return data.chapters;
+    return [...data.chapters].sort((a, b) => sortKey(a.score) - sortKey(b.score));
+  }, [data, sortByMastery]);
 
   if (!studentId) {
     return (
@@ -348,81 +409,57 @@ export function MasteryView() {
     );
   }
 
-  const empty =
-    !data ||
-    (data.header.touched === 0 &&
-      data.chapters.length === 0 &&
-      data.sessions.length === 0);
-
   return (
     <AppShell>
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-lane mx-auto px-6 py-8 space-y-8">
-          <div className="flex items-baseline justify-between">
+        <div className="max-w-lane mx-auto px-6 py-8 space-y-6">
+          <div className="flex items-baseline justify-between gap-4">
             <h1 className="text-2xl font-semibold">My mastery</h1>
-            <button
-              onClick={() => void load()}
-              className="rounded-lg border border-border px-3 py-1.5 text-sm hover:border-accent transition"
-            >
-              Refresh
-            </button>
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-2 text-xs text-muted cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={sortByMastery}
+                  onChange={(e) => setSortByMastery(e.target.checked)}
+                  className="accent-accent"
+                />
+                Sort by mastery
+              </label>
+              <button
+                onClick={() => void load()}
+                className="rounded-lg border border-border px-3 py-1.5 text-sm hover:border-accent transition"
+              >
+                Refresh
+              </button>
+            </div>
           </div>
 
-          {empty ? (
+          {chapters.length === 0 ? (
             <div className="rounded-card border border-border bg-panel px-4 py-8 text-center">
-              <div className="font-medium">No mastery data yet</div>
+              <div className="font-medium">No corpus loaded</div>
               <div className="mt-1 text-sm text-muted">
-                Start a chat. After your first session, your topic mastery will
-                appear here.
+                The mastery tree is empty. Check the topic index for the
+                active domain.
               </div>
             </div>
           ) : (
-            <>
-              {/* Section 1: Header */}
-              <HeaderStats header={data!.header} />
-
-              {/* Section 2: Sessions list */}
-              <section className="space-y-3">
-                <h2 className="text-base font-semibold">Sessions</h2>
-                {data!.sessions.length === 0 ? (
-                  <div className="rounded-card border border-border bg-panel px-4 py-3 text-sm text-muted">
-                    No session history available.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {data!.sessions.map((s, idx) => (
-                      <SessionCard
-                        key={`${s.session_date}-${s.subsection_path}-${idx}`}
-                        session={s}
-                        onRevisit={handleRevisit}
-                      />
-                    ))}
-                  </div>
-                )}
-              </section>
-
-              {/* Section 3: Chapter tree */}
-              <section className="space-y-3">
-                <h2 className="text-base font-semibold">All concepts</h2>
-                {data!.chapters.length === 0 ? (
-                  <div className="rounded-card border border-border bg-panel px-4 py-3 text-sm text-muted">
-                    No concepts touched yet.
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {data!.chapters.map((ch) => (
-                      <ChapterRow
-                        key={ch.chapter_num}
-                        chapter={ch}
-                        expanded={expandedChapters.has(ch.chapter_num)}
-                        onToggle={() => toggleChapter(ch.chapter_num)}
-                        onRevisit={handleRevisit}
-                      />
-                    ))}
-                  </div>
-                )}
-              </section>
-            </>
+            <section className="space-y-2">
+              {chapters.map((chapter) => {
+                const key = `${chapter.chapter_num ?? ""}::${chapter.chapter}`;
+                return (
+                  <ChapterRow
+                    key={key}
+                    chapter={chapter}
+                    expanded={expandedChapters.has(key)}
+                    onToggle={() => toggleChapter(key)}
+                    expandedSections={expandedSections}
+                    onToggleSection={toggleSection}
+                    sortByMastery={sortByMastery}
+                    onAction={handleAction}
+                  />
+                );
+              })}
+            </section>
           )}
         </div>
       </div>

@@ -1,5 +1,8 @@
 import type {
   MasteryDashboardResponse,
+  MasterySessionRow,
+  MasterySessionsResponse,
+  MasteryTreeResponse,
   MemoryDeleteResponse,
   MemoryListResponse,
   SessionStartResponse,
@@ -69,6 +72,43 @@ export async function getMastery(
     `${API_BASE}/api/mastery/${encodeURIComponent(studentId)}`
   );
   if (!res.ok) throw new Error("Failed to fetch mastery");
+  return res.json();
+}
+
+// L29-L34 v2 endpoints (SQLite-backed, accordion tree). Track 5.
+
+export async function getMasteryTree(
+  studentId: string
+): Promise<MasteryTreeResponse> {
+  const res = await fetch(
+    `${API_BASE}/api/mastery/v2/${encodeURIComponent(studentId)}/tree`
+  );
+  if (!res.ok) throw new Error("Failed to fetch mastery tree");
+  return res.json();
+}
+
+export async function getMasterySessions(
+  studentId: string,
+  opts: { limit?: number; completedOnly?: boolean } = {}
+): Promise<MasterySessionsResponse> {
+  const params = new URLSearchParams();
+  if (opts.limit) params.set("limit", String(opts.limit));
+  if (opts.completedOnly) params.set("completed_only", "true");
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  const res = await fetch(
+    `${API_BASE}/api/mastery/v2/${encodeURIComponent(studentId)}/sessions${qs}`
+  );
+  if (!res.ok) throw new Error("Failed to fetch mastery sessions");
+  return res.json();
+}
+
+export async function getMasterySession(
+  threadId: string
+): Promise<MasterySessionRow> {
+  const res = await fetch(
+    `${API_BASE}/api/mastery/v2/session/${encodeURIComponent(threadId)}`
+  );
+  if (!res.ok) throw new Error("Failed to fetch mastery session");
   return res.json();
 }
 

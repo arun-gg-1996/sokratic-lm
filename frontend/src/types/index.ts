@@ -151,3 +151,68 @@ export interface MasteryDashboardResponse {
   chapters: MasteryChapterRow[];
   sessions: MasterySessionEntry[];
 }
+
+// --- L29-L34 v2 mastery tree (SQLite-backed, accordion-rendered) ---
+
+export type MasteryColor = "green" | "yellow" | "red" | "grey";
+
+export interface MasterySubsectionNode {
+  subsection: string;
+  display_label: string;
+  path: string;
+  score: number | null;
+  color: MasteryColor;
+  tier: string;
+  outcome: string | null;
+  last_session_at: string | null;
+  attempt_count: number;
+}
+
+export interface MasterySectionNode {
+  section: string;
+  score: number | null;
+  color: MasteryColor;
+  tier: string;
+  touched: number;
+  total: number;
+  subsections: MasterySubsectionNode[];
+}
+
+export interface MasteryChapterNode {
+  chapter: string;
+  chapter_num: number | null;
+  score: number | null;
+  color: MasteryColor;
+  tier: string;
+  touched: number;
+  total: number;
+  sections: MasterySectionNode[];
+}
+
+export interface MasteryTreeResponse {
+  student_id: string;
+  chapters: MasteryChapterNode[];
+}
+
+export interface MasterySessionRow {
+  thread_id: string;
+  student_id: string;
+  started_at: string | null;
+  ended_at: string | null;
+  locked_topic_path: string | null;
+  locked_subsection_path: string | null;
+  mastery_tier: string | null;
+  core_mastery_tier: string | null;
+  clinical_mastery_tier: string | null;
+  core_score: number | null;
+  clinical_score: number | null;
+  status: string;
+  turn_count: number | null;
+  reach_status: boolean | null;
+  key_takeaways: { what_demonstrated?: string; what_needs_work?: string } | null;
+}
+
+export interface MasterySessionsResponse {
+  student_id: string;
+  sessions: MasterySessionRow[];
+}
