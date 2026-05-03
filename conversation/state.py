@@ -205,6 +205,18 @@ class TutorState(TypedDict):
     # At 7, the v2 pre-lock flow forces guided-pick cards (L22).
     prelock_loop_count: int
 
+    # --- L6 mem0 carryover (Track 4.7f) ---
+    # Stashed by topic_lock_v2._lock_topic at lock time (injection #1):
+    # a formatted block of misconception + learning_style notes from
+    # prior sessions. Consumed by dean_node_v2's per-turn dean.plan()
+    # call as carryover_notes. Persists across turns until the topic
+    # changes (next lock seeds fresh notes).
+    mem0_carryover_notes: str
+    # The turn number at which hint_level last advanced. Used by
+    # dean_node_v2 to fire L6 injection #2 (hint_advance learning_style
+    # read) on the NEXT turn after an advance. -1 = never advanced.
+    last_hint_advance_at_turn: int
+
     # --- Exploration budget ---
     # Students occasionally ask about concepts outside the locked topic.
     # When Dean detects a tangential question and budget remains, we fire one
@@ -315,6 +327,8 @@ def initial_state(student_id: str, cfg) -> TutorState:
         clinical_off_topic_count=0,
         rejected_topic_paths=[],
         prelock_loop_count=0,
+        mem0_carryover_notes="",
+        last_hint_advance_at_turn=-1,
         exploration_max=int(getattr(getattr(cfg, "session", object()), "exploration_max", 3)),
         exploration_used=0,
         memory_enabled=True,

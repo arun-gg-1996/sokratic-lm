@@ -225,11 +225,21 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         elapsed_ms = int((time.time() - t0) * 1000)
         debug_trace.append({"wrapper": "dean_node_v2.total_elapsed_ms", "value": elapsed_ms})
 
+        # L6 mem0 injection #2 hook: stamp the turn at which hint advanced
+        # so the NEXT turn's dean_node_v2 entry can read learning-style cue
+        # via mem0_inject.read_hint_advance_carryover and pass it as
+        # carryover_notes to dean.plan().
+        prev_hint_level = int(state.get("hint_level", 0) or 0)
+        last_advance_at = int(state.get("last_hint_advance_at_turn", -1) or -1)
+        if new_hint_level > prev_hint_level:
+            last_advance_at = int(state.get("turn_count", 0) or 0)
+
         return {
             "messages": msgs,
             "help_abuse_count": new_help_count,
             "off_topic_count": new_off_count,
             "hint_level": new_hint_level,
+            "last_hint_advance_at_turn": last_advance_at,
             "phase": new_phase,
             "debug": state["debug"],
         }
@@ -249,10 +259,49 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
     dean_v2 = DeanV2(client, model=resolve_model(_cfg.models.dean))
     teacher_v2 = TeacherV2(client, model=resolve_model(_cfg.models.teacher))
 
+    # ── L6 mem0 carryover assembly (Track 4.7f) ─────────────────────────
+    # Injection #1: stashed on state["mem0_carryover_notes"] at lock time
+    # by topic_lock_v2 — survives turn-to-turn until consumed.
+    # Injection #2: fired here on every hint advance (1→2 or 2→3).
+    from conversation.mem0_inject import (
+        read_hint_advance_carryover,
+        combine_carryover,
+    )
+    carryover_topic_lock = str(state.get("mem0_carryover_notes", "") or "")
+    carryover_hint_advance = ""
+    prev_hint_level = int(state.get("hint_level", 0) or 0)
+    # Hint advance happens INSIDE Dean's planning when it bumps level — at
+    # this point in the turn, we don't yet know whether Dean will advance.
+    # Fire injection #2 SPECULATIVELY when the prior turn's plan already
+    # bumped the level (i.e. current level > 1 and last_hint_advance_at_turn
+    # equals current turn number) — this surfaces style cues for the next
+    # plan decision. Cheap (mem0_safe never raises, top_k=1).
+    last_advance_at = int(state.get("last_hint_advance_at_turn", -1) or -1)
+    current_turn = int(state.get("turn_count", 0) or 0)
+    if prev_hint_level >= 2 and last_advance_at == current_turn - 1:
+        try:
+            persistent = getattr(dean, "memory_client", None)
+            carryover_hint_advance = read_hint_advance_carryover(
+                state, persistent, locked,
+            )
+            if carryover_hint_advance:
+                debug_trace.append({
+                    "wrapper": "mem0_inject.hint_advance_carryover",
+                    "carryover_chars": len(carryover_hint_advance),
+                })
+        except Exception as e:
+            debug_trace.append({
+                "wrapper": "mem0_inject.hint_advance_carryover_error",
+                "error": f"{type(e).__name__}: {str(e)[:160]}",
+            })
+    carryover_combined = combine_carryover(
+        carryover_topic_lock, carryover_hint_advance,
+    )
+
     # Plan the turn
     plan_result = dean_v2.plan(
         state, chunks,
-        carryover_notes="",  # L6 wire (Track 4.7e) populates this
+        carryover_notes=carryover_combined,
         domain_name=getattr(_cfg.domain, "name", "human anatomy"),
         domain_short=getattr(_cfg.domain, "short", "anatomy"),
     )

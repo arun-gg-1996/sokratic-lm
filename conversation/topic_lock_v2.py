@@ -259,6 +259,26 @@ def _lock_topic(
         "locked_answer": state["locked_answer"],
     })
 
+    # L6 injection #1 — read mem0 once at lock-time and stash on state so
+    # the next dean.plan() call (Track 4.7e tutoring loop) can pass it as
+    # carryover_notes. Safe wrapper: never raises, returns "" on any
+    # mem0/network/stub failure.
+    try:
+        from conversation.mem0_inject import read_topic_lock_carryover
+        persistent = getattr(dean, "memory_client", None)
+        carryover = read_topic_lock_carryover(state, persistent, state.get("locked_topic") or {})
+        if carryover:
+            state["mem0_carryover_notes"] = carryover
+            trace.append({
+                "wrapper": "topic_lock_v2.mem0_carryover_seeded",
+                "carryover_chars": len(carryover),
+            })
+    except Exception as e:
+        trace.append({
+            "wrapper": "topic_lock_v2.mem0_carryover_error",
+            "error": f"{type(e).__name__}: {str(e)[:160]}",
+        })
+
     try:
         ack = dean._build_topic_ack_message(state)
     except Exception:
@@ -289,6 +309,7 @@ def _lock_topic(
         "hint_level": 0,
         "student_state": "question",
         "prelock_loop_count": 0,
+        "mem0_carryover_notes": state.get("mem0_carryover_notes", ""),
         "debug": state["debug"],
     }
 
