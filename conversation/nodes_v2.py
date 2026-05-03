@@ -61,6 +61,7 @@ from conversation.teacher_v2 import TeacherV2, TeacherPromptInputs
 from conversation.retry_orchestrator import run_turn
 from conversation.turn_plan import TurnPlan
 from conversation.topic_lock_v2 import run_topic_lock_v2
+from conversation.assessment_v2 import assessment_node_v2 as _assessment_node_v2_impl
 
 
 def use_v2_flow() -> bool:
@@ -339,3 +340,48 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         "turn_count": int(state.get("turn_count", 0) or 0) + 1,
         "debug": state["debug"],
     }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# assessment_node_v2 — wires DeanV2 + TeacherV2 into the assessment phase
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def assessment_node_v2(state: dict, dean, teacher, retriever) -> dict:
+    """V2 assessment phase node — opt-in/clinical/close orchestration.
+
+    Constructs DeanV2 + TeacherV2 lazily (matches dean_node_v2 pattern)
+    and delegates to conversation.assessment_v2.assessment_node_v2 for
+    the orchestration. `dean` and `teacher` are the legacy agents kept
+    for parity with the dean_node_v2 signature; the v2 stack does not
+    use them today (helpers like _coverage_gate aren't needed in
+    assessment), so they're passed through but ignored.
+    """
+    from conversation.llm_client import make_anthropic_client, resolve_model
+    from config import cfg as _cfg
+
+    # Archive previous turn's trace before resetting (same pattern as
+    # dean_node_v2). Keeps per-phase trace records distinct.
+    prior_trace = list(state.get("debug", {}).get("turn_trace", []) or [])
+    if prior_trace:
+        att = list(state.get("debug", {}).get("all_turn_traces", []) or [])
+        att.append({
+            "turn": int(state.get("turn_count", 0) or 0),
+            "phase": state.get("phase", "assessment"),
+            "trace": prior_trace,
+        })
+        state.setdefault("debug", {})["all_turn_traces"] = att[-50:]
+    state.setdefault("debug", {})["turn_trace"] = []
+
+    client = make_anthropic_client()
+    dean_v2_inst = DeanV2(client, model=resolve_model(_cfg.models.dean))
+    teacher_v2_inst = TeacherV2(client, model=resolve_model(_cfg.models.teacher))
+
+    return _assessment_node_v2_impl(
+        state,
+        dean=dean,
+        teacher=teacher,
+        retriever=retriever,
+        dean_v2=dean_v2_inst,
+        teacher_v2=teacher_v2_inst,
+    )

@@ -54,7 +54,11 @@ def build_graph(retriever, memory_manager):
     Returns:
         Compiled LangGraph runnable (with MemorySaver checkpointer).
     """
-    from conversation.nodes_v2 import dean_node_v2, use_v2_flow
+    from conversation.nodes_v2 import (
+        dean_node_v2,
+        assessment_node_v2,
+        use_v2_flow,
+    )
 
     # Compatibility: real MemoryManager exposes `.persistent`, while the current
     # stubbed manager may not. Dean accepts either and currently does not depend
@@ -78,7 +82,16 @@ def build_graph(retriever, memory_manager):
     else:
         graph.add_node("dean_node", partial(dean_node, dean=dean, teacher=teacher))
 
-    graph.add_node("assessment_node", partial(assessment_node, dean=dean, teacher=teacher))
+    # Per Track 4.7e: feature-flagged dispatch on the assessment_node slot.
+    # Same pattern as dean_node above. v2 path runs the L65/L67/L70-L75
+    # opt-in/clinical orchestration via DeanV2 + TeacherV2.
+    if use_v2_flow():
+        graph.add_node(
+            "assessment_node",
+            partial(assessment_node_v2, dean=dean, teacher=teacher, retriever=retriever),
+        )
+    else:
+        graph.add_node("assessment_node", partial(assessment_node, dean=dean, teacher=teacher))
     graph.add_node("memory_update_node", partial(memory_update_node, dean=dean, memory_manager=memory_manager))
 
     graph.add_edge(START, "rapport_node")
