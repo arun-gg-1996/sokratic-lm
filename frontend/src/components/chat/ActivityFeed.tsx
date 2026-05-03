@@ -78,28 +78,44 @@ export function ActivityFeed({ labels, mode }: Props) {
     );
   }
 
-  // Live mode: latest item gets the spinner, older items get ✓.
+  // Live mode: render in the same shape as a tutor message bubble
+  // (avatar + card) so it visually slots into the conversation rather
+  // than feeling like a popup. Latest stage is the prominent "currently
+  // doing X" line with a spinner; previous stages are checked-off
+  // sub-items collapsed below.
+  const latest = labels[labels.length - 1];
+  const previous = labels.slice(0, -1);
   return (
-    <div className="rounded-card border border-border bg-panel px-4 py-3 max-w-md">
-      <div className="text-xs text-muted uppercase tracking-wide mb-2">
-        Working on it
+    <div className="flex items-start gap-3 fade-in">
+      <img
+        src="/sokratic_bot_icon.png"
+        alt="Sokratic Tutor"
+        className="h-8 w-8 rounded-md mt-1 shrink-0 opacity-70"
+      />
+      <div className="rounded-card border border-border bg-panel px-4 py-3 flex-1 max-w-md">
+        <div className="flex items-center gap-2">
+          <span
+            className="inline-block h-3 w-3 rounded-full border-2 border-muted border-t-accent animate-spin shrink-0"
+            aria-label="In progress"
+          />
+          <span className="text-sm text-text font-medium animate-pulse">
+            {latest}
+          </span>
+        </div>
+        {previous.length > 0 && (
+          <ul className="mt-2 text-xs text-muted space-y-0.5 border-l-2 border-border pl-3">
+            {previous.map((label, idx) => (
+              <li
+                key={`${idx}-${label}`}
+                className="flex items-center gap-2"
+              >
+                <span className="text-accent shrink-0" aria-label="Done">✓</span>
+                <span>{label}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-      <ul className="text-sm space-y-1">
-        {labels.map((label, idx) => {
-          const isLatest = idx === labels.length - 1;
-          return (
-            <li
-              key={`${idx}-${label}`}
-              className={`flex items-center gap-2 ${
-                isLatest ? "text-text" : "text-muted"
-              }`}
-            >
-              <StatusDot active={isLatest} />
-              <span>{label}</span>
-            </li>
-          );
-        })}
-      </ul>
     </div>
   );
 }

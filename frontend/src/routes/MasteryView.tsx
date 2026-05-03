@@ -362,19 +362,26 @@ export function MasteryView() {
   };
 
   const handleAction = (sub: MasterySubsectionNode) => {
-    // Per L33 — clicking Start/Revisit pre-locks the subsection. We
-    // hand off via localStorage so the value survives ChatView's
-    // bootstrap re-mount when studentId resolves.
+    // Demo flow (per UX feedback 2026-05-03):
+    //   1. user clicks Start on a subsection
+    //   2. chat view bootstraps and renders the rapport opener
+    //   3. AFTER rapport renders, the subsection name is auto-injected
+    //      as a student message
+    //   4. Dean resolves the topic normally and locks it
+    //
+    // We previously also wrote REVISIT_TOPIC_PATH to drive the backend
+    // prelocked_topic shortcut, but that produced a stacked
+    // "Got it - let's work on X" tutor message immediately after the
+    // rapport, which read like the LLM was talking to itself. The
+    // subsection-name injection is the natural-feeling alternative.
     try {
-      if (sub.path) {
-        localStorage.setItem(REVISIT_TOPIC_PATH, sub.path);
-        localStorage.removeItem(REVISIT_KEY);
-      } else if (sub.subsection) {
-        localStorage.setItem(REVISIT_KEY, sub.subsection);
-        localStorage.removeItem(REVISIT_TOPIC_PATH);
+      const subName = (sub.subsection || "").trim();
+      if (subName) {
+        localStorage.setItem(REVISIT_KEY, subName);
       }
+      localStorage.removeItem(REVISIT_TOPIC_PATH);
     } catch {
-      // ignore — user without localStorage just won't get the auto-prelock
+      // localStorage unavailable — user just won't get the auto-inject
     }
     resetSession();
     navigate("/chat");

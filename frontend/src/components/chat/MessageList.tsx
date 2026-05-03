@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import { useSessionStore } from "../../stores/sessionStore";
 import { useTTS } from "../../hooks/useTTS";
 import { ActivityFeed } from "./ActivityFeed";
-import { ImageUploadCard } from "./ImageUploadCard";
 import { MessageBubble } from "./MessageBubble";
 import { ThinkingIndicator } from "./ThinkingIndicator";
 
@@ -30,25 +29,21 @@ export function MessageList() {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages.length, isWaiting, streaming.length, activityLog.length]);
 
-  // The "thinking…" indicator only shows while we're waiting AND
-  // there's no other live signal (no streaming tokens yet, no activity
-  // labels yet). Once either lands, the spinner disappears so the user
-  // isn't seeing two indicators at once.
+  // Thinking indicator: only while waiting AND no other live signal
+  // (no streaming tokens, no activity labels yet). Once the activity
+  // feed starts emitting backend-stage labels it takes over — this is
+  // the desired behavior (the activity feed is more informative).
   const showThinking =
     isWaiting && streaming.length === 0 && activityLog.length === 0;
-  // The activity feed lingers while waiting; once the streaming
-  // bubble appears or the final message lands, the activity feed
-  // can fade out (we hide it once streaming has any content).
+  // Activity feed: render whenever we have stage labels and aren't
+  // already streaming the tutor's bubble. This is the "live" mode of
+  // the thinking indicator — shows each backend stage as it fires.
   const showActivity =
     isWaiting && activityLog.length > 0 && streaming.length === 0;
-  // L77 — image upload affordance. Only shown on a fresh chat
-  // (rapport phase: at most the rapport opener has been rendered, no
-  // student messages yet). Hidden as soon as the student types or
-  // picks a topic card.
-  const showImageUpload = (
-    !isWaiting
-    && messages.filter((m) => m.role === "student").length === 0
-  );
+  // L77 — image upload moved to a `+` button on the Composer toolbar
+  // (per UX feedback: the big upload card cluttered the rapport view
+  // and lingered in the wrong contexts). The Composer button gates on
+  // the same conditions: no student turns yet AND no topic locked.
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -56,7 +51,6 @@ export function MessageList() {
         {messages.map((m) => (
           <MessageBubble key={m.id} message={m} />
         ))}
-        {showImageUpload && <ImageUploadCard />}
         {showActivity && <ActivityFeed labels={activityLog} mode="live" />}
         {streaming && (
           <div className="rounded-card bg-panel border border-border px-4 py-3">

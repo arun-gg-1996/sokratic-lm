@@ -18,7 +18,7 @@
  * native `title` attribute (no extra dependencies). Each tooltip
  * explains what the counter measures + what triggers escalation.
  */
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSessionStore } from "../../stores/sessionStore";
 import { useUserStore } from "../../stores/userStore";
 import { AccountPopover } from "../account/AccountPopover";
@@ -67,6 +67,10 @@ function derivePhase(d: DebugRecord, topicConfirmed: boolean, assessmentTurn: nu
 
 export function Sidebar() {
   const navigate = useNavigate();
+  const location = useLocation();
+  // Phase badge + counters only make sense in the chat view — they're
+  // metadata for the active session, not global app state.
+  const isChatView = location.pathname.startsWith("/chat");
   const studentId = useUserStore((s) => s.studentId);
   const resetSession = useSessionStore((s) => s.reset);
   const debug = useSessionStore((s) => s.debug) as DebugRecord;
@@ -127,13 +131,17 @@ export function Sidebar() {
           <div className="text-2xl font-semibold">Sokratic</div>
         </div>
 
-        {/* L80.c — prominent phase badge */}
-        <div
-          className={`rounded-card border px-3 py-2 text-center text-sm font-semibold tracking-wide uppercase transition-colors duration-300 ${PHASE_BADGE_CLASS[phase]}`}
-          title={`Current session phase: ${PHASE_LABEL[phase]}`}
-        >
-          {PHASE_LABEL[phase]}
-        </div>
+        {/* L80.c — prominent phase badge.
+            Phase + counters are session-scoped; only render in chat view
+            so they don't leak onto Chats list / My Mastery / settings. */}
+        {isChatView && (
+          <div
+            className={`rounded-card border px-3 py-2 text-center text-sm font-semibold tracking-wide uppercase transition-colors duration-300 ${PHASE_BADGE_CLASS[phase]}`}
+            title={`Current session phase: ${PHASE_LABEL[phase]}`}
+          >
+            {PHASE_LABEL[phase]}
+          </div>
+        )}
 
         <button
           onClick={startNew}
@@ -151,7 +159,8 @@ export function Sidebar() {
           </Link>
         </nav>
 
-        {/* L80.a — phase-contextual counter panel */}
+        {/* L80.a — phase-contextual counter panel (chat-view only) */}
+        {isChatView && (
         <div className="rounded-card border border-border bg-bg px-3 py-3 space-y-2 text-sm transition-opacity duration-300">
           {phase === "rapport" && (
             <div
@@ -261,6 +270,7 @@ export function Sidebar() {
             </div>
           )}
         </div>
+        )}
 
         <div className="flex-1" />
 

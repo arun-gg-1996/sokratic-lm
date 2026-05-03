@@ -107,39 +107,17 @@ export function useSession() {
           ? (initialDebug?.turn_trace as Array<Record<string, unknown>>)
           : [];
         if (session.initial_message) addTutorMessage(session.initial_message, "rapport", initialTrace, 0);
-        // Change 2 (2026-04-29): for prelocked sessions, the backend now
-        // builds the dean's deterministic topic-acknowledgement message
-        // inline and sends it back as `initial_topic_ack`. Render it as
-        // a second tutor turn — the user lands directly on "Got it —
-        // let's work on X. Question?" without us needing to fake a
-        // student message to trigger the dean.
-        if (session.initial_topic_ack && session.initial_topic_ack.trim()) {
-          addTutorMessage(session.initial_topic_ack.trim(), "tutoring", [], 0);
-        }
-        // Auto-send queue for the legacy free-text Revisit path only.
-        // Pre-locked sessions used to need a kickstarter ("Let's begin
-        // with the first question.") so the dean would fire — that's
-        // obsolete now that the ack message ships in the bootstrap
-        // response. We still support REVISIT_KEY (legacy fallback)
-        // where the click happened before path metadata was set; in
-        // that case we send the subsection title as free-text and let
-        // the dean resolve topic the usual way.
+        // My Mastery → Start flow (refactored 2026-05-03):
+        // Don't pre-bake a topic_ack on the backend. Instead, queue
+        // the subsection name as a student auto-send, dispatched
+        // after rapport has rendered (the polling effect below uses
+        // a 1500ms initial delay). Dean will then resolve the topic
+        // via the normal lock flow.
         try {
-          if (prelockedPath && session.initial_topic_ack) {
-            // Prelocked + ack already shown — no auto-send needed.
-            // Student types their first answer attempt directly.
-          } else if (prelockedPath) {
-            // Defensive: prelock succeeded but the inline ack failed
-            // (server-side build error). Fall back to the old
-            // kickstarter so the dean's ack-emit branch fires on the
-            // student's first message.
-            pendingRevisitRef.current = "Let's begin with the first question.";
-          } else {
-            const revisit = localStorage.getItem(REVISIT_KEY);
-            if (revisit && revisit.trim()) {
-              pendingRevisitRef.current = revisit.trim();
-              localStorage.removeItem(REVISIT_KEY);
-            }
+          const revisit = localStorage.getItem(REVISIT_KEY);
+          if (revisit && revisit.trim()) {
+            pendingRevisitRef.current = revisit.trim();
+            localStorage.removeItem(REVISIT_KEY);
           }
         } catch {
           // localStorage unavailable — ignore, user just won't get auto-send
@@ -154,17 +132,34 @@ export function useSession() {
     bootstrapRef.current = bootstrap;
   }, [addTutorMessage, memoryEnabled, setDebug, setSessionPhase, setThreadId, studentId, threadId]);
 
-  // Auto-dispatch a queued "Revisit" topic once the websocket is ready.
-  // Polls every 200ms up to 5s; gives up silently if the connection
-  // never opens (the user can still type the topic themselves).
+  // Auto-dispatch a queued "Revisit" topic AFTER the rapport message
+  // has finished streaming. We poll the messages array — the rapport
+  // tutor message starts with shouldStream=true and flips to false
+  // once the typewriter animation completes (markTutorMessageStreamed).
+  // Only then do we fire the auto-injected student message.
+  // This prevents the visual race where the student bubble appears
+  // mid-stream while the rapport text is still typing.
   useEffect(() => {
     if (!threadId || !pendingRevisitRef.current) return;
     let attempts = 0;
-    const maxAttempts = 25; // 25 * 200ms = 5s
+    const maxAttempts = 50; // 50 * 200ms = 10s safety cap
     const tick = () => {
       attempts += 1;
       const topic = pendingRevisitRef.current;
       if (!topic) return;
+      // Look at the latest tutor message — if it's still streaming,
+      // wait for it to finish before injecting the student message.
+      const msgs = useSessionStore.getState().messages;
+      let latestTutor = null;
+      for (let i = msgs.length - 1; i >= 0; i--) {
+        if (msgs[i].role === "tutor") { latestTutor = msgs[i]; break; }
+      }
+      const stillStreaming = Boolean(latestTutor?.shouldStream);
+      if (stillStreaming) {
+        if (attempts < maxAttempts) window.setTimeout(tick, 200);
+        else pendingRevisitRef.current = null;
+        return;
+      }
       const sent = sendStudentMessage(topic);
       if (sent) {
         addStudentMessage(topic);
@@ -180,7 +175,10 @@ export function useSession() {
         pendingRevisitRef.current = null;
       }
     };
-    const handle = window.setTimeout(tick, 200);
+    // Small initial delay for the rapport message to be added to the
+    // store. After that, the streaming-completion check above gates
+    // the actual dispatch.
+    const handle = window.setTimeout(tick, 400);
     return () => window.clearTimeout(handle);
   }, [
     threadId,

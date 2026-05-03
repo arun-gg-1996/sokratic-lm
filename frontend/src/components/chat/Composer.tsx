@@ -17,9 +17,13 @@
  * Send button shares the same disabled treatment so they read as one
  * unit. 100ms transition on background color per L80.e.
  */
-import { FormEvent, KeyboardEvent, useState } from "react";
+import { FormEvent, KeyboardEvent, useRef, useState } from "react";
 import { useSessionStore } from "../../stores/sessionStore";
 import { useSTT } from "../../hooks/useSTT";
+import { uploadVlmImage } from "../../api/client";
+
+const IMAGE_CONTEXT_KEY = "sokratic_pending_image_context";
+const IMAGE_ACCEPT = ".png,.jpg,.jpeg,.webp";
 
 interface ComposerProps {
   onSubmit: (text: string) => void;
@@ -47,12 +51,58 @@ export function Composer({ onSubmit, placeholder = "Reply..." }: ComposerProps) 
   const [text, setText] = useState("");
   const isWaiting = useSessionStore((s) => s.isWaitingForTutor);
   const pendingChoice = useSessionStore((s) => s.pendingChoice);
+  const debug = useSessionStore((s) => s.debug) as Record<string, unknown> | null;
+  const messages = useSessionStore((s) => s.messages);
+  const reset = useSessionStore((s) => s.reset);
   const stt = useSTT();
   const helper = helperFor(isWaiting, pendingChoice?.kind);
   // ChatView already hides the Composer entirely when pendingChoice is
   // set, so the most common disabled path is "tutor is streaming".
   const disabled = isWaiting;
   const showHelper = disabled && helper;
+
+  // Image upload affordance — available only before a topic is locked
+  // and only on a fresh chat (no student messages yet). Once the
+  // student has typed or a topic is confirmed, the + button hides.
+  const topicConfirmed = Boolean(debug?.topic_confirmed);
+  const noStudentTurnsYet = messages.filter((m) => m.role === "student").length === 0;
+  const showImageButton = !topicConfirmed && noStudentTurnsYet;
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const onUploadClick = () => {
+    if (disabled || uploading) return;
+    fileRef.current?.click();
+  };
+
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = ""; // allow re-picking the same file later
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const placeholder = `pending_${Math.random().toString(36).slice(2, 10)}`;
+      const result = await uploadVlmImage(placeholder, file);
+      if (result.route_decision === "refuse" || result.confidence < 0.3) {
+        setUploadError(
+          "Couldn't recognize that image — try a labeled diagram or skip and type the topic.",
+        );
+        setUploading(false);
+        return;
+      }
+      try {
+        localStorage.setItem(IMAGE_CONTEXT_KEY, JSON.stringify(result));
+      } catch {
+        // localStorage unavailable
+      }
+      reset();
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed");
+      setUploading(false);
+    }
+  };
 
   const submit = (e?: FormEvent) => {
     e?.preventDefault();
@@ -88,6 +138,9 @@ export function Composer({ onSubmit, placeholder = "Reply..." }: ComposerProps) 
   return (
     <div className="shrink-0 border-t border-border bg-bg">
       <form onSubmit={submit} className="max-w-lane mx-auto px-6 py-4">
+        {uploadError && (
+          <div className="mb-2 text-xs text-red-400" role="alert">{uploadError}</div>
+        )}
         <div
           className={`rounded-composer flex gap-3 items-end p-3 transition-colors duration-100 ${
             disabled
@@ -110,6 +163,35 @@ export function Composer({ onSubmit, placeholder = "Reply..." }: ComposerProps) 
             aria-disabled={disabled}
             aria-label={showHelper ? (helper as string) : "Reply to tutor"}
           />
+          {showImageButton && (
+            <>
+              <input
+                ref={fileRef}
+                type="file"
+                accept={IMAGE_ACCEPT}
+                onChange={onFileChange}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={onUploadClick}
+                disabled={disabled || uploading}
+                className={`h-10 w-10 rounded-full transition-colors duration-100 ${
+                  disabled || uploading
+                    ? "bg-muted/20 text-muted/40 cursor-not-allowed"
+                    : "bg-panel text-text border border-border hover:border-accent"
+                }`}
+                aria-label="Upload an anatomical image"
+                title={uploading ? "Analyzing image…" : "Upload an image (anatomical diagram or photo)"}
+              >
+                {uploading ? (
+                  <span className="inline-block h-3 w-3 rounded-full border-2 border-muted border-t-accent animate-spin" />
+                ) : (
+                  "+"
+                )}
+              </button>
+            </>
+          )}
           {stt.supported && (
             <button
               type="button"
