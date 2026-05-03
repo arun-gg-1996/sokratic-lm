@@ -47,48 +47,70 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
     # Legacy slot — kept for knowledge-tracing wiring (D.3).
     weak_topics: list[dict] = []
 
-    # Pull cross-session memories from mem0. Empty list for new students,
-    # if memory is disabled for this session (frontend toggle), or if
-    # Qdrant/mem0 is unavailable (memory_manager swallows all errors).
+    # Pull cross-session context from SQL (per L1 — session_summary +
+    # open_thread now live in the sessions table, not mem0).
     #
-    # Two TARGETED queries instead of one generic "topics + misconceptions
-    # + outcomes" sweep. Why: the rapport opener should reference at most
-    # ONE prior topic or open thread (per the prompt rules in
-    # config/base.yaml::teacher_rapport). Misconceptions and learning-
-    # style cues are tutor-internal — not material for an opener — and
-    # surfacing them in the rapport prompt creates noise the LLM has to
-    # ignore. This used to be one generic search returning a mixed bag;
-    # now we filter at the mem0 layer to:
-    #   1. session_summary  → "the most recent session's topic"
-    #   2. open_thread      → "any unresolved thread to offer continuation"
-    # Both filters require the metadata payload added in commit
-    # 'feat(memory): tag mem0 entries with category + topic metadata'.
+    # Two derived signals fold into past_memories for the rapport prompt:
+    #   1. "recent_summary" — most recent COMPLETED session's locked topic
+    #      (sessions.ended_at IS NOT NULL AND status='completed')
+    #   2. "open_thread"    — any session left unresolved
+    #      (ended_at IS NULL OR status IN
+    #         ('abandoned_no_lock','ended_off_domain','ended_turn_limit'))
+    # Both are formatted as memory-shaped dicts so draft_rapport treats
+    # them identically to a mem0 entry. Misconception + learning_style
+    # narratives stay in mem0 (per L1) — those are tutor-internal,
+    # NOT material for an opener.
     student_id = state.get("student_id", "") or ""
     memory_enabled = bool(state.get("memory_enabled", True))
     past_memories: list[dict] = []
     weak_subsections: list[dict] = []
     if student_id and memory_enabled:
         try:
-            recent_summaries = memory_manager.load(
+            from memory.sqlite_store import SQLiteStore
+            store = SQLiteStore()
+            # Most recent completed session — surface as "session summary"
+            recent = store.list_sessions(student_id, limit=1, completed_only=True)
+            for s in recent:
+                topic = (
+                    s.get("locked_subsection_path")
+                    or s.get("locked_topic_path")
+                    or ""
+                )
+                if not topic:
+                    continue
+                tier = s.get("mastery_tier") or "not_assessed"
+                past_memories.append({
+                    "memory": (
+                        f"[Recent session] Last covered: {topic}. "
+                        f"Mastery tier: {tier}. "
+                        f"Reach: {'yes' if s.get('reach_status') else 'partial/no'}."
+                    )
+                })
+            # Open threads — sessions with no ended_at OR unresolved-status
+            open_sessions = store.list_sessions(
                 student_id,
-                query="most recent session topic",
-                filters={"category": "session_summary"},
+                limit=3,
+                status=("abandoned_no_lock", "ended_off_domain", "ended_turn_limit"),
             )
+            in_progress = store.list_sessions(student_id, limit=3, status="in_progress")
+            for s in (in_progress + open_sessions)[:3]:
+                topic = (
+                    s.get("locked_subsection_path")
+                    or s.get("locked_topic_path")
+                    or ""
+                )
+                if not topic:
+                    continue
+                past_memories.append({
+                    "memory": (
+                        f"[Open thread] Student was working on: {topic}. "
+                        f"Status: {s.get('status', 'in_progress')}. "
+                        f"Resume this topic if helpful."
+                    )
+                })
         except Exception:
-            recent_summaries = []
-        try:
-            open_threads = memory_manager.load(
-                student_id,
-                query="unresolved thread to resume",
-                filters={"category": "open_thread"},
-            )
-        except Exception:
-            open_threads = []
-        # Cap each list and merge. The rapport prompt only needs a few
-        # bullets — more memory just dilutes the LLM's attention. Keep
-        # open_threads first (more rapport-actionable than completed
-        # summaries) and trim to 6 total entries.
-        past_memories = (open_threads[:3] + recent_summaries[:3])[:6]
+            # SQL unreachable — degrade silently. Cold-start opener still works.
+            pass
 
         # D.3: pull the student's weakest subsections so the rapport
         # opener can reference one *quantitatively* (not just "we worked
