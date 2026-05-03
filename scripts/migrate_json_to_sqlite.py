@@ -4,8 +4,12 @@ scripts/migrate_json_to_sqlite.py
 One-shot migration of legacy per-student JSON mastery files into the new
 SQLite store (per docs/AUDIT_2026-05-02.md L1, L2).
 
-Source:    data/student_state/{student_id}.json   (one file per student)
-Target:    data/student_state/sokratic.sqlite3    (single SQLite DB)
+Source:    data/student_state/{student_id}.json              (one file per student)
+Target:    data/student_state/sokratic_{domain}.sqlite3      (per-domain DB)
+
+Pass --domain to control which DB file you migrate into (default
+"openstax_anatomy"). Per docs/AUDIT_2026-05-02.md L1, each domain has its
+own SQLite file; same student_id can hold independent progress in each.
 
 The legacy JSON shape is:
 
@@ -101,8 +105,12 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--dry-run", action="store_true",
                    help="Report what would migrate; do not write to SQLite.")
+    p.add_argument("--domain", default="openstax_anatomy",
+                   help="Target domain (default: openstax_anatomy). Selects "
+                        "data/student_state/sokratic_{domain}.sqlite3 unless "
+                        "--db is given.")
     p.add_argument("--db", type=Path, default=None,
-                   help="Override target SQLite DB path (default: data/student_state/sokratic.sqlite3).")
+                   help="Override target SQLite DB path (default resolved from --domain).")
     args = p.parse_args()
 
     chapter_lookup = load_chapter_lookup()
@@ -113,8 +121,8 @@ def main():
 
     store: SQLiteStore | None = None
     if not args.dry_run:
-        store = SQLiteStore(db_path=args.db)
-        print(f"opened SQLite DB at {store.db_path}", flush=True)
+        store = SQLiteStore(domain=args.domain, db_path=args.db)
+        print(f"opened SQLite DB at {store.db_path} (domain={args.domain})", flush=True)
 
     n_students = 0
     n_concepts_migrated = 0

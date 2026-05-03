@@ -11,13 +11,26 @@ docs/AUDIT_2026-05-02.md). Owns:
 mem0 is reduced to misconception + learning_style only (per L1). Anything
 structured / countable / aggregatable lives here.
 
+Domain isolation
+----------------
+Each domain (anatomy, physics, etc.) gets its OWN SQLite file
+(`data/student_state/sokratic_{retrieval_domain}.sqlite3`). Mirrors how
+mem0 already separates per-domain Qdrant collections + namespaces. Same
+student_id can have completely independent progress in each domain; no
+domain column is needed on any table; `WHERE domain=?` is impossible to
+forget because the file is the boundary. Switching domains = swapping
+files, just like everything else under `cfg.domain.*`.
+
 Public entry points
 -------------------
-SQLiteStore(db_path)                        constructor; runs migrations on first use
+SQLiteStore(domain="openstax_anatomy")      production: per-domain DB file
+SQLiteStore(db_path=tmp_path/"x.sqlite3")   tests: explicit override
+SQLiteStore()                               picks cfg.domain.retrieval_domain
   .ensure_student(student_id, *, display_name=None) → student row
   .start_session(thread_id, student_id, *, message_log_path=None,
                  image_path=None, image_context=None) → inserts in_progress row
-  .update_session(thread_id, **fields)      partial update; only non-None fields applied
+  .update_session(thread_id, **fields)      partial update; explicit None
+                                             writes SQL NULL (skip = omit kwarg)
   .get_session(thread_id) → dict | None
   .list_sessions(student_id, *, limit=20, status=None) → list[dict]
   .upsert_subsection_mastery(student_id, subsection_path, fresh_score, outcome,
@@ -46,8 +59,23 @@ from pathlib import Path
 from typing import Any, Iterable, Optional
 
 REPO = Path(__file__).resolve().parent.parent
-DEFAULT_DB_PATH = REPO / "data" / "student_state" / "sokratic.sqlite3"
 MIGRATIONS_DIR = Path(__file__).resolve().parent / "migrations"
+
+# Per-domain SQLite DB files — physical isolation guarantees zero cross-domain
+# contamination, mirroring how mem0 already isolates per domain via its own
+# Qdrant collection (cfg.domain.memory_collection). One DB file per domain
+# means: same student_id can have independent progress across anatomy /
+# physics / future domains; no domain column needed on any table; per-domain
+# dump / restore / reset is one file operation.
+def default_db_path(domain: str) -> Path:
+    """Resolve the canonical SQLite path for a domain.
+
+    `domain` should match `cfg.domain.retrieval_domain` (e.g.
+    "openstax_anatomy", "physics"). Falls back to "default" only if a caller
+    explicitly opts out by passing domain="default" — production callers
+    should always pass an explicit domain.
+    """
+    return REPO / "data" / "student_state" / f"sokratic_{domain}.sqlite3"
 
 # Mastery tier mapping (per L3 + L68 — score → categorical tier).
 # Read at L3 rollup time + when projecting subsection mastery into a session.
@@ -117,11 +145,42 @@ class SQLiteStore:
     Migrations are applied lazily on first use.
     """
 
-    _migrations_applied = False
+    # Per-DB-path cache so we don't re-run migrations on the same file in
+    # the same process. Keyed by absolute path string. A separate DB file
+    # (different domain, test fixture, etc.) gets its own migration pass.
+    _migrations_applied_paths: set[str] = set()
     _migrations_lock = threading.Lock()
 
-    def __init__(self, db_path: Optional[Path | str] = None):
-        self.db_path = Path(db_path) if db_path else DEFAULT_DB_PATH
+    def __init__(
+        self,
+        domain: Optional[str] = None,
+        *,
+        db_path: Optional[Path | str] = None,
+    ):
+        """Open a per-domain SQLite store.
+
+        Resolution order:
+          1. Explicit `db_path` (test isolation, override).
+          2. `default_db_path(domain)` if `domain` is given.
+          3. `default_db_path(cfg.domain.retrieval_domain)` (production path).
+          4. Raise — refuse to open a domain-blind DB.
+        """
+        if db_path is not None:
+            self.db_path = Path(db_path)
+        else:
+            if domain is None:
+                # Resolve from active config — keeps callers terse in
+                # production (`SQLiteStore()` "just works" against the active
+                # domain) without ever risking a shared cross-domain file.
+                from config import cfg as _cfg
+                domain = _cfg.domain.retrieval_domain
+            if not domain:
+                raise ValueError(
+                    "SQLiteStore requires a non-empty domain (got "
+                    f"{domain!r}); pass domain= or db_path= explicitly."
+                )
+            self.db_path = default_db_path(domain)
+        self.domain = domain
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._tls = threading.local()
         self._ensure_migrations()
@@ -145,17 +204,20 @@ class SQLiteStore:
             self._tls.conn = None
 
     def _ensure_migrations(self) -> None:
-        # Lazy + thread-safe; run once per process per db_path.
+        """Apply any unrun migrations against this instance's DB file.
+
+        Cached per absolute DB path so repeated SQLiteStore instances on the
+        same file in the same process pay no extra cost, while different
+        files (different domains, test fixtures) each get their own pass.
+        """
+        path_key = str(self.db_path.resolve())
         with type(self)._migrations_lock:
-            if type(self)._migrations_applied:
-                # Even if the class flag is set, a brand-new db file may need
-                # migrations. Check schema_version to be safe.
-                pass
+            if path_key in type(self)._migrations_applied_paths:
+                return
             conn = self._conn()
-            applied: set[int] = set()
             try:
                 cur = conn.execute("SELECT version FROM schema_version")
-                applied = {row["version"] for row in cur.fetchall()}
+                applied: set[int] = {row["version"] for row in cur.fetchall()}
             except sqlite3.OperationalError:
                 applied = set()
 
@@ -164,10 +226,9 @@ class SQLiteStore:
                 version = int(migration_file.name.split("_", 1)[0])
                 if version in applied:
                     continue
-                sql = migration_file.read_text()
-                conn.executescript(sql)
+                conn.executescript(migration_file.read_text())
                 conn.commit()
-            type(self)._migrations_applied = True
+            type(self)._migrations_applied_paths.add(path_key)
 
     # ── Helpers ────────────────────────────────────────────────────────────
 
@@ -256,12 +317,18 @@ class SQLiteStore:
     }
 
     def update_session(self, thread_id: str, **fields: Any) -> dict | None:
-        """Partial update of a session row. Only non-None fields are written.
+        """Partial update of a session row.
 
-        Special handling:
-          * `key_takeaways` and `image_context` accept dicts; serialized as JSON.
-          * `reach_status` accepts bool; stored as INTEGER 0/1.
-          * `status` validated against the L21 enum.
+        Every kwarg passed is written, including explicit None (which sets
+        the column to SQL NULL). To skip a column entirely, simply don't
+        pass that kwarg. This unambiguous semantics avoids silent drops on
+        programmer typos.
+
+        Special encoding:
+          * `key_takeaways` / `image_context` accept dict or list — serialized as JSON.
+          * `reach_status` accepts bool — stored as INTEGER 0/1.
+          * `status` validated against the L21 enum (None is rejected for
+            status because the column is NOT NULL).
         """
         if not fields:
             return self.get_session(thread_id)
@@ -271,27 +338,20 @@ class SQLiteStore:
         for col, value in fields.items():
             if col not in self._UPDATEABLE_SESSION_COLS:
                 raise ValueError(f"Unknown session column: {col!r}")
-            if value is None:
-                # Explicit None means "set to NULL" — but treat skip-if-None as
-                # the default for partial updates. Caller can set status=None
-                # only deliberately and it's harmless (status has NOT NULL +
-                # default).
-                continue
-            if col == "status" and value not in SESSION_STATUSES:
-                raise ValueError(
-                    f"Invalid status {value!r}; valid: {sorted(SESSION_STATUSES)}"
-                )
-            if col == "key_takeaways" and isinstance(value, (dict, list)):
-                value = json.dumps(value)
-            elif col == "image_context" and isinstance(value, (dict, list)):
-                value = json.dumps(value)
-            elif col == "reach_status" and isinstance(value, bool):
-                value = 1 if value else 0
+            if col == "status":
+                if value is None:
+                    raise ValueError("status is NOT NULL — cannot be set to None")
+                if value not in SESSION_STATUSES:
+                    raise ValueError(
+                        f"Invalid status {value!r}; valid: {sorted(SESSION_STATUSES)}"
+                    )
+            elif value is not None:
+                if col in ("key_takeaways", "image_context") and isinstance(value, (dict, list)):
+                    value = json.dumps(value)
+                elif col == "reach_status" and isinstance(value, bool):
+                    value = 1 if value else 0
             sets.append(f"{col} = ?")
             vals.append(value)
-
-        if not sets:
-            return self.get_session(thread_id)
 
         vals.append(thread_id)
         conn = self._conn()

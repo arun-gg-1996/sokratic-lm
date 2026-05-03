@@ -47,9 +47,7 @@ from memory.sqlite_store import (
 
 @pytest.fixture
 def store(tmp_path: Path) -> SQLiteStore:
-    """Fresh SQLite DB per test."""
-    # Reset the migration-applied flag so each tmp DB gets migrations run.
-    SQLiteStore._migrations_applied = False
+    """Fresh SQLite DB per test (explicit db_path bypasses domain resolution)."""
     db = tmp_path / "test.sqlite3"
     s = SQLiteStore(db_path=db)
     yield s
@@ -86,7 +84,6 @@ def topic_index_min() -> list[dict]:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def test_migration_creates_three_tables(tmp_path):
-    SQLiteStore._migrations_applied = False
     db = tmp_path / "x.sqlite3"
     s = SQLiteStore(db_path=db)
     conn = s._conn()
@@ -97,16 +94,29 @@ def test_migration_creates_three_tables(tmp_path):
 
 
 def test_migration_idempotent(tmp_path):
-    SQLiteStore._migrations_applied = False
     db = tmp_path / "x.sqlite3"
     SQLiteStore(db_path=db).close()
-    SQLiteStore._migrations_applied = False  # simulate process restart
-    SQLiteStore(db_path=db).close()  # should not raise
+    # Re-open same file in same process — must not duplicate version row.
+    SQLiteStore(db_path=db).close()
     s = SQLiteStore(db_path=db)
     cur = s._conn().execute("SELECT version FROM schema_version")
     versions = [r["version"] for r in cur.fetchall()]
-    assert versions == [1]  # exactly one row, not duplicated
+    assert versions == [1]
     s.close()
+
+
+def test_two_dbs_in_same_process_both_get_migrations(tmp_path):
+    """Regression: the migrations cache is per-DB-path; opening a second DB
+    file in the same process must run migrations on it, not skip because the
+    first DB already had them applied."""
+    a = tmp_path / "a.sqlite3"
+    b = tmp_path / "b.sqlite3"
+    sa = SQLiteStore(db_path=a)
+    sb = SQLiteStore(db_path=b)
+    for s in (sa, sb):
+        cur = s._conn().execute("SELECT version FROM schema_version")
+        assert {r["version"] for r in cur.fetchall()} == {1}
+    sa.close(); sb.close()
 
 
 def test_foreign_keys_enforced(store):
@@ -418,3 +428,110 @@ def test_status_enum_matches_l21_spec():
 def test_color_threshold_constants():
     assert COLOR_GREEN_MIN == 0.75
     assert COLOR_YELLOW_MIN == 0.50
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Cross-domain isolation (per L1 — separate DB file per domain)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_default_db_path_is_per_domain():
+    from memory.sqlite_store import default_db_path
+    assert default_db_path("openstax_anatomy").name == "sokratic_openstax_anatomy.sqlite3"
+    assert default_db_path("physics").name == "sokratic_physics.sqlite3"
+    # Different domains → different file paths (cross-contamination impossible)
+    assert default_db_path("openstax_anatomy") != default_db_path("physics")
+
+
+def test_two_domain_dbs_isolated(tmp_path):
+    """Same student_id, two domain DBs, no cross-read.
+
+    Models the real-world scenario: a student studies both anatomy and
+    physics. Their progress in each must be independent.
+    """
+    db_anat = tmp_path / "sokratic_openstax_anatomy.sqlite3"
+    db_phys = tmp_path / "sokratic_physics.sqlite3"
+    s_anat = SQLiteStore(db_path=db_anat)
+    s_phys = SQLiteStore(db_path=db_phys)
+
+    # Same student_id in both domains
+    s_anat.start_session("t-anat-1", "alice")
+    s_anat.end_session("t-anat-1", status="completed", mastery_tier="proficient",
+                       locked_subsection_path="The Cardiovascular System: ... > Sec > Sub")
+    s_anat.upsert_subsection_mastery(
+        "alice", "Anatomy > Sec > Sub", fresh_score=0.9, outcome="reached"
+    )
+
+    s_phys.start_session("t-phys-1", "alice")
+    s_phys.end_session("t-phys-1", status="completed", mastery_tier="developing")
+    s_phys.upsert_subsection_mastery(
+        "alice", "Physics > Sec > Sub", fresh_score=0.6, outcome="partial"
+    )
+
+    # Anatomy DB sees only the anatomy session + mastery
+    assert {s["thread_id"] for s in s_anat.list_sessions("alice")} == {"t-anat-1"}
+    anat_paths = {m["subsection_path"] for m in s_anat.list_subsection_mastery("alice")}
+    assert anat_paths == {"Anatomy > Sec > Sub"}
+
+    # Physics DB sees only the physics session + mastery
+    assert {s["thread_id"] for s in s_phys.list_sessions("alice")} == {"t-phys-1"}
+    phys_paths = {m["subsection_path"] for m in s_phys.list_subsection_mastery("alice")}
+    assert phys_paths == {"Physics > Sec > Sub"}
+
+    # Stats counters never leak across domains
+    assert s_anat.student_stats("alice")["completed_sessions"] == 1
+    assert s_phys.student_stats("alice")["completed_sessions"] == 1
+    s_anat.close(); s_phys.close()
+
+
+def test_no_domain_no_db_path_raises(monkeypatch):
+    """Production safety: refusing to open a domain-blind store."""
+    # Force cfg.domain.retrieval_domain to be empty/missing
+    import config
+    monkeypatch.setattr(config.cfg.domain, "retrieval_domain", "", raising=False)
+    with pytest.raises(ValueError, match="non-empty domain"):
+        SQLiteStore()
+
+
+def test_explicit_domain_resolves_canonical_path(tmp_path, monkeypatch):
+    """Passing domain= alone must land at the canonical per-domain file."""
+    # Sandbox the data dir so we don't write to real student_state during tests
+    from memory import sqlite_store as _ss
+    monkeypatch.setattr(_ss, "REPO", tmp_path)
+    s = SQLiteStore(domain="testdomain")
+    expected = tmp_path / "data" / "student_state" / "sokratic_testdomain.sqlite3"
+    assert s.db_path == expected
+    assert s.domain == "testdomain"
+    s.close()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# update_session — explicit-NULL semantics (Refinement R3)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def test_explicit_none_writes_null(store):
+    """Passing a kwarg with value=None should set the column to SQL NULL."""
+    store.start_session("t1", "alice")
+    store.update_session("t1", locked_topic_path="Some Topic", turn_count=5)
+    assert store.get_session("t1")["locked_topic_path"] == "Some Topic"
+
+    store.update_session("t1", locked_topic_path=None)
+    assert store.get_session("t1")["locked_topic_path"] is None
+    # Other columns must not have been touched
+    assert store.get_session("t1")["turn_count"] == 5
+
+
+def test_status_cannot_be_none(store):
+    """status is NOT NULL — must reject explicit None."""
+    store.start_session("t1", "alice")
+    with pytest.raises(ValueError, match="status is NOT NULL"):
+        store.update_session("t1", status=None)
+
+
+def test_omit_kwarg_skips_column(store):
+    """If you don't pass a column at all, it stays unchanged (vs explicit None)."""
+    store.start_session("t1", "alice")
+    store.update_session("t1", locked_topic_path="X", turn_count=10)
+    store.update_session("t1", turn_count=11)  # locked_topic_path NOT passed
+    row = store.get_session("t1")
+    assert row["locked_topic_path"] == "X"  # still there
+    assert row["turn_count"] == 11
