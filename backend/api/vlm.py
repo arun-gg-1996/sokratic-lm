@@ -122,7 +122,13 @@ async def upload_image(
     from vlm.extract import extract_image_context
 
     client = make_anthropic_client()
-    model = resolve_model(getattr(_cfg.models, "vlm", None) or _cfg.models.dean)
+    # config/base.yaml exposes the vision model as `vision`; legacy
+    # name `vlm` falls through to `dean` when absent.
+    model = resolve_model(
+        getattr(_cfg.models, "vision", None)
+        or getattr(_cfg.models, "vlm", None)
+        or _cfg.models.dean
+    )
     prompt = (
         getattr(vlm_cfg, "prompt_template", "") or
         "Identify all anatomical structures visible in this image."
