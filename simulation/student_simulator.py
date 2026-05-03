@@ -40,12 +40,18 @@ class StudentSimulator:
 
         Args:
             state: Current TutorState.
-                   Uses: hint_level, locked_answer, messages (for last tutor message)
+                   Uses: hint_level, locked_answer, messages (for last tutor message),
+                         pending_user_choice (mimic UI button clicks)
 
         Returns:
             A realistic student response string matching this profile's behavior.
 
         Flow:
+          0. If state.pending_user_choice is set, mimic UI buttons: pick the
+             expected option (yes for opt_in/confirm_topic; first option for
+             topic cards). Real users click these buttons; the simulator
+             mirrors that so the conversation doesn't drift back into
+             topic-mapper hell when it's actually mid-confirmation.
           1. Get hint_level from state (clamp to 1-3)
           2. Determine if student "should" answer correctly this turn:
                roll = random.random()
@@ -57,6 +63,34 @@ class StudentSimulator:
           5. Naturalize raw with Claude
           6. Return naturalized response
         """
+        # L73 + Track 4.7d UX: mimic UI button clicks when a pending choice
+        # is open. Without this, the simulator typed substantive answers
+        # into the opt-in / confirm-topic prompts, which the v2 flow
+        # interpreted as topic-switch attempts and re-fired the L9 mapper.
+        # That manifested as the "wrong-topic-lock + opt-in infinite loop"
+        # bug observed during the 2026-05-03 sanity check.
+        pending = state.get("pending_user_choice") or {}
+        if isinstance(pending, dict):
+            kind = pending.get("kind", "")
+            options = pending.get("options") or []
+            if kind in {"opt_in", "confirm_topic"} and options:
+                # Disengaged students decline; everyone else takes the
+                # bonus/confirms. Mimics how the buttons would actually
+                # be clicked by these personas.
+                if self.profile.engagement_level < 0.3:
+                    # Disengaged → decline
+                    return "No"
+                return "Yes"
+            if kind == "topic" and options:
+                # Pick the first card — same default as the e2e harness
+                end_value = pending.get("end_session_value")
+                # Skip the "Give up / End session" sentinel even if present
+                for opt in options:
+                    if end_value and opt.lower() in {end_value.lower(), "give up", "end session"}:
+                        continue
+                    return str(opt)
+                return str(options[0])
+
         hint_level = max(1, min(3, state.get("hint_level", 1)))
 
         # Get topic from first student message or locked_answer context

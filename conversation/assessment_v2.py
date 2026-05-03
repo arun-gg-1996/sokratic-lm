@@ -47,6 +47,11 @@ CLINICAL_TURN_CAP = 7
 # Sentinel labels used in pending_user_choice for clinical opt-in
 OPT_IN_OPTIONS = ["Yes", "No"]
 
+# Max re-ask attempts when opt-in classifier returns "ambiguous". Beyond
+# this we close the session (per L65) instead of looping. Surfaced as a
+# constant so tests + the audit doc can reference it.
+OPT_IN_REASK_CAP = 2
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Public entry point
@@ -216,7 +221,19 @@ def _handle_opt_in_response(
         # L65 — answer-confirmation graceful close
         return _render_reach_close(state, teacher_v2, messages=messages)
 
-    # Ambiguous: re-ask once with the same opt-in card.
+    # Ambiguous: re-ask, but cap re-asks to prevent infinite loops
+    # (sanity-check observation 2026-05-03 — the simulator typing
+    # substantive responses kept landing in ambiguous and looping).
+    # After OPT_IN_REASK_CAP attempts, treat as "no" and close
+    # gracefully via L65.
+    reask_count = int(state.get("opt_in_reask_count", 0) or 0)
+    if reask_count >= OPT_IN_REASK_CAP:
+        state["debug"]["turn_trace"].append({
+            "wrapper": "assessment_v2.opt_in_reask_cap",
+            "result": f"reask_count={reask_count} >= cap {OPT_IN_REASK_CAP}; treating as no",
+        })
+        return _render_reach_close(state, teacher_v2, messages=messages)
+    state["opt_in_reask_count"] = reask_count + 1
     return _render_opt_in_clarify(state, teacher_v2, messages=messages)
 
 
@@ -885,18 +902,60 @@ def _last_scenario_from_history(state: dict) -> str:
     return ""
 
 
+_YES_TOKENS = {
+    "yes", "y", "yeah", "yep", "yup", "sure", "ok", "okay",
+    "absolutely", "definitely", "totally",
+    "let's", "lets",   # "let's do it" / "lets go" — first token
+    "i'd", "i'll",     # "I'd love to" / "I'll try"
+    "go", "go ahead",
+}
+_NO_TOKENS = {
+    "no", "n", "nope", "nah", "not", "skip", "pass", "stop",
+    "wrap", "done", "end", "later", "exit",
+}
+_NEGATION_TOKENS = {"not", "no", "n't", "nope", "nah"}
+
+
 def _classify_opt_in(student_msg: str) -> str:
     """Return 'yes', 'no', or 'ambiguous'.
 
-    Per L73 — drop the legacy ≥6-word implicit-yes heuristic. Either the
-    student clicks Yes/No, types something matching the canonical phrases,
-    or we re-ask once.
+    Per L73 — the UI's primary path is Yes/No buttons. This classifier
+    handles the free-text fallback. Strategy:
+
+      1. Exact-match canonical strings first (highest precision)
+      2. Otherwise look for a YES/NO token anywhere in the message,
+         penalised by negation. Long substantive affirmations like
+         "Yes, I'd love to try the bonus question!" must classify as
+         "yes" — the legacy ≥6-word implicit-yes heuristic was too
+         coarse, but pure exact-match was too strict and produced
+         infinite re-ask loops on simulator transcripts (sanity-check
+         observation 2026-05-03).
+
+    Returns "ambiguous" only when there's no clear yes/no signal OR
+    when both signals are present (genuinely unclear).
     """
     txt = re.sub(r"\s+", " ", (student_msg or "").strip().lower())
     if not txt:
         return "ambiguous"
+
+    # Exact canonical phrases — highest confidence, short-circuit.
     if txt in {"yes", "y", "yeah", "yep", "sure", "ok", "okay", "let's do it"}:
         return "yes"
     if txt in {"no", "n", "nope", "not really", "skip", "pass", "stop"}:
         return "no"
+
+    # Token search — split on word-ish boundaries.
+    tokens = re.findall(r"[a-z']+", txt)
+    token_set = set(tokens)
+
+    has_yes = bool(token_set & _YES_TOKENS)
+    has_no = bool(token_set & _NO_TOKENS)
+    has_negation = bool(token_set & _NEGATION_TOKENS)
+
+    # "no thanks" / "not really" — no wins regardless of any yes-token.
+    if has_no:
+        return "no"
+    # Plain yes signal with no negation
+    if has_yes and not has_negation:
+        return "yes"
     return "ambiguous"
