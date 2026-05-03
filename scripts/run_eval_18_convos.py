@@ -250,20 +250,58 @@ async def run_one_session(
         print(f"  [{student_id} s{session_index}] topic_input ERROR: {e}")
         return _build_result(student_id, conv_id, profile_id, topic, session_index, turns_log, state, bugs_noted)
 
-    # ---- Card-pick if needed ----
-    if not state.get("topic_confirmed", False):
+    # ---- Pre-lock loop (handles legacy topic-cards AND v2 confirm_topic UX) ----
+    # B1 fix (2026-05-03): the legacy harness only checked `state.topic_options`
+    # and hard-picked opts[0]. v2's L10 confirm_and_lock sets topic_options=[]
+    # and puts options under `pending_user_choice.options` (kind="confirm_topic").
+    # Hard-picking opts[0] then fell back to `topic` (re-typing the original
+    # question), which v2 read as a fresh topic query, kicking off another
+    # confirm_and_lock — infinite loop until the harness 16-turn cap.
+    #
+    # New approach: defer to simulator.respond() which already handles every
+    # pending_user_choice kind correctly (mimics UI button clicks per the
+    # f78f8e1 simulator fix). Loop a few times because the v2 flow may need
+    # multiple turns to lock (confirm_and_lock → yes → coverage gate → cards
+    # → pick).
+    prelock_loops = 0
+    MAX_PRELOCK_LOOPS = 5
+    while not state.get("topic_confirmed", False) and prelock_loops < MAX_PRELOCK_LOOPS:
+        prelock_loops += 1
+        # If v2 surfaced a pending choice, simulator.respond() returns the
+        # appropriate button click. Otherwise fall back to first card option
+        # / typed topic — same as the legacy behavior.
+        pending = state.get("pending_user_choice") or {}
         opts = state.get("topic_options") or []
-        chosen = opts[0] if opts else topic
+        if pending and pending.get("options"):
+            try:
+                chosen = await asyncio.to_thread(simulator.respond, state)
+            except Exception:
+                chosen = pending["options"][0]
+        elif opts:
+            chosen = opts[0]
+        else:
+            chosen = topic
         state["messages"].append({"role": "student", "content": chosen})
-        turns_log.append({"turn": 0, "phase": "option_pick", "role": "student", "content": chosen})
+        turns_log.append({
+            "turn": 0,
+            "phase": f"prelock_{prelock_loops}",
+            "role": "student",
+            "content": chosen,
+            "pending_kind": pending.get("kind", "") if pending else "",
+        })
         try:
             state = await asyncio.to_thread(graph.invoke, state, thread_config)
             last_tutor = next((m for m in reversed(state.get("messages", [])) if m.get("role") == "tutor"), None)
             if last_tutor:
-                turns_log.append({"turn": 1, "phase": "tutoring", "role": "tutor", "content": last_tutor["content"]})
+                turns_log.append({"turn": 0, "phase": f"prelock_{prelock_loops}_tutor", "role": "tutor", "content": last_tutor["content"]})
         except Exception as e:
-            bugs_noted.append({"phase": "first_tutoring", "error": f"{type(e).__name__}: {e}"})
+            bugs_noted.append({"phase": "prelock", "error": f"{type(e).__name__}: {e}"})
             return _build_result(student_id, conv_id, profile_id, topic, session_index, turns_log, state, bugs_noted)
+    if not state.get("topic_confirmed", False):
+        bugs_noted.append({
+            "phase": "prelock",
+            "error": f"failed to lock topic after {MAX_PRELOCK_LOOPS} pre-lock loops",
+        })
 
     # ---- Tutoring + assessment loop ----
     max_loop = 14
