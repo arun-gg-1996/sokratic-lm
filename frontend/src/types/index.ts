@@ -17,8 +17,11 @@ export interface ChatMessage {
 }
 
 export interface PendingChoice {
-  kind: "opt_in" | "topic";
+  kind: "opt_in" | "topic" | "confirm_topic";
   options: string[];
+  allow_custom?: boolean;
+  end_session_label?: string;
+  end_session_value?: string;
 }
 
 export interface ServerMessage {

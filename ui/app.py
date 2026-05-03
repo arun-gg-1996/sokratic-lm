@@ -1304,6 +1304,14 @@ def _render_topic_option_cards(state: dict) -> str | None:
             ):
                 selected = opt
                 break
+        end_label = pending.get("end_session_label") if isinstance(pending, dict) else None
+        end_value = pending.get("end_session_value") if isinstance(pending, dict) else None
+        if end_label and st.button(
+            str(end_label),
+            key="topic_option_end_session",
+            use_container_width=True,
+        ):
+            selected = str(end_value or end_label)
     return selected
 
 

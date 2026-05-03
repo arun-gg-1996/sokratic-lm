@@ -21,7 +21,8 @@ comparison via Nidhi's existing 8 e2e scenarios.
 
 Scope of this commit
 --------------------
-* dean_node_v2 — for the LOCKED-topic tutoring case ONLY:
+* dean_node_v2:
+    0. If topic is not locked yet → topic_lock_v2 handles L9/L10/L11/L22
     1. Run preflight on the latest student message
     2. If preflight fires → teacher_v2.draft(redirect/nudge/confirm_end)
        (Dean SKIPPED, hint/strike counters updated per L55/L56/L58)
@@ -36,11 +37,6 @@ Scope of this commit
 
 NOT in scope of this commit (defer to follow-ups)
 -------------------------------------------------
-* Topic locking with L9 wire-over (Track 4.7c) — dean_node_v2 falls
-  back to legacy dean.run_turn() for the unlocked path. The legacy
-  topic resolver still fires; v2 takes over once topic is locked.
-* Pre-lock loop counter (L11), confirm-and-lock UX (L10), guided-pick
-  UI at cap-7 (L22) — Track 4.7d
 * Clinical phase scenario generation (L74) — Track Clinical
 * L6 mem0 read injection points (#1 + #2) — Track 4.7e
 
@@ -64,6 +60,7 @@ from conversation.dean_v2 import DeanV2
 from conversation.teacher_v2 import TeacherV2, TeacherPromptInputs
 from conversation.retry_orchestrator import run_turn
 from conversation.turn_plan import TurnPlan
+from conversation.topic_lock_v2 import run_topic_lock_v2
 
 
 def use_v2_flow() -> bool:
@@ -95,20 +92,17 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
       Partial state dict for LangGraph reducer (messages, phase, hint_level,
       help_abuse_count, off_topic_count, debug.turn_trace, etc.)
     """
-    # If topic isn't locked yet, defer to legacy dean.run_turn() per the
-    # Track 4.7b scope decision. v2 takes over once topic is locked.
-    locked = state.get("locked_topic") or {}
-    if not locked or not locked.get("path"):
-        # Legacy locking path — call the existing dean_node implementation
-        from conversation.nodes import dean_node as legacy_dean_node
-        return legacy_dean_node(state, dean=dean, teacher=teacher)
-
     # ── Latest student message ───────────────────────────────────────────
     latest_student = ""
+    has_student_msg = False
     for m in reversed(state.get("messages", []) or []):
         if (m or {}).get("role") == "student":
+            has_student_msg = True
             latest_student = str(m.get("content", "") or "")
             break
+    if not has_student_msg:
+        # Rapport just fired on the same graph invoke; wait for real input.
+        return {}
     if not latest_student or not latest_student.strip():
         # Whitespace guard — never route empty messages through LLMs
         msgs = list(state.get("messages", []))
@@ -133,8 +127,21 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         state.setdefault("debug", {})["all_turn_traces"] = att[-50:]
     state.setdefault("debug", {})["turn_trace"] = []
 
+    state["debug"]["current_node"] = "dean_node_v2"
     debug_trace = state["debug"]["turn_trace"]
     t0 = time.time()
+
+    # If topic isn't locked yet, Track 4.7d owns the v2 pre-lock path:
+    # L9 topic_mapper_llm, L10 confirm-and-lock, L11 prelock counter,
+    # and L22 guided-pick at cap 7.
+    locked = state.get("locked_topic") or {}
+    if not locked or not locked.get("path"):
+        return run_topic_lock_v2(
+            state,
+            dean=dean,
+            retriever=retriever,
+            latest_student=latest_student,
+        )
 
     # ── 1. Pre-flight Haiku layer ────────────────────────────────────────
     preflight = run_preflight(state, latest_student, locked_topic=locked)

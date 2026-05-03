@@ -199,6 +199,12 @@ class TutorState(TypedDict):
     # can't teach, which caused the card-loop bug in the 2026-04-22 session.
     rejected_topic_paths: list[str]
 
+    # --- Pre-lock loop counter (L11) ---
+    # Counts student round-trips before a topic is locked. Separate from
+    # turn_count, which starts only after the Socratic tutoring anchor exists.
+    # At 7, the v2 pre-lock flow forces guided-pick cards (L22).
+    prelock_loop_count: int
+
     # --- Exploration budget ---
     # Students occasionally ask about concepts outside the locked topic.
     # When Dean detects a tangential question and budget remains, we fire one
@@ -308,6 +314,7 @@ def initial_state(student_id: str, cfg) -> TutorState:
         clinical_low_effort_count=0,
         clinical_off_topic_count=0,
         rejected_topic_paths=[],
+        prelock_loop_count=0,
         exploration_max=int(getattr(getattr(cfg, "session", object()), "exploration_max", 3)),
         exploration_used=0,
         memory_enabled=True,

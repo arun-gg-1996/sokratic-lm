@@ -296,6 +296,7 @@ async def start_session(req: StartSessionRequest):
     debug_payload["hint_level"] = int(state.get("hint_level", 0) or 0)
     debug_payload["max_hints"] = int(state.get("max_hints", 3) or 3)
     debug_payload["topic_confirmed"] = bool(state.get("topic_confirmed", False))
+    debug_payload["prelock_loop_count"] = int(state.get("prelock_loop_count", 0) or 0)
     debug_payload["topic_selection"] = str(state.get("topic_selection", "") or "")
     # Send the full locked_topic dict so the sidebar can show chapter +
     # section + subsection in the collapsible details (Phase 1, 2026-04-30).

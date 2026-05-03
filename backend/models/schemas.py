@@ -47,8 +47,11 @@ class StartSessionResponse(BaseModel):
 
 
 class PendingChoice(BaseModel):
-    kind: Literal["opt_in", "topic"]
+    kind: Literal["opt_in", "topic", "confirm_topic"]
     options: list[str]
+    allow_custom: bool | None = None
+    end_session_label: str | None = None
+    end_session_value: str | None = None
 
 
 class ServerMessage(BaseModel):

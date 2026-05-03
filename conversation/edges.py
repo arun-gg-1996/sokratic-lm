@@ -58,6 +58,8 @@ def after_dean(state: TutorState) -> str:
     """
     assessment_style = getattr(cfg.session, "assessment_style", "clinical")
 
+    if state.get("phase") == "memory_update":
+        return "memory_update_node"
     if state["student_reached_answer"]:
         if assessment_style == "none":
             return "memory_update_node"

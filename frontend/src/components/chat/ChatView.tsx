@@ -18,10 +18,20 @@ export function ChatSurface() {
       {!isTerminal && pendingChoice?.kind === "opt_in" && (
         <OptInCard options={pendingChoice.options} onSelect={submitMessage} />
       )}
+      {!isTerminal && pendingChoice?.kind === "confirm_topic" && (
+        <OptInCard
+          options={pendingChoice.options}
+          onSelect={submitMessage}
+          label="Confirm topic:"
+        />
+      )}
       {!isTerminal && pendingChoice?.kind === "topic" && (
         <TopicCard
           options={pendingChoice.options}
           onSelect={submitMessage}
+          allowCustom={pendingChoice.allow_custom !== false}
+          endSessionLabel={pendingChoice.end_session_label}
+          endSessionValue={pendingChoice.end_session_value}
           onSomethingElse={() => setPendingChoice(null)}
         />
       )}

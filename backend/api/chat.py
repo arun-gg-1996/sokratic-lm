@@ -24,14 +24,21 @@ router = APIRouter()
 def _extract_pending_choice(state: dict) -> dict | None:
     """
     Return the pending user choice from state, or None.
-    Only nodes.py sets pending_user_choice — no fallback derivation here.
+    Only graph nodes set pending_user_choice — no fallback derivation here.
     """
     pending = state.get("pending_user_choice")
     if isinstance(pending, dict):
         kind = pending.get("kind")
         options = pending.get("options")
-        if kind in {"opt_in", "topic"} and isinstance(options, list) and options:
-            return {"kind": kind, "options": [str(x) for x in options]}
+        if kind in {"opt_in", "topic", "confirm_topic"} and isinstance(options, list) and options:
+            out = {"kind": kind, "options": [str(x) for x in options]}
+            if "allow_custom" in pending:
+                out["allow_custom"] = bool(pending.get("allow_custom"))
+            if pending.get("end_session_label"):
+                out["end_session_label"] = str(pending.get("end_session_label"))
+            if pending.get("end_session_value"):
+                out["end_session_value"] = str(pending.get("end_session_value"))
+            return out
     return None
 
 
@@ -211,6 +218,7 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
             debug_payload["hint_level"] = int(new_state.get("hint_level", 0) or 0)
             debug_payload["max_hints"] = int(new_state.get("max_hints", 3) or 3)
             debug_payload["topic_confirmed"] = bool(new_state.get("topic_confirmed", False))
+            debug_payload["prelock_loop_count"] = int(new_state.get("prelock_loop_count", 0) or 0)
             debug_payload["topic_selection"] = str(new_state.get("topic_selection", "") or "")
             # Send the full locked_topic dict so the sidebar can show
             # chapter + section + subsection in the collapsible details.

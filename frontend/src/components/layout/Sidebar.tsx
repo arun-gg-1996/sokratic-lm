@@ -27,6 +27,10 @@ export function Sidebar() {
   const displayHint = Math.min(hintLevel, maxHints);
   const hintsExhausted = hintLevel > maxHints;
   const topicConfirmed = Boolean((debug as Record<string, unknown> | null)?.topic_confirmed);
+  const prelockLoopCount =
+    typeof (debug as Record<string, unknown> | null)?.prelock_loop_count === "number"
+      ? ((debug as Record<string, unknown>).prelock_loop_count as number)
+      : 0;
   const topicSelection =
     typeof (debug as Record<string, unknown> | null)?.topic_selection === "string"
       ? String((debug as Record<string, unknown>).topic_selection)
@@ -110,7 +114,9 @@ export function Sidebar() {
         </nav>
 
         <div className="rounded-card border border-border bg-bg px-3 py-3 space-y-1 text-sm">
-          <div className="text-muted">Turn {turnCount}/{maxTurns}</div>
+          <div className="text-muted">
+            {topicConfirmed ? `Turn ${turnCount}/${maxTurns}` : `Pre-lock ${prelockLoopCount}/7`}
+          </div>
           <div className="text-muted">
             {hintsExhausted ? "Hints exhausted" : `Hints ${displayHint}/${maxHints}`}
           </div>

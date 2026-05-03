@@ -6,7 +6,7 @@ preflight + dean_v2 + teacher_v2 + retry_orchestrator (Track 4.7b).
 
 Coverage:
   * use_v2_flow() reads SOKRATIC_USE_V2_FLOW env var correctly
-  * dean_node_v2 falls back to legacy when topic isn't locked
+  * dean_node_v2 routes unlocked-topic turns through topic_lock_v2
   * dean_node_v2 whitespace-input guard (no LLM call on empty messages)
   * Pre-flight FIRES → Dean SKIPPED, Teacher renders redirect, counters
     update, hint_level forced advance at strike 4 per L55
@@ -82,21 +82,20 @@ def _state(**overrides):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Topic-not-locked → legacy fallback
+# Topic-not-locked → v2 topic lock
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def test_dean_node_v2_falls_back_to_legacy_when_topic_unlocked():
-    """When state.locked_topic is empty/missing, defer to legacy dean_node."""
+def test_dean_node_v2_routes_to_topic_lock_v2_when_topic_unlocked():
+    """When state.locked_topic is empty/missing, use Track 4.7d v2 lock flow."""
     state = _state(locked_topic={})  # not locked
-    # Mock the legacy dean_node to assert it gets called
-    with patch("conversation.nodes.dean_node") as mock_legacy:
-        mock_legacy.return_value = {"phase": "tutoring", "messages": ["legacy_called"]}
+    with patch("conversation.nodes_v2.run_topic_lock_v2") as mock_lock:
+        mock_lock.return_value = {"phase": "tutoring", "messages": ["topic_lock_v2"]}
         result = N.dean_node_v2(
             state, dean=MagicMock(), teacher=MagicMock(), retriever=MagicMock(),
         )
-        mock_legacy.assert_called_once()
-        assert result["messages"] == ["legacy_called"]
+        mock_lock.assert_called_once()
+        assert result["messages"] == ["topic_lock_v2"]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
