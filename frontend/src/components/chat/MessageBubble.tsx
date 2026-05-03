@@ -12,7 +12,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
 
   if (message.role === "student") {
     return (
-      <div className="flex justify-end">
+      <div className="flex justify-end fade-in">
         <div className="bg-accent-soft text-text rounded-2xl px-4 py-2 max-w-[520px] leading-relaxed">
           {message.content}
         </div>
@@ -22,14 +22,14 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
 
   if (message.role === "system") {
     return (
-      <div className="rounded-card border border-border bg-panel px-4 py-3 text-sm text-muted">
+      <div className="rounded-card border border-border bg-panel px-4 py-3 text-sm text-muted fade-in">
         {message.content}
       </div>
     );
   }
 
   return (
-    <div className="flex items-start gap-3">
+    <div className="flex items-start gap-3 fade-in">
       <img
         src="/sokratic_bot_icon.png"
         alt="Sokratic Tutor"

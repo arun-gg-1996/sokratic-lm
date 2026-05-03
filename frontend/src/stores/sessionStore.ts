@@ -26,6 +26,13 @@ interface SessionState {
   // of each new student turn so labels from a prior turn don't
   // linger.
   activityLog: string[];
+  // L80.f — WebSocket connection lifecycle visible to the UI so we
+  // can render a reconnect banner. "connecting" until first onopen,
+  // "connected" while healthy, "reconnecting" after onclose while
+  // the auto-reconnect backoff is in flight, "lost" after we've
+  // burned through the reconnect budget.
+  connection: "connecting" | "connected" | "reconnecting" | "lost";
+  setConnection: (c: SessionState["connection"]) => void;
   setThreadId: (id: string) => void;
   setSessionPhase: (phase: string) => void;
   addStudentMessage: (content: string) => void;
@@ -60,6 +67,8 @@ export const useSessionStore = create<SessionState>((set) => ({
   debug: null,
   streamingTutorContent: "",
   activityLog: [],
+  connection: "connecting",
+  setConnection: (c) => set({ connection: c }),
   setThreadId: (id) => set({ threadId: id }),
   setSessionPhase: (phase) => set({ sessionPhase: phase || "tutoring" }),
   addStudentMessage: (content) =>
@@ -136,5 +145,6 @@ export const useSessionStore = create<SessionState>((set) => ({
       debug: null,
       streamingTutorContent: "",
       activityLog: [],
+      connection: "connecting",
     }),
 }));

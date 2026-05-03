@@ -3,9 +3,15 @@ import { wsUrl } from "../api/websocket";
 import { useSessionStore } from "../stores/sessionStore";
 import type { ClientMessage, ServerMessage } from "../types";
 
+// L80.f — give up after this many failed reconnects, then surface a
+// "connection lost — refresh to continue" banner via session.connection.
+// 25 attempts × 1.2s backoff = ~30s before surfacing the dead-state.
+const MAX_RECONNECT_ATTEMPTS = 25;
+
 export function useWebSocket(threadId: string | null) {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectRef = useRef<number | null>(null);
+  const reconnectAttemptsRef = useRef<number>(0);
   // Guards the auto-reconnect on ws.onclose. When the threadId changes
   // (user clicked "+ New chat"), the React cleanup fires before
   // ws.onclose — so onclose's captured threadId is stale, and its
@@ -18,6 +24,7 @@ export function useWebSocket(threadId: string | null) {
   const disposedRef = useRef<boolean>(false);
 
   const setPendingChoice = useSessionStore((s) => s.setPendingChoice);
+  const setConnection = useSessionStore((s) => s.setConnection);
   const setDebug = useSessionStore((s) => s.setDebug);
   const setSessionPhase = useSessionStore((s) => s.setSessionPhase);
   const addTutorMessage = useSessionStore((s) => s.addTutorMessage);
@@ -36,6 +43,12 @@ export function useWebSocket(threadId: string | null) {
 
     const ws = new WebSocket(wsUrl(threadId));
     wsRef.current = ws;
+
+    ws.onopen = () => {
+      // L80.f — reset reconnect budget + flip to connected.
+      reconnectAttemptsRef.current = 0;
+      setConnection("connected");
+    };
 
     ws.onmessage = (event) => {
       try {
@@ -138,6 +151,15 @@ export function useWebSocket(threadId: string | null) {
       wsRef.current = null;
       if (disposedRef.current) return;
       if (!threadId) return;
+      // L80.f — surface the reconnect attempt to the UI banner.
+      // After MAX_RECONNECT_ATTEMPTS we stop and show "lost" so the
+      // user knows to refresh instead of waiting indefinitely.
+      reconnectAttemptsRef.current += 1;
+      if (reconnectAttemptsRef.current > MAX_RECONNECT_ATTEMPTS) {
+        setConnection("lost");
+        return;
+      }
+      setConnection("reconnecting");
       reconnectRef.current = window.setTimeout(() => connect(), 1200);
     };
   }, [
@@ -145,6 +167,7 @@ export function useWebSocket(threadId: string | null) {
     appendActivity,
     appendStreamingToken,
     clearStreamingBuffer,
+    setConnection,
     setDebug,
     setPendingChoice,
     setSessionPhase,

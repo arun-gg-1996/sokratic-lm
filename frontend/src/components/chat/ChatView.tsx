@@ -1,4 +1,5 @@
 import { Composer } from "./Composer";
+import { ConnectionBanner } from "./ConnectionBanner";
 import { MessageList } from "./MessageList";
 import { OptInCard } from "../cards/OptInCard";
 import { TopicCard } from "../cards/TopicCard";
@@ -14,6 +15,8 @@ export function ChatSurface() {
 
   return (
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+      {/* L80.f — WS lifecycle banner; hidden during healthy connection. */}
+      <ConnectionBanner />
       <MessageList />
       {!isTerminal && pendingChoice?.kind === "opt_in" && (
         <OptInCard options={pendingChoice.options} onSelect={submitMessage} />

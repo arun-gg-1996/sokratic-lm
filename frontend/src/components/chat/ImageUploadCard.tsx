@@ -72,7 +72,7 @@ export function ImageUploadCard() {
   };
 
   return (
-    <div className="rounded-card border border-dashed border-border bg-panel/60 px-4 py-4 space-y-2">
+    <div className="rounded-card border border-dashed border-border bg-panel/60 px-4 py-4 space-y-2 fade-in">
       <div className="text-sm font-medium">📷 Start with an image</div>
       <div className="text-xs text-muted">
         Upload an anatomical diagram or photo (PNG / JPG / WebP, ≤ 5 MB).
