@@ -19,6 +19,8 @@ from typing import Any
 
 from dotenv import load_dotenv
 from nltk.stem import PorterStemmer
+import threading
+
 from openai import OpenAI
 from qdrant_client import QdrantClient
 from qdrant_client.models import FieldCondition, Filter, MatchValue
@@ -88,6 +90,18 @@ class Retriever:
         self.cross_encoder = CrossEncoder(
             cfg.models.cross_encoder, max_length=512, device=_ce_device
         )
+        # PyTorch on Apple Silicon MPS is NOT thread-safe — concurrent
+        # .predict() calls on the same MPS-loaded model corrupt internal
+        # state and return NaN / zero scores silently. Without this lock,
+        # 4 parallel sessions through the same retriever instance see all
+        # CE scores collapse to ~0 → max_ce < ood_ce_threshold (-5.0) →
+        # _is_in_scope returns False → retrieve() returns []. Reproduced
+        # 2026-05-03 with 0/18 sessions failing in the eval harness with
+        # the same retrieval call that returns 9 chunks single-threaded.
+        # CUDA + CPU don't have this issue, but lock unconditionally for
+        # consistency. Inference is fast enough that serialization adds
+        # ~50-200ms per concurrent retrieval which is acceptable.
+        self._ce_lock = threading.Lock()
         # Domain ontology adapter (UMLS for anatomy/OT, Noop for physics etc.).
         # Construct, then EAGERLY warm up so the first retrieve() call doesn't
         # pay the ~70-second scispacy + UMLS KB load cost. Warmup is a single
@@ -316,7 +330,12 @@ class Retriever:
         if not parent_chunks:
             return []
         pairs = [(query, c.get("text", "")) for c in parent_chunks]
-        ce_scores = self.cross_encoder.predict(pairs)
+        # Serialize CE inference — see __init__ note on MPS thread-safety.
+        # Without this lock, concurrent retrieve() calls on the same
+        # ChunkRetriever instance silently return [] under load (all CE
+        # scores ≈ 0 → max_ce < threshold → _is_in_scope=False).
+        with self._ce_lock:
+            ce_scores = self.cross_encoder.predict(pairs)
 
         ranked: list[dict] = []
         for chunk, score in zip(parent_chunks, ce_scores):
@@ -1167,6 +1186,8 @@ class ChunkRetriever(Retriever):
         self.cross_encoder = CrossEncoder(
             cfg.models.cross_encoder, max_length=512, device=_ce_device
         )
+        # MPS thread-safety lock (see Retriever.__init__ for full rationale).
+        self._ce_lock = threading.Lock()
 
         self._ontology = get_ontology_adapter(self.default_domain)
         try:
