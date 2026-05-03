@@ -286,3 +286,178 @@ async def get_mastery(
         chapters=chapters,
         sessions=sessions,
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# L29-L34 SQLite-backed endpoints (track 1.9 — additive, coexists with the
+# legacy /mastery/{student_id} JSON-backed endpoint above)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class MasterySubsectionNode(BaseModel):
+    subsection: str
+    display_label: str
+    path: str
+    score: Optional[float] = None
+    color: str = "grey"
+    tier: str = "not_assessed"
+    outcome: Optional[str] = None
+    last_session_at: Optional[str] = None
+    attempt_count: int = 0
+
+
+class MasterySectionNode(BaseModel):
+    section: str
+    score: Optional[float] = None
+    color: str = "grey"
+    tier: str = "not_assessed"
+    touched: int = 0
+    total: int = 0
+    subsections: list[MasterySubsectionNode] = []
+
+
+class MasteryChapterNode(BaseModel):
+    chapter: str
+    chapter_num: Optional[int] = None
+    score: Optional[float] = None
+    color: str = "grey"
+    tier: str = "not_assessed"
+    touched: int = 0
+    total: int = 0
+    sections: list[MasterySectionNode] = []
+
+
+class MasteryTreeResponse(BaseModel):
+    student_id: str
+    chapters: list[MasteryChapterNode] = []
+
+
+class MasterySessionRow(BaseModel):
+    """One row in the My Mastery sessions list (per L29-L34)."""
+    thread_id: str
+    student_id: str
+    started_at: Optional[str] = None
+    ended_at: Optional[str] = None
+    locked_topic_path: Optional[str] = None
+    locked_subsection_path: Optional[str] = None
+    mastery_tier: Optional[str] = None
+    core_mastery_tier: Optional[str] = None
+    clinical_mastery_tier: Optional[str] = None
+    core_score: Optional[float] = None
+    clinical_score: Optional[float] = None
+    status: str
+    turn_count: Optional[int] = None
+    reach_status: Optional[bool] = None
+    key_takeaways: Optional[dict] = None
+
+
+class MasterySessionsResponse(BaseModel):
+    student_id: str
+    sessions: list[MasterySessionRow] = []
+
+
+def _load_topic_index_for_tree() -> list[dict]:
+    """Read the active domain's topic_index for tree rollup.
+
+    Per L78, every domain config has its own `cfg.paths.topic_index_{domain}`
+    slot (added in track 0 / 65d5111). Falls back to the legacy
+    `data/topic_index.json` only if the per-domain slot is absent — which
+    shouldn't happen in production since the slot is mandatory per L78.
+    """
+    import json
+    from pathlib import Path
+    from config import cfg as _cfg
+    domain = _cfg.domain.retrieval_domain
+    slot = f"topic_index_{domain}"
+    path_str = getattr(_cfg.paths, slot, None) or "data/topic_index.json"
+    p = Path(path_str)
+    if not p.is_absolute():
+        # Resolve relative to repo root (parent of backend/)
+        p = Path(__file__).resolve().parent.parent.parent / path_str
+    if not p.exists():
+        return []
+    raw = json.loads(p.read_text())
+    return raw if isinstance(raw, list) else list(raw.values())
+
+
+def _row_to_session_model(row: dict) -> MasterySessionRow:
+    """Convert a SQLite session row dict to the API response model."""
+    reach = row.get("reach_status")
+    return MasterySessionRow(
+        thread_id=row["thread_id"],
+        student_id=row["student_id"],
+        started_at=row.get("started_at"),
+        ended_at=row.get("ended_at"),
+        locked_topic_path=row.get("locked_topic_path"),
+        locked_subsection_path=row.get("locked_subsection_path"),
+        mastery_tier=row.get("mastery_tier"),
+        core_mastery_tier=row.get("core_mastery_tier"),
+        clinical_mastery_tier=row.get("clinical_mastery_tier"),
+        core_score=row.get("core_score"),
+        clinical_score=row.get("clinical_score"),
+        status=row.get("status") or "in_progress",
+        turn_count=row.get("turn_count"),
+        reach_status=bool(reach) if reach is not None else None,
+        key_takeaways=row.get("key_takeaways") if isinstance(row.get("key_takeaways"), dict) else None,
+    )
+
+
+@router.get("/v2/{student_id}/tree", response_model=MasteryTreeResponse)
+async def get_mastery_tree(student_id: str) -> MasteryTreeResponse:
+    """Per L29-L34 — full mastery tree rolled up from the per-domain SQLite store.
+
+    Returns nested chapters → sections → subsections with score / color /
+    tier / coverage at every level. Untouched nodes report score=None,
+    color="grey" so the frontend can render greyed-out cards without
+    extra branching.
+    """
+    sid = (student_id or "").strip()
+    if not sid:
+        raise HTTPException(status_code=400, detail="student_id required")
+    if not known_student_id(sid):
+        raise HTTPException(status_code=400, detail=f"unknown student_id: {sid!r}")
+
+    from memory.sqlite_store import SQLiteStore
+    store = SQLiteStore()  # picks active domain from cfg
+    topic_index = _load_topic_index_for_tree()
+    tree = store.mastery_tree(sid, topic_index)
+    # MasteryChapterNode mirrors mastery_tree's output exactly — pass through.
+    return MasteryTreeResponse(student_id=sid, chapters=tree["chapters"])
+
+
+@router.get("/v2/{student_id}/sessions", response_model=MasterySessionsResponse)
+async def get_mastery_sessions(
+    student_id: str,
+    limit: int = 50,
+    completed_only: bool = False,
+) -> MasterySessionsResponse:
+    """Per L29-L34 — list of sessions newest-first, with key fields needed
+    by the My Mastery sessions panel."""
+    sid = (student_id or "").strip()
+    if not sid:
+        raise HTTPException(status_code=400, detail="student_id required")
+    if not known_student_id(sid):
+        raise HTTPException(status_code=400, detail=f"unknown student_id: {sid!r}")
+
+    from memory.sqlite_store import SQLiteStore
+    store = SQLiteStore()
+    rows = store.list_sessions(sid, limit=max(1, min(limit, 200)), completed_only=completed_only)
+    return MasterySessionsResponse(
+        student_id=sid,
+        sessions=[_row_to_session_model(r) for r in rows],
+    )
+
+
+@router.get("/v2/session/{thread_id}", response_model=MasterySessionRow)
+async def get_mastery_session(thread_id: str) -> MasterySessionRow:
+    """Per L29-L34 — single session detail (used by the Revisit / Analyze view)."""
+    tid = (thread_id or "").strip()
+    if not tid:
+        raise HTTPException(status_code=400, detail="thread_id required")
+
+    from memory.sqlite_store import SQLiteStore
+    store = SQLiteStore()
+    row = store.get_session(tid)
+    if not row:
+        raise HTTPException(status_code=404, detail=f"unknown thread_id: {tid!r}")
+    return _row_to_session_model(row)
