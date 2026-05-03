@@ -91,6 +91,7 @@ class TopicMapperResult:
     input_tokens: int = 0
     output_tokens: int = 0
     cache_read_tokens: int = 0
+    cache_creation_tokens: int = 0     # tokens written to Bedrock prompt cache
 
     def route_decision(self) -> RouteDecision:
         """Map (verdict, confidence) to the caller's downstream action."""
@@ -404,7 +405,11 @@ def map_topic(
 
     toc_block = build_toc_block(topic_index_path, raptor_summaries_path)
     abbrevs_block = build_abbreviations_block(curated_abbrevs_path)
-    prompt = build_prompt(
+    # Multi-block content marks the heavy TOC + abbreviations block as
+    # ephemeral-cached so Bedrock's prompt cache hits on every call after
+    # the first within the 5-min TTL. ~10x cheaper for the cached portion
+    # (which is ~99% of the input). See build_cached_message_blocks.
+    content_blocks = build_cached_message_blocks(
         query,
         domain_name=domain_name,
         domain_short=domain_short,
@@ -418,7 +423,7 @@ def map_topic(
             model=model,
             max_tokens=max_tokens,
             temperature=temperature,
-            messages=[{"role": "user", "content": prompt}],
+            messages=[{"role": "user", "content": content_blocks}],
         )
     except Exception as e:
         # Network / API failure — return a "none" result so the caller can
@@ -464,6 +469,7 @@ def map_topic(
         input_tokens=getattr(usage, "input_tokens", 0) or 0,
         output_tokens=getattr(usage, "output_tokens", 0) or 0,
         cache_read_tokens=getattr(usage, "cache_read_input_tokens", 0) or 0,
+        cache_creation_tokens=getattr(usage, "cache_creation_input_tokens", 0) or 0,
     )
 
 
@@ -471,3 +477,50 @@ def clear_caches() -> None:
     """Drop the TOC + abbreviation caches (useful for tests + after corpus rebuild)."""
     _TOC_BLOCK_CACHE.clear()
     _ABBREVS_BLOCK_CACHE.clear()
+
+def build_cached_message_blocks(
+    query: str,
+    *,
+    domain_name: str,
+    domain_short: str,
+    toc_block: str,
+    abbrevs_block: str,
+) -> list[dict]:
+    """Build the message content as cacheable + variable blocks.
+
+    The header + TOC + abbreviations are identical across every call (until
+    the corpus or domain changes), so we mark them with
+    `cache_control: ephemeral` to hit the Bedrock prompt cache (5-min TTL).
+    First call within the window pays full price for the cached blocks;
+    subsequent calls pay ~10x less for the cached portion. Saves ~$0.09 per
+    call on a 100K-token TOC.
+
+    Returns a list of message-content blocks suitable for
+    `client.messages.create(messages=[{"role": "user", "content": <this>}])`.
+    """
+    header = PROMPT_HEADER.format(domain_name=domain_name, domain_short=domain_short)
+
+    # Single cached block: header + TOC + abbreviations. Combined into one
+    # text block so the cache is a single hit rather than two adjacent
+    # cache_control markers (Bedrock supports up to 4 ephemeral cache
+    # breakpoints per request, but using one is cheapest).
+    abbrevs_section = (
+        f"\n\nCOMMON ABBREVIATIONS (non-exhaustive — generalize from your own "
+        f"{domain_short} knowledge):\n{abbrevs_block}"
+        if abbrevs_block
+        else ""
+    )
+    cached_text = f"{header}\n\nTOC:\n{toc_block}{abbrevs_section}"
+    variable_text = f"\n\nSTUDENT UTTERANCE:\n{query}\n\nOutput JSON only:"
+
+    return [
+        {
+            "type": "text",
+            "text": cached_text,
+            "cache_control": {"type": "ephemeral"},
+        },
+        {
+            "type": "text",
+            "text": variable_text,
+        },
+    ]

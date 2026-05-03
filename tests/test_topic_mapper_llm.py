@@ -412,3 +412,81 @@ def test_build_prompt_omits_abbrevs_section_when_empty():
         toc_block="...", abbrevs_block="",
     )
     assert "COMMON ABBREVIATIONS" not in prompt
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Bedrock prompt-caching (track 2.2)
+# ─────────────────────────────────────────────────────────────────────────────
+
+from retrieval.topic_mapper_llm import build_cached_message_blocks
+
+
+def test_cached_blocks_first_is_marked_ephemeral():
+    blocks = build_cached_message_blocks(
+        "what is the SA node",
+        domain_name="anatomy", domain_short="anatomy",
+        toc_block="- Ch > Sec > Sub\n  display_label: x\n  summary: y",
+        abbrevs_block="  - SA = sinoatrial",
+    )
+    assert len(blocks) == 2
+    assert blocks[0]["type"] == "text"
+    assert blocks[0].get("cache_control") == {"type": "ephemeral"}
+    # Cached block carries the heavy invariant content
+    assert "TOC:" in blocks[0]["text"]
+    assert "Ch > Sec > Sub" in blocks[0]["text"]
+    assert "SA = sinoatrial" in blocks[0]["text"]
+
+
+def test_cached_blocks_second_holds_query_and_no_cache_control():
+    blocks = build_cached_message_blocks(
+        "test_query_xyzzy",
+        domain_name="anatomy", domain_short="anatomy",
+        toc_block="...", abbrevs_block="",
+    )
+    assert "cache_control" not in blocks[1]
+    assert "test_query_xyzzy" in blocks[1]["text"]
+    # Variable block must NOT contain the TOC (else cache key is broken)
+    assert "TOC:" not in blocks[1]["text"]
+
+
+def test_cached_blocks_omit_abbrevs_section_when_empty():
+    blocks = build_cached_message_blocks(
+        "x",
+        domain_name="anatomy", domain_short="anatomy",
+        toc_block="...", abbrevs_block="",
+    )
+    assert "COMMON ABBREVIATIONS" not in blocks[0]["text"]
+
+
+def test_cached_blocks_invariant_text_is_byte_identical_across_queries():
+    """Cache hit requires byte-identical cached blocks. Two different queries
+    must produce the SAME first block (only the second block changes)."""
+    a = build_cached_message_blocks("query A", domain_name="x", domain_short="x",
+                                    toc_block="TOC", abbrevs_block="ABB")
+    b = build_cached_message_blocks("query B", domain_name="x", domain_short="x",
+                                    toc_block="TOC", abbrevs_block="ABB")
+    assert a[0]["text"] == b[0]["text"]
+    assert a[0].get("cache_control") == b[0].get("cache_control")
+    assert a[1]["text"] != b[1]["text"]
+
+
+def test_map_topic_passes_cached_blocks_to_client(topic_index_path,
+                                                   raptor_summaries_path,
+                                                   abbrevs_path):
+    """Verify map_topic actually sends list-of-blocks (not a string) so the
+    cache_control marker reaches Bedrock."""
+    client = MockAnthropicClient(response_text=STRONG_RESPONSE)
+    map_topic("SA node", client=client, model="haiku",
+              topic_index_path=topic_index_path,
+              raptor_summaries_path=raptor_summaries_path,
+              curated_abbrevs_path=abbrevs_path,
+              domain_name="anatomy", domain_short="anatomy")
+    sent = client.last_messages
+    assert isinstance(sent, list) and len(sent) == 1
+    content = sent[0]["content"]
+    # Must be a list of blocks (not a single string), and the first block
+    # must carry the cache_control marker.
+    assert isinstance(content, list)
+    assert len(content) == 2
+    assert content[0].get("cache_control") == {"type": "ephemeral"}
+    assert "cache_control" not in content[1]
