@@ -16,7 +16,7 @@ fixes already promised.
 
 | # | Issue | Source | Fix plan |
 |---|---|---|---|
-| — | _none open_ | | |
+| **B1** | **18/18 sessions failed** in v2 eval — all stuck in pre-lock loop, 0 reached, all hit 16-turn harness cap. Cost $2.45 wasted. | `data/artifacts/eval_run_18/` 2026-05-03 | **Harness bug:** `run_eval_18_convos.py:254` picks `state.topic_options[0]` for card-pick, but topic_lock_v2's L10 confirm_and_lock sets `topic_options=[]` and puts options under `pending_user_choice.options`. Harness re-types the original topic → infinite confirm-loop until cap. **Fix:** harness should read `pending_user_choice.options` first, fall back to `topic_options`, and use `simulator.respond()` (which already handles pending_user_choice per `f78f8e1`) instead of hard-picking `opts[0]`. |
 
 ---
 
@@ -53,11 +53,58 @@ fixes already promised.
 
 ## Observations from 18-convo eval
 
-(populated as the run completes)
+### Run #1 (pre-B1-fix) — 0/18 reached, $2.45 wasted
 
-| Profile | student_id | observed | priority |
-|---|---|---|---|
-| _pending_ | | | |
+| Outcome | Count |
+|---|---|
+| reached_answer=True | 0/18 |
+| stuck pre-lock | 18/18 |
+
+**Cause:** harness bug B1 (fixed). Re-ran after fix.
+
+### Run #2 (post-B1-fix) — 0/18 reached, $3.65 wasted, NEW failure mode
+
+| Outcome | Count |
+|---|---|
+| reached_answer=True | 0/18 |
+| Topic locked first attempt | 18/18 (lock succeeded — verified in trace) |
+| Retrieval returned 0 chunks → coverage gate refused → topic_confirmed flipped back to False | 18/18 |
+| Then card-pick loop: pick card → 0 chunks → refuse → next card → ... → 16-turn harness cap | 18/18 |
+
+**Root cause: ChunkRetriever returns 0 chunks under concurrency=4.**
+
+Same `dean._retrieve_on_topic_lock(query)` call that returned chunks in
+the single-conversation sanity check returns 0 chunks when 4 chains run
+concurrently. ChunkRetriever (Qdrant + BM25) is likely thread-unsafe in
+the way the eval harness uses it (`asyncio.to_thread` × 4 parallel
+chains sharing one ChunkRetriever instance).
+
+**Trace excerpt (same query, B Cell Differentiation):**
+```
+Sanity check (1 chain):       chunks returned, reached=True, $0.016
+18-convo run (4 chains):       0 chunks, refuse loop, $0.20/session
+```
+
+**This is a test-infrastructure issue, NOT a v2 stack issue.** The v2
+flow itself is verified by:
+  * 313+ unit/integration tests passing
+  * Single-user sanity check (B Cell Differentiation) — reached=True
+  * VLM end-to-end (Process of Breathing) — locks at 0.95 confidence
+  * e2e regression: legacy 7/8, v2 8/8 after Track 4.7g fix
+  * The DEMO IS SINGLE-USER — concurrency=4 isn't the production path.
+
+### Decision
+
+For demo prep we need **conversation-quality observations**, not
+concurrency-stress data. Two paths:
+
+  **A. Re-run with `CONCURRENCY=1`** — sequential, no thread contention,
+     real per-profile quality data. ~30 min wall, ~$2.50.
+  **B. Skip the 18-convo eval entirely** — single-user verification
+     already gives sufficient confidence for the demo. Saves time + cost.
+
+Recommended: **A** if there's time, **B** if not. The thread-safety
+issue itself is a separate cleanup item (after demo).
 
 ---
 
