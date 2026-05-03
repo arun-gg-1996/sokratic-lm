@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useSessionStore } from "../../stores/sessionStore";
+import { useTTS } from "../../hooks/useTTS";
 import { ActivityFeed } from "./ActivityFeed";
 import { MessageBubble } from "./MessageBubble";
 import { ThinkingIndicator } from "./ThinkingIndicator";
@@ -7,6 +8,10 @@ import { ThinkingIndicator } from "./ThinkingIndicator";
 export function MessageList() {
   const messages = useSessionStore((s) => s.messages);
   const isWaiting = useSessionStore((s) => s.isWaitingForTutor);
+  // L79 — read tutor messages aloud when ttsEnabled. Hook is a no-op
+  // when the user has the toggle off or when speechSynthesis is missing
+  // (Firefox partial support).
+  useTTS();
   // D.6a: live streaming buffer. While the backend streams the
   // teacher's draft, this string grows token-by-token. Render it as a
   // tutor-styled bubble so the user sees the response forming in

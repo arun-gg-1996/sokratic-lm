@@ -8,11 +8,18 @@
  *     so the student knows WHY they can't type instead of staring at a
  *     dead box. Helper picked from the pending choice kind.
  *
+ * L79 (accessibility):
+ *   - Mic button next to send. Click → browser-native SpeechRecognition
+ *     transcribes speech into the input. Click again or stop → keeps the
+ *     transcript in the input box; the student edits + presses send.
+ *     No auto-send. Hidden when SpeechRecognition isn't available.
+ *
  * Send button shares the same disabled treatment so they read as one
  * unit. 100ms transition on background color per L80.e.
  */
 import { FormEvent, KeyboardEvent, useState } from "react";
 import { useSessionStore } from "../../stores/sessionStore";
+import { useSTT } from "../../hooks/useSTT";
 
 interface ComposerProps {
   onSubmit: (text: string) => void;
@@ -40,6 +47,7 @@ export function Composer({ onSubmit, placeholder = "Reply..." }: ComposerProps) 
   const [text, setText] = useState("");
   const isWaiting = useSessionStore((s) => s.isWaitingForTutor);
   const pendingChoice = useSessionStore((s) => s.pendingChoice);
+  const stt = useSTT();
   const helper = helperFor(isWaiting, pendingChoice?.kind);
   // ChatView already hides the Composer entirely when pendingChoice is
   // set, so the most common disabled path is "tutor is streaming".
@@ -50,6 +58,9 @@ export function Composer({ onSubmit, placeholder = "Reply..." }: ComposerProps) 
     e?.preventDefault();
     const trimmed = text.trim();
     if (!trimmed || disabled) return;
+    // Stop any in-flight recognition so it doesn't overwrite the text
+    // we're about to send.
+    if (stt.listening) stt.stop();
     onSubmit(trimmed);
     setText("");
   };
@@ -59,6 +70,19 @@ export function Composer({ onSubmit, placeholder = "Reply..." }: ComposerProps) 
       e.preventDefault();
       submit();
     }
+  };
+
+  const toggleMic = () => {
+    if (disabled) return;
+    if (stt.listening) {
+      stt.stop();
+      return;
+    }
+    stt.start((transcript) => {
+      // Replace the input text with the live transcript. The student
+      // can edit before sending. Per L79: no auto-send.
+      setText(transcript);
+    });
   };
 
   return (
@@ -86,6 +110,24 @@ export function Composer({ onSubmit, placeholder = "Reply..." }: ComposerProps) 
             aria-disabled={disabled}
             aria-label={showHelper ? (helper as string) : "Reply to tutor"}
           />
+          {stt.supported && (
+            <button
+              type="button"
+              onClick={toggleMic}
+              disabled={disabled}
+              className={`h-10 w-10 rounded-full transition-colors duration-100 ${
+                disabled
+                  ? "bg-muted/20 text-muted/40 cursor-not-allowed"
+                  : stt.listening
+                    ? "bg-red-500 text-bg animate-pulse"
+                    : "bg-panel text-text border border-border hover:border-accent"
+              }`}
+              aria-label={stt.listening ? "Stop recording" : "Start voice input"}
+              title={stt.listening ? "Stop recording" : "Speak your reply"}
+            >
+              {stt.listening ? "■" : "🎤"}
+            </button>
+          )}
           <button
             type="submit"
             disabled={disabled || !text.trim()}

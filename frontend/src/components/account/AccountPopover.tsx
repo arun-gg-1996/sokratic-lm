@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { exportSession } from "../../api/client";
 import { downloadJson } from "../../utils/export";
 import { useTheme } from "../../hooks/useTheme";
+import { isTTSAvailable } from "../../hooks/useTTS";
 import { useSessionStore } from "../../stores/sessionStore";
 import { useUserStore } from "../../stores/userStore";
 import { MemoryDrawer } from "./MemoryDrawer";
@@ -19,6 +20,8 @@ export function AccountPopover({ studentId }: { studentId: string | null }) {
   const setStudentId = useUserStore((s) => s.setStudentId);
   const memoryEnabled = useUserStore((s) => s.memoryEnabled);
   const setMemoryEnabled = useUserStore((s) => s.setMemoryEnabled);
+  const ttsEnabled = useUserStore((s) => s.ttsEnabled);
+  const setTtsEnabled = useUserStore((s) => s.setTtsEnabled);
   const threadId = useSessionStore((s) => s.threadId);
 
   useEffect(() => {
@@ -77,6 +80,17 @@ export function AccountPopover({ studentId }: { studentId: string | null }) {
           >
             Cross-session memory: {memoryEnabled ? "on" : "off"}
           </button>
+          {/* L79 — TTS toggle. Hidden when SpeechSynthesis isn't
+              available (e.g. some Firefox builds). */}
+          {isTTSAvailable() && (
+            <button
+              className="w-full rounded-lg border border-border px-3 py-2 text-left hover:border-accent"
+              onClick={() => setTtsEnabled(!ttsEnabled)}
+              title="When on, tutor messages are read aloud via your browser's text-to-speech. Toggle off to silence in-flight speech."
+            >
+              Read aloud (TTS): {ttsEnabled ? "on" : "off"}
+            </button>
+          )}
           <button
             disabled={!studentId}
             className="w-full rounded-lg border border-border px-3 py-2 text-left hover:border-accent disabled:opacity-50"
