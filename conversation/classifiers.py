@@ -913,7 +913,10 @@ def to_universal_check_result(
     fail_verdicts = {
         "haiku_leak_check":       {"leak"},
         "haiku_sycophancy_check": {"sycophantic"},
-        "haiku_off_domain_check": {"substance", "chitchat", "jailbreak", "answer_demand"},
+        # off_domain accepts the binary "off_domain" verdict (current impl)
+        # AND the granular L56 set (future). Either signals fail.
+        "haiku_off_domain_check": {"off_domain", "substance", "chitchat",
+                                    "jailbreak", "answer_demand"},
     }
     fail_set = fail_verdicts.get(check_name, set())
     is_fail = verdict in fail_set
