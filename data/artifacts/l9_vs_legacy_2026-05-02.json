@@ -1,0 +1,445 @@
+{
+  "queries": [
+    "SA node",
+    "rotator cuff",
+    "what is glycolysis",
+    "ATP and muscle contraction",
+    "ADH",
+    "CN VII",
+    "GFR",
+    "muscle",
+    "joints",
+    "brain",
+    "What part of the heart starts the heartbeat?",
+    "What are the structural and functional distinctions between the superior and inferior venae cavae?",
+    "wrist drop",
+    "ulnar nerve injuries at the elbow",
+    "what is the capital of France",
+    "vaping policy"
+  ],
+  "model": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+  "rows": [
+    {
+      "query": "SA node",
+      "legacy": {
+        "tier": "borderline",
+        "n_matches": 5,
+        "top_path": "Chapter 3: The Cellular Level of Organization > The Nucleus and DNA Replication > Organization of the Nucleus and Its DNA",
+        "top_path_legacy": "Chapter 3: The Cellular Level of Organization > The Nucleus and DNA Replication > Organization of the Nucleus and Its DNA",
+        "top_score": 51.0,
+        "elapsed_ms": 58289
+      },
+      "l9": {
+        "verdict": "strong",
+        "confidence": 0.95,
+        "route": "lock_immediately",
+        "n_matches": 1,
+        "top_path": "The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart",
+        "top_confidence": 0.95,
+        "rationale": "The SA (sinoatrial) node is the primary pacemaker of the heart and is a core component of the cardiac conduction system, which is the direct focus of this subsection.",
+        "elapsed_ms": 2879,
+        "tokens_in": 18,
+        "tokens_cache_create": 0,
+        "tokens_cache_read": 100818,
+        "tokens_out": 157
+      },
+      "agreement": "disagree_different_paths"
+    },
+    {
+      "query": "rotator cuff",
+      "legacy": {
+        "tier": "none",
+        "n_matches": 5,
+        "top_path": "Chapter 17: The Endocrine System > Hormones > Factors Affecting Target Cell Response",
+        "top_path_legacy": "Chapter 17: The Endocrine System > Hormones > Factors Affecting Target Cell Response",
+        "top_score": 48.22222222222222,
+        "elapsed_ms": 11686
+      },
+      "l9": {
+        "verdict": "strong",
+        "confidence": 0.92,
+        "route": "lock_immediately",
+        "n_matches": 1,
+        "top_path": "The Muscular System > Muscles of the Pectoral Girdle and Upper Limbs > Muscles That Move the Humerus",
+        "top_confidence": 0.92,
+        "rationale": "The rotator cuff muscles (supraspinatus, infraspinatus, teres minor, subscapularis) are the primary muscles that move the humerus and stabilize the glenohumeral joint.",
+        "elapsed_ms": 2576,
+        "tokens_in": 20,
+        "tokens_cache_create": 0,
+        "tokens_cache_read": 100818,
+        "tokens_out": 171
+      },
+      "agreement": "legacy_refused_l9_resolved"
+    },
+    {
+      "query": "what is glycolysis",
+      "legacy": {
+        "tier": "strong",
+        "n_matches": 5,
+        "top_path": "Chapter 24: Metabolism and Nutrition > Carbohydrate Metabolism > Glycolysis",
+        "top_path_legacy": "Chapter 24: Metabolism and Nutrition > Carbohydrate Metabolism > Glycolysis",
+        "top_score": 101.0,
+        "elapsed_ms": 653
+      },
+      "l9": {
+        "verdict": "strong",
+        "confidence": 0.95,
+        "route": "lock_immediately",
+        "n_matches": 1,
+        "top_path": "Metabolism and Nutrition > Carbohydrate Metabolism > Glycolysis",
+        "top_confidence": 0.95,
+        "rationale": "Direct match: student asks about glycolysis, which is the primary metabolic pathway for glucose breakdown covered in this subsection.",
+        "elapsed_ms": 2114,
+        "tokens_in": 21,
+        "tokens_cache_create": 0,
+        "tokens_cache_read": 100818,
+        "tokens_out": 136
+      },
+      "agreement": "disagree_different_paths"
+    },
+    {
+      "query": "ATP and muscle contraction",
+      "legacy": {
+        "tier": "strong",
+        "n_matches": 5,
+        "top_path": "Chapter 10: Muscle Tissue > Muscle Fiber Contraction and Relaxation > ATP and Muscle Contraction",
+        "top_path_legacy": "Chapter 10: Muscle Tissue > Muscle Fiber Contraction and Relaxation > ATP and Muscle Contraction",
+        "top_score": 101.0,
+        "elapsed_ms": 683
+      },
+      "l9": {
+        "verdict": "strong",
+        "confidence": 0.92,
+        "route": "lock_immediately",
+        "n_matches": 3,
+        "top_path": "Muscle Tissue > Muscle Fiber Contraction and Relaxation > ATP and Muscle Contraction",
+        "top_confidence": 0.92,
+        "rationale": "Direct match: subsection explicitly titled 'ATP and Muscle Contraction' covering the cross-bridge cycle and energy requirements for contraction.",
+        "elapsed_ms": 3686,
+        "tokens_in": 21,
+        "tokens_cache_create": 0,
+        "tokens_cache_read": 100818,
+        "tokens_out": 307
+      },
+      "agreement": "disagree_different_paths"
+    },
+    {
+      "query": "ADH",
+      "legacy": {
+        "tier": "borderline",
+        "n_matches": 5,
+        "top_path": "Chapter 20: The Cardiovascular System: Blood Vessels and Circulation > Blood Flow, Blood Pressure, and Resistance > Blood Pressure and Hydrostatic Pressure",
+        "top_path_legacy": "Chapter 20: The Cardiovascular System: Blood Vessels and Circulation > Blood Flow, Blood Pressure, and Resistance > Blood Pressure and Hydrostatic Pressure",
+        "top_score": 55.54545454545455,
+        "elapsed_ms": 260
+      },
+      "l9": {
+        "verdict": "strong",
+        "confidence": 0.92,
+        "route": "lock_immediately",
+        "n_matches": 3,
+        "top_path": "The Urinary System > Endocrine Regulation of Kidney Function > Antidiuretic Hormone (ADH)",
+        "top_confidence": 0.95,
+        "rationale": "Direct match: ADH is the primary topic of this subsection, which covers ADH and endothelin as key regulators of kidney function and water balance.",
+        "elapsed_ms": 3462,
+        "tokens_in": 18,
+        "tokens_cache_create": 0,
+        "tokens_cache_read": 100818,
+        "tokens_out": 334
+      },
+      "agreement": "disagree_different_paths"
+    },
+    {
+      "query": "CN VII",
+      "legacy": {
+        "tier": "none",
+        "n_matches": 5,
+        "top_path": "Chapter 5: The Integumentary System > Diseases, Disorders, and Injuries of the Integumentary System > Skin Cancer",
+        "top_path_legacy": "Chapter 5: The Integumentary System > Diseases, Disorders, and Injuries of the Integumentary System > Skin Cancer",
+        "top_score": 48.05882352941177,
+        "elapsed_ms": 220
+      },
+      "l9": {
+        "verdict": "strong",
+        "confidence": 0.95,
+        "route": "lock_immediately",
+        "n_matches": 3,
+        "top_path": "Anatomy of the Nervous System > The Peripheral Nervous System > Cranial Nerves and Their Functions",
+        "top_confidence": 0.92,
+        "rationale": "CN VII (facial nerve) is a cranial nerve with mixed sensory and motor functions; this entry directly covers cranial nerve functions and classification.",
+        "elapsed_ms": 3110,
+        "tokens_in": 18,
+        "tokens_cache_create": 0,
+        "tokens_cache_read": 100818,
+        "tokens_out": 324
+      },
+      "agreement": "legacy_refused_l9_resolved"
+    },
+    {
+      "query": "GFR",
+      "legacy": {
+        "tier": "strong",
+        "n_matches": 5,
+        "top_path": "Chapter 25: The Urinary System > Physiology of Urine Formation > Glomerular Filtration Rate (GFR)",
+        "top_path_legacy": "Chapter 25: The Urinary System > Physiology of Urine Formation > Glomerular Filtration Rate (GFR)",
+        "top_score": 97.7741935483871,
+        "elapsed_ms": 236
+      },
+      "l9": {
+        "verdict": "strong",
+        "confidence": 0.95,
+        "route": "lock_immediately",
+        "n_matches": 1,
+        "top_path": "The Urinary System > Physiology of Urine Formation > Glomerular Filtration Rate (GFR)",
+        "top_confidence": 0.95,
+        "rationale": "GFR is the standard abbreviation for glomerular filtration rate, a core concept in renal physiology that directly matches this subsection's title and focus.",
+        "elapsed_ms": 2178,
+        "tokens_in": 19,
+        "tokens_cache_create": 0,
+        "tokens_cache_read": 100818,
+        "tokens_out": 154
+      },
+      "agreement": "disagree_different_paths"
+    },
+    {
+      "query": "muscle",
+      "legacy": {
+        "tier": "borderline",
+        "n_matches": 5,
+        "top_path": "Chapter 10: Muscle Tissue > Cardiac Muscle Tissue > Aging and Muscle Tissue",
+        "top_path_legacy": "Chapter 10: Muscle Tissue > Cardiac Muscle Tissue > Aging and Muscle Tissue",
+        "top_score": 101.0,
+        "elapsed_ms": 393
+      },
+      "l9": {
+        "verdict": "borderline",
+        "confidence": 0.65,
+        "route": "show_top_matches",
+        "n_matches": 3,
+        "top_path": "Muscle Tissue > Overview of Muscle Tissues > Comparing the Three Muscle Types",
+        "top_confidence": 0.75,
+        "rationale": "Directly addresses the three muscle types (skeletal, cardiac, smooth) and their comparative features, likely the most common entry point for a general 'muscle' query.",
+        "elapsed_ms": 3462,
+        "tokens_in": 17,
+        "tokens_cache_create": 0,
+        "tokens_cache_read": 100818,
+        "tokens_out": 286
+      },
+      "agreement": "disagree_different_paths"
+    },
+    {
+      "query": "joints",
+      "legacy": {
+        "tier": "borderline",
+        "n_matches": 5,
+        "top_path": "Chapter 9: Joints > Synovial Joints > Types of Synovial Joints",
+        "top_path_legacy": "Chapter 9: Joints > Synovial Joints > Types of Synovial Joints",
+        "top_score": 101.0,
+        "elapsed_ms": 264
+      },
+      "l9": {
+        "verdict": "borderline",
+        "confidence": 0.65,
+        "route": "show_top_matches",
+        "n_matches": 3,
+        "top_path": "Joints > Classification of Joints > Structural Classification of Joints",
+        "top_confidence": 0.75,
+        "rationale": "Direct match to foundational joint classification by structure (fibrous, cartilaginous, synovial).",
+        "elapsed_ms": 3209,
+        "tokens_in": 17,
+        "tokens_cache_create": 0,
+        "tokens_cache_read": 100818,
+        "tokens_out": 274
+      },
+      "agreement": "disagree_different_paths"
+    },
+    {
+      "query": "brain",
+      "legacy": {
+        "tier": "borderline",
+        "n_matches": 5,
+        "top_path": "Chapter 7: Axial Skeleton > The Skull > Bones of the Brain Case",
+        "top_path_legacy": "Chapter 7: Axial Skeleton > The Skull > Bones of the Brain Case",
+        "top_score": 101.0,
+        "elapsed_ms": 361
+      },
+      "l9": {
+        "verdict": "borderline",
+        "confidence": 0.65,
+        "route": "show_top_matches",
+        "n_matches": 3,
+        "top_path": "Anatomy of the Nervous System > The Central Nervous System > The Cerebrum",
+        "top_confidence": 0.8,
+        "rationale": "The cerebrum is the brain's largest and most iconic structure, directly addressing a general query about 'brain' anatomy.",
+        "elapsed_ms": 2841,
+        "tokens_in": 17,
+        "tokens_cache_create": 0,
+        "tokens_cache_read": 100818,
+        "tokens_out": 279
+      },
+      "agreement": "disagree_different_paths"
+    },
+    {
+      "query": "What part of the heart starts the heartbeat?",
+      "legacy": {
+        "tier": "borderline",
+        "n_matches": 5,
+        "top_path": "Chapter 17: The Endocrine System > Organs with Secondary Endocrine Functions > The Heart",
+        "top_path_legacy": "Chapter 17: The Endocrine System > Organs with Secondary Endocrine Functions > The Heart",
+        "top_score": 101.0,
+        "elapsed_ms": 217
+      },
+      "l9": {
+        "verdict": "strong",
+        "confidence": 0.92,
+        "route": "lock_immediately",
+        "n_matches": 1,
+        "top_path": "The Cardiovascular System: The Heart > Cardiac Muscle and Electrical Activity > Conduction System of the Heart",
+        "top_confidence": 0.92,
+        "rationale": "This subsection directly addresses the cardiac conduction system, including the sinoatrial (SA) node, which is the heart's natural pacemaker that initiates each heartbeat.",
+        "elapsed_ms": 2327,
+        "tokens_in": 26,
+        "tokens_cache_create": 0,
+        "tokens_cache_read": 100818,
+        "tokens_out": 155
+      },
+      "agreement": "disagree_different_paths"
+    },
+    {
+      "query": "What are the structural and functional distinctions between the superior and inferior venae cavae?",
+      "legacy": {
+        "tier": "borderline",
+        "n_matches": 5,
+        "top_path": "Chapter 9: Joints > Types of Body Movements > Superior Rotation and Inferior Rotation",
+        "top_path_legacy": "Chapter 9: Joints > Types of Body Movements > Superior Rotation and Inferior Rotation",
+        "top_score": 83.35294117647058,
+        "elapsed_ms": 884
+      },
+      "l9": {
+        "verdict": "strong",
+        "confidence": 0.92,
+        "route": "lock_immediately",
+        "n_matches": 3,
+        "top_path": "The Cardiovascular System: Blood Vessels and Circulation > Circulatory Pathways > Overview of Systemic Veins",
+        "top_confidence": 0.92,
+        "rationale": "This subsection directly addresses systemic veins and their organization, including the superior and inferior venae cavae as major venous return pathways.",
+        "elapsed_ms": 3259,
+        "tokens_in": 34,
+        "tokens_cache_create": 0,
+        "tokens_cache_read": 100818,
+        "tokens_out": 324
+      },
+      "agreement": "disagree_different_paths"
+    },
+    {
+      "query": "wrist drop",
+      "legacy": {
+        "tier": "none",
+        "n_matches": 5,
+        "top_path": "Chapter 24: Metabolism and Nutrition > Nutrition and Diet > Metabolism and Obesity",
+        "top_path_legacy": "Chapter 24: Metabolism and Nutrition > Nutrition and Diet > Metabolism and Obesity",
+        "top_score": 46.15384615384615,
+        "elapsed_ms": 745
+      },
+      "l9": {
+        "verdict": "borderline",
+        "confidence": 0.72,
+        "route": "confirm_and_lock",
+        "n_matches": 3,
+        "top_path": "The Nervous System and Nervous Tissue > The Function of Nervous Tissue > Pathology of Nervous Tissue",
+        "top_confidence": 0.78,
+        "rationale": "Wrist drop is a classic clinical sign of radial nerve injury or palsy, which represents pathology of nervous tissue affecting motor function.",
+        "elapsed_ms": 3479,
+        "tokens_in": 19,
+        "tokens_cache_create": 0,
+        "tokens_cache_read": 100818,
+        "tokens_out": 325
+      },
+      "agreement": "legacy_refused_l9_resolved"
+    },
+    {
+      "query": "ulnar nerve injuries at the elbow",
+      "legacy": {
+        "tier": "borderline",
+        "n_matches": 5,
+        "top_path": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Elbow Joint",
+        "top_path_legacy": "Chapter 9: Joints > Anatomy of Selected Synovial Joints > Elbow Joint",
+        "top_score": 63.5,
+        "elapsed_ms": 97
+      },
+      "l9": {
+        "verdict": "borderline",
+        "confidence": 0.72,
+        "route": "confirm_and_lock",
+        "n_matches": 3,
+        "top_path": "The Appendicular Skeleton > Bones of the Upper Limb > Structural Alignment and the Carrying Angle",
+        "top_confidence": 0.68,
+        "rationale": "Discusses forearm anatomy and alignment relevant to understanding elbow joint mechanics where ulnar nerve injuries occur.",
+        "elapsed_ms": 3605,
+        "tokens_in": 24,
+        "tokens_cache_create": 0,
+        "tokens_cache_read": 100818,
+        "tokens_out": 301
+      },
+      "agreement": "disagree_different_paths"
+    },
+    {
+      "query": "what is the capital of France",
+      "legacy": {
+        "tier": "borderline",
+        "n_matches": 5,
+        "top_path": "Chapter 16: The Neurological Exam > The Cranial Nerve Exam > Nerves of the Face and Oral Cavity",
+        "top_path_legacy": "Chapter 16: The Neurological Exam > The Cranial Nerve Exam > Nerves of the Face and Oral Cavity",
+        "top_score": 64.4920634920635,
+        "elapsed_ms": 3267
+      },
+      "l9": {
+        "verdict": "none",
+        "confidence": 0.0,
+        "route": "refuse_with_starter_cards",
+        "n_matches": 0,
+        "top_path": "",
+        "top_confidence": 0.0,
+        "rationale": "",
+        "elapsed_ms": 1643,
+        "tokens_in": 22,
+        "tokens_cache_create": 0,
+        "tokens_cache_read": 100818,
+        "tokens_out": 59
+      },
+      "agreement": "l9_refused_legacy_resolved"
+    },
+    {
+      "query": "vaping policy",
+      "legacy": {
+        "tier": "borderline",
+        "n_matches": 5,
+        "top_path": "Chapter 14: The Somatic Nervous System > Central Processing > Cortical Processing",
+        "top_path_legacy": "Chapter 14: The Somatic Nervous System > Central Processing > Cortical Processing",
+        "top_score": 51.0,
+        "elapsed_ms": 3593
+      },
+      "l9": {
+        "verdict": "none",
+        "confidence": 0.05,
+        "route": "refuse_with_starter_cards",
+        "n_matches": 3,
+        "top_path": "The Respiratory System > Modifications in Respiratory Functions > Exercise Hyperpnea and Hyperventilation",
+        "top_confidence": 0.15,
+        "rationale": "Vaping affects respiratory function, though this entry focuses on exercise physiology rather than substance inhalation effects.",
+        "elapsed_ms": 3496,
+        "tokens_in": 19,
+        "tokens_cache_create": 0,
+        "tokens_cache_read": 100818,
+        "tokens_out": 304
+      },
+      "agreement": "l9_refused_legacy_resolved"
+    }
+  ],
+  "agreement_counts": {
+    "disagree_different_paths": 11,
+    "legacy_refused_l9_resolved": 3,
+    "l9_refused_legacy_resolved": 2
+  },
+  "cost_estimate": 0.18108880000000002
+}
