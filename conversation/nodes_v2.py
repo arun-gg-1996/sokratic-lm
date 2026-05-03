@@ -144,6 +144,58 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
             latest_student=latest_student,
         )
 
+    # ── 0. L53 reach-answer gate (Track 4.7g) ─────────────────────────────
+    # Mirrors legacy dean.run_turn() lines 1741-1783 — fires the SAME
+    # gate (Step A.1 token-overlap → Step A.2 K-of-N partial reach →
+    # Step B LLM paraphrase) on the student's latest message before any
+    # planning. Stamps state so:
+    #   * after_dean() can route to assessment_node when reached=True
+    #   * Dean.plan() and Teacher inputs can see student_reached_answer
+    # Skip on the lock-time ack turn (topic_just_locked=True) per legacy:
+    # the lock-acknowledgment turn isn't a real attempt and would produce
+    # spurious reach=True via topic-keyword overlap with the locked answer.
+    skip_gate_for_ack = bool(state.get("topic_just_locked", False))
+    if (
+        latest_student
+        and state.get("locked_answer")
+        and not skip_gate_for_ack
+    ):
+        try:
+            gate_result = dean.reached_answer_gate(state, latest_student)
+        except Exception as e:
+            debug_trace.append({
+                "wrapper": "dean.reached_answer_gate.error",
+                "error": f"{type(e).__name__}: {str(e)[:160]}",
+            })
+            gate_result = {"reached": False, "evidence": "", "path": "error", "coverage": 0.0}
+        state["student_reached_answer"] = bool(gate_result.get("reached", False))
+        state["student_reach_coverage"] = round(
+            float(gate_result.get(
+                "coverage", 1.0 if state["student_reached_answer"] else 0.0,
+            )),
+            3,
+        )
+        state["student_reach_path"] = str(gate_result.get("path", "unknown"))
+        debug_trace.append({
+            "wrapper": "dean.reached_answer_gate",
+            "reached": state["student_reached_answer"],
+            "path": state["student_reach_path"],
+            "coverage": state["student_reach_coverage"],
+            "evidence": str(gate_result.get("evidence", ""))[:160],
+            "n_matched": gate_result.get("n_matched"),
+            "n_total": gate_result.get("n_total"),
+        })
+    else:
+        # No student msg yet, no locked answer, or lock-ack turn — gate
+        # cannot fire. Preserve any prior value (don't downgrade to False).
+        debug_trace.append({
+            "wrapper": "dean.reached_answer_gate.skipped",
+            "reason": (
+                "topic_just_locked" if skip_gate_for_ack
+                else ("no_locked_answer" if not state.get("locked_answer") else "no_msg")
+            ),
+        })
+
     # ── 1. Pre-flight Haiku layer ────────────────────────────────────────
     preflight = run_preflight(state, latest_student, locked_topic=locked)
     debug_trace.append({
@@ -241,6 +293,11 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
             "hint_level": new_hint_level,
             "last_hint_advance_at_turn": last_advance_at,
             "phase": new_phase,
+            # Track 4.7g — propagate reach gate result so after_dean
+            # routes to assessment_node when the student reached the answer.
+            "student_reached_answer": bool(state.get("student_reached_answer", False)),
+            "student_reach_coverage": float(state.get("student_reach_coverage", 0.0) or 0.0),
+            "student_reach_path": str(state.get("student_reach_path", "") or ""),
             "debug": state["debug"],
         }
 
@@ -387,6 +444,11 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         "help_abuse_count": new_help_count,  # reset to 0 on engagement
         "off_topic_count": new_off_count,
         "turn_count": int(state.get("turn_count", 0) or 0) + 1,
+        # Track 4.7g — propagate reach gate result so after_dean routes
+        # to assessment_node when the student reached the answer.
+        "student_reached_answer": bool(state.get("student_reached_answer", False)),
+        "student_reach_coverage": float(state.get("student_reach_coverage", 0.0) or 0.0),
+        "student_reach_path": str(state.get("student_reach_path", "") or ""),
         "debug": state["debug"],
     }
 
