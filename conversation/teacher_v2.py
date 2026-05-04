@@ -83,8 +83,13 @@ You are a Socratic {domain_name} tutor opening a new session with a
 Strict rules:
 - First words must be exactly: "Good {time_of_day}".
 - Do NOT use generic clichés ("Hello", "Welcome", "I'm here to help").
-- End with exactly one question asking what {domain_name} topic the
-  student wants to tackle today.
+- If LOCKED SUBSECTION is set (the student arrived with a prelocked
+  topic from My Mastery), do NOT ask them to pick a topic. Instead,
+  acknowledge by NAME — e.g. "Picking up on <subsection> today" — and
+  end with a brief invitation to dive in (no question; cards follow).
+- If LOCKED SUBSECTION is "(unspecified)" or empty, end with exactly
+  one question asking what {domain_name} topic the student wants to
+  tackle today.
 - If CARRYOVER NOTES reference a prior topic, mention it briefly as a
   resume option — but do NOT lecture.
 """,
@@ -321,10 +326,12 @@ _MODES_USING_HISTORY = {
     "honest_close", "reach_close", "clinical_natural_close", "close",
 }
 
-# Modes that need locked-topic context fields
+# Modes that need locked-topic context fields. M4: rapport added so
+# prelock from My Mastery → Start surfaces the subsection name in the
+# greeting instead of asking "what topic do you want to study?"
 _MODES_USING_LOCKED = {"socratic", "clinical", "redirect", "opt_in",
                        "confirm_end", "honest_close", "reach_close",
-                       "clinical_natural_close", "close"}
+                       "clinical_natural_close", "close", "rapport"}
 
 
 # ─────────────────────────────────────────────────────────────────────────────

@@ -16,6 +16,7 @@ The graph in graph.py wires these together with edges from edges.py.
 """
 
 import json
+from datetime import datetime
 from pathlib import Path
 from conversation.state import TutorState
 from conversation.summarizer import maybe_summarize
@@ -158,12 +159,37 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
     else:
         initial_suggestions = _topic_suggester.suggest(n=6)
 
-    greeting = teacher.draft_rapport(
-        weak_topics,
-        state=state,
-        past_session_memories=past_memories,
-        client_hour=state.get("client_hour"),
-    )
+    # M4 (B6) — when the session was prelocked from My Mastery, the rapport
+    # opener should ACKNOWLEDGE the subsection by name instead of asking
+    # "what topic?" and then auto-injecting one. Skip the generic LLM
+    # rapport call entirely (saves 1 Sonnet call) and emit a short
+    # deterministic acknowledgment. This is interface chrome (the cards
+    # below carry the user's choice) — not a templated tutor reply per M-FB.
+    locked_for_rapport = state.get("locked_topic") or {}
+    prelocked_sub = str(locked_for_rapport.get("subsection") or "").strip()
+    if prelocked_sub:
+        client_hour_val = state.get("client_hour")
+        try:
+            hr = int(client_hour_val) if client_hour_val is not None else datetime.now().hour
+        except (TypeError, ValueError):
+            hr = datetime.now().hour
+        if hr < 12:
+            tod = "morning"
+        elif hr < 17:
+            tod = "afternoon"
+        else:
+            tod = "evening"
+        greeting = (
+            f"Good {tod}. Picking up on {prelocked_sub} — "
+            f"pick how you'd like to start below."
+        )
+    else:
+        greeting = teacher.draft_rapport(
+            weak_topics,
+            state=state,
+            past_session_memories=past_memories,
+            client_hour=state.get("client_hour"),
+        )
 
     messages = list(state.get("messages", []))
     messages.append({"role": "tutor", "content": greeting, "phase": "rapport"})
