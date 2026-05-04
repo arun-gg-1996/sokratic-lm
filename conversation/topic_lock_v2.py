@@ -166,9 +166,27 @@ def run_topic_lock_v2(
                 pending_user_choice={},
                 student_state="answer",
             )
-        # Non-match falls through — student typed something not on the cards.
-        # Fall back to a normal topic query (next mapper call) but PRESERVE
-        # the locked_topic so they can still pick later.
+        # M4 — pivot path: student typed something instead of picking
+        # one of the anchor cards. Treat as a NEW topic query: clear the
+        # prelock state so the topic mapper can resolve from scratch.
+        # Without this, the student would be stuck on the prior subsection's
+        # cards or fall through to tutoring with empty Q/A.
+        trace.append({
+            "wrapper": "topic_lock_v2.anchor_pick_pivot",
+            "typed": latest_student[:80],
+            "had_subsection": str((state.get("locked_topic") or {}).get("subsection") or "")[:60],
+        })
+        state["locked_topic"] = None
+        state["topic_confirmed"] = False
+        state["topic_selection"] = ""
+        state["locked_question"] = ""
+        state["locked_answer"] = ""
+        state["full_answer"] = ""
+        state["locked_answer_aliases"] = []
+        state["retrieved_chunks"] = []
+        state["topic_just_locked"] = False
+        # pending will be cleared by the _map_topic path that runs below.
+        state["pending_user_choice"] = {}
 
     if prelock_count >= PRELOCK_CAP:
         fire_activity("Showing a guided picker")

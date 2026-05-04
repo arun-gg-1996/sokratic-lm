@@ -35,9 +35,10 @@ interface ComposerProps {
 
 function helperFor(
   isWaiting: boolean,
+  isStreaming: boolean,
   pendingKind: string | undefined,
 ): string | null {
-  if (isWaiting) return "Tutor is responding…";
+  if (isWaiting || isStreaming) return "Tutor is responding…";
   switch (pendingKind) {
     case "opt_in":
       return "Click Yes or No above ↑";
@@ -45,6 +46,8 @@ function helperFor(
       return "Click Yes to lock or No to pick a different topic ↑";
     case "topic":
       return "Pick a topic above ↑";
+    case "anchor_pick":
+      return "Pick a question above — or type your own to switch topics ↑";
     default:
       return null;
   }
@@ -57,12 +60,19 @@ export function Composer({ onSubmit, placeholder = "Reply..." }: ComposerProps) 
   const debug = useSessionStore((s) => s.debug) as Record<string, unknown> | null;
   const messages = useSessionStore((s) => s.messages);
   const sessionEnded = useSessionStore((s) => s.sessionEnded);
+  const streamingTutorContent = useSessionStore((s) => s.streamingTutorContent);
+  // M4 — also disable while ANY tutor message is currently typewriter-
+  // streaming OR while a streaming buffer has tokens. Without this, the
+  // user could type into a "live" input during the rapport animation
+  // before the tutor finished landing.
+  const isAnyTutorStreaming = messages.some((m) => m.role === "tutor" && m.shouldStream);
+  const isStreamingNow = isAnyTutorStreaming || streamingTutorContent.length > 0;
   const stt = useSTT();
-  const helper = helperFor(isWaiting, pendingChoice?.kind);
+  const helper = helperFor(isWaiting, isStreamingNow, pendingChoice?.kind);
   // ChatView already hides the Composer entirely when pendingChoice is
   // set, so the most common disabled path is "tutor is streaming".
   // M1 — once session is ended, hard-disable input. Banner above explains why.
-  const disabled = isWaiting || sessionEnded;
+  const disabled = isWaiting || sessionEnded || isAnyTutorStreaming || streamingTutorContent.length > 0;
   const showHelper = disabled && (helper || (sessionEnded ? "Session ended — visit My Mastery to review or start a new session." : null));
 
   // M1 — render a session-ended banner above the disabled input so the

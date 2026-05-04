@@ -90,6 +90,28 @@ export function useSession() {
     } catch {
       imageContext = null;
     }
+    // M4 — instant feedback for prelocked sessions: show a thinking
+    // indicator with the subsection name BEFORE the backend round-trip
+    // completes. Avoids the "blank screen for 5-8s" feel users hit
+    // after clicking Start. The indicator is replaced by the real
+    // rapport bubble + cards when startSession resolves.
+    if (prelockedPath) {
+      // Extract subsection from "Chapter X > Section > Subsection" or
+      // legacy "ChN|Section|Subsection" format.
+      let subLabel = "";
+      if (prelockedPath.includes(" > ")) {
+        const parts = prelockedPath.split(" > ");
+        subLabel = parts[parts.length - 1] || "";
+      } else if (prelockedPath.includes("|")) {
+        const parts = prelockedPath.split("|");
+        subLabel = parts[parts.length - 1] || "";
+      }
+      if (subLabel) {
+        useSessionStore.getState().setWaiting(true);
+        useSessionStore.getState().appendActivity(`Loading ${subLabel}...`);
+      }
+    }
+
     const bootstrap = (async () => {
       try {
         const session = await startSession(
@@ -135,8 +157,16 @@ export function useSession() {
         } catch {
           // ignore
         }
+        // Clear the loading-state activity log + isWaiting now that
+        // the rapport message has landed.
+        useSessionStore.getState().clearActivityLog();
+        useSessionStore.getState().setWaiting(false);
       } catch {
         if (bootstrapSeqRef.current !== seq) return;
+        // Recovery: clear loading indicator on bootstrap failure so the
+        // user isn't stuck staring at "Loading...".
+        useSessionStore.getState().clearActivityLog();
+        useSessionStore.getState().setWaiting(false);
         addTutorMessage("Unable to start session. Please retry.", "system");
       } finally {
         if (bootstrapSeqRef.current === seq) bootstrapRef.current = null;
