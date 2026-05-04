@@ -32,7 +32,7 @@ export function ChatSurface() {
         <div className="shrink-0 border-b border-border px-4 py-2 flex items-center justify-end">
           <button
             onClick={() => setExitModalOpen(true)}
-            className="text-xs text-muted-foreground hover:text-destructive transition px-2 py-1 rounded border border-border hover:border-destructive"
+            className="text-xs text-muted hover:text-red-600 dark:text-red-400 transition px-2 py-1 rounded border border-border hover:border-red-500"
             aria-label="End this session"
           >
             End session

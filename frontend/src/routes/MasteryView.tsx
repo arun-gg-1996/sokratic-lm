@@ -204,7 +204,7 @@ function SubsectionRow({
         <button
           onClick={handleToggle}
           disabled={!expandable}
-          className={`shrink-0 w-4 text-muted-foreground ${expandable ? "cursor-pointer hover:text-foreground" : "opacity-30 cursor-default"}`}
+          className={`shrink-0 w-4 text-muted ${expandable ? "cursor-pointer hover:text-text" : "opacity-30 cursor-default"}`}
           aria-label={expanded ? "Collapse sessions" : "Expand sessions"}
           aria-expanded={expanded}
         >
@@ -234,7 +234,7 @@ function SubsectionRow({
       {expanded && expandable && (
         <div className="pl-20 pr-4 pb-3 space-y-1">
           {loading && (
-            <div className="text-xs text-muted-foreground italic">
+            <div className="text-xs text-muted italic">
               Loading sessions…
             </div>
           )}
@@ -244,7 +244,7 @@ function SubsectionRow({
             </div>
           )}
           {sessions !== null && sessions.length === 0 && (
-            <div className="text-xs text-muted-foreground italic">
+            <div className="text-xs text-muted italic">
               No completed sessions yet.
             </div>
           )}
@@ -261,11 +261,11 @@ function SubsectionRow({
                 key={s.thread_id}
                 className="flex items-center gap-3 text-xs py-1 border-t border-border/50"
               >
-                <span className="text-muted-foreground w-24">{dateStr}</span>
-                <span className="text-muted-foreground flex-1 truncate">
+                <span className="text-muted w-24">{dateStr}</span>
+                <span className="text-muted flex-1 truncate">
                   {reach}
                 </span>
-                <span className="font-mono text-muted-foreground w-10 text-right">
+                <span className="font-mono text-muted w-10 text-right">
                   {score}
                 </span>
                 <Link

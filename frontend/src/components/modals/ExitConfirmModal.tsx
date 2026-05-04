@@ -22,33 +22,33 @@ export function ExitConfirmModal({ open, onCancel, onConfirm }: ExitConfirmModal
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="exit-modal-title"
       onClick={onCancel}
     >
       <div
-        className="w-[min(400px,90vw)] rounded-xl bg-card border border-border shadow-xl p-6"
+        className="w-[min(400px,90vw)] rounded-xl bg-panel border border-border shadow-2xl p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id="exit-modal-title" className="text-lg font-semibold mb-3">
           End this session?
         </h2>
-        <p className="text-sm text-muted-foreground mb-5">
+        <p className="text-sm text-muted mb-5">
           Your conversation won't be saved. You can start a new one anytime
           from My Mastery.
         </p>
         <div className="flex justify-end gap-2">
           <button
             onClick={onCancel}
-            className="px-4 py-2 rounded-md border border-border text-sm font-medium hover:bg-muted transition"
+            className="px-4 py-2 rounded-md border border-border bg-panel text-sm font-medium hover:bg-bg transition"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 rounded-md bg-destructive text-destructive-foreground text-sm font-medium hover:bg-destructive/90 transition"
+            className="px-4 py-2 rounded-md bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition"
           >
             End session
           </button>

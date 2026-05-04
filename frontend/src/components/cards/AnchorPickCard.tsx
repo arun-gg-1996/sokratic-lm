@@ -19,11 +19,11 @@ export function AnchorPickCard({ options, subsection, onSelect }: AnchorPickCard
   return (
     <div className="shrink-0 border-t border-border bg-bg">
       <div className="max-w-lane mx-auto px-6 py-4 space-y-3">
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm text-muted">
           {subsection ? (
             <>
               Pick how you'd like to start{" "}
-              <span className="font-medium text-foreground">{subsection}</span>:
+              <span className="font-medium text-text">{subsection}</span>:
             </>
           ) : (
             "Pick a question to start with:"
@@ -36,7 +36,7 @@ export function AnchorPickCard({ options, subsection, onSelect }: AnchorPickCard
               onClick={() => onSelect(opt)}
               className="w-full rounded-card border border-border bg-panel px-4 py-3 text-left hover:border-accent transition"
             >
-              <div className="text-xs text-muted-foreground mb-1">
+              <div className="text-xs text-muted mb-1">
                 Option {idx + 1}
               </div>
               <div className="text-sm italic">{opt}</div>

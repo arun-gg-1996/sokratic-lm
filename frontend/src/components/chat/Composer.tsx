@@ -69,7 +69,7 @@ export function Composer({ onSubmit, placeholder = "Reply..." }: ComposerProps) 
   // student understands why typing is blocked.
   if (sessionEnded) {
     return (
-      <div className="border-t border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground flex items-center justify-between gap-3">
+      <div className="border-t border-border bg-muted/30 px-4 py-3 text-sm text-muted flex items-center justify-between gap-3">
         <span>Session ended. Visit My Mastery to review or start a new session.</span>
         <a
           href="/mastery"

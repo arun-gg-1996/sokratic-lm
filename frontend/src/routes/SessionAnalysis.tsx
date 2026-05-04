@@ -130,7 +130,7 @@ export function SessionAnalysis() {
     return (
       <AppShell>
         <div className="flex-1 flex flex-col items-center justify-center gap-3">
-          <div className="text-destructive">{error}</div>
+          <div className="text-red-600 dark:text-red-400">{error}</div>
           <Link to="/mastery" className="text-accent underline">← My Mastery</Link>
         </div>
       </AppShell>
@@ -155,19 +155,19 @@ export function SessionAnalysis() {
     <AppShell>
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-6 py-6 space-y-5">
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-muted">
             <Link to="/mastery" className="hover:text-accent">← My Mastery</Link>
             <span className="mx-2">/</span>
             <span>{subsectionLabel}</span>
           </div>
 
           {/* Transcript panel */}
-          <section className="border border-border rounded-lg p-4 bg-card">
-            <h2 className="text-sm font-semibold uppercase text-muted-foreground tracking-wide mb-3">
+          <section className="border border-border rounded-lg p-4 bg-panel">
+            <h2 className="text-sm font-semibold uppercase text-muted tracking-wide mb-3">
               Transcript
             </h2>
             {transcript.length === 0 ? (
-              <div className="text-sm text-muted-foreground italic">
+              <div className="text-sm text-muted italic">
                 No transcript available for this session.
               </div>
             ) : (
@@ -181,7 +181,7 @@ export function SessionAnalysis() {
                         : "text-sm bg-accent/10 rounded px-3 py-2 ml-8"
                     }
                   >
-                    <div className="text-xs text-muted-foreground mb-1">
+                    <div className="text-xs text-muted mb-1">
                       {m.role === "tutor" ? "Tutor" : "You"}
                     </div>
                     <div className="whitespace-pre-wrap">{m.content}</div>
@@ -192,16 +192,16 @@ export function SessionAnalysis() {
           </section>
 
           {/* Summary panel */}
-          <section className="border border-border rounded-lg p-4 bg-card">
+          <section className="border border-border rounded-lg p-4 bg-panel">
             <div className="flex items-start justify-between mb-3">
-              <h2 className="text-sm font-semibold uppercase text-muted-foreground tracking-wide">
+              <h2 className="text-sm font-semibold uppercase text-muted tracking-wide">
                 Summary
               </h2>
               {!takeaways && (
                 <button
                   onClick={handleRegenerate}
                   disabled={regenerating}
-                  className="text-xs text-accent hover:underline disabled:text-muted-foreground"
+                  className="text-xs text-accent hover:underline disabled:text-muted"
                 >
                   {regenerating ? "Regenerating..." : "Regenerate"}
                 </button>
@@ -210,13 +210,13 @@ export function SessionAnalysis() {
             <div className="text-sm space-y-2">
               {session.locked_question && (
                 <div>
-                  <span className="text-muted-foreground">Locked Q: </span>
+                  <span className="text-muted">Locked Q: </span>
                   <span>{session.locked_question}</span>
                 </div>
               )}
               {session.locked_answer && (
                 <div>
-                  <span className="text-muted-foreground">Answer: </span>
+                  <span className="text-muted">Answer: </span>
                   <span>{session.locked_answer}</span>
                 </div>
               )}
@@ -245,13 +245,13 @@ export function SessionAnalysis() {
           </section>
 
           {/* Analysis chat panel */}
-          <section className="border border-border rounded-lg p-4 bg-card">
-            <h2 className="text-sm font-semibold uppercase text-muted-foreground tracking-wide mb-3">
-              📖 Analysis chat <span className="text-xs font-normal normal-case text-muted-foreground">— scoped to this session</span>
+          <section className="border border-border rounded-lg p-4 bg-panel">
+            <h2 className="text-sm font-semibold uppercase text-muted tracking-wide mb-3">
+              📖 Analysis chat <span className="text-xs font-normal normal-case text-muted">— scoped to this session</span>
             </h2>
             <div className="space-y-2 mb-3 max-h-60 overflow-y-auto pr-2">
               {analysisHistory.length === 0 && !analysisLoading && (
-                <div className="text-sm text-muted-foreground italic">
+                <div className="text-sm text-muted italic">
                   Ask a question about this session — what you got stuck on, why a hint
                   didn't help, etc.
                 </div>
@@ -269,7 +269,7 @@ export function SessionAnalysis() {
                           : "text-sm bg-muted/30 rounded px-3 py-2"
                     }
                   >
-                    <div className="text-xs text-muted-foreground mb-1">
+                    <div className="text-xs text-muted mb-1">
                       {t.role === "user" ? "You" : (isSystem ? "Note" : "Tutor")}
                     </div>
                     <div className="whitespace-pre-wrap">{t.content}</div>
@@ -277,7 +277,7 @@ export function SessionAnalysis() {
                 );
               })}
               {analysisLoading && (
-                <div className="text-sm text-muted-foreground italic">Thinking…</div>
+                <div className="text-sm text-muted italic">Thinking…</div>
               )}
             </div>
             <form onSubmit={handleAnalysisSubmit} className="flex gap-2">
