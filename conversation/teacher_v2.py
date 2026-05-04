@@ -520,20 +520,35 @@ class TeacherV2:
         feedback loop (Track 4.6) — empty on first attempt; populated
         when a check failed and we're retrying with the failure detail.
         """
-        prompt = build_teacher_prompt(turn_plan, inputs)
+        # PERF — split the prompt into (stable, variable) so Anthropic's
+        # prompt cache can hit on the heavy chunks/history/locked block
+        # across retries within the same turn AND across turns within
+        # the 5-min TTL. Stable part = the rendered Teacher prompt (chunks,
+        # locked context, history). Variable part = retry-feedback addendum
+        # which changes per attempt. ~10× cheaper input + faster TTFT.
+        stable_prompt = build_teacher_prompt(turn_plan, inputs)
 
-        # Append retry-feedback addendum per L62 if present.
+        variable_tail = ""
         if prior_attempts:
-            prior_block = "\n\n--- PRIOR ATTEMPTS (do NOT repeat the same mistakes) ---\n"
+            variable_tail = "\n\n--- PRIOR ATTEMPTS (do NOT repeat the same mistakes) ---\n"
             for i, attempt in enumerate(prior_attempts, start=1):
-                prior_block += f"\nAttempt {i}: {attempt}\n"
+                variable_tail += f"\nAttempt {i}: {attempt}\n"
                 if prior_failures and len(prior_failures) >= i:
                     f = prior_failures[i - 1]
-                    prior_block += (
+                    variable_tail += (
                         f"  → failed {f.get('_check_name', '?')}: "
                         f"{f.get('reason', '?')}\n"
                     )
-            prompt = prompt + prior_block
+
+        content_blocks: list[dict] = [
+            {
+                "type": "text",
+                "text": stable_prompt,
+                "cache_control": {"type": "ephemeral"},
+            },
+        ]
+        if variable_tail:
+            content_blocks.append({"type": "text", "text": variable_tail})
 
         t0 = time.time()
         try:
@@ -541,7 +556,8 @@ class TeacherV2:
                 model=self.model,
                 max_tokens=self.max_tokens,
                 temperature=self.temperature,
-                messages=[{"role": "user", "content": prompt}],
+                messages=[{"role": "user", "content": content_blocks}],
+                extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"},
             )
         except Exception as e:
             return TeacherDraftResult(

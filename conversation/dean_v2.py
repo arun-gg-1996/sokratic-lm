@@ -506,14 +506,26 @@ class DeanV2:
         *,
         attempt: int,
     ) -> DeanPlanResult:
+        # PERF — cache the system prompt block (~stable across plan calls
+        # within the session) so Anthropic's prompt cache cuts input tokens
+        # ~10× and improves TTFT. system passed as content-block list
+        # with cache_control: ephemeral.
+        system_blocks = [
+            {
+                "type": "text",
+                "text": system_prompt,
+                "cache_control": {"type": "ephemeral"},
+            }
+        ]
         t0 = time.time()
         try:
             resp = self.client.messages.create(
                 model=self.model,
                 max_tokens=self.max_tokens,
                 temperature=self.temperature,
-                system=system_prompt,
+                system=system_blocks,
                 messages=[{"role": "user", "content": user_prompt}],
+                extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"},
             )
         except Exception as e:
             return DeanPlanResult(
