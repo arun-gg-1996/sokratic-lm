@@ -484,17 +484,12 @@ async def run_check(student_id: str) -> int:
     # ── Phase 3: tutoring loop until reach/cap ──
     max_loop = 12
     while turn_idx < max_loop and state.get("phase") != "memory_update":
-        # Generate student reply via simulator
-        last_tutor = ""
-        for m in reversed(state.get("messages") or []):
-            if (m or {}).get("role") == "tutor":
-                last_tutor = str(m.get("content") or "")
-                break
-        reply = simulator.next_reply(
-            tutor_message=last_tutor,
-            phase=state.get("phase", "tutoring"),
-            turn_count=turn_idx,
-        )
+        # Generate student reply via simulator (signature: respond(state))
+        try:
+            reply = simulator.respond(state)
+        except Exception as exc:
+            print(f"     SIM_ERR {type(exc).__name__}: {exc}")
+            reply = "I'm not sure"
         if not reply:
             reply = "I'm not sure"
         state["messages"].append({"role": "student", "content": reply})
