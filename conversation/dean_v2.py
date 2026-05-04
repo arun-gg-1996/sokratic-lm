@@ -136,6 +136,15 @@ Output STRICT JSON only — no markdown fences, no preamble:
 apply_redaction is ALWAYS false. clinical_scenario / clinical_target are
 null UNLESS mode="clinical".
 
+HINT-LEVEL ADVANCE:
+Set advance_hint_level=true ONLY when the student attempted a real answer
+that missed (a substantive guess, even if wrong). Do NOT advance on:
+  - hedges / non-attempts ("idk", "i'm not sure", "hmm")
+  - clarification requests ("what do you mean?")
+  - on-topic but partial-reach answers (the reach gate handles those)
+The shown hint_level is the CURRENT level; if you advance, the NEXT turn
+sees level+1 and your hint_text should escalate one tier deeper.
+
 EXPLORATION RETRIEVAL (M6):
 Set needs_exploration=true ONLY when the student's question is tangential
 to the locked subsection AND the answer requires content not present in the

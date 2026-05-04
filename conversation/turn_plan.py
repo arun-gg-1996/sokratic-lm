@@ -111,6 +111,14 @@ class TurnPlan:
     needs_exploration: bool = False
     exploration_query: str = ""
 
+    # Hint-level advance signal. v2 had no path to bump hint_level on a
+    # substantive-but-wrong student answer (the legacy v1 eval-student
+    # call set it). Dean now signals true when the student attempted a
+    # real answer that missed; nodes_v2 increments state.hint_level
+    # (capped at max_hints+1, which trips the hint-exhaustion route to
+    # memory_update per M1's edges fix).
+    advance_hint_level: bool = False
+
     # ── Validation ───────────────────────────────────────────────────────
 
     def __post_init__(self):
@@ -202,6 +210,7 @@ class TurnPlan:
             "clinical_target": parsed.get("clinical_target"),
             "needs_exploration": bool(parsed.get("needs_exploration") or False),
             "exploration_query": str(parsed.get("exploration_query") or "").strip(),
+            "advance_hint_level": bool(parsed.get("advance_hint_level") or False),
         }
         # Defensive: coerce list items to strings if LLM returned weird types
         kwargs["permitted_terms"] = [str(x) for x in kwargs["permitted_terms"]]
@@ -241,6 +250,7 @@ class TurnPlan:
             clinical_target=None,
             needs_exploration=False,
             exploration_query="",
+            advance_hint_level=False,
         )
 
     # ── Serialization ────────────────────────────────────────────────────

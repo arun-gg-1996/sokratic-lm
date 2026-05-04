@@ -506,11 +506,30 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
     elapsed_ms = int((time.time() - t0) * 1000)
     debug_trace.append({"wrapper": "dean_node_v2.total_elapsed_ms", "value": elapsed_ms})
 
+    # Hint-level advance — Dean signals on substantive-but-wrong answers.
+    # Cap at max_hints+1 so the next routing tick trips the hint-exhaustion
+    # path to memory_update (per M1's edges.py:67 fix).
+    prev_hint_level_engaged = int(state.get("hint_level", 0) or 0)
+    new_hint_level_engaged = prev_hint_level_engaged
+    last_advance_at_engaged = int(state.get("last_hint_advance_at_turn", -1) or -1)
+    if final_plan.advance_hint_level and not state.get("student_reached_answer"):
+        max_hints = int(state.get("max_hints", 3) or 3)
+        new_hint_level_engaged = min(max_hints + 1, prev_hint_level_engaged + 1)
+        last_advance_at_engaged = int(state.get("turn_count", 0) or 0)
+        debug_trace.append({
+            "wrapper": "dean_node_v2.hint_level_advance",
+            "from": prev_hint_level_engaged,
+            "to": new_hint_level_engaged,
+            "trigger": "dean_signal",
+        })
+
     return {
         "messages": msgs,
         "help_abuse_count": new_help_count,  # reset to 0 on engagement
         "off_topic_count": new_off_count,
         "turn_count": int(state.get("turn_count", 0) or 0) + 1,
+        "hint_level": new_hint_level_engaged,
+        "last_hint_advance_at_turn": last_advance_at_engaged,
         # Track 4.7g — propagate reach gate result so after_dean routes
         # to assessment_node when the student reached the answer.
         "student_reached_answer": bool(state.get("student_reached_answer", False)),
