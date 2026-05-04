@@ -254,6 +254,14 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
             # phase-contextual counters during the clinical loop.
             debug_payload["clinical_turn_count"] = int(new_state.get("clinical_turn_count", 0) or 0)
             debug_payload["clinical_max_turns"] = int(new_state.get("clinical_max_turns", 7) or 7)
+            # M1 — surface lifecycle flags so the frontend can pop the
+            # ExitConfirmModal on deflection and render the session-ended
+            # banner on close. Without these fields the WS payload would
+            # leave the frontend's exitIntentPending/sessionEnded false
+            # even when the backend mutated state.
+            debug_payload["exit_intent_pending"] = bool(new_state.get("exit_intent_pending", False))
+            debug_payload["session_ended"] = bool(new_state.get("session_ended", False))
+            debug_payload["close_reason"] = str(new_state.get("close_reason", "") or "")
 
             payload = {
                 "type": "message_complete",

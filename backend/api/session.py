@@ -383,6 +383,12 @@ async def start_session(req: StartSessionRequest):
     debug_payload["clinical_low_effort_count"] = int(state.get("clinical_low_effort_count", 0) or 0)
     debug_payload["clinical_off_topic_count"] = int(state.get("clinical_off_topic_count", 0) or 0)
     debug_payload["clinical_strike_threshold"] = int(getattr(cfg.dean, "clinical_strike_threshold", 2))
+    # M1 — same lifecycle flags as chat.py debug_payload so the frontend
+    # can read them consistently from session-start AND from per-turn
+    # WS message_complete events.
+    debug_payload["exit_intent_pending"] = bool(state.get("exit_intent_pending", False))
+    debug_payload["session_ended"] = bool(state.get("session_ended", False))
+    debug_payload["close_reason"] = str(state.get("close_reason", "") or "")
     # M4 — surface anchor_pick cards (or other initial pending choice) so
     # the frontend can render them right after the rapport greeting.
     initial_pending: dict | None = None
