@@ -557,7 +557,6 @@ class TeacherV2:
                 max_tokens=self.max_tokens,
                 temperature=self.temperature,
                 messages=[{"role": "user", "content": content_blocks}],
-                extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"},
             )
         except Exception as e:
             return TeacherDraftResult(

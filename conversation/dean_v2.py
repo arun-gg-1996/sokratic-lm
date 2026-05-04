@@ -525,7 +525,6 @@ class DeanV2:
                 temperature=self.temperature,
                 system=system_blocks,
                 messages=[{"role": "user", "content": user_prompt}],
-                extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"},
             )
         except Exception as e:
             return DeanPlanResult(
