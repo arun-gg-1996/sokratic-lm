@@ -1,6 +1,10 @@
 # Morning handoff — 2026-05-04 night → 2026-05-05 morning
 
-**Status:** all locked blocks shipped except B6 (deferred). One commit: `9d3984c`.
+**Status:** ALL B0-B7 blocks shipped including B6 + M5 row redesign. Two commits.
+
+**Commits (newest first):**
+- `<latest>` — B6 (M4 anchor-pick UX) + M5 row redesign
+- `9d3984c` — B0–B5 + B7 + initial M5 backend
 
 ---
 
@@ -39,7 +43,9 @@ Open http://localhost:5173, run a session. New things to look for:
 | B3 | One unified intent classifier replaces 3 Haiku calls; strike decay | sanity ✅ |
 | B4 | Lifecycle redesign + close LLM + error cards + frontend banner/modal | ✅ close fired 1006 chars, mem0 7/7 |
 | B5 | M-FB sweep — no templated tutor fallbacks in v2 path | ✅ |
+| B6 | M4 anchor-pick UX (3 anchor variations, AnchorPickCard, drop REVISIT_KEY) | ✅ regression clean, $0.0154 |
 | B7 | M5 backend (3 endpoints) + SessionAnalysis route | route registered, types clean |
+| M5 row | SubsectionRow expandable + inline session list + tier-colored bar + [Start]/[+ New session]/[Open] buttons | ✅ TS 0 errors |
 
 **Final acceptance eval (eval18_solo1_S1):** reached=True, cost $0.0157, `teacher_v2.close_draft: 1006`, `mode=close, close_reason=clinical_cap`, mem0 wrote 7/7, sqlite ok.
 
@@ -49,17 +55,17 @@ Open http://localhost:5173, run a session. New things to look for:
 
 ## Deferred / not done
 
-### B6 — M4 mastery → start anchor-pick UX (NOT STARTED)
-Backend prelock refactor + 3-anchor generation + frontend TopicCard 3-layer + drop REVISIT_KEY hack. Needs paired backend+frontend changes — would have created regressions if started but not finished. Today's REVISIT_KEY fake-student-message hack still works.
-
-### M5 row redesign in MasteryView (PARTIAL)
-The analysis page is reachable by direct URL `/sessions/<thread_id>`. The expandable subsection-row UI (with inline session list + per-row [Open] buttons + tier-colored bar + [Start]/[+ New session] copy) isn't built. SubsectionRow.tsx still uses today's flat layout with [Revisit] button.
-
 ### v1 dead-code cleanup
 `dean.py` / `nodes.py` legacy fallback sites (1458, 2111, 3099, 397, 450, 578, 595) still have templated text but are unreachable in v2 path. Cleanup would shrink files but not change behavior.
 
 ### Audit findings logged for polish pass
 14 backend + 13 frontend MED/LOW items in [docs/IMPLEMENTATION_PLAN_2026-05-04.md](IMPLEMENTATION_PLAN_2026-05-04.md) "Audit findings NOT folded into M-blocks" section.
+
+### Worth verifying in browser tomorrow
+- B6 anchor cards: open My Mastery, click [Start] on any subsection. Should land in chat with rapport then 3 anchor question cards (not the old auto-injected subsection-name flow)
+- M5 row: any touched subsection shows a ▸ caret. Click expand → inline session list. Click [Open] on a session row → analysis view
+- Bar fill should match dot color (red/yellow/green/grey) at all tree levels
+- Button on touched rows now reads "+ New session" (not "Revisit")
 
 ---
 
