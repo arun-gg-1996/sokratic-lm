@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import uuid
 from datetime import datetime
 from typing import Any
@@ -60,12 +61,33 @@ def _apply_prelock(state: dict, path: str) -> None:
     Raises any error encountered. The caller in start_session
     catches and falls back to the normal free-text flow.
     """
-    parts = path.split("|", 2)
-    if len(parts) != 3 or not parts[0].startswith("Ch") or not parts[0][2:].isdigit():
-        raise ValueError(f"prelocked_topic path malformed: {path!r}")
-    chapter_num = int(parts[0][2:])
-    section = parts[1].strip()
-    subsection = parts[2].strip()
+    # Accept BOTH path formats:
+    #   1. Canonical "Chapter Title > Section > Subsection" (MasteryView's
+    #      sub.path — what comes back from mastery_tree)
+    #   2. Legacy "Ch{N}|Section|Subsection" (pre-L4 mastery store format)
+    chapter_num: int = 0
+    section = ""
+    subsection = ""
+    chapter_label = ""
+    if " > " in path and "|" not in path:
+        canon_parts = [p.strip() for p in path.split(" > ")]
+        if len(canon_parts) < 3:
+            raise ValueError(f"prelocked_topic path malformed (canonical): {path!r}")
+        chapter_label = canon_parts[0]
+        section = canon_parts[1]
+        subsection = canon_parts[-1]
+        # Try to extract chapter_num from "Chapter N: Title" prefix.
+        m = re.match(r"Chapter\s+(\d+)", chapter_label)
+        if m:
+            chapter_num = int(m.group(1))
+    else:
+        parts = path.split("|", 2)
+        if len(parts) != 3 or not parts[0].startswith("Ch") or not parts[0][2:].isdigit():
+            raise ValueError(f"prelocked_topic path malformed (legacy): {path!r}")
+        chapter_num = int(parts[0][2:])
+        section = parts[1].strip()
+        subsection = parts[2].strip()
+        chapter_label = section  # legacy format has no chapter title; use section
     if not subsection:
         raise ValueError(f"prelocked_topic missing subsection: {path!r}")
 
@@ -76,7 +98,8 @@ def _apply_prelock(state: dict, path: str) -> None:
     # vote-based resolver also lacks chapter_title metadata).
     state["locked_topic"] = {
         "path": path,
-        "chapter": section,    # best-effort; real chapter title not in the path
+        "chapter": chapter_label,
+        "chapter_num": chapter_num,
         "section": section,
         "subsection": subsection,
         "difficulty": "moderate",
