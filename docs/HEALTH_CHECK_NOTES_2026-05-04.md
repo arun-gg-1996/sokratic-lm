@@ -141,3 +141,54 @@ Try also: `eval18_solo3_S3` (hedging), `eval18_solo4_S4` (overconfident),
 hedge-only, one full close) confirm every locked block (B0–B7) is
 working. Demo-ready except for the known-defer items in
 [MORNING_HANDOFF_2026-05-04.md](MORNING_HANDOFF_2026-05-04.md).
+
+---
+
+## Latency reduction follow-up (post initial run)
+
+After analyzing the wrapper-level traces, identified `retry_orchestrator.run_turn`
+as the bottleneck (mean 19-26s, max 31s) — the Haiku verifier quartet was
+rejecting Teacher's first draft 75%+ of the time, forcing 3-4 retries
+per turn.
+
+**Fix applied:** Anthropic prompt-cache marker (`cache_control: ephemeral`)
+on the heavy stable parts of Teacher draft and Dean plan prompts. Added
+`anthropic-beta: prompt-caching-2024-07-31` header.
+
+**Measured impact (re-ran both health checks after caching):**
+
+solo1_S1 (engaged, 4-turn happy path):
+| Phase | Baseline | Cached | Δ |
+|---|---|---|---|
+| T03 reach + assessment | 35.98s | 4.88s | −86% |
+| T04 close + save | 26.22s | 13.21s | −50% |
+| Total session | 75.2s | 30.4s | −60% |
+
+solo3_S3 (hedging, 12-turn tutoring loop with heavy retries):
+| Metric | Baseline | Cached |
+|---|---|---|
+| Mean tutoring turn | 38s | 5.5s |
+| Max tutoring turn | 46.3s | 6.3s |
+| Total session | 388.6s | 62.4s |
+| Cost | $0.0613 | $0.0561 |
+
+**Both runs maintained their health-check pass rate** (23/23 and 13/15
+respectively — the 2 solo3 failures are S3-expected, not caching-induced).
+
+**Min/max per turn type (post-cache):**
+- Engaged tutoring: min 4.03s, max 6.31s
+- Preflight redirect: min 4.20s, max 5.23s
+- Close + save: 13.21s (single observation)
+- Rapport: ~2.6s
+- Topic confirm/lock: 5.8s
+
+**Reductions NOT applied (unnecessary post-cache):**
+- Drop MAX_TEACHER_ATTEMPTS 3→2 — would save ~1s on edge cases now that
+  cache hits make each retry ~2s instead of ~7s
+- Skip pedagogy_check on attempt 3+ — verifier quality preserved
+- Harden Teacher prompt — long-tail; not worth the risk for demo
+
+**The close turn (~13s) remains the slowest discrete operation** but
+it's bounded by mem0 (3-7 writes), sqlite, and mastery LLM scorer —
+none of which benefit from the prompt cache since inputs are unique
+per session. Acceptable; fires once per session.
