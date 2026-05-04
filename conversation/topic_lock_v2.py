@@ -173,6 +173,11 @@ def run_topic_lock_v2(
             # invocation read them as empty → empty Q/A → SAFE_PROBE loop.
             return _base_update(
                 state, messages, prelock_count,
+                # M4 — topic IS confirmed once the student picked an anchor.
+                # Without this, _base_update defaults to False and the
+                # sidebar derivePhase falls back to "rapport" + shows the
+                # pre-lock counter even though tutoring has started.
+                topic_confirmed=True,
                 topic_options=[], topic_question="",
                 pending_user_choice={},
                 student_state="answer",
