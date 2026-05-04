@@ -501,19 +501,49 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
 
     fire_activity("Reviewing draft for accuracy")
 
-    # Append the final text to messages
+    # M-FB — when retry exhausts (used_safe_generic_probe=True), do NOT
+    # ship templated tutor text. Emit an error_card system message so
+    # the frontend ErrorCard component renders it as a distinct UI
+    # element with [Retry] instead of a fake tutor bubble.
     msgs = list(state.get("messages", []))
-    msgs.append({
-        "role": "tutor",
-        "content": turn_result.final_text,
-        "phase": "tutoring",
-        "metadata": {
-            "mode": turn_result.final_turn_plan.mode if turn_result.final_turn_plan else "socratic",
-            "tone": turn_result.final_turn_plan.tone if turn_result.final_turn_plan else "neutral",
-            "final_attempt": turn_result.final_attempt,
-            "safe_probe": turn_result.used_safe_generic_probe,
-        },
-    })
+    if turn_result.used_safe_generic_probe or not (turn_result.final_text or "").strip():
+        failed_summary = []
+        for a in (turn_result.attempts or []):
+            failed = a.failed_check_names()
+            if failed:
+                failed_summary.append(f"attempt {a.attempt_num}: {','.join(failed)}")
+        err_msg = (
+            "; ".join(failed_summary)[:200]
+            if failed_summary
+            else "Teacher returned empty drafts on all retry attempts"
+        )
+        msgs.append({
+            "role": "system",
+            "content": "",
+            "phase": "tutoring",
+            "metadata": {
+                "kind": "error_card",
+                "component": "Teacher.draft (retry exhausted)",
+                "error_class": (
+                    "LeakCapFallback" if turn_result.leak_cap_fallback_fired
+                    else "RetryExhausted"
+                ),
+                "message": err_msg,
+                "retry_handler": "tutoring_turn",
+            },
+        })
+    else:
+        msgs.append({
+            "role": "tutor",
+            "content": turn_result.final_text,
+            "phase": "tutoring",
+            "metadata": {
+                "mode": turn_result.final_turn_plan.mode if turn_result.final_turn_plan else "socratic",
+                "tone": turn_result.final_turn_plan.tone if turn_result.final_turn_plan else "neutral",
+                "final_attempt": turn_result.final_attempt,
+                "safe_probe": turn_result.used_safe_generic_probe,
+            },
+        })
 
     elapsed_ms = int((time.time() - t0) * 1000)
     debug_trace.append({"wrapper": "dean_node_v2.total_elapsed_ms", "value": elapsed_ms})

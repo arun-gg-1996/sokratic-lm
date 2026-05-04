@@ -66,14 +66,13 @@ from conversation.turn_plan import TurnPlan
 MAX_TEACHER_ATTEMPTS = 3       # Then Dean re-plans + 1 more Teacher attempt
 TURN_HARD_TIMEOUT_S = 30.0     # Wall-clock cap
 
-# Per L50 — deterministic safe fallback used when leak_check still fails
-# after the full retry chain. Templated; guaranteed non-leak; never
-# increments hint_level.
-SAFE_GENERIC_PROBE = (
-    "Let me reframe — what aspect of this would you like to think through "
-    "more carefully? Pick a piece you're less sure about and we can explore "
-    "it together."
-)
+# M-FB compliance: NO templated tutor-text fallback. When the retry
+# chain exhausts (Teacher attempts 1-3 + Dean replan + 1 more all fail
+# verifier checks OR produce empty drafts), nodes_v2 detects
+# used_safe_generic_probe=True and emits an ErrorCard system message
+# instead of fake tutor text. The empty string here is a sentinel —
+# never reaches the chat surface.
+SAFE_GENERIC_PROBE = ""
 
 
 @dataclass
