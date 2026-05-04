@@ -264,6 +264,30 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
 
     # ── 2a. Pre-flight fired → Dean SKIPPED, Teacher renders redirect ───
     if preflight.fired:
+        # M1 — DEFLECTION SHORT-CIRCUIT: when preflight detects the student
+        # wants to end, do NOT have Teacher draft a confirm_end message
+        # (that's templated tutor text per M-FB). Instead, stamp
+        # exit_intent_pending=True; the frontend (useWebSocket → store →
+        # ChatView) renders ExitConfirmModal directly. Modal pops, no
+        # tutor bubble added to transcript.
+        if preflight.category == "deflection":
+            elapsed_ms_e = int((time.time() - t0) * 1000)
+            debug_trace.append({
+                "wrapper": "dean_node_v2.exit_intent_modal_triggered",
+                "category": preflight.category,
+                "evidence": preflight.evidence[:120],
+            })
+            debug_trace.append({"wrapper": "dean_node_v2.total_elapsed_ms", "value": elapsed_ms_e})
+            return {
+                "exit_intent_pending": True,
+                "help_abuse_count": new_help_count,
+                "off_topic_count": new_off_count,
+                "student_reached_answer": bool(state.get("student_reached_answer", False)),
+                "student_reach_coverage": float(state.get("student_reach_coverage", 0.0) or 0.0),
+                "student_reach_path": str(state.get("student_reach_path", "") or ""),
+                "debug": state["debug"],
+            }
+
         # Force hint advance if L55 strike-4 fired
         new_hint_level = int(state.get("hint_level", 0) or 0)
         if preflight.should_force_hint_advance:
