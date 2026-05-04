@@ -139,9 +139,21 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
 
     # If topic isn't locked yet, Track 4.7d owns the v2 pre-lock path:
     # L9 topic_mapper_llm, L10 confirm-and-lock, L11 prelock counter,
-    # and L22 guided-pick at cap 7.
+    # L22 guided-pick at cap 7, and M4 (B6) anchor_pick.
+    #
+    # M4: even when locked_topic.path is set (from _apply_prelock), we
+    # MUST route to topic_lock_v2 if there's a pending anchor_pick — that
+    # handler resolves the student's anchor selection into the actual
+    # locked_question/locked_answer/aliases. Without this gate, dean_node_v2
+    # would bypass the handler and Teacher would draft against empty Q/A
+    # (then retry-fail 3× and ship SAFE_GENERIC_PROBE).
     locked = state.get("locked_topic") or {}
-    if not locked or not locked.get("path"):
+    pending_for_lock = state.get("pending_user_choice") or {}
+    pending_is_anchor_pick = (
+        isinstance(pending_for_lock, dict)
+        and pending_for_lock.get("kind") == "anchor_pick"
+    )
+    if (not locked or not locked.get("path")) or pending_is_anchor_pick:
         return run_topic_lock_v2(
             state,
             dean=dean,
