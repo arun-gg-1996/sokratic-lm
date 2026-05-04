@@ -145,26 +145,43 @@ def run_topic_lock_v2(
                 pass
         if chosen_q and isinstance(anchor_meta, dict) and chosen_q in anchor_meta:
             v = anchor_meta[chosen_q]
-            state["locked_question"] = str(v.get("question") or "").strip()
-            state["locked_answer"] = str(v.get("answer") or "").strip()
-            state["full_answer"] = str(v.get("full_answer") or v.get("answer") or "").strip()
-            state["locked_answer_aliases"] = [
+            locked_q = str(v.get("question") or "").strip()
+            locked_a = str(v.get("answer") or "").strip()
+            full_a = str(v.get("full_answer") or v.get("answer") or "").strip()
+            aliases = [
                 str(a) for a in (v.get("aliases") or [])
                 if isinstance(a, str) and str(a).strip()
             ]
+            # Mirror onto state so downstream code reading state directly
+            # in this same invocation sees them.
+            state["locked_question"] = locked_q
+            state["locked_answer"] = locked_a
+            state["full_answer"] = full_a
+            state["locked_answer_aliases"] = aliases
             state["topic_just_locked"] = True
             trace.append({
                 "wrapper": "topic_lock_v2.anchor_pick_resolved",
                 "chosen": chosen_q[:80],
+                "locked_question_len": len(locked_q),
+                "locked_answer_len": len(locked_a),
             })
-            # Drop pending and fall through to normal locked-topic flow
-            # (next dean_node_v2 invocation will see topic_just_locked and
-            # emit the deterministic ack message before the first hint).
+            # CRITICAL — _base_update only puts a fixed set of keys into
+            # the return dict (messages/phase/topic_confirmed/prelock_loop_count/debug).
+            # Anything else MUST be passed via **extra or LangGraph's
+            # reducer drops the state mutation. Earlier version assigned
+            # these to state but didn't pass them through, so the next
+            # invocation read them as empty → empty Q/A → SAFE_PROBE loop.
             return _base_update(
                 state, messages, prelock_count,
                 topic_options=[], topic_question="",
                 pending_user_choice={},
                 student_state="answer",
+                locked_topic=state.get("locked_topic") or {},
+                locked_question=locked_q,
+                locked_answer=locked_a,
+                full_answer=full_a,
+                locked_answer_aliases=aliases,
+                topic_just_locked=True,
             )
         # M4 — pivot path: student typed something instead of picking
         # one of the anchor cards. Treat as a NEW topic query: clear the
