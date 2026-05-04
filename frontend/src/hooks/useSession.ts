@@ -95,6 +95,8 @@ export function useSession() {
     // completes. Avoids the "blank screen for 5-8s" feel users hit
     // after clicking Start. The indicator is replaced by the real
     // rapport bubble + cards when startSession resolves.
+    // Track the rotating-activity timer so we can cancel on bootstrap done.
+    let prelockActivityTimers: number[] = [];
     if (prelockedPath) {
       // Extract subsection from "Chapter X > Section > Subsection" or
       // legacy "ChN|Section|Subsection" format.
@@ -108,9 +110,41 @@ export function useSession() {
       }
       if (subLabel) {
         useSessionStore.getState().setWaiting(true);
-        useSessionStore.getState().appendActivity(`Loading ${subLabel}...`);
+        // Roll through stage-aligned labels so the wait feels like work
+        // is happening, not just a static "Loading...". Backend stages
+        // during _apply_prelock are roughly:
+        //   t≈0s  — path parse + state setup (instant)
+        //   t≈1-4s — dean._retrieve_on_topic_lock (chunks + reranker)
+        //   t≈4-12s — dean._generate_anchor_variations (1 Sonnet call)
+        // We can't get exact backend timestamps without WS (which connects
+        // AFTER startSession resolves), so this is a best-effort visual
+        // pacing that matches the typical prelock latency profile.
+        const labels = [
+          `Opening ${subLabel}…`,
+          `Pulling textbook excerpts for ${subLabel}…`,
+          "Generating starter questions…",
+          "Almost ready…",
+        ];
+        useSessionStore.getState().appendActivity(labels[0]);
+        const schedule = [2500, 5500, 11000];  // ms after start
+        schedule.forEach((delay, i) => {
+          const handle = window.setTimeout(() => {
+            // Only append if we're still waiting (bootstrap may have
+            // resolved already and cleared activityLog).
+            if (useSessionStore.getState().isWaitingForTutor) {
+              useSessionStore.getState().appendActivity(labels[i + 1]);
+            }
+          }, delay);
+          prelockActivityTimers.push(handle);
+        });
       }
     }
+    const cancelPrelockActivityTimers = () => {
+      for (const h of prelockActivityTimers) {
+        window.clearTimeout(h);
+      }
+      prelockActivityTimers = [];
+    };
 
     const bootstrap = (async () => {
       try {
@@ -159,12 +193,14 @@ export function useSession() {
         }
         // Clear the loading-state activity log + isWaiting now that
         // the rapport message has landed.
+        cancelPrelockActivityTimers();
         useSessionStore.getState().clearActivityLog();
         useSessionStore.getState().setWaiting(false);
       } catch {
         if (bootstrapSeqRef.current !== seq) return;
         // Recovery: clear loading indicator on bootstrap failure so the
         // user isn't stuck staring at "Loading...".
+        cancelPrelockActivityTimers();
         useSessionStore.getState().clearActivityLog();
         useSessionStore.getState().setWaiting(false);
         addTutorMessage("Unable to start session. Please retry.", "system");
