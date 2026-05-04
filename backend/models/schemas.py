@@ -52,10 +52,14 @@ class StartSessionResponse(BaseModel):
     # tutor turn right after the rapport greeting.
     initial_topic_ack: str | None = None
     initial_debug: dict[str, Any] | None = None
+    # M4 — initial pending_user_choice (anchor_pick cards). Set when
+    # _apply_prelock generated anchor variations. Frontend reads this
+    # and renders the cards immediately after rapport.
+    initial_pending_choice: dict | None = None
 
 
 class PendingChoice(BaseModel):
-    kind: Literal["opt_in", "topic", "confirm_topic"]
+    kind: Literal["opt_in", "topic", "confirm_topic", "anchor_pick"]
     options: list[str]
     allow_custom: bool | None = None
     end_session_label: str | None = None

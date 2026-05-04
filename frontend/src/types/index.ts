@@ -30,11 +30,21 @@ export interface ChatMessage {
 }
 
 export interface PendingChoice {
-  kind: "opt_in" | "topic" | "confirm_topic";
+  kind: "opt_in" | "topic" | "confirm_topic" | "anchor_pick";
   options: string[];
   allow_custom?: boolean;
   end_session_label?: string;
   end_session_value?: string;
+  // M4 — anchor_pick carries a per-question metadata bag (key = question
+  // text, value = {question, answer, aliases, full_answer}). Used only
+  // for layout (the actual Q/A binding happens server-side on selection).
+  anchor_meta?: Record<string, {
+    question: string;
+    answer: string;
+    full_answer?: string;
+    aliases?: string[];
+  }>;
+  subsection?: string;
 }
 
 export interface ServerMessage {
@@ -82,6 +92,11 @@ export interface SessionStartResponse {
   // where the dean ack-emits during the normal turn loop instead.
   initial_topic_ack?: string | null;
   initial_debug?: Record<string, unknown> | null;
+  // M4 — anchor_pick cards (or other pending choice) the backend
+  // generated at session start. Frontend renders these immediately
+  // after rapport so the student can pick which anchor question to
+  // work on.
+  initial_pending_choice?: PendingChoice | null;
 }
 
 export interface StudentOverviewResponse {

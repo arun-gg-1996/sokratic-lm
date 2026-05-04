@@ -3,6 +3,7 @@ import { ConnectionBanner } from "./ConnectionBanner";
 import { MessageList } from "./MessageList";
 import { OptInCard } from "../cards/OptInCard";
 import { TopicCard } from "../cards/TopicCard";
+import { AnchorPickCard } from "../cards/AnchorPickCard";
 import { ExitConfirmModal } from "../modals/ExitConfirmModal";
 import { useSession } from "../../hooks/useSession";
 import { useSessionStore } from "../../stores/sessionStore";
@@ -68,6 +69,14 @@ export function ChatSurface() {
           endSessionLabel={pendingChoice.end_session_label}
           endSessionValue={pendingChoice.end_session_value}
           onSomethingElse={() => setPendingChoice(null)}
+        />
+      )}
+      {/* M4 (B6) — anchor question picker for prelocked sessions. */}
+      {!isTerminal && pendingChoice?.kind === "anchor_pick" && (
+        <AnchorPickCard
+          options={pendingChoice.options}
+          subsection={pendingChoice.subsection}
+          onSelect={submitMessage}
         />
       )}
       {!pendingChoice && !isTerminal && <Composer onSubmit={submitMessage} />}

@@ -123,6 +123,53 @@ def run_topic_lock_v2(
                 )
         # Non-selection text falls through to the L9 mapper.
 
+    # M4 — anchor_pick (My Mastery prelock UX). Student is choosing WHICH
+    # anchor question variation to work on. Each variation already has its
+    # own locked_question / locked_answer / aliases / full_answer in the
+    # pending.anchor_meta dict — set them on state and route into tutoring.
+    if isinstance(pending, dict) and pending.get("kind") == "anchor_pick":
+        options = list(pending.get("options", []) or [])
+        anchor_meta = pending.get("anchor_meta") or {}
+        # Match by exact question text first, then by 1-based index.
+        chosen_q: Optional[str] = None
+        for opt in options:
+            if opt and opt.strip() == latest_student.strip():
+                chosen_q = opt
+                break
+        if chosen_q is None:
+            try:
+                idx = int(latest_student.strip()) - 1
+                if 0 <= idx < len(options):
+                    chosen_q = options[idx]
+            except (TypeError, ValueError):
+                pass
+        if chosen_q and isinstance(anchor_meta, dict) and chosen_q in anchor_meta:
+            v = anchor_meta[chosen_q]
+            state["locked_question"] = str(v.get("question") or "").strip()
+            state["locked_answer"] = str(v.get("answer") or "").strip()
+            state["full_answer"] = str(v.get("full_answer") or v.get("answer") or "").strip()
+            state["locked_answer_aliases"] = [
+                str(a) for a in (v.get("aliases") or [])
+                if isinstance(a, str) and str(a).strip()
+            ]
+            state["topic_just_locked"] = True
+            trace.append({
+                "wrapper": "topic_lock_v2.anchor_pick_resolved",
+                "chosen": chosen_q[:80],
+            })
+            # Drop pending and fall through to normal locked-topic flow
+            # (next dean_node_v2 invocation will see topic_just_locked and
+            # emit the deterministic ack message before the first hint).
+            return _base_update(
+                state, messages, prelock_count,
+                topic_options=[], topic_question="",
+                pending_user_choice={},
+                student_state="answer",
+            )
+        # Non-match falls through — student typed something not on the cards.
+        # Fall back to a normal topic query (next mapper call) but PRESERVE
+        # the locked_topic so they can still pick later.
+
     if prelock_count >= PRELOCK_CAP:
         fire_activity("Showing a guided picker")
         return _render_guided_pick(state, messages, retriever, latest_student, prelock_count)

@@ -32,15 +32,16 @@
  * Replaces the legacy view that consumed /api/mastery/{student_id}.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AppShell } from "../components/layout/AppShell";
-import { getMasteryTree } from "../api/client";
+import { getMasterySessions, getMasteryTree } from "../api/client";
 import { useUserStore } from "../stores/userStore";
 import { useSessionStore } from "../stores/sessionStore";
 import type {
   MasteryChapterNode,
   MasteryColor,
   MasterySectionNode,
+  MasterySessionRow,
   MasterySubsectionNode,
   MasteryTreeResponse,
 } from "../types";
@@ -110,8 +111,23 @@ function Dot({ color }: { color: MasteryColor }) {
   );
 }
 
-function MasteryBar({ value }: { value: number | null }) {
+// M5 — bar fill matches the tier color (was monochrome bg-accent).
+const BAR_FILL_CLASS: Record<MasteryColor, string> = {
+  green: "bg-emerald-500",
+  yellow: "bg-amber-500",
+  red: "bg-red-500",
+  grey: "bg-border",
+};
+
+function MasteryBar({
+  value,
+  color,
+}: {
+  value: number | null;
+  color?: MasteryColor;
+}) {
   const w = value == null ? 0 : Math.max(0, Math.min(1, value)) * 100;
+  const fill = color ? BAR_FILL_CLASS[color] : "bg-accent";
   return (
     <div
       className="h-1 w-full rounded-full bg-border overflow-hidden"
@@ -123,7 +139,7 @@ function MasteryBar({ value }: { value: number | null }) {
     >
       {value != null && (
         <div
-          className="h-full bg-accent transition-[width] duration-300"
+          className={`h-full ${fill} transition-[width] duration-300`}
           style={{ width: `${w}%` }}
         />
       )}
@@ -137,40 +153,132 @@ function MasteryBar({ value }: { value: number | null }) {
 
 function SubsectionRow({
   sub,
+  studentId,
   onAction,
 }: {
   sub: MasterySubsectionNode;
+  studentId: string;
   onAction: (sub: MasterySubsectionNode) => void;
 }) {
   const isStart = sub.attempt_count === 0;
-  const buttonLabel = isStart ? "Start" : "Revisit";
+  // M5 — button copy: untouched → [Start], touched → [+ New session].
+  const buttonLabel = isStart ? "Start" : "+ New session";
   const dateText = sub.last_session_at
-    ? `last session ${fmtDate(sub.last_session_at)}`
+    ? `${sub.attempt_count} session${sub.attempt_count === 1 ? "" : "s"} · last ${fmtDate(sub.last_session_at)}`
     : "untouched";
+
+  const [expanded, setExpanded] = useState(false);
+  const [sessions, setSessions] = useState<MasterySessionRow[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // M5 — only touched subsections expand (no sessions to show otherwise).
+  const expandable = sub.attempt_count > 0;
+
+  const handleToggle = useCallback(async () => {
+    if (!expandable) return;
+    const next = !expanded;
+    setExpanded(next);
+    if (next && sessions === null && !loading && studentId && sub.path) {
+      setLoading(true);
+      setLoadError(null);
+      try {
+        const resp = await getMasterySessions(studentId, {
+          subsectionPath: sub.path,
+          completedOnly: true,
+          limit: 20,
+        });
+        setSessions(resp.sessions);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : "load error";
+        setLoadError(msg);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }, [expandable, expanded, sessions, loading, studentId, sub.path]);
+
   return (
-    <div
-      className={`pl-12 pr-4 py-2 flex items-center gap-3 ${BORDER_CLASS[sub.color]}`}
-    >
-      <Dot color={sub.color} />
-      <div className="flex-1 min-w-0">
-        <div className="text-sm truncate">
-          {sub.display_label || sub.subsection || "Unknown"}
+    <div className={BORDER_CLASS[sub.color]}>
+      <div className="pl-12 pr-4 py-2 flex items-center gap-3">
+        <button
+          onClick={handleToggle}
+          disabled={!expandable}
+          className={`shrink-0 w-4 text-muted-foreground ${expandable ? "cursor-pointer hover:text-foreground" : "opacity-30 cursor-default"}`}
+          aria-label={expanded ? "Collapse sessions" : "Expand sessions"}
+          aria-expanded={expanded}
+        >
+          {expandable ? (expanded ? "▾" : "▸") : ""}
+        </button>
+        <Dot color={sub.color} />
+        <div className="flex-1 min-w-0">
+          <div className="text-sm truncate">
+            {sub.display_label || sub.subsection || "Unknown"}
+          </div>
+          <div className="text-xs text-muted">{dateText}</div>
         </div>
-        <div className="text-xs text-muted">{dateText}</div>
+        <div className="w-24 shrink-0">
+          <MasteryBar value={sub.score} color={sub.color} />
+        </div>
+        <div className="text-xs text-muted w-10 text-right shrink-0">
+          {pct(sub.score)}
+        </div>
+        <button
+          onClick={() => onAction(sub)}
+          className="rounded-lg border border-border px-2 py-1 text-xs hover:border-accent transition shrink-0"
+          title={`${buttonLabel} on ${sub.display_label || sub.subsection || "this topic"}`}
+        >
+          {buttonLabel}
+        </button>
       </div>
-      <div className="w-24 shrink-0">
-        <MasteryBar value={sub.score} />
-      </div>
-      <div className="text-xs text-muted w-10 text-right shrink-0">
-        {pct(sub.score)}
-      </div>
-      <button
-        onClick={() => onAction(sub)}
-        className="rounded-lg border border-border px-2 py-1 text-xs hover:border-accent transition shrink-0"
-        title={`${buttonLabel} a session on this topic`}
-      >
-        {buttonLabel}
-      </button>
+      {expanded && expandable && (
+        <div className="pl-20 pr-4 pb-3 space-y-1">
+          {loading && (
+            <div className="text-xs text-muted-foreground italic">
+              Loading sessions…
+            </div>
+          )}
+          {loadError && (
+            <div className="text-xs text-destructive">
+              Failed to load: {loadError}
+            </div>
+          )}
+          {sessions !== null && sessions.length === 0 && (
+            <div className="text-xs text-muted-foreground italic">
+              No completed sessions yet.
+            </div>
+          )}
+          {sessions?.map((s) => {
+            const dateStr = s.ended_at ? fmtDate(s.ended_at) : "";
+            const reach = s.reach_status === true ? "reached"
+              : s.reach_status === false ? "not reached"
+              : (s.status || "");
+            const score = s.core_score != null
+              ? `.${String(Math.round(s.core_score * 100)).padStart(2, "0")}`
+              : "—";
+            return (
+              <div
+                key={s.thread_id}
+                className="flex items-center gap-3 text-xs py-1 border-t border-border/50"
+              >
+                <span className="text-muted-foreground w-24">{dateStr}</span>
+                <span className="text-muted-foreground flex-1 truncate">
+                  {reach}
+                </span>
+                <span className="font-mono text-muted-foreground w-10 text-right">
+                  {score}
+                </span>
+                <Link
+                  to={`/sessions/${encodeURIComponent(s.thread_id)}`}
+                  className="text-accent hover:underline px-2 py-0.5 rounded border border-border hover:border-accent"
+                >
+                  Open
+                </Link>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -185,12 +293,14 @@ function SectionRow({
   onToggle,
   sortByMastery,
   onAction,
+  studentId,
 }: {
   section: MasterySectionNode;
   expanded: boolean;
   onToggle: () => void;
   sortByMastery: boolean;
   onAction: (sub: MasterySubsectionNode) => void;
+  studentId: string;
 }) {
   const subs = useMemo(() => {
     if (!sortByMastery) return section.subsections;
@@ -216,7 +326,7 @@ function SectionRow({
           {section.touched}/{section.total}
         </span>
         <div className="w-24 shrink-0">
-          <MasteryBar value={section.score} />
+          <MasteryBar value={section.score} color={section.color} />
         </div>
         <span className="text-xs text-muted shrink-0 w-10 text-right">
           {pct(section.score)}
@@ -225,7 +335,12 @@ function SectionRow({
       {expanded && (
         <div className="border-t border-border/50 divide-y divide-border/50">
           {subs.map((sub) => (
-            <SubsectionRow key={sub.path} sub={sub} onAction={onAction} />
+            <SubsectionRow
+              key={sub.path}
+              sub={sub}
+              studentId={studentId}
+              onAction={onAction}
+            />
           ))}
         </div>
       )}
@@ -245,6 +360,7 @@ function ChapterRow({
   onToggleSection,
   sortByMastery,
   onAction,
+  studentId,
 }: {
   chapter: MasteryChapterNode;
   expanded: boolean;
@@ -253,6 +369,7 @@ function ChapterRow({
   onToggleSection: (key: string) => void;
   sortByMastery: boolean;
   onAction: (sub: MasterySubsectionNode) => void;
+  studentId: string;
 }) {
   const sections = useMemo(() => {
     if (!sortByMastery) return chapter.sections;
@@ -279,7 +396,7 @@ function ChapterRow({
           {chapter.touched}/{chapter.total} subsections
         </span>
         <div className="w-24 shrink-0">
-          <MasteryBar value={chapter.score} />
+          <MasteryBar value={chapter.score} color={chapter.color} />
         </div>
         <span className="text-xs text-muted shrink-0 w-10 text-right">
           {pct(chapter.score)}
@@ -297,6 +414,7 @@ function ChapterRow({
                 onToggle={() => onToggleSection(key)}
                 sortByMastery={sortByMastery}
                 onAction={onAction}
+                studentId={studentId}
               />
             );
           })}
@@ -362,26 +480,20 @@ export function MasteryView() {
   };
 
   const handleAction = (sub: MasterySubsectionNode) => {
-    // Demo flow (per UX feedback 2026-05-03):
-    //   1. user clicks Start on a subsection
-    //   2. chat view bootstraps and renders the rapport opener
-    //   3. AFTER rapport renders, the subsection name is auto-injected
-    //      as a student message
-    //   4. Dean resolves the topic normally and locks it
-    //
-    // We previously also wrote REVISIT_TOPIC_PATH to drive the backend
-    // prelocked_topic shortcut, but that produced a stacked
-    // "Got it - let's work on X" tutor message immediately after the
-    // rapport, which read like the LLM was talking to itself. The
-    // subsection-name injection is the natural-feeling alternative.
+    // M4 (B6) — pass the canonical subsection PATH to the backend via
+    // REVISIT_TOPIC_PATH (consumed by useSession bootstrap and forwarded
+    // as `prelocked_topic` to startSession). Backend generates 3 anchor
+    // question variations and ships them as initial_pending_choice
+    // (kind="anchor_pick"). The student picks WHICH anchor to work on.
     try {
-      const subName = (sub.subsection || "").trim();
-      if (subName) {
-        localStorage.setItem(REVISIT_KEY, subName);
+      const path = (sub.path || "").trim();
+      if (path) {
+        localStorage.setItem(REVISIT_TOPIC_PATH, path);
       }
-      localStorage.removeItem(REVISIT_TOPIC_PATH);
+      // Drop the legacy subsection-name auto-inject hack — superseded.
+      localStorage.removeItem(REVISIT_KEY);
     } catch {
-      // localStorage unavailable — user just won't get the auto-inject
+      // localStorage unavailable — user just won't get the prelock
     }
     resetSession();
     navigate("/chat");
@@ -472,6 +584,7 @@ export function MasteryView() {
                     onToggleSection={toggleSection}
                     sortByMastery={sortByMastery}
                     onAction={handleAction}
+                    studentId={studentId}
                   />
                 );
               })}

@@ -96,41 +96,57 @@ def _apply_prelock(state: dict, path: str) -> None:
     state.setdefault("debug", {})
     state["debug"]["locked_topic_snapshot"] = dict(state["locked_topic"])
 
-    # Eagerly retrieve + lock anchors so the first tutoring turn has
-    # everything ready. Both are idempotent on state — they read
-    # state["locked_topic"] and write retrieved_chunks /
-    # locked_question / locked_answer. Failures here propagate up to
-    # the caller's except block which falls back to free-text flow.
+    # Eagerly retrieve so chunks are populated for anchor variations.
     dean = get_dean()
     dean._retrieve_on_topic_lock(state)
     if not state.get("retrieved_chunks"):
         raise ValueError(
             f"prelocked_topic {path!r} returned 0 chunks — bad path or corpus mismatch"
         )
-    anchors = dean._lock_anchors_call(state)
-    state["locked_question"] = str(anchors.get("locked_question", "") or "").strip()
-    state["locked_answer"] = str(anchors.get("locked_answer", "") or "").strip()
-    raw_aliases_pre = anchors.get("locked_answer_aliases", []) or []
-    state["locked_answer_aliases"] = (
-        [str(a) for a in raw_aliases_pre if isinstance(a, str) and str(a).strip()]
-        if isinstance(raw_aliases_pre, list) else []
-    )
-    # Two-tier (Change 2026-04-30): full_answer for grading layer.
-    state["full_answer"] = str(anchors.get("full_answer", "") or "").strip() or state["locked_answer"]
-    if not state["locked_question"] or not state["locked_answer"]:
-        raise ValueError(
-            f"prelocked_topic {path!r} anchor lock returned empty question/answer"
+
+    # M4 — instead of auto-locking ONE anchor, generate 3 variations and
+    # present them as a pending_user_choice. The student picks which
+    # angle they want to work on. Each variation carries its own
+    # locked_question + locked_answer + aliases + full_answer.
+    variations = dean._generate_anchor_variations(state, n=3)
+    if not variations:
+        # Fallback: single _lock_anchors_call (legacy path). Auto-lock
+        # the one anchor — no pick UX.
+        anchors = dean._lock_anchors_call(state)
+        state["locked_question"] = str(anchors.get("locked_question", "") or "").strip()
+        state["locked_answer"] = str(anchors.get("locked_answer", "") or "").strip()
+        raw_aliases_pre = anchors.get("locked_answer_aliases", []) or []
+        state["locked_answer_aliases"] = (
+            [str(a) for a in raw_aliases_pre if isinstance(a, str) and str(a).strip()]
+            if isinstance(raw_aliases_pre, list) else []
         )
-    # Change 2 (2026-04-29): mark topic as just-locked so the FIRST
-    # dean_node call (after rapport's greeting) emits a deterministic
-    # ack message stating the question, instead of jumping into a
-    # paraphrased hint. The dean's ack-emit branch consumes this flag.
-    state["topic_just_locked"] = True
+        state["full_answer"] = str(anchors.get("full_answer", "") or "").strip() or state["locked_answer"]
+        if not state["locked_question"] or not state["locked_answer"]:
+            raise ValueError(
+                f"prelocked_topic {path!r} anchor lock returned empty question/answer"
+            )
+        state["topic_just_locked"] = True
+        state["debug"]["turn_trace"].append({
+            "wrapper": "session.prelock_applied_legacy_single_anchor",
+            "path": path,
+            "subsection": subsection,
+        })
+        return
+
+    # Stash variations on state under pending_user_choice so the
+    # frontend renders cards and the topic_lock_v2 handler can resolve
+    # the pick into locked_question/answer on the first student turn.
+    state["pending_user_choice"] = {
+        "kind": "anchor_pick",
+        "options": [v["question"] for v in variations],
+        "anchor_meta": {v["question"]: v for v in variations},
+        "subsection": subsection,
+    }
     state["debug"].setdefault("turn_trace", []).append({
         "wrapper": "session.prelock_applied",
         "path": path,
         "subsection": subsection,
-        "anchor_set": True,
+        "anchor_variation_count": len(variations),
         "chunk_count": len(state.get("retrieved_chunks") or []),
     })
 
@@ -344,11 +360,19 @@ async def start_session(req: StartSessionRequest):
     debug_payload["clinical_low_effort_count"] = int(state.get("clinical_low_effort_count", 0) or 0)
     debug_payload["clinical_off_topic_count"] = int(state.get("clinical_off_topic_count", 0) or 0)
     debug_payload["clinical_strike_threshold"] = int(getattr(cfg.dean, "clinical_strike_threshold", 2))
+    # M4 — surface anchor_pick cards (or other initial pending choice) so
+    # the frontend can render them right after the rapport greeting.
+    initial_pending: dict | None = None
+    pc = state.get("pending_user_choice") or {}
+    if isinstance(pc, dict) and pc.get("kind"):
+        initial_pending = dict(pc)
+
     return StartSessionResponse(
         thread_id=thread_id,
         initial_message=greeting,
         initial_topic_ack=initial_topic_ack,
         initial_debug=debug_payload,
+        initial_pending_choice=initial_pending,
     )
 
 

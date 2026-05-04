@@ -107,20 +107,24 @@ export function useSession() {
           ? (initialDebug?.turn_trace as Array<Record<string, unknown>>)
           : [];
         if (session.initial_message) addTutorMessage(session.initial_message, "rapport", initialTrace, 0);
-        // My Mastery → Start flow (refactored 2026-05-03):
-        // Don't pre-bake a topic_ack on the backend. Instead, queue
-        // the subsection name as a student auto-send, dispatched
-        // after rapport has rendered (the polling effect below uses
-        // a 1500ms initial delay). Dean will then resolve the topic
-        // via the normal lock flow.
+        // M4 (B6) — surface anchor_pick cards from the backend's
+        // _apply_prelock. They land in initial_pending_choice and the
+        // chat router renders them right after rapport. No more
+        // REVISIT_KEY auto-send hack.
+        if (session.initial_pending_choice && session.initial_pending_choice.kind) {
+          // Slight delay so cards appear AFTER the rapport bubble has
+          // visibly rendered (rapport message is added above; cards
+          // shouldn't pop simultaneously).
+          window.setTimeout(() => {
+            useSessionStore.getState().setPendingChoice(session.initial_pending_choice ?? null);
+          }, 250);
+        }
+        // Drop legacy REVISIT_KEY if present from an older session — we
+        // don't auto-send anymore.
         try {
-          const revisit = localStorage.getItem(REVISIT_KEY);
-          if (revisit && revisit.trim()) {
-            pendingRevisitRef.current = revisit.trim();
-            localStorage.removeItem(REVISIT_KEY);
-          }
+          localStorage.removeItem(REVISIT_KEY);
         } catch {
-          // localStorage unavailable — ignore, user just won't get auto-send
+          // ignore
         }
       } catch {
         if (bootstrapSeqRef.current !== seq) return;

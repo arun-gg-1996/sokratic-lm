@@ -2944,6 +2944,109 @@ class DeanAgent:
             "rationale": str(parsed.get("rationale", "") or ""),
         }
 
+    def _generate_anchor_variations(
+        self, state: TutorState, n: int = 3,
+    ) -> list[dict]:
+        """M4 — generate N anchor question variations for the locked subsection.
+
+        Returns a list of dicts: [{question, answer, aliases, full_answer}, ...].
+        Used by the My Mastery prelock UX so the student picks WHICH anchor
+        question they want to work on (rather than auto-locking one).
+
+        Single Sonnet call. Uses the same chunks as _lock_anchors_call (already
+        filtered to the locked subsection). On parse failure or empty response,
+        returns [] — caller falls back to single _lock_anchors_call.
+
+        ~$0.01 per call (small JSON output, cached system block).
+        """
+        import json as _json
+        target_subsection = str((state.get("locked_topic") or {}).get("subsection") or "").strip()
+        all_chunks = state.get("retrieved_chunks", []) or []
+        if target_subsection and all_chunks:
+            in_section = [
+                c for c in all_chunks
+                if str((c or {}).get("subsection_title") or "").strip() == target_subsection
+            ]
+            section_chunks = in_section if len(in_section) >= 2 else all_chunks
+        else:
+            section_chunks = all_chunks
+        chunks_str = _format_chunks(section_chunks)
+        topic_label = target_subsection or str(state.get("topic_selection") or "the locked topic")
+
+        prompt = (
+            f"You are generating {n} ANCHOR QUESTION variations for a Socratic "
+            f"tutoring session on the subsection: {topic_label}\n\n"
+            f"CHUNKS:\n{chunks_str}\n\n"
+            f"Each variation must:\n"
+            f"  - Probe a DIFFERENT angle of this subsection (mechanism, comparison, "
+            f"clinical relevance, etc.)\n"
+            f"  - Have a clear textbook answer derivable from the chunks\n"
+            f"  - Be a single sentence ending in '?'\n\n"
+            f"Output STRICT JSON only:\n"
+            f"{{\n  \"variations\": [\n"
+            f"    {{\"question\": \"...\", \"answer\": \"<short concept anchor>\", "
+            f"\"aliases\": [\"...\"], \"full_answer\": \"<complete textbook answer>\"}},\n"
+            f"    ...\n"
+            f"  ]\n}}"
+        )
+        try:
+            resp = _timed_create(
+                self.client, state, "dean._generate_anchor_variations",
+                model=self.model,
+                temperature=0.4,
+                max_tokens=900,
+                messages=[{"role": "user", "content": prompt}],
+            )
+        except Exception as e:
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean._generate_anchor_variations.error",
+                "error": f"{type(e).__name__}: {str(e)[:120]}",
+            })
+            return []
+        text = (resp.content[0].text or "").strip() if resp.content else ""
+        # Strip markdown fences
+        if text.startswith("```"):
+            lines = text.split("\n")
+            text = "\n".join(lines[1:-1] if lines[-1].startswith("```") else lines[1:])
+        try:
+            parsed = _json.loads(text)
+        except _json.JSONDecodeError:
+            import re as _re
+            m = _re.search(r"\{.*\}", text, _re.DOTALL)
+            if not m:
+                return []
+            try:
+                parsed = _json.loads(m.group(0))
+            except Exception:
+                return []
+        variations = parsed.get("variations") if isinstance(parsed, dict) else None
+        if not isinstance(variations, list):
+            return []
+        out: list[dict] = []
+        for v in variations[:n]:
+            if not isinstance(v, dict):
+                continue
+            q = str(v.get("question") or "").strip()
+            a = str(v.get("answer") or "").strip()
+            if not q or not a:
+                continue
+            aliases_raw = v.get("aliases") or []
+            if not isinstance(aliases_raw, list):
+                aliases_raw = []
+            aliases = [str(x).strip() for x in aliases_raw if isinstance(x, str) and str(x).strip()][:5]
+            full = str(v.get("full_answer") or "").strip() or a
+            out.append({
+                "question": q,
+                "answer": a,
+                "aliases": aliases,
+                "full_answer": full[:400],
+            })
+        state["debug"]["turn_trace"].append({
+            "wrapper": "dean._generate_anchor_variations",
+            "n_returned": len(out),
+        })
+        return out
+
     def _hint_plan_call(self, state: TutorState) -> list[str]:
         """
         Build a 3-step progressive hint plan after anchors lock.
