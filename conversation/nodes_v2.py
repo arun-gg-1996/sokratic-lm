@@ -153,13 +153,44 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         isinstance(pending_for_lock, dict)
         and pending_for_lock.get("kind") == "anchor_pick"
     )
+    # Tracks anchor_pick resolution so we can (a) fall through to tutoring
+    # on the same invocation when the pick is successfully resolved, and
+    # (b) merge the handler's state updates into the final tutoring return.
+    anchor_pick_overrides: dict = {}
     if (not locked or not locked.get("path")) or pending_is_anchor_pick:
-        return run_topic_lock_v2(
+        handler_result = run_topic_lock_v2(
             state,
             dean=dean,
             retriever=retriever,
             latest_student=latest_student,
         )
+        just_picked = (
+            pending_is_anchor_pick
+            and bool(handler_result.get("locked_question"))
+            and not (handler_result.get("pending_user_choice") or {}).get("kind")
+        )
+        if not just_picked:
+            return handler_result
+        # Anchor was resolved — apply the handler's state updates to the
+        # live state so the tutoring code below sees the locked Q/A, then
+        # fall through. Also capture the keys we'll merge into the final
+        # tutoring return (the engaged-tutoring return doesn't normally
+        # echo locked_question etc, so without this they'd get dropped).
+        for k, v in handler_result.items():
+            if k == "debug":
+                continue
+            state[k] = v
+        for k in (
+            "locked_topic", "locked_question", "locked_answer", "full_answer",
+            "locked_answer_aliases", "topic_confirmed", "topic_selection",
+            "topic_options", "topic_question", "pending_user_choice",
+            "topic_just_locked", "student_state", "prelock_loop_count",
+            "phase",
+        ):
+            if k in handler_result:
+                anchor_pick_overrides[k] = handler_result[k]
+        # Refresh the locked snapshot since we just mutated it.
+        locked = state.get("locked_topic") or {}
 
     # ── 0. L53 reach-answer gate (Track 4.7g) ─────────────────────────────
     # Mirrors legacy dean.run_turn() lines 1741-1783 — fires the SAME
@@ -565,7 +596,7 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
             "trigger": "dean_signal",
         })
 
-    return {
+    final_return = {
         "messages": msgs,
         "help_abuse_count": new_help_count,  # reset to 0 on engagement
         "off_topic_count": new_off_count,
@@ -581,6 +612,19 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         "exploration_count": new_exploration_count,
         "debug": state["debug"],
     }
+    # When an anchor_pick was just resolved on this same invocation, the
+    # tutoring return above doesn't echo locked_question / locked_answer /
+    # locked_topic — without merging in the handler's overrides, the
+    # LangGraph reducer would drop those updates and the NEXT invocation
+    # would see empty Q/A again. Apply overrides last so they land in the
+    # node's output dict.
+    if anchor_pick_overrides:
+        for k, v in anchor_pick_overrides.items():
+            # Don't clobber tutoring's messages with handler's empty list.
+            if k == "messages":
+                continue
+            final_return[k] = v
+    return final_return
 
 
 # ─────────────────────────────────────────────────────────────────────────────
