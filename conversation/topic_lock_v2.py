@@ -90,6 +90,14 @@ def run_topic_lock_v2(
                     prelock_count=prelock_count, source="confirm_topic",
                 )
         elif _is_no(latest_student):
+            # M3: record the rejected subsection so the next _map_topic call
+            # excludes it. State field clears on new session — in-session only.
+            rejected = list(state.get("rejected_topic_paths", []) or [])
+            topic_meta = (pending.get("topic_meta") or {}).get("__candidate__") or {}
+            rej_path = str(topic_meta.get("path", "") or "").strip()
+            if rej_path and rej_path not in rejected:
+                rejected.append(rej_path)
+            state["rejected_topic_paths"] = rejected
             messages.append({
                 "role": "tutor",
                 "content": "Ok, what topic would you like to work on instead?",
@@ -120,7 +128,8 @@ def run_topic_lock_v2(
         return _render_guided_pick(state, messages, retriever, latest_student, prelock_count)
 
     fire_activity("Resolving topic to the textbook")
-    result = _map_topic(latest_student, trace)
+    rejected_for_resolver = list(state.get("rejected_topic_paths", []) or [])
+    result = _map_topic(latest_student, trace, rejected_paths=rejected_for_resolver)
     decision = result.route_decision()
     trace.append({
         "wrapper": "topic_lock_v2.map_topic",
@@ -159,13 +168,19 @@ def run_topic_lock_v2(
     )
 
 
-def _map_topic(query: str, trace: list[dict]) -> TopicMapperResult:
+def _map_topic(
+    query: str,
+    trace: list[dict],
+    *,
+    rejected_paths: Optional[list[str]] = None,
+) -> TopicMapperResult:
     try:
         client = make_anthropic_client()
         return map_topic(
             query,
             client=client,
             model=resolve_model(getattr(getattr(cfg, "models", object()), "topic_mapper", TOPIC_MAPPER_MODEL)),
+            rejected_paths=rejected_paths,
         )
     except Exception as e:
         trace.append({
@@ -465,7 +480,16 @@ def _render_refuse_cards(
     matcher = get_topic_matcher()
     rejected = set(state.get("rejected_topic_paths", []) or [])
     topics = matcher.sample_diverse(NORMAL_CARD_COUNT, min_chunk_count=5, exclude_paths=rejected)
-    intro = "I could not find a strong textbook match for that. Pick one of these or type a more specific topic:"
+    # M3: when this fires AFTER one or more rejections, the message implies
+    # "your prior tries were rejected" — pivot the wording so the student
+    # doesn't think the system never understood them at all.
+    if rejected:
+        intro = (
+            "I couldn't find another clear match for that topic. "
+            "Try rephrasing more specifically, or browse these:"
+        )
+    else:
+        intro = "I could not find a strong textbook match for that. Pick one of these or type a more specific topic:"
     try:
         refuse = dean._prelock_refuse_call(
             state,
@@ -491,7 +515,17 @@ def _render_guided_pick(
 ) -> dict:
     matcher = get_topic_matcher()
     rejected = set(state.get("rejected_topic_paths", []) or [])
-    topics = matcher.sample_diverse(GUIDED_PICK_COUNT, min_chunk_count=8, exclude_paths=rejected)
+    # M3: rerank against the ORIGINAL query (BM25 via matcher.match) instead of
+    # random sample_diverse — picking unrelated chapters at cap-7 is bad UX.
+    match_result = matcher.match(query, k=GUIDED_PICK_COUNT * 3)
+    topics = [m for m in match_result.matches
+              if m.path not in rejected and m.chunk_count >= 8][:GUIDED_PICK_COUNT]
+    if not topics:
+        # Final safety net: relaxed sample_diverse (chunk_count >= 5) still
+        # excluding rejected. Should be rare in practice.
+        topics = matcher.sample_diverse(
+            GUIDED_PICK_COUNT, min_chunk_count=5, exclude_paths=rejected,
+        )
     intro = "Let's choose a starting point so we can begin. Pick one of these focus areas, or end the session."
     return _topic_card_update(
         state, messages, topics, intro, prelock_count,

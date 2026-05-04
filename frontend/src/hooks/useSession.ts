@@ -188,10 +188,13 @@ export function useSession() {
     setWaiting,
   ]);
 
-  const submitMessage = (content: string) => {
+  const submitMessage = (content: string, imageUrl?: string) => {
     const trimmed = content.trim();
     if (!trimmed) return;
-    addStudentMessage(trimmed);
+    // imageUrl is set by the VLM upload path — the student bubble then
+    // renders an image preview above the caption text instead of a
+    // text-only bubble.
+    addStudentMessage(trimmed, imageUrl);
     setPendingChoice(null);
     setWaiting(true);
     // Clear the previous turn's activity log so the new turn starts
@@ -211,5 +214,25 @@ export function useSession() {
     reset();
   };
 
-  return { threadId, studentId, submitMessage, restartSession };
+  // M1 — explicit-exit (button click OR confirming the deflection modal).
+  // Sends a special "__exit_session__" sentinel message; backend interprets
+  // it via state and routes to memory_update with close_reason=exit_intent.
+  // Per M1 spec: no save, just goodbye + END.
+  const requestExitSession = () => {
+    setWaiting(true);
+    useSessionStore.getState().clearActivityLog();
+    const sent = sendStudentMessage("__exit_session__");
+    if (!sent) {
+      addTutorMessage("Connection not ready. Please retry.", "system");
+      setWaiting(false);
+    }
+  };
+
+  // M1 — clears the exit_intent_pending flag without ending the session.
+  // Frontend-only: doesn't talk to backend (backend will clear on next turn).
+  const cancelExitIntent = () => {
+    useSessionStore.getState().setExitIntentPending(false);
+  };
+
+  return { threadId, studentId, submitMessage, restartSession, requestExitSession, cancelExitIntent };
 }

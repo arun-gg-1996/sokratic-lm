@@ -185,6 +185,50 @@ Strict rules:
 - Do NOT say they "didn't engage" — they did engage; they just ran out
   of turns on the bonus.
 """,
+
+    # M1 — unified close mode. ONE Sonnet call replaces 3 legacy close
+    # prompts. The CLOSE_REASON in the user prompt picks the framing.
+    # Output is STRICT JSON {message, demonstrated, needs_work} so:
+    #   message → tutor chat bubble (streamed)
+    #   demonstrated + needs_work → sessions.key_takeaways (M5 reads this)
+    "close": """\
+You are a Socratic {domain_short} tutor closing this session. Produce
+a thoughtful, history-aware goodbye message that ALSO emits the
+post-session takeaways used by the My Mastery analysis view.
+
+The CLOSE_REASON in the user prompt tells you WHY the session is
+ending. Tailor tone and content accordingly:
+
+  reach_full          — student got the clinical answer correctly. Warm
+                        celebratory close. Confirm they nailed it.
+  reach_skipped       — student reached the core answer but declined the
+                        clinical bonus. Warm. No reproach for skipping.
+  clinical_cap        — clinical phase hit turn cap. Acknowledge the
+                        reasoning work. No congrats they didn't earn.
+  hints_exhausted     — student didn't reach the answer; hints used up.
+                        Honest, encouraging. Name the gap explicitly.
+                        Suggest a fresh start from My Mastery.
+  tutoring_cap        — turn budget hit, no reach. Same as above.
+  off_domain_strike   — student kept going off-domain. Firm but kind.
+                        Suggest the right time to come back.
+  exit_intent         — student clicked End session. Brief, neutral.
+                        No save-or-don't-save framing — frontend banner
+                        handles that.
+
+Universal rules:
+- Read the CONVERSATION HISTORY. Name something SPECIFIC the student
+  did or said — never generic "great work today".
+- Write 2-4 sentences total. No closing question.
+- Do NOT congratulate them on reaching anything they didn't reach.
+- Do NOT say "we didn't get to..." if reason indicates they did reach.
+
+Output STRICT JSON only — no markdown, no preamble:
+{{
+  "message":      "<tutor goodbye message — 2-4 sentences>",
+  "demonstrated": "<one short line: what the student showed they understood>",
+  "needs_work":   "<one short line: what they should revisit; empty if none>"
+}}
+""",
 }
 
 
@@ -269,14 +313,18 @@ no markdown, no JSON, no explanations.
 # Modes that use chunks (other modes don't need them — saves tokens).
 _MODES_USING_CHUNKS = {"socratic", "clinical"}
 
-# Modes that use history (rapport/opt_in/honest_close are short bursts
-# that don't need prior turns).
-_MODES_USING_HISTORY = {"socratic", "clinical", "redirect", "nudge", "confirm_end"}
+# Modes that use history. M1: close modes added so the LLM goodbye sees
+# what actually happened (was generic before — produced near-identical
+# closes for very different conversations).
+_MODES_USING_HISTORY = {
+    "socratic", "clinical", "redirect", "nudge", "confirm_end",
+    "honest_close", "reach_close", "clinical_natural_close", "close",
+}
 
 # Modes that need locked-topic context fields
 _MODES_USING_LOCKED = {"socratic", "clinical", "redirect", "opt_in",
                        "confirm_end", "honest_close", "reach_close",
-                       "clinical_natural_close"}
+                       "clinical_natural_close", "close"}
 
 
 # ─────────────────────────────────────────────────────────────────────────────

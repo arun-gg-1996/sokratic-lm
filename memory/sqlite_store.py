@@ -402,12 +402,15 @@ class SQLiteStore:
         limit: int = 20,
         status: Optional[str | Iterable[str]] = None,
         completed_only: bool = False,
+        subsection_path: Optional[str] = None,
     ) -> list[dict]:
         """List sessions newest-first.
 
         `completed_only=True` filters on `ended_at IS NOT NULL` (per L21
         downstream pattern: 'completed sessions only').
         `status` can be a single value or iterable of values to OR together.
+        `subsection_path` (M5): filter to sessions whose locked_subsection_path
+        matches. Used by the My Mastery → Subsection inline session list.
         """
         sql = "SELECT * FROM sessions WHERE student_id = ?"
         params: list[Any] = [student_id]
@@ -423,6 +426,10 @@ class SQLiteStore:
             placeholders = ",".join("?" for _ in statuses)
             sql += f" AND status IN ({placeholders})"
             params.extend(statuses)
+
+        if subsection_path is not None and subsection_path:
+            sql += " AND locked_subsection_path = ?"
+            params.append(subsection_path)
 
         sql += " ORDER BY started_at DESC LIMIT ?"
         params.append(limit)

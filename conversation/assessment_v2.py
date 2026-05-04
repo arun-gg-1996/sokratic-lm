@@ -201,7 +201,7 @@ def _handle_opt_in_response(
     messages = list(state.get("messages", []) or [])
     student_msg = _latest_student(messages)
 
-    intent = _classify_opt_in(student_msg)
+    intent = _classify_opt_in(student_msg, state)
     state["debug"]["turn_trace"].append({
         "wrapper": "assessment_v2.opt_in_response",
         "intent": intent,
@@ -596,27 +596,12 @@ def _render_reach_close(
         clinical_target=None,
         apply_redaction=False,
     )
-    inputs = _teacher_inputs(state, locked)
-    fallback = _build_reach_close_fallback(locked, locked_q, locked_a)
-    text = _safe_teacher_draft(
-        teacher_v2, plan, inputs, fallback_text=fallback,
-        trace=state["debug"]["turn_trace"],
-    )
-
-    messages.append({
-        "role": "tutor",
-        "content": text,
-        "phase": "memory_update",
-        "metadata": {
-            "mode": "honest_close",
-            "tone": "encouraging",
-            "source": "assessment_v2",
-            "is_closing": True,
-        },
-    })
+    # M1/B4 — close LLM is owned by memory_update_node. Don't draft a
+    # duplicate close message here; just route with reach_skipped reason.
+    state["close_reason"] = "reach_skipped"
     state["debug"]["turn_trace"].append({
-        "wrapper": "assessment_v2.reach_close_rendered",
-        "preview": text[:120],
+        "wrapper": "assessment_v2.reach_close_routed",
+        "close_reason": "reach_skipped",
     })
 
     return {
@@ -625,6 +610,7 @@ def _render_reach_close(
         "clinical_opt_in": False,
         "clinical_mastery_tier": "not_assessed",
         "phase": "memory_update",
+        "close_reason": "reach_skipped",
         "pending_user_choice": {},
         "debug": state["debug"],
     }
@@ -678,27 +664,12 @@ def _render_reveal_close(state: dict, teacher_v2: TeacherV2) -> dict:
         clinical_target=None,
         apply_redaction=False,
     )
-    inputs = _teacher_inputs(state, locked)
-    fallback = _build_reveal_close_fallback(locked, locked_q, locked_a)
-    text = _safe_teacher_draft(
-        teacher_v2, plan, inputs, fallback_text=fallback,
-        trace=state["debug"]["turn_trace"],
-    )
-
-    messages.append({
-        "role": "tutor",
-        "content": text,
-        "phase": "memory_update",
-        "metadata": {
-            "mode": "honest_close",
-            "tone": "honest",
-            "source": "assessment_v2",
-            "is_closing": True,
-        },
-    })
+    # M1/B4 — close LLM is owned by memory_update_node. Don't draft a
+    # duplicate reveal/close here; just route with hints_exhausted reason.
+    state["close_reason"] = "hints_exhausted"
     state["debug"]["turn_trace"].append({
-        "wrapper": "assessment_v2.reveal_close_rendered",
-        "preview": text[:120],
+        "wrapper": "assessment_v2.reveal_close_routed",
+        "close_reason": "hints_exhausted",
     })
 
     return {
@@ -707,6 +678,7 @@ def _render_reveal_close(state: dict, teacher_v2: TeacherV2) -> dict:
         "clinical_opt_in": False,
         "clinical_mastery_tier": "not_assessed",
         "phase": "memory_update",
+        "close_reason": "hints_exhausted",
         "pending_user_choice": {},
         "debug": state["debug"],
     }
@@ -762,31 +734,19 @@ def _render_clinical_close(
         clinical_target=None,
         apply_redaction=False,
     )
-    inputs = _teacher_inputs(state, locked)
-    fallback = (
-        "Nice work on the clinical reasoning — let's wrap here. Your mastery "
-        "and any open threads will appear in My Mastery."
-    )
-    text = _safe_teacher_draft(
-        teacher_v2, plan, inputs, fallback_text=fallback,
-        trace=state["debug"]["turn_trace"],
-    )
-    messages.append({
-        "role": "tutor",
-        "content": text,
-        "phase": "memory_update",
-        "metadata": {
-            "mode": "honest_close",
-            "tone": "neutral",
-            "source": "assessment_v2",
-            "is_closing": True,
-        },
+    # M1/B4 — close LLM is owned by memory_update_node. Don't draft a
+    # duplicate clinical-natural close; route with clinical_cap reason.
+    state["close_reason"] = "clinical_cap"
+    state["debug"]["turn_trace"].append({
+        "wrapper": "assessment_v2.clinical_natural_close_routed",
+        "close_reason": "clinical_cap",
     })
     return {
         "messages": messages,
         "assessment_turn": 3,
         "phase": "memory_update",
         "clinical_completed": False,
+        "close_reason": "clinical_cap",
         "pending_user_choice": {},
         "debug": state["debug"],
     }
@@ -848,13 +808,17 @@ def _safe_teacher_draft(
     plan: TurnPlan,
     inputs: TeacherPromptInputs,
     *,
-    fallback_text: str,
+    fallback_text: str = "",
     trace: list[dict],
 ) -> str:
-    """Call teacher_v2.draft() with a deterministic fallback on failure."""
-    # Live activity feed — surface the drafting + reviewing stages to the
-    # UI so the student sees what's happening while Teacher composes the
-    # turn. Mirrors v1 dean.py:fire_activity calls.
+    """Call teacher_v2.draft(). M-FB: NO templated tutor-text fallback.
+
+    On LLM failure / empty draft, returns "" so caller emits an error
+    card (not a fake tutor reply). The `fallback_text` param is kept for
+    backwards compat and IGNORED — explicit empty-string return is the
+    new contract.
+    """
+    _ = fallback_text  # kept for backwards-compat; no longer used
     from conversation.teacher import fire_activity
     _MODE_DRAFTING_LABEL = {
         "socratic": "Drafting tutoring question",
@@ -864,9 +828,10 @@ def _safe_teacher_draft(
         "redirect": "Redirecting back to topic",
         "nudge": "Nudging back on topic",
         "confirm_end": "Confirming session end",
-        "honest_close": "Closing the session",
-        "reach_close": "Wrapping up the session",
-        "clinical_natural_close": "Wrapping up the clinical phase",
+        "honest_close": "Reflecting on your progress",
+        "reach_close": "Reflecting on your progress",
+        "clinical_natural_close": "Reflecting on your progress",
+        "close": "Reflecting on your progress",
     }
     fire_activity(_MODE_DRAFTING_LABEL.get(plan.mode, "Drafting response"))
 
@@ -877,8 +842,13 @@ def _safe_teacher_draft(
             trace.append({
                 "wrapper": "assessment_v2.teacher_draft_empty",
                 "mode": plan.mode,
+                "_error_card": {
+                    "component": f"Teacher.draft[{plan.mode}]",
+                    "error_class": "EmptyDraft",
+                    "message": "Teacher returned empty text",
+                },
             })
-            return fallback_text
+            return ""
         fire_activity("Reviewing response")
         return text
     except Exception as e:
@@ -886,8 +856,13 @@ def _safe_teacher_draft(
             "wrapper": "assessment_v2.teacher_draft_error",
             "mode": plan.mode,
             "error": f"{type(e).__name__}: {str(e)[:160]}",
+            "_error_card": {
+                "component": f"Teacher.draft[{plan.mode}]",
+                "error_class": type(e).__name__,
+                "message": str(e)[:200],
+            },
         })
-        return fallback_text
+        return ""
 
 
 def _latest_student(messages: list[dict]) -> str:
@@ -939,46 +914,56 @@ _NO_TOKENS = {
 _NEGATION_TOKENS = {"not", "no", "n't", "nope", "nah"}
 
 
-def _classify_opt_in(student_msg: str) -> str:
+def _classify_opt_in(student_msg: str, state: Optional[dict] = None) -> str:
     """Return 'yes', 'no', or 'ambiguous'.
 
-    Per L73 — the UI's primary path is Yes/No buttons. This classifier
-    handles the free-text fallback. Strategy:
-
-      1. Exact-match canonical strings first (highest precision)
-      2. Otherwise look for a YES/NO token anywhere in the message,
-         penalised by negation. Long substantive affirmations like
-         "Yes, I'd love to try the bonus question!" must classify as
-         "yes" — the legacy ≥6-word implicit-yes heuristic was too
-         coarse, but pure exact-match was too strict and produced
-         infinite re-ask loops on simulator transcripts (sanity-check
-         observation 2026-05-03).
-
-    Returns "ambiguous" only when there's no clear yes/no signal OR
-    when both signals are present (genuinely unclear).
+    M7: replaces the legacy regex with the unified Haiku intent classifier.
+    Fast-path for canonical strings (no Haiku call) avoids ~$0.0003 on the
+    common case. State context (locked subsection, recent turns) lets the
+    classifier disambiguate substantive replies that the regex over-rejected.
     """
     txt = re.sub(r"\s+", " ", (student_msg or "").strip().lower())
     if not txt:
         return "ambiguous"
 
-    # Exact canonical phrases — highest confidence, short-circuit.
+    # Fast path — exact canonical strings, no LLM call.
     if txt in {"yes", "y", "yeah", "yep", "sure", "ok", "okay", "let's do it"}:
         return "yes"
     if txt in {"no", "n", "nope", "not really", "skip", "pass", "stop"}:
         return "no"
 
-    # Token search — split on word-ish boundaries.
-    tokens = re.findall(r"[a-z']+", txt)
-    token_set = set(tokens)
-
-    has_yes = bool(token_set & _YES_TOKENS)
-    has_no = bool(token_set & _NO_TOKENS)
-    has_negation = bool(token_set & _NEGATION_TOKENS)
-
-    # "no thanks" / "not really" — no wins regardless of any yes-token.
-    if has_no:
-        return "no"
-    # Plain yes signal with no negation
-    if has_yes and not has_negation:
+    # Long-form / ambiguous → unified Haiku classifier with full context.
+    from conversation import classifiers as _C
+    locked_sub = ""
+    locked_q = ""
+    history_pairs: list[tuple[str, str]] = []
+    if state:
+        locked = state.get("locked_topic") or {}
+        locked_sub = str(locked.get("subsection") or "")
+        locked_q = str(state.get("locked_question") or "")
+        msgs = list(state.get("messages") or [])
+        cur_tutor = ""
+        for m in msgs[-8:]:
+            role = (m or {}).get("role") or ""
+            content = str((m or {}).get("content") or "").strip()
+            if role == "tutor":
+                cur_tutor = content
+            elif role == "student" and cur_tutor:
+                history_pairs.append((cur_tutor, content))
+                cur_tutor = ""
+        history_pairs = history_pairs[-2:]
+    result = _C.haiku_intent_classify_unified(
+        student_msg,
+        history_pairs=history_pairs,
+        locked_subsection=locked_sub,
+        locked_question=locked_q,
+        phase="assessment",
+    )
+    verdict = result.get("verdict", "opt_in_ambiguous")
+    if verdict == "opt_in_yes":
         return "yes"
+    if verdict == "opt_in_no":
+        return "no"
+    # Anything else (opt_in_ambiguous, on_topic_engaged, etc.) → ambiguous
+    # so the existing re-ask loop handles it.
     return "ambiguous"

@@ -131,16 +131,74 @@ export async function getMasteryTree(
 
 export async function getMasterySessions(
   studentId: string,
-  opts: { limit?: number; completedOnly?: boolean } = {}
+  opts: { limit?: number; completedOnly?: boolean; subsectionPath?: string } = {}
 ): Promise<MasterySessionsResponse> {
   const params = new URLSearchParams();
   if (opts.limit) params.set("limit", String(opts.limit));
   if (opts.completedOnly) params.set("completed_only", "true");
+  if (opts.subsectionPath) params.set("subsection_path", opts.subsectionPath);
   const qs = params.toString() ? `?${params.toString()}` : "";
   const res = await fetch(
     `${API_BASE}/api/mastery/v2/${encodeURIComponent(studentId)}/sessions${qs}`
   );
   if (!res.ok) throw new Error("Failed to fetch mastery sessions");
+  return res.json();
+}
+
+// M5 — analysis view endpoints
+
+export interface TranscriptMessage {
+  role: string;
+  content: string;
+  phase?: string | null;
+  metadata?: Record<string, unknown> | null;
+}
+
+export interface TranscriptResponse {
+  thread_id: string;
+  student_id?: string | null;
+  messages: TranscriptMessage[];
+}
+
+export async function getSessionTranscript(threadId: string): Promise<TranscriptResponse> {
+  const res = await fetch(`${API_BASE}/api/sessions/${encodeURIComponent(threadId)}/transcript`);
+  if (!res.ok) throw new Error("Failed to fetch transcript");
+  return res.json();
+}
+
+export interface AnalysisChatResponse {
+  thread_id: string;
+  reply: string;
+  in_scope: boolean;
+  cost_estimate_usd: number;
+}
+
+export async function postAnalysisChat(
+  threadId: string,
+  message: string,
+  history: { role: string; content: string }[] = []
+): Promise<AnalysisChatResponse> {
+  const res = await fetch(`${API_BASE}/api/sessions/${encodeURIComponent(threadId)}/analysis_chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message, history }),
+  });
+  if (!res.ok) throw new Error("Failed to post analysis chat");
+  return res.json();
+}
+
+export interface RegenerateResponse {
+  thread_id: string;
+  success: boolean;
+  key_takeaways?: { demonstrated?: string; needs_work?: string; close_reason?: string } | null;
+  error?: string | null;
+}
+
+export async function regenerateTakeaways(threadId: string): Promise<RegenerateResponse> {
+  const res = await fetch(`${API_BASE}/api/sessions/${encodeURIComponent(threadId)}/regenerate_takeaways`, {
+    method: "POST",
+  });
+  if (!res.ok) throw new Error("Failed to regenerate takeaways");
   return res.json();
 }
 

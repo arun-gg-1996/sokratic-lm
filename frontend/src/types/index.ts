@@ -14,6 +14,19 @@ export interface ChatMessage {
   // affordance below the message for users who want to inspect what
   // the system did during that turn.
   activityLog?: string[];
+  // Optional image preview URL — set on student bubbles created from
+  // a VLM upload so the picture renders inline above the caption.
+  imageUrl?: string;
+  // M-FB — error card metadata. When set on a system message, render
+  // ErrorCard component instead of plain text. Backend emits this on
+  // any LLM-call failure path in lieu of a templated tutor fallback.
+  metadata?: {
+    kind?: "error_card";
+    component?: string;
+    error_class?: string;
+    message?: string;
+    retry_handler?: string;
+  };
 }
 
 export interface PendingChoice {
@@ -201,6 +214,11 @@ export interface MasterySessionRow {
   ended_at: string | null;
   locked_topic_path: string | null;
   locked_subsection_path: string | null;
+  // M5 — locked Q/A surfaced at session-end so the analysis view
+  // doesn't need a second fetch.
+  locked_question?: string | null;
+  locked_answer?: string | null;
+  full_answer?: string | null;
   mastery_tier: string | null;
   core_mastery_tier: string | null;
   clinical_mastery_tier: string | null;
@@ -209,7 +227,16 @@ export interface MasterySessionRow {
   status: string;
   turn_count: number | null;
   reach_status: boolean | null;
-  key_takeaways: { what_demonstrated?: string; what_needs_work?: string } | null;
+  // M1 — close-LLM JSON output. Backend uses {demonstrated, needs_work,
+  // close_reason}; legacy "what_*" keys retained for existing rows.
+  key_takeaways: {
+    demonstrated?: string;
+    needs_work?: string;
+    close_reason?: string;
+    regenerated?: boolean;
+    what_demonstrated?: string;
+    what_needs_work?: string;
+  } | null;
 }
 
 export interface MasterySessionsResponse {

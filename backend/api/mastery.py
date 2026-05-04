@@ -340,6 +340,10 @@ class MasterySessionRow(BaseModel):
     ended_at: Optional[str] = None
     locked_topic_path: Optional[str] = None
     locked_subsection_path: Optional[str] = None
+    # M5 — surface locked Q/A so the analysis view doesn't need a second fetch.
+    locked_question: Optional[str] = None
+    locked_answer: Optional[str] = None
+    full_answer: Optional[str] = None
     mastery_tier: Optional[str] = None
     core_mastery_tier: Optional[str] = None
     clinical_mastery_tier: Optional[str] = None
@@ -390,6 +394,9 @@ def _row_to_session_model(row: dict) -> MasterySessionRow:
         ended_at=row.get("ended_at"),
         locked_topic_path=row.get("locked_topic_path"),
         locked_subsection_path=row.get("locked_subsection_path"),
+        locked_question=row.get("locked_question"),
+        locked_answer=row.get("locked_answer"),
+        full_answer=row.get("full_answer"),
         mastery_tier=row.get("mastery_tier"),
         core_mastery_tier=row.get("core_mastery_tier"),
         clinical_mastery_tier=row.get("clinical_mastery_tier"),
@@ -430,9 +437,14 @@ async def get_mastery_sessions(
     student_id: str,
     limit: int = 50,
     completed_only: bool = False,
+    subsection_path: Optional[str] = None,
 ) -> MasterySessionsResponse:
     """Per L29-L34 — list of sessions newest-first, with key fields needed
-    by the My Mastery sessions panel."""
+    by the My Mastery sessions panel.
+
+    M5: optional `subsection_path` query param filters to sessions for one
+    subsection (used by the inline session list under each row).
+    """
     sid = (student_id or "").strip()
     if not sid:
         raise HTTPException(status_code=400, detail="student_id required")
@@ -441,7 +453,12 @@ async def get_mastery_sessions(
 
     from memory.sqlite_store import SQLiteStore
     store = SQLiteStore()
-    rows = store.list_sessions(sid, limit=max(1, min(limit, 200)), completed_only=completed_only)
+    rows = store.list_sessions(
+        sid,
+        limit=max(1, min(limit, 200)),
+        completed_only=completed_only,
+        subsection_path=subsection_path,
+    )
     return MasterySessionsResponse(
         student_id=sid,
         sessions=[_row_to_session_model(r) for r in rows],

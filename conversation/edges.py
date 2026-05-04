@@ -33,9 +33,13 @@ from config import cfg
 
 def after_rapport(state: TutorState) -> str:
     """Route after rapport_node (which skips if phase != 'rapport').
+    - If phase already memory_update (M1 explicit-exit fired between turns) →
+      memory_update_node so close fires immediately, no Dean call.
     - If in assessment phase waiting for student input (opt-in or clinical) → assessment_node
     - Otherwise → dean_node
     """
+    if state.get("phase") == "memory_update":
+        return "memory_update_node"
     if state.get("phase") == "assessment" and state.get("assessment_turn") in (1, 2):
         return "assessment_node"
     return "dean_node"
@@ -60,15 +64,16 @@ def after_dean(state: TutorState) -> str:
 
     if state.get("phase") == "memory_update":
         return "memory_update_node"
-    if state["student_reached_answer"]:
+    if state.get("student_reached_answer"):
         if assessment_style == "none":
             return "memory_update_node"
         return "assessment_node"
-    if state["hint_level"] > state["max_hints"]:
-        if assessment_style == "none":
-            return "memory_update_node"
-        return "assessment_node"
-    if state["turn_count"] >= state["max_turns"]:
+    # M1 — hint-exhausted goes STRAIGHT to memory_update with honest_close
+    # tone. Asking opt_in for a clinical bonus when the student didn't even
+    # reach the core answer is bad UX (and produced wrong reach_close text).
+    if int(state.get("hint_level", 0) or 0) > int(state.get("max_hints", 0) or 0):
+        return "memory_update_node"
+    if int(state.get("turn_count", 0) or 0) >= int(state.get("max_turns", 0) or 0):
         return "assessment_node"
     return END
 
@@ -79,6 +84,6 @@ def after_assessment(state: TutorState) -> str:
     - assessment_turn in (1, 2): waiting for student's answer (END).
     - assessment_turn == 3: assessment complete — move to memory update.
     """
-    if state["assessment_turn"] == 3:
+    if int(state.get("assessment_turn", 0) or 0) == 3:
         return "memory_update_node"
     return END

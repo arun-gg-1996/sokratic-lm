@@ -219,8 +219,18 @@ async def run_one_session(
     """Drive ONE session through the full graph. LLM-driven student via
     simulator. Returns a dict with the full state + transcript + bugs."""
     conv_id = str(uuid.uuid4())[:8]
+    thread_id = f"{student_id}_s{session_index}_{conv_id}"
+    # M2 Bug A — production calls SQLiteStore.ensure_student in start_session;
+    # the eval harness bypasses that path, so insert here to satisfy the
+    # students→sessions FK constraint at session-end time.
+    try:
+        from memory.sqlite_store import SQLiteStore
+        SQLiteStore().ensure_student(student_id)
+    except Exception:
+        pass
     state = initial_state(student_id, cfg)
-    thread_config = {"configurable": {"thread_id": f"{student_id}_s{session_index}_{conv_id}"}}
+    state["thread_id"] = thread_id
+    thread_config = {"configurable": {"thread_id": thread_id}}
     simulator = StudentSimulator(PROFILES[profile_id])
 
     turns_log: list[dict] = []

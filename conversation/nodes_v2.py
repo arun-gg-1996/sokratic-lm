@@ -317,13 +317,16 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
     from conversation.llm_client import make_anthropic_client, resolve_model
     from config import cfg as _cfg
 
-    # Fetch chunks for this turn — reuse existing retriever
-    fire_activity("Searching textbook for context")
-    try:
-        chunks = retriever.retrieve(latest_student) if retriever else []
-    except Exception as e:
-        chunks = []
-        debug_trace.append({"wrapper": "retriever.retrieve_error", "error": str(e)[:160]})
+    # M6 — reuse lock-time chunks by default. The unconditional per-turn
+    # retrieve we used to do here busted the prompt-cache contract (chunks
+    # change every turn → cache miss → expensive). Lock-time chunks already
+    # cover the locked subsection. Dean can opt-in to exploration retrieval
+    # via plan.needs_exploration when student detours into a tangent.
+    chunks = list(state.get("retrieved_chunks", []) or [])
+    debug_trace.append({
+        "wrapper": "retriever.reused_lock_time_chunks",
+        "n": len(chunks),
+    })
 
     client = make_anthropic_client()
     dean_v2 = DeanV2(client, model=resolve_model(_cfg.models.dean))
@@ -420,6 +423,39 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
     if session_image_context and not final_plan.image_context:
         final_plan.image_context = session_image_context
 
+    # M6 — exploration retrieval gate. Dean opts in via plan.needs_exploration
+    # when student went tangential. Append exploration chunks (don't replace
+    # locked-time chunks — Teacher sees both contexts).
+    new_exploration_count = int(state.get("exploration_count", 0) or 0)
+    if final_plan.needs_exploration and final_plan.exploration_query:
+        fire_activity("Searching textbook for related context")
+        try:
+            extra = retriever.retrieve(final_plan.exploration_query) if retriever else []
+        except Exception as e:
+            extra = []
+            debug_trace.append({
+                "wrapper": "retriever.exploration_retrieve_error",
+                "error": str(e)[:160],
+            })
+        if extra:
+            tagged = []
+            for c in extra:
+                row = dict(c)
+                row["exploration"] = True
+                tagged.append(row)
+            chunks = list(chunks) + tagged
+            inputs.chunks = chunks
+            new_exploration_count += 1
+            debug_trace.append({
+                "wrapper": "exploration_retrieval",
+                "n_added": len(tagged),
+                "exploration_count": new_exploration_count,
+                "query": final_plan.exploration_query[:80],
+            })
+    else:
+        # On-topic engaged turn (no exploration requested) — decay the count.
+        new_exploration_count = max(0, new_exploration_count - 1)
+
     fire_activity("Drafting tutoring question")
     turn_result = run_turn(
         teacher=teacher_v2,
@@ -480,6 +516,8 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         "student_reached_answer": bool(state.get("student_reached_answer", False)),
         "student_reach_coverage": float(state.get("student_reach_coverage", 0.0) or 0.0),
         "student_reach_path": str(state.get("student_reach_path", "") or ""),
+        # M6 — exploration count incremented on tangent / decayed on on-topic
+        "exploration_count": new_exploration_count,
         "debug": state["debug"],
     }
 

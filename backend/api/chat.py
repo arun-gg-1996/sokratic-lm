@@ -104,11 +104,23 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
                 )
                 continue
 
-            messages = list(state.get("messages", []))
-            messages.append({"role": "student", "content": client_msg.content})
-            state["messages"] = messages
-            state.setdefault("debug", {}).setdefault("turn_trace", [])
-            state["debug"]["turn_trace"] = []
+            # M1 — explicit-exit sentinel from frontend ([End session] button
+            # OR exit modal confirm). Stamp exit_intent_pending=True and route
+            # straight to memory_update so close fires with reason=exit_intent.
+            if client_msg.content == "__exit_session__":
+                state["exit_intent_pending"] = True
+                state["close_reason"] = "exit_intent"
+                state["phase"] = "memory_update"
+                # Don't append the sentinel to messages — modal already
+                # gave the student visual feedback; transcript stays clean.
+                state.setdefault("debug", {}).setdefault("turn_trace", [])
+                state["debug"]["turn_trace"] = []
+            else:
+                messages = list(state.get("messages", []))
+                messages.append({"role": "student", "content": client_msg.content})
+                state["messages"] = messages
+                state.setdefault("debug", {}).setdefault("turn_trace", [])
+                state["debug"]["turn_trace"] = []
 
             # D.6a: install a streaming callback before invoking the
             # graph. The teacher's draft_socratic checks this contextvar

@@ -434,6 +434,7 @@ def map_topic(
     max_tokens: int = 1200,
     temperature: float = 0.0,
     use_compact_toc: bool = False,
+    rejected_paths: Optional[list[str]] = None,
 ) -> TopicMapperResult:
     """Single Haiku call → TopicMapperResult.
 
@@ -472,6 +473,7 @@ def map_topic(
         domain_short=domain_short,
         toc_block=toc_block,
         abbrevs_block=abbrevs_block,
+        rejected_paths=rejected_paths,
     )
 
     t0 = time.time()
@@ -513,6 +515,15 @@ def map_topic(
         )
 
     verdict, confidence, top_matches = _validate_and_coerce(parsed)
+    # Defensive belt-and-suspenders: drop any returned matches whose path
+    # was previously rejected. The variable_text already nudges the LLM
+    # to avoid them, but filter again in case it ignores the hint.
+    if rejected_paths:
+        rej_set = set(rejected_paths)
+        top_matches = [m for m in top_matches if m.path not in rej_set]
+        if not top_matches:
+            verdict = "none"
+            confidence = 0.0
     usage = getattr(resp, "usage", None)
     return TopicMapperResult(
         query=query,
@@ -543,6 +554,7 @@ def build_cached_message_blocks(
     domain_short: str,
     toc_block: str,
     abbrevs_block: str,
+    rejected_paths: Optional[list[str]] = None,
 ) -> list[dict]:
     """Build the message content as cacheable + variable blocks.
 
@@ -569,7 +581,14 @@ def build_cached_message_blocks(
         else ""
     )
     cached_text = f"{header}\n\nTOC:\n{toc_block}{abbrevs_section}"
-    variable_text = f"\n\nSTUDENT UTTERANCE:\n{query}\n\nOutput JSON only:"
+    rejected_section = ""
+    if rejected_paths:
+        rej_lines = "\n".join(f"  - {p}" for p in rejected_paths)
+        rejected_section = (
+            "\n\nREJECTED (the student already declined these — do NOT suggest them again, "
+            "pick something else from the TOC):\n" + rej_lines
+        )
+    variable_text = f"{rejected_section}\n\nSTUDENT UTTERANCE:\n{query}\n\nOutput JSON only:"
 
     return [
         {

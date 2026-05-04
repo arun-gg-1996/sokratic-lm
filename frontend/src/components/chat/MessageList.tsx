@@ -4,6 +4,7 @@ import { useTTS } from "../../hooks/useTTS";
 import { ActivityFeed } from "./ActivityFeed";
 import { MessageBubble } from "./MessageBubble";
 import { ThinkingIndicator } from "./ThinkingIndicator";
+import { ErrorCard } from "../cards/ErrorCard";
 
 export function MessageList() {
   const messages = useSessionStore((s) => s.messages);
@@ -48,9 +49,22 @@ export function MessageList() {
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-lane mx-auto px-6 py-8 space-y-4">
-        {messages.map((m) => (
-          <MessageBubble key={m.id} message={m} />
-        ))}
+        {messages.map((m) => {
+          // M-FB — system messages with error_card metadata render as the
+          // dedicated ErrorCard component instead of a plain bubble. The
+          // backend emits these in lieu of templated tutor fallbacks.
+          if (m.role === "system" && m.metadata?.kind === "error_card") {
+            return (
+              <ErrorCard
+                key={m.id}
+                component={m.metadata.component || "unknown"}
+                errorClass={m.metadata.error_class || "Error"}
+                message={m.metadata.message || ""}
+              />
+            );
+          }
+          return <MessageBubble key={m.id} message={m} />;
+        })}
         {showActivity && <ActivityFeed labels={activityLog} mode="live" />}
         {streaming && (
           <div className="rounded-card bg-panel border border-border px-4 py-3">

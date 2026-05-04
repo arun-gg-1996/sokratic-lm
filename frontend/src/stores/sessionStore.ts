@@ -32,10 +32,21 @@ interface SessionState {
   // the auto-reconnect backoff is in flight, "lost" after we've
   // burned through the reconnect budget.
   connection: "connecting" | "connected" | "reconnecting" | "lost";
+  // M1 — set true on any close path. Composer disables input,
+  // chat shows the "Session ended" banner with link to My Mastery.
+  sessionEnded: boolean;
+  // M1 — set true when preflight detects deflection. Frontend shows
+  // ExitConfirmModal directly (no Teacher draft of confirm text).
+  exitIntentPending: boolean;
+  // M1 — last close reason, used for banner copy + analytics.
+  closeReason: string;
   setConnection: (c: SessionState["connection"]) => void;
+  setSessionEnded: (e: boolean) => void;
+  setExitIntentPending: (p: boolean) => void;
+  setCloseReason: (r: string) => void;
   setThreadId: (id: string) => void;
   setSessionPhase: (phase: string) => void;
-  addStudentMessage: (content: string) => void;
+  addStudentMessage: (content: string, imageUrl?: string) => void;
   addTutorMessage: (
     content: string,
     phase?: string,
@@ -68,12 +79,21 @@ export const useSessionStore = create<SessionState>((set) => ({
   streamingTutorContent: "",
   activityLog: [],
   connection: "connecting",
+  sessionEnded: false,
+  exitIntentPending: false,
+  closeReason: "",
   setConnection: (c) => set({ connection: c }),
+  setSessionEnded: (e) => set({ sessionEnded: e }),
+  setExitIntentPending: (p) => set({ exitIntentPending: p }),
+  setCloseReason: (r) => set({ closeReason: r }),
   setThreadId: (id) => set({ threadId: id }),
   setSessionPhase: (phase) => set({ sessionPhase: phase || "tutoring" }),
-  addStudentMessage: (content) =>
+  addStudentMessage: (content, imageUrl) =>
     set((s) => ({
-      messages: [...s.messages, { id: messageId("student"), role: "student", content }],
+      messages: [
+        ...s.messages,
+        { id: messageId("student"), role: "student", content, imageUrl },
+      ],
     })),
   addTutorMessage: (
     content,
@@ -146,5 +166,8 @@ export const useSessionStore = create<SessionState>((set) => ({
       streamingTutorContent: "",
       activityLog: [],
       connection: "connecting",
+      sessionEnded: false,
+      exitIntentPending: false,
+      closeReason: "",
     }),
 }));

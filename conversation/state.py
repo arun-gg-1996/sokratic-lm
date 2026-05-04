@@ -19,6 +19,10 @@ from typing import TypedDict, Literal, Optional
 class TutorState(TypedDict):
     # --- Identity ---
     student_id: str
+    # LangGraph thread_id (also stashed on state so memory_update_node and
+    # mem0/sqlite write paths can read it without threading the RunnableConfig
+    # through). Required field — LangGraph drops keys not declared here.
+    thread_id: str
 
     # --- Phase ---
     phase: Literal["rapport", "tutoring", "assessment", "memory_update"]
@@ -199,6 +203,23 @@ class TutorState(TypedDict):
     # can't teach, which caused the card-loop bug in the 2026-04-22 session.
     rejected_topic_paths: list[str]
 
+    # M6 — count of exploration retrievals fired this session.
+    # Increments on tangential turns, decays on engaged on-topic turns.
+    # Surfaced to Dean's prompt so it can soft-warn about turn budget.
+    exploration_count: int
+
+    # M1 — session lifecycle flags
+    # session_ended: stamped True on any close path. Frontend reads to
+    #   disable input + show "Session ended" banner.
+    # exit_intent_pending: set True when preflight detects deflection.
+    #   Frontend renders ExitConfirmModal directly (NO Teacher draft).
+    #   Cleared on either confirmation action (end / cancel).
+    # close_reason: which auto-end / explicit-exit path fired. Drives
+    #   the unified close mode's prompt + the save/no-save bucket.
+    session_ended: bool
+    exit_intent_pending: bool
+    close_reason: str
+
     # --- Pre-lock loop counter (L11) ---
     # Counts student round-trips before a topic is locked. Separate from
     # turn_count, which starts only after the Socratic tutoring anchor exists.
@@ -287,6 +308,7 @@ def initial_state(student_id: str, cfg) -> TutorState:
     """
     return TutorState(
         student_id=student_id,
+        thread_id="",
         phase="rapport",
         messages=[],
         retrieved_chunks=[],
@@ -335,6 +357,10 @@ def initial_state(student_id: str, cfg) -> TutorState:
         clinical_low_effort_count=0,
         clinical_off_topic_count=0,
         rejected_topic_paths=[],
+        exploration_count=0,
+        session_ended=False,
+        exit_intent_pending=False,
+        close_reason="",
         prelock_loop_count=0,
         mem0_carryover_notes="",
         last_hint_advance_at_turn=-1,

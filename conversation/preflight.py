@@ -317,141 +317,123 @@ def run_preflight(
     locked_topic: Optional[dict] = None,
     parallel: bool = True,
 ) -> PreflightResult:
-    """L44 + L45 + L55 + L56 + L58 — run 3 Haiku checks, apply counter
-    logic, return PreflightResult.
+    """M7 — single Haiku unified intent classifier (replaces 3 separate
+    Haiku calls). Sees locked_topic + last 2 turn pairs + phase so it
+    can disambiguate context-dependent words ("yes"/"no"/topic mentions).
 
-    `state` is the live TutorState (read-only here — caller writes back
-    counter updates from PreflightResult fields). Reads:
-      state.help_abuse_count, state.off_topic_count
-    Counters are 0 by default for fresh sessions.
+    Strike counters decay on on_topic_engaged turns to prevent a single
+    misclassification 10 turns ago from killing a session at strike 4.
 
-    `student_message` is the latest student utterance (the one being
-    classified).
-
-    `locked_topic` (optional) is the current locked subsection — only
-    relevant for off_domain detection's locked-topic argument; the
-    existing haiku_off_domain_check accepts it.
-
-    `parallel=True` (default) runs all 3 Haiku calls concurrently via a
-    thread pool (lowest-latency path). `parallel=False` runs sequentially
-    — useful for tests + debugging.
+    The `parallel` kwarg is kept for backward compat but ignored (single
+    call now).
     """
+    _ = parallel  # kept for backwards compat
     t0 = time.time()
     help_count = int(state.get("help_abuse_count") or 0)
     off_count = int(state.get("off_topic_count") or 0)
 
-    locked_str = ""
+    locked_subsection = ""
     if locked_topic:
-        locked_str = (
+        locked_subsection = (
             locked_topic.get("subsection")
             or locked_topic.get("section")
             or ""
         )
 
-    def _run_help_abuse():
-        return haiku_help_abuse_check(student_message)
+    # Build last 2 (tutor, student) turn pairs from messages history.
+    history_pairs: list[tuple[str, str]] = []
+    msgs = list(state.get("messages") or [])
+    # Walk from end, collect tutor msg + the immediately following student msg.
+    # Limit to last 4 exchanges.
+    pairs_buf: list[dict] = []
+    for m in msgs[-8:]:
+        pairs_buf.append(m)
+    cur_tutor = ""
+    for m in pairs_buf:
+        role = (m or {}).get("role") or ""
+        content = str((m or {}).get("content") or "").strip()
+        if role == "tutor":
+            cur_tutor = content
+        elif role == "student" and cur_tutor:
+            history_pairs.append((cur_tutor, content))
+            cur_tutor = ""
+    history_pairs = history_pairs[-2:]
 
-    def _run_off_domain():
-        # haiku_off_domain_check signature is (student_msg) — no locked_topic
-        # arg today. The check is locked-topic-agnostic; we still capture
-        # locked_str into trace via the orchestrator for context.
-        return C.haiku_off_domain_check(student_message)
-
-    def _run_deflection():
-        return haiku_deflection_check(student_message)
-
-    if parallel:
-        results: dict[str, dict] = {}
-        with ThreadPoolExecutor(max_workers=3) as pool:
-            futures = {
-                pool.submit(_run_help_abuse): "help_abuse",
-                pool.submit(_run_off_domain): "off_domain",
-                pool.submit(_run_deflection): "deflection",
-            }
-            for f in as_completed(futures):
-                results[futures[f]] = f.result()
-    else:
-        results = {
-            "help_abuse": _run_help_abuse(),
-            "off_domain": _run_off_domain(),
-            "deflection": _run_deflection(),
-        }
-
+    result = C.haiku_intent_classify_unified(
+        student_message,
+        history_pairs=history_pairs,
+        locked_subsection=locked_subsection,
+        locked_question=str(state.get("locked_question") or ""),
+        phase=str(state.get("phase") or "tutoring"),
+    )
+    verdict = str(result.get("verdict", "on_topic_engaged"))
     elapsed = round(time.time() - t0, 3)
-
-    # Categorize. Note: existing haiku_off_domain_check (Nidhi's branch)
-    # collapses the L56 granular categories (substance/chitchat/jailbreak/
-    # answer_demand) into a single "off_domain" verdict. We accept both
-    # the granular set (forward-compat for when L56 categories land in
-    # the classifier) AND the binary "off_domain" verdict.
-    help_fired = results["help_abuse"]["verdict"] == "help_abuse"
-    off_fired = results["off_domain"]["verdict"] in {
-        "off_domain",  # binary (today)
-        "substance", "chitchat", "jailbreak", "answer_demand",  # granular (per L56, future)
+    # Trace bag — keep the 3-key shape so existing dashboards still work.
+    checks = {
+        "unified": result,
+        # Synthesize per-check shape so legacy trace consumers don't break:
+        "help_abuse": {"verdict": "help_abuse" if verdict == "help_abuse" else "legitimate_engagement"},
+        "off_domain": {"verdict": "off_domain" if verdict == "off_domain" else "clean"},
+        "deflection": {"verdict": "deflection" if verdict == "deflection" else "continuing"},
     }
-    deflect_fired = results["deflection"]["verdict"] == "deflection"
 
-    # Decision: deflection > off_domain > help_abuse > none
-    # (deflection is the most user-explicit signal; off_domain has
-    # session-end consequences at strike 4; help_abuse is the lightest)
-    if deflect_fired:
+    if verdict == "deflection":
         return PreflightResult(
             fired=True,
             category="deflection",
-            evidence=results["deflection"]["evidence"],
-            rationale=results["deflection"]["rationale"],
-            new_help_abuse_count=help_count,    # not advanced
-            new_off_topic_count=off_count,      # not advanced
+            evidence=result.get("evidence", ""),
+            rationale=result.get("rationale", ""),
+            new_help_abuse_count=help_count,
+            new_off_topic_count=off_count,
             suggested_mode="confirm_end",
             suggested_tone="neutral",
-            checks=results,
+            checks=checks,
             elapsed_s=elapsed,
         )
 
-    if off_fired:
+    if verdict == "off_domain":
         new_off = off_count + 1
         end_session = new_off >= OFF_TOPIC_END_SESSION_STRIKE
         return PreflightResult(
             fired=True,
             category="off_domain",
-            evidence=results["off_domain"]["evidence"],
-            rationale=results["off_domain"]["rationale"],
-            new_help_abuse_count=help_count,    # reset on off_domain to avoid double-penalize
+            evidence=result.get("evidence", ""),
+            rationale=result.get("rationale", ""),
+            new_help_abuse_count=help_count,
             new_off_topic_count=new_off,
             suggested_mode="honest_close" if end_session else "nudge",
             suggested_tone=_select_tone_for_strike("off_domain", new_off),
             should_end_session=end_session,
-            checks=results,
+            checks=checks,
             elapsed_s=elapsed,
         )
 
-    if help_fired:
+    if verdict == "help_abuse":
         new_help = help_count + 1
         force_hint = new_help >= HELP_ABUSE_HINT_ADVANCE_STRIKE
         return PreflightResult(
             fired=True,
             category="help_abuse",
-            evidence=results["help_abuse"]["evidence"],
-            rationale=results["help_abuse"]["rationale"],
+            evidence=result.get("evidence", ""),
+            rationale=result.get("rationale", ""),
             new_help_abuse_count=new_help,
             new_off_topic_count=off_count,
             suggested_mode="redirect",
             suggested_tone=_select_tone_for_strike("help_abuse", new_help),
             should_force_hint_advance=force_hint,
-            checks=results,
+            checks=checks,
             elapsed_s=elapsed,
         )
 
-    # All 3 checks passed → Dean runs. Reset help_abuse counter (per L55:
-    # any non-help-abuse engagement resets the counter). Off-domain counter
-    # is independent — only resets on detected on-domain engagement, which
-    # isn't reliably knowable until Dean processes the message; conservative
-    # default is to leave off_count unchanged.
+    # on_topic_engaged or opt_in_* in preflight context — let Dean handle.
+    # M7 strike decay: on engagement, decrement off_topic_count (max 0)
+    # so a single old misclassification doesn't accumulate to strike 4.
+    new_off = max(0, off_count - 1)
     return PreflightResult(
         fired=False,
         category="none",
-        new_help_abuse_count=0,        # reset
-        new_off_topic_count=off_count, # leave alone
-        checks=results,
+        new_help_abuse_count=0,        # reset (existing L55 behavior)
+        new_off_topic_count=new_off,   # M7 decay
+        checks=checks,
         elapsed_s=elapsed,
     )

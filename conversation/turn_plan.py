@@ -41,9 +41,10 @@ MODES = {
     "redirect",                # pre-flight redirect (off-domain / help-abuse / deflection)
     "nudge",                   # ultra-light prompt — student needs minor poke
     "confirm_end",             # student requested end-of-session — confirm
-    "honest_close",            # session-end after FAILURE / disengagement (B2: NOT for reach path)
-    "reach_close",             # session-end after student REACHED + declined bonus (B2 fix)
-    "clinical_natural_close",  # session-end after clinical phase hit turn cap (B2 fix)
+    "honest_close",            # legacy — kept for back-compat; new code uses "close"
+    "reach_close",             # legacy — kept for back-compat; new code uses "close"
+    "clinical_natural_close",  # legacy — kept for back-compat; new code uses "close"
+    "close",                   # M1 unified close mode — reason flag picks tone/text variant
 }
 
 # `tone` shapes phrasing — orthogonal to mode.
@@ -102,6 +103,13 @@ class TurnPlan:
     # Clinical phase fields (per L74) — null in tutoring phase
     clinical_scenario: Optional[str] = None
     clinical_target: Optional[str] = None
+
+    # M6 — exploration retrieval signal. Default False = reuse lock-time
+    # chunks (preserves prompt-cache contract). Set True when student asked
+    # about an OT-related sub-aspect not in current chunks. exploration_query
+    # is the focused query string Dean wants to retrieve for.
+    needs_exploration: bool = False
+    exploration_query: str = ""
 
     # ── Validation ───────────────────────────────────────────────────────
 
@@ -192,6 +200,8 @@ class TurnPlan:
             "image_context": parsed.get("image_context"),
             "clinical_scenario": parsed.get("clinical_scenario"),
             "clinical_target": parsed.get("clinical_target"),
+            "needs_exploration": bool(parsed.get("needs_exploration") or False),
+            "exploration_query": str(parsed.get("exploration_query") or "").strip(),
         }
         # Defensive: coerce list items to strings if LLM returned weird types
         kwargs["permitted_terms"] = [str(x) for x in kwargs["permitted_terms"]]
@@ -229,6 +239,8 @@ class TurnPlan:
             image_context=None,
             clinical_scenario=None,
             clinical_target=None,
+            needs_exploration=False,
+            exploration_query="",
         )
 
     # ── Serialization ────────────────────────────────────────────────────

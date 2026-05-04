@@ -3,20 +3,52 @@ import { ConnectionBanner } from "./ConnectionBanner";
 import { MessageList } from "./MessageList";
 import { OptInCard } from "../cards/OptInCard";
 import { TopicCard } from "../cards/TopicCard";
+import { ExitConfirmModal } from "../modals/ExitConfirmModal";
 import { useSession } from "../../hooks/useSession";
 import { useSessionStore } from "../../stores/sessionStore";
+import { useState } from "react";
 
 export function ChatSurface() {
-  const { submitMessage, restartSession } = useSession();
+  const { submitMessage, restartSession, requestExitSession, cancelExitIntent } = useSession();
   const pendingChoice = useSessionStore((s) => s.pendingChoice);
   const sessionPhase = useSessionStore((s) => s.sessionPhase);
+  const sessionEnded = useSessionStore((s) => s.sessionEnded);
+  const exitIntentPending = useSessionStore((s) => s.exitIntentPending);
   const setPendingChoice = useSessionStore((s) => s.setPendingChoice);
-  const isTerminal = sessionPhase === "memory_update";
+  const [exitModalOpen, setExitModalOpen] = useState(false);
+  // M1 — modal opens either via header [End session] button OR when
+  // backend signals exit_intent_pending=true (preflight detected deflection).
+  const showExitModal = exitModalOpen || exitIntentPending;
+  const isTerminal = sessionPhase === "memory_update" || sessionEnded;
 
   return (
     <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
       {/* L80.f — WS lifecycle banner; hidden during healthy connection. */}
       <ConnectionBanner />
+      {/* M1 — chat header with persistent [End session] button. Hidden once
+          session is terminal (banner takes over from Composer). */}
+      {!isTerminal && (
+        <div className="shrink-0 border-b border-border px-4 py-2 flex items-center justify-end">
+          <button
+            onClick={() => setExitModalOpen(true)}
+            className="text-xs text-muted-foreground hover:text-destructive transition px-2 py-1 rounded border border-border hover:border-destructive"
+            aria-label="End this session"
+          >
+            End session
+          </button>
+        </div>
+      )}
+      <ExitConfirmModal
+        open={showExitModal}
+        onCancel={() => {
+          setExitModalOpen(false);
+          if (exitIntentPending) cancelExitIntent();
+        }}
+        onConfirm={() => {
+          setExitModalOpen(false);
+          requestExitSession();
+        }}
+      />
       <MessageList />
       {!isTerminal && pendingChoice?.kind === "opt_in" && (
         <OptInCard options={pendingChoice.options} onSelect={submitMessage} />

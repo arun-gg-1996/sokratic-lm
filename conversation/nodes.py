@@ -631,22 +631,237 @@ def assessment_node(state: TutorState, dean, teacher) -> dict:
         return _close_session_with_dean(state, dean, messages)
 
 
+# M1 — close-reason buckets. Drives both the close-LLM tone AND the
+# save/no-save decision at memory_update_node.
+_NO_SAVE_REASONS = {"exit_intent", "off_domain_strike"}
+_VALID_CLOSE_REASONS = {
+    "reach_full", "reach_skipped", "clinical_cap",
+    "hints_exhausted", "tutoring_cap",
+    "off_domain_strike", "exit_intent",
+}
+
+
+def _derive_close_reason(state: TutorState) -> str:
+    """M1 — pick the close reason from state signals at session end.
+
+    Priority order:
+      1. exit_intent_pending or session_ended_off_domain → explicit triggers
+      2. clinical_completed + clinical reach → reach_full
+      3. clinical_completed + cap hit → clinical_cap
+      4. tutoring student_reached_answer + opt_in_no → reach_skipped
+      5. hint_level > max_hints → hints_exhausted
+      6. turn_count >= max_turns → tutoring_cap
+      7. else → tutoring_cap (defensive)
+    """
+    # Explicit triggers from upstream
+    if state.get("exit_intent_pending"):
+        return "exit_intent"
+    if state.get("session_ended_off_domain"):
+        return "off_domain_strike"
+
+    # Clinical phase outcomes
+    if state.get("clinical_completed"):
+        clinical_state = state.get("clinical_state") or ""
+        if clinical_state in {"correct", "partial_correct"}:
+            return "reach_full"
+        return "clinical_cap"
+
+    # Tutoring outcomes
+    if state.get("student_reached_answer") and state.get("clinical_opt_in") is False:
+        return "reach_skipped"
+
+    hint_level = int(state.get("hint_level", 0) or 0)
+    max_hints = int(state.get("max_hints", 0) or 0)
+    if hint_level > max_hints:
+        return "hints_exhausted"
+
+    turn_count = int(state.get("turn_count", 0) or 0)
+    max_turns = int(state.get("max_turns", 0) or 0)
+    if max_turns and turn_count >= max_turns:
+        return "tutoring_cap"
+
+    return "tutoring_cap"
+
+
+def _draft_close_message(state: TutorState, close_reason: str) -> dict:
+    """M1 — single Sonnet close call. Returns dict with message + takeaways.
+
+    Output shape (from the close-mode prompt JSON):
+      {
+        "message":      "<tutor goodbye>",
+        "demonstrated": "<short>",
+        "needs_work":   "<short>",
+      }
+
+    Empty fields on LLM failure (no templated tutor text per M-FB).
+    """
+    import json as _json
+    from conversation.teacher_v2 import TeacherV2, TeacherPromptInputs
+    from conversation.turn_plan import TurnPlan
+    from conversation.llm_client import make_anthropic_client, resolve_model
+    from conversation.teacher import fire_activity
+    from config import cfg as _cfg
+
+    fire_activity("Reflecting on your progress")
+
+    locked = state.get("locked_topic") or (state.get("debug") or {}).get("locked_topic_snapshot") or {}
+    plan = TurnPlan(
+        scenario=f"close:{close_reason}",
+        hint_text="",
+        mode="close",
+        tone="neutral",
+        forbidden_terms=[],
+        permitted_terms=[],
+        # close JSON output is unconstrained sentences; loose shape
+        shape_spec={"max_sentences": 6, "exactly_one_question": False},
+        carryover_notes=f"close_reason: {close_reason}",
+    )
+    inputs = TeacherPromptInputs(
+        chunks=[],
+        history=state.get("messages", []),
+        locked_subsection=str(locked.get("subsection") or ""),
+        locked_question=str(state.get("locked_question") or ""),
+        domain_name=getattr(_cfg.domain, "name", "this subject"),
+        domain_short=getattr(_cfg.domain, "short", "subject"),
+        student_descriptor=getattr(_cfg.domain, "student_descriptor", "student"),
+    )
+    client = make_anthropic_client()
+    teacher_v2 = TeacherV2(client, model=resolve_model(_cfg.models.teacher))
+
+    # Single attempt with internal silent retry — M-FB pattern.
+    text = ""
+    error = ""
+    for attempt in (1, 2):
+        try:
+            draft = teacher_v2.draft(plan, inputs)
+            text = (draft.text or "").strip()
+            if text:
+                error = ""
+                break
+            error = "empty_text"
+        except Exception as e:
+            error = f"{type(e).__name__}: {str(e)[:120]}"
+
+    state["debug"]["turn_trace"].append({
+        "wrapper": "teacher_v2.close_draft",
+        "close_reason": close_reason,
+        "attempts": attempt,
+        "error": error,
+        "text_len": len(text),
+    })
+    if not text:
+        return {"message": "", "demonstrated": "", "needs_work": "", "_error": error}
+
+    # Strip ```json fences if present
+    s = text
+    if s.startswith("```"):
+        lines = s.split("\n")
+        s = "\n".join(lines[1:-1] if lines[-1].startswith("```") else lines[1:])
+    try:
+        parsed = _json.loads(s)
+    except _json.JSONDecodeError:
+        # Fallback: try to extract first JSON object substring
+        import re as _re
+        m = _re.search(r"\{.*\}", s, _re.DOTALL)
+        parsed = None
+        if m:
+            try:
+                parsed = _json.loads(m.group(0))
+            except Exception:
+                parsed = None
+    if not isinstance(parsed, dict):
+        # If JSON parse fails, treat the whole text as the message and
+        # leave takeaways empty (no fake/templated takeaways).
+        return {
+            "message": text,
+            "demonstrated": "",
+            "needs_work": "",
+            "_error": "json_parse_fail",
+        }
+    return {
+        "message": str(parsed.get("message") or "").strip(),
+        "demonstrated": str(parsed.get("demonstrated") or "").strip(),
+        "needs_work": str(parsed.get("needs_work") or "").strip(),
+        "_error": "",
+    }
+
+
 def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
     """
-    Phase 4 — Memory Update.
+    Phase 4 — Memory Update + Close.
 
-    Calls memory_manager.flush() which writes 5 categories of mem0 entries
-    for the session: session summary, misconceptions, open thread (if not
-    reached), topics covered, and learning style cues. See
-    memory/memory_manager.py for category formats.
+    M1 redesign:
+      1. Determine close_reason from state signals
+      2. Draft the LLM close message (structured JSON)
+      3. Append close message to chat history
+      4. If close_reason is no-save (exit_intent, off_domain_strike):
+         skip mem0 / mastery / sqlite writes
+      5. Otherwise: full save + record key_takeaways from the close JSON
+      6. Stamp session_ended=True so frontend disables input
 
-    Falls back to no-op if mem0 / Qdrant is unavailable (memory_manager
-    handles that internally) — never blocks session-end.
-
-    Returns phase = "memory_update" to signal session end.
+    No templated tutor fallbacks (M-FB). On close-LLM failure, the message
+    is empty (frontend renders an error card).
     """
     state["debug"]["current_node"] = "memory_update_node"
     from conversation.teacher import fire_activity
+
+    # ── M1: derive close reason + draft close message ─────────────────────
+    close_reason = state.get("close_reason") or _derive_close_reason(state)
+    state["close_reason"] = close_reason
+    close_payload = _draft_close_message(state, close_reason)
+    close_message = close_payload.get("message") or ""
+    takeaways = {
+        "demonstrated": close_payload.get("demonstrated") or "",
+        "needs_work": close_payload.get("needs_work") or "",
+        "close_reason": close_reason,
+    }
+
+    # Append close message to chat (only if non-empty — avoid blank
+    # tutor bubble; frontend will surface the error card instead).
+    new_messages = list(state.get("messages", []) or [])
+    if close_message:
+        new_messages.append({
+            "role": "tutor",
+            "content": close_message,
+            "phase": "memory_update",
+            "metadata": {
+                "mode": "close",
+                "close_reason": close_reason,
+                "source": "memory_update_node",
+            },
+        })
+    else:
+        # M-FB: surface error card payload — frontend renders distinct UI
+        new_messages.append({
+            "role": "system",
+            "content": "",
+            "phase": "memory_update",
+            "metadata": {
+                "kind": "error_card",
+                "component": "Teacher.close_draft",
+                "error_class": "EmptyOrParseFail",
+                "message": close_payload.get("_error") or "close draft empty",
+                "retry_handler": "close",
+            },
+        })
+
+    # ── M1: no-save bucket → skip all persistence ─────────────────────────
+    if close_reason in _NO_SAVE_REASONS:
+        state["debug"]["turn_trace"].append({
+            "wrapper": "memory_update_node.no_save",
+            "close_reason": close_reason,
+            "result": "skipped_save_per_M1_design",
+        })
+        return {
+            "phase": "memory_update",
+            "messages": new_messages,
+            "session_ended": True,
+            "close_reason": close_reason,
+            "exit_intent_pending": False,
+            "debug": state["debug"],
+        }
+
+    # ── Save bucket — existing mem0 + mastery + sqlite flow ───────────────
     fire_activity("Saving session memory")
     student_id = state.get("student_id", "") or ""
     flush_status = "skipped_no_student_id"
@@ -734,7 +949,10 @@ def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
     # into the per-domain SQLite store. This populates the new data layer
     # alongside the legacy JSON MasteryStore. Reads switch to SQLite in
     # the next commit (track 1.9). Best-effort — never blocks return.
+    # M1 — also writes key_takeaways from the close-LLM JSON.
+    state["_close_takeaways_pending"] = takeaways
     sqlite_status = _persist_session_end_to_sqlite(state, judgment)
+    state.pop("_close_takeaways_pending", None)
     state["debug"]["turn_trace"].append({
         "wrapper": "sqlite_store.session_end",
         "result": sqlite_status,
@@ -742,6 +960,10 @@ def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
 
     return {
         "phase": "memory_update",
+        "messages": new_messages,
+        "session_ended": True,
+        "close_reason": close_reason,
+        "exit_intent_pending": False,
         "debug": state["debug"],
     }
 
@@ -1059,9 +1281,9 @@ def _persist_session_end_to_sqlite(
             thread_id,
             ended_at=None and None,  # sentinel: end_session sets ended_at via utc_now
         )
-        # Use end_session as one atomic UPDATE that sets all final fields.
-        store.end_session(
-            thread_id,
+        # M1 — pull takeaways from the close LLM JSON (set by memory_update_node)
+        takeaways_payload = state.get("_close_takeaways_pending") or {}
+        end_kwargs = dict(
             status=status,
             locked_topic_path=canonical_path or None,
             locked_subsection_path=canonical_path or None,
@@ -1077,6 +1299,11 @@ def _persist_session_end_to_sqlite(
             hint_level_final=int(state.get("hint_level") or 0),
             turn_count=turn_count,
         )
+        if takeaways_payload and (
+            takeaways_payload.get("demonstrated") or takeaways_payload.get("needs_work")
+        ):
+            end_kwargs["key_takeaways"] = takeaways_payload
+        store.end_session(thread_id, **end_kwargs)
         if canonical_path and score is not None:
             outcome = "reached" if reach else (
                 "partial" if (state.get("student_reach_coverage") or 0.0) > 0 else "not_reached"

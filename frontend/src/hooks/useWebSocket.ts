@@ -29,6 +29,9 @@ export function useWebSocket(threadId: string | null) {
   const setSessionPhase = useSessionStore((s) => s.setSessionPhase);
   const addTutorMessage = useSessionStore((s) => s.addTutorMessage);
   const setWaiting = useSessionStore((s) => s.setWaiting);
+  const setSessionEnded = useSessionStore((s) => s.setSessionEnded);
+  const setExitIntentPending = useSessionStore((s) => s.setExitIntentPending);
+  const setCloseReason = useSessionStore((s) => s.setCloseReason);
   // D.6a streaming: append per-token deltas + clear when the final
   // message_complete arrives.
   const appendStreamingToken = useSessionStore((s) => s.appendStreamingToken);
@@ -116,6 +119,17 @@ export function useWebSocket(threadId: string | null) {
           }
           if (phase) setSessionPhase(phase);
           setDebug(debugObj);
+          // M1 — propagate session_ended / exit_intent_pending / close_reason
+          // from the backend state into the store so Composer + chat header
+          // can react (disable input, render banner, show modal).
+          if (debugObj && typeof debugObj === "object") {
+            const sessionEndedFlag = Boolean((debugObj as Record<string, unknown>).session_ended);
+            if (sessionEndedFlag) setSessionEnded(true);
+            const exitPending = Boolean((debugObj as Record<string, unknown>).exit_intent_pending);
+            setExitIntentPending(exitPending);
+            const closeReasonRaw = (debugObj as Record<string, unknown>).close_reason;
+            if (typeof closeReasonRaw === "string" && closeReasonRaw) setCloseReason(closeReasonRaw);
+          }
           setWaiting(false);
           // Clear AFTER the permanent message is staged.
           clearStreamingBuffer();
@@ -169,6 +183,9 @@ export function useWebSocket(threadId: string | null) {
     clearStreamingBuffer,
     setConnection,
     setDebug,
+    setSessionEnded,
+    setExitIntentPending,
+    setCloseReason,
     setPendingChoice,
     setSessionPhase,
     setWaiting,

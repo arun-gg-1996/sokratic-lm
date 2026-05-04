@@ -26,7 +26,10 @@ const IMAGE_CONTEXT_KEY = "sokratic_pending_image_context";
 const IMAGE_ACCEPT = ".png,.jpg,.jpeg,.webp";
 
 interface ComposerProps {
-  onSubmit: (text: string) => void;
+  // imageUrl: when provided, a single student bubble with image
+  // preview + caption is rendered instead of a text-only bubble.
+  // Used by the VLM upload flow.
+  onSubmit: (text: string, imageUrl?: string) => void;
   placeholder?: string;
 }
 
@@ -53,13 +56,30 @@ export function Composer({ onSubmit, placeholder = "Reply..." }: ComposerProps) 
   const pendingChoice = useSessionStore((s) => s.pendingChoice);
   const debug = useSessionStore((s) => s.debug) as Record<string, unknown> | null;
   const messages = useSessionStore((s) => s.messages);
-  const reset = useSessionStore((s) => s.reset);
+  const sessionEnded = useSessionStore((s) => s.sessionEnded);
   const stt = useSTT();
   const helper = helperFor(isWaiting, pendingChoice?.kind);
   // ChatView already hides the Composer entirely when pendingChoice is
   // set, so the most common disabled path is "tutor is streaming".
-  const disabled = isWaiting;
-  const showHelper = disabled && helper;
+  // M1 — once session is ended, hard-disable input. Banner above explains why.
+  const disabled = isWaiting || sessionEnded;
+  const showHelper = disabled && (helper || (sessionEnded ? "Session ended — visit My Mastery to review or start a new session." : null));
+
+  // M1 — render a session-ended banner above the disabled input so the
+  // student understands why typing is blocked.
+  if (sessionEnded) {
+    return (
+      <div className="border-t border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground flex items-center justify-between gap-3">
+        <span>Session ended. Visit My Mastery to review or start a new session.</span>
+        <a
+          href="/mastery"
+          className="text-accent hover:underline whitespace-nowrap font-medium"
+        >
+          Open My Mastery →
+        </a>
+      </div>
+    );
+  }
 
   // Image upload affordance — available only before a topic is locked
   // and only on a fresh chat (no student messages yet). Once the
@@ -82,6 +102,7 @@ export function Composer({ onSubmit, placeholder = "Reply..." }: ComposerProps) 
     e.target.value = ""; // allow re-picking the same file later
     setUploading(true);
     setUploadError(null);
+    const previewUrl = URL.createObjectURL(file);
     try {
       const placeholder = `pending_${Math.random().toString(36).slice(2, 10)}`;
       const result = await uploadVlmImage(placeholder, file);
@@ -92,12 +113,17 @@ export function Composer({ onSubmit, placeholder = "Reply..." }: ComposerProps) 
         setUploading(false);
         return;
       }
-      try {
-        localStorage.setItem(IMAGE_CONTEXT_KEY, JSON.stringify(result));
-      } catch {
-        // localStorage unavailable
+      const topicText = (result.best_topic_guess || result.description || "").trim();
+      if (!topicText) {
+        setUploadError("Image analyzed but no topic guess returned.");
+        setUploading(false);
+        return;
       }
-      reset();
+      // Hand off to the standard submit path with imageUrl — useSession
+      // renders one student bubble (image + caption) and dispatches the
+      // topicText to Dean for normal topic resolution.
+      onSubmit(topicText, previewUrl);
+      setUploading(false);
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : "Upload failed");
       setUploading(false);

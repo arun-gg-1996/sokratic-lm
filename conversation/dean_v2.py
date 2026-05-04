@@ -135,6 +135,22 @@ Output STRICT JSON only — no markdown fences, no preamble:
 
 apply_redaction is ALWAYS false. clinical_scenario / clinical_target are
 null UNLESS mode="clinical".
+
+EXPLORATION RETRIEVAL (M6):
+Set needs_exploration=true ONLY when the student's question is tangential
+to the locked subsection AND the answer requires content not present in the
+chunks shown above. When true, also set exploration_query to a short
+focused search string (3-8 words) for the tangential concept.
+
+Default: needs_exploration=false, exploration_query="" — reuse the
+chunks already provided (they cover the locked subsection).
+
+You will see exploration_count and turns_remaining in the user prompt.
+If needs_exploration=true:
+  - Always answer helpfully with the chunks (existing + exploration).
+  - If turns_remaining < 4 OR exploration_count >= 2, briefly remind the
+    student we have N turns left for the original question.
+  - Never refuse exploration. Genuine curiosity is welcome.
 """
 
 
@@ -148,7 +164,9 @@ LOCKED TOPIC
 CURRENT TURN CONTEXT
   Hint level: {hint_level}
   Turn number: {turn_count}
+  Turns remaining: {turns_remaining}
   Phase: {phase}
+  Exploration count: {exploration_count}
 {clinical_style_block}
 CARRYOVER NOTES (mem0 — empty if cold-start):
 {carryover_notes}
@@ -448,15 +466,20 @@ class DeanV2:
             clinical_block = _CLINICAL_STYLE_BLOCK.format(
                 clinical_scenario_style=clinical_scenario_style.strip(),
             )
+        turn_count_val = sum(
+            1 for m in (state.get("messages") or []) if m.get("role") == "student"
+        )
+        max_turns_val = int(state.get("max_turns", 0) or 0)
+        turns_remaining = max(0, max_turns_val - turn_count_val) if max_turns_val else "n/a"
         return _DEAN_USER_TEMPLATE.format(
             locked_subsection=locked.get("subsection") or "(unspecified)",
             locked_question=state.get("locked_question") or "(unspecified)",
             locked_answer=state.get("locked_answer") or "(unspecified)",
             aliases=", ".join(aliases) if aliases else "(none)",
             hint_level=state.get("hint_level") or 0,
-            turn_count=sum(
-                1 for m in (state.get("messages") or []) if m.get("role") == "student"
-            ),
+            turn_count=turn_count_val,
+            turns_remaining=turns_remaining,
+            exploration_count=int(state.get("exploration_count", 0) or 0),
             phase=state.get("phase") or "tutoring",
             clinical_style_block=clinical_block,
             carryover_notes=carryover_notes or "(none)",
