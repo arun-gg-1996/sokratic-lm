@@ -106,18 +106,27 @@ export function useSession() {
         const initialTrace = Array.isArray(initialDebug?.turn_trace)
           ? (initialDebug?.turn_trace as Array<Record<string, unknown>>)
           : [];
-        if (session.initial_message) addTutorMessage(session.initial_message, "rapport", initialTrace, 0);
         // M4 (B6) — surface anchor_pick cards from the backend's
-        // _apply_prelock. They land in initial_pending_choice and the
-        // chat router renders them right after rapport. No more
-        // REVISIT_KEY auto-send hack.
-        if (session.initial_pending_choice && session.initial_pending_choice.kind) {
-          // Slight delay so cards appear AFTER the rapport bubble has
-          // visibly rendered (rapport message is added above; cards
-          // shouldn't pop simultaneously).
-          window.setTimeout(() => {
-            useSessionStore.getState().setPendingChoice(session.initial_pending_choice ?? null);
-          }, 250);
+        // _apply_prelock. Queue as pendingChoiceAfterStream on the
+        // rapport message so the cards land AFTER the typewriter
+        // animation completes (markTutorMessageStreamed reads
+        // pendingChoiceAfterStream and sets pendingChoice atomically).
+        // Earlier setTimeout-then-setPendingChoice raced with the
+        // streaming-finish handler, which would overwrite the cards
+        // back to null.
+        const initialPending = session.initial_pending_choice ?? null;
+        if (session.initial_message) {
+          addTutorMessage(
+            session.initial_message,
+            "rapport",
+            initialTrace,
+            0,
+            initialPending,  // pendingChoiceAfterStream
+          );
+        } else if (initialPending) {
+          // No rapport message but we still have anchor cards — set
+          // immediately (no streaming to wait for).
+          useSessionStore.getState().setPendingChoice(initialPending);
         }
         // Drop legacy REVISIT_KEY if present from an older session — we
         // don't auto-send anymore.
