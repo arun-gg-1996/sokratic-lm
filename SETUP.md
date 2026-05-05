@@ -92,11 +92,7 @@ HF_TOKEN=hf_...           # optional; only needed for private repos or publish
 
 ## 8. Run the tutor
 
-```bash
-.venv/bin/python -m streamlit run ui/app.py
-```
-
-Or for a programmatic run:
+For a programmatic conversation run:
 
 ```bash
 python scripts/run_final_convos.py

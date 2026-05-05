@@ -276,30 +276,6 @@ pytest tests/test_conversation.py -v -m scenarios
 
 ---
 
-## Layer 5 — Manual UI verification (requires `ANTHROPIC_API_KEY`)
-
-```bash
-streamlit run ui/app.py
-```
-
-Go through this checklist manually:
-
-- [ ] Rapport greeting appears on load (no student message needed)
-- [ ] Student profile dropdown changes work
-- [ ] Type a question → tutor responds with a question (never a direct answer)
-- [ ] `locked_answer` appears in debug sidebar after first question
-- [ ] Quick-response buttons work (Correct / Wrong / Don't know / Off-topic)
-- [ ] `help_abuse_count` increments on "I don't know" button presses (debug panel)
-- [ ] After 3× "I don't know" → hint level advances (debug panel shows `hint: 2/3`)
-- [ ] Enable debug mode → two-column layout appears
-- [ ] Dean stream (right column) shows wrappers fired, tool calls, PASS/FAIL
-- [ ] Correct answer → assessment phase fires → clinical question sent
-- [ ] After clinical answer → mastery summary sent
-- [ ] Session ends → "Session complete!" message appears
-- [ ] New Session button resets everything
-
----
-
 ## Layer 6 — Simulation smoke test (requires `ANTHROPIC_API_KEY`)
 
 ```bash
