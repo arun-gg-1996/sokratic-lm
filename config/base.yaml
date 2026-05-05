@@ -181,35 +181,22 @@ simulation:
 paths:
   raw_ot_pdf: "data/raw/Anatomy_and_Physiology_2e_-_WEB_c9nD9QL.pdf"
   raw_physics_pdf: "data/raw/college_physics_2e.pdf"
-  chunks_ot: "data/processed/chunks_ot.jsonl"
-  chunks_physics: "data/processed/chunks_physics.jsonl"
-  # v1 pipeline rebuild (2026-04-28) wrote chunks + propositions + BM25 under
-  # the textbook_id "openstax_anatomy". The retriever looks these up via
-  # `cfg.paths.chunks_<retrieval_domain>` / `bm25_<retrieval_domain>` where
-  # retrieval_domain is now set to "openstax_anatomy" in domains/ot.yaml.
+  # ─── Per-domain artifact paths ───────────────────────────────────────────
+  # Naming convention: {kind}_{retrieval_domain}. Code resolves these via
+  # cfg.domain_path("chunks"), cfg.domain_path("propositions"), etc., where
+  # retrieval_domain is set in domains/<domain_id>.yaml.
   chunks_openstax_anatomy: "data/processed/chunks_openstax_anatomy.jsonl"
+  chunks_physics: "data/processed/chunks_physics.jsonl"
   propositions_openstax_anatomy: "data/processed/propositions_openstax_anatomy.jsonl"
-  bm25_openstax_anatomy: "data/indexes/bm25_chunks_openstax_anatomy.pkl"
-  propositions_ot: "data/processed/propositions_ot.jsonl"
   propositions_physics: "data/processed/propositions_physics.jsonl"
-  indexes_ot: "data/indexes"
-  bm25_ot: "data/indexes/bm25_ot.pkl"
+  bm25_openstax_anatomy: "data/indexes/bm25_chunks_openstax_anatomy.pkl"
   bm25_physics: "data/indexes/bm25_physics.pkl"
+
+  # Domain-agnostic shared paths.
   diagrams: "data/diagrams"
   textbook_structure: "data/textbook_structure.json"
   simulations: "data/simulations"
   artifacts: "data/artifacts"
-
-  # ─── Per-domain artifact paths (per L78) ─────────────────────────────────
-  # Naming convention: {kind}_{retrieval_domain}. Code that needs a
-  # domain-specific path resolves via cfg.paths[f"{kind}_{cfg.domain.retrieval_domain}"].
-  # Today's chunks_openstax_anatomy.jsonl is the post-2026-04-28 v1 corpus
-  # (chunks-only, no propositions). The legacy chunks_ot path above is kept
-  # for back-compat with any code still pointing at the pre-rebuild file.
-
-  # Chunks (post-rebuild)
-  chunks_openstax_anatomy: "data/processed/chunks_openstax_anatomy.jsonl"
-  bm25_openstax_anatomy: "data/indexes/bm25_chunks_openstax_anatomy.pkl"
 
   # Topic index (per L9 + L19)
   topic_index_openstax_anatomy: "data/topic_index.json"
@@ -230,6 +217,12 @@ paths:
 
   # LLM-synthesized subsection audit log (per L76)
   llm_synthesized_subsections_dir: "data/artifacts/llm_synthesized_subsections"
+  raw_sections_openstax_anatomy: "data/processed/raw_sections_openstax_anatomy.jsonl"
+  raw_sections_physics: "data/processed/raw_sections_physics.jsonl"
+  raw_elements_openstax_anatomy: "data/processed/raw_elements_openstax_anatomy.jsonl"
+  raw_elements_physics: "data/processed/raw_elements_physics.jsonl"
+  indexes_openstax_anatomy: "data/indexes"
+  indexes_physics: "data/indexes"
 
 qdrant:
   vector_size: 3072

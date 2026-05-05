@@ -19,11 +19,6 @@ import re
 from typing import Any, Optional
 
 from config import cfg
-from conversation.dean import (
-    _coverage_gate,
-    _format_topic_label,
-    _replace_latest_student_message,
-)
 from conversation.llm_client import make_anthropic_client, resolve_model
 from retrieval.topic_mapper_llm import TopicMapperResult, map_topic
 from retrieval.topic_matcher import TopicMatch, get_topic_matcher
@@ -34,6 +29,145 @@ GUIDED_PICK_COUNT = 6
 NORMAL_CARD_COUNT = 3
 GIVE_UP_VALUE = "__sokratic_give_up__"
 TOPIC_MAPPER_MODEL = "claude-haiku-4-5-20251001"
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Inlined helpers (ported from V1 dean.py + nodes.py during D1).
+# Previously imported from `conversation.dean` and `conversation.nodes`;
+# now owned by this module so V1 files can be deleted. Behavior
+# preserved verbatim.
+# ─────────────────────────────────────────────────────────────────────
+
+
+def _latest_student_message(messages: list[dict]) -> str:
+    for msg in reversed(messages):
+        if msg.get("role") == "student":
+            return str(msg.get("content", "")).strip()
+    return ""
+
+
+def _format_topic_label(m: TopicMatch) -> str:
+    """Card label for a TOC match — human-readable, with a limited-coverage tag."""
+    base = m.label
+    if m.limited:
+        return f"{base} · limited coverage"
+    return base
+
+
+def _replace_latest_student_message(messages: list[dict], new_content: str) -> list[dict]:
+    """
+    Replace latest student message content so downstream retrieval/classification
+    runs on the selected topic text (instead of a numeric reply like '2').
+    """
+    patched = list(messages or [])
+    for i in range(len(patched) - 1, -1, -1):
+        msg = patched[i]
+        if msg.get("role") == "student":
+            new_msg = dict(msg)
+            new_msg["content"] = new_content
+            patched[i] = new_msg
+            break
+    return patched
+
+
+def _coverage_gate(state: dict, retriever=None) -> dict | None:
+    """
+    Check whether retrieved_chunks actually cover the locked TOC node.
+
+    Args:
+        state: tutor state.
+        retriever: optional retriever for picking SEMANTICALLY-RELATED
+            alternative cards via sample_related. Without it, falls back
+            to sample_diverse (random teachable picks).
+
+    Returns None on pass. On fail, returns metadata for the caller (run_turn)
+    to build a refuse turn with an LLM-authored intro + card list. Shape:
+      {reason, topic_label, options, pending_user_choice, rejected_path,
+       failure_count}
+
+    Rules:
+      1. Empty retrieval → fail hard.
+      2. Locked topic has a known section/subsection AND none of the top-5
+         chunks reference it → fail (retrieval drifted to another chapter).
+      3. Top chunk cosine below ood_cosine_threshold → fail.
+    """
+    chunks = state.get("retrieved_chunks", []) or []
+    locked = state.get("locked_topic") or {}
+    topic_label = locked.get("subsection") or locked.get("section") or state.get("topic_selection", "this topic")
+    rejected_paths = list(state.get("rejected_topic_paths", []) or [])
+    rejected_set = set(rejected_paths)
+    if locked.get("path"):
+        rejected_set.add(locked["path"])
+
+    def _refuse(reason: str) -> dict:
+        matcher = get_topic_matcher()
+        failure_count = len(rejected_set)
+        min_chunks = 5 if failure_count < 2 else 8
+        # Prefer SEMANTICALLY-RELATED alternatives via sample_related when
+        # we have a retriever. Falls back to sample_diverse if retriever
+        # is unavailable or returns nothing related. Without this,
+        # students typing "brain" got cards like "DNA Replication" —
+        # technically teachable but unrelated to the query.
+        query_for_related = (
+            state.get("topic_selection")
+            or topic_label
+            or _latest_student_message(state.get("messages", []))
+            or ""
+        )
+        if retriever is not None and query_for_related:
+            alternatives = matcher.sample_related(
+                retriever, query_for_related, 3,
+                min_chunk_count=min_chunks, exclude_paths=rejected_set,
+            )
+        else:
+            alternatives = matcher.sample_diverse(
+                3, min_chunk_count=min_chunks, exclude_paths=rejected_set,
+            )
+        option_labels = [_format_topic_label(m) for m in alternatives]
+        option_meta = {
+            label: {
+                "path": m.path, "chapter": m.chapter, "section": m.section,
+                "subsection": m.subsection, "difficulty": m.difficulty,
+                "chunk_count": m.chunk_count, "limited": m.limited, "score": m.score,
+            }
+            for label, m in zip(option_labels, alternatives)
+        }
+        return {
+            "reason": reason,
+            "topic_label": topic_label,
+            "failure_count": failure_count,
+            "options": option_labels,
+            "rejected_path": locked.get("path") or "",
+            "pending_user_choice": {
+                "kind": "topic", "options": option_labels, "topic_meta": option_meta,
+            },
+        }
+
+    if not chunks:
+        # Empty after hard section filter → this TOC node has no indexable
+        # chunks in the current corpus. Refuse with alternatives.
+        return _refuse("empty_retrieval")
+
+    # Relevance floor via CE score. The CE returns near-1 for confident
+    # in-scope hits and near-0 for OOD; intermediate values indicate a query
+    # that is in-corpus but not perfectly answered by any single chunk
+    # (typical for relational questions like "what nerve innervates X?" where
+    # the chunks mention X in many contexts but only one actually states the
+    # nerve). We want to PASS those queries through to the LLM, not refuse
+    # them — so the gate uses a dedicated threshold (`dean_topic_gate_ce_threshold`)
+    # that is much lower than the OOD cosine floor used by the retriever's
+    # in-scope check. Default 0.05 — virtually any non-zero CE score passes.
+    #
+    # 2026-04-29: previously this gate read `ood_cosine_threshold` (0.45) and
+    # refused valid topics like "what nerve innervates the deltoid?" on the
+    # basis of CE score 0.20-0.40 — see e2e S6a where the deltoid topic was
+    # refused and the conversation pivoted to "muscle tone".
+    threshold = float(getattr(cfg.retrieval, "dean_topic_gate_ce_threshold", 0.05))
+    top_score = chunks[0].get("score")
+    if isinstance(top_score, (int, float)) and float(top_score) < threshold:
+        return _refuse("low_relevance_score")
+
+    return None
 
 
 def run_topic_lock_v2(
@@ -58,7 +192,7 @@ def run_topic_lock_v2(
     # NOTE: nodes_v2.dean_node_v2 already fires "Reading your message"
     # before delegating here, so do NOT fire it again — that produced
     # a visible duplicate row in the activity feed.
-    from conversation.teacher import fire_activity
+    from conversation.streaming import fire_activity
 
     trace.append({
         "wrapper": "topic_lock_v2.entry",
@@ -165,6 +299,16 @@ def run_topic_lock_v2(
                 "locked_question_len": len(locked_q),
                 "locked_answer_len": len(locked_a),
             })
+            # BLOCK 5 (REAL-Q5) — log topic_locked event so LLM sees the
+            # transition in history annotations. payload is non-sensitive
+            # (subsection title only — never the answer).
+            from conversation.snapshots import log_system_event
+            _locked_topic = state.get("locked_topic") or {}
+            log_system_event(
+                state, "topic_locked",
+                subsection=str(_locked_topic.get("subsection") or "")[:120],
+                via="anchor_pick",
+            )
             # CRITICAL — _base_update only puts a fixed set of keys into
             # the return dict (messages/phase/topic_confirmed/prelock_loop_count/debug).
             # Anything else MUST be passed via **extra or LangGraph's
@@ -211,10 +355,22 @@ def run_topic_lock_v2(
         state["pending_user_choice"] = {}
 
     if prelock_count >= PRELOCK_CAP:
-        fire_activity("Showing a guided picker")
+        fire_activity(
+        "Showing a guided picker",
+        detail=(
+            "Hit the 7-attempt prelock cap. Surfacing the chapter-level "
+            "TOC so the student can pick a topic directly instead of typing."
+        ),
+    )
         return _render_guided_pick(state, messages, retriever, latest_student, prelock_count)
 
-    fire_activity("Resolving topic to the textbook")
+    fire_activity(
+        "Resolving topic to the textbook",
+        detail=(
+            "LLM mapping the student's natural-language topic request to a "
+            "specific subsection in the openstax_anatomy table of contents."
+        ),
+    )
     rejected_for_resolver = list(state.get("rejected_topic_paths", []) or [])
     result = _map_topic(latest_student, trace, rejected_paths=rejected_for_resolver)
     decision = result.route_decision()
@@ -297,8 +453,15 @@ def _lock_topic(
     source: str,
 ) -> dict:
     """Lock a chosen TOC topic, run retrieval + coverage + anchors, then ack."""
-    from conversation.teacher import fire_activity
-    fire_activity(f"Topic locked: {selected_label}")
+    from conversation.streaming import fire_activity
+    fire_activity(
+        f"Topic locked: {selected_label}",
+        detail=(
+            f"Subsection '{selected_label}' is now state.locked_topic. "
+            "Anchor question + answer + aliases will get stored when the "
+            "student picks one of the 3 anchor variations."
+        ),
+    )
 
     if source in {"topic_card", "guided_pick", "confirm_topic"}:
         messages = _replace_latest_student_message(messages, selected_label)
@@ -326,8 +489,23 @@ def _lock_topic(
         "label": selected_label,
         "prelock_loop_count": prelock_count,
     })
+    # BLOCK 5 (REAL-Q5) — log topic_locked event (text-typed lock path)
+    from conversation.snapshots import log_system_event
+    log_system_event(
+        state, "topic_locked",
+        subsection=str(topic.subsection or "")[:120],
+        via=source,
+    )
 
-    fire_activity("Loading textbook context")
+    fire_activity(
+        "Searching textbook for the topic",
+        detail=(
+            "Running BM25 + Qdrant retrieval across the openstax_anatomy "
+            "knowledge base to pull the chunks under the chosen subsection. "
+            "These chunks become the grounding for both the anchor question "
+            "and every Teacher draft for the rest of the session."
+        ),
+    )
     try:
         dean._retrieve_on_topic_lock(state)
     except Exception as e:
@@ -343,7 +521,15 @@ def _lock_topic(
             gate=gate, prelock_count=prelock_count,
         )
 
-    fire_activity("Setting up the anchor question")
+    fire_activity(
+        "Generating anchor questions",
+        detail=(
+            "Dean drafting 3 anchor question variations from the retrieved "
+            "chunks (each with question + short answer + aliases + full answer). "
+            "Heaviest LLM call in this phase — usually 5-8s. The student picks "
+            "one of the 3 to lock the question for the rest of the session."
+        ),
+    )
     try:
         anchors = dean._lock_anchors_call(state)
     except Exception as e:

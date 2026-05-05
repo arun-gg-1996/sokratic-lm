@@ -109,5 +109,22 @@ class Config:
         Config.query_aliases = _raw.get("query_aliases", {}) or {}
         Config.topic_index   = _Section(_raw.get("topic_index", {}) or {})
 
+    def domain_path(self, kind: str) -> str:
+        """Resolve `cfg.paths[f"{kind}_{cfg.domain.retrieval_domain}"]`.
+
+        Used by ingestion / retrieval / scripts to look up domain-aware data
+        paths without hardcoding the textbook slug. `kind` is one of:
+        chunks, propositions, bm25, raw_sections, raw_elements, indexes.
+
+        Raises KeyError if the resolved key is not in cfg.paths.
+        """
+        key = f"{kind}_{self.domain.retrieval_domain}"
+        if not hasattr(self.paths, key):
+            raise KeyError(
+                f"No path key {key!r} in cfg.paths "
+                f"(domain={self.domain.retrieval_domain!r})"
+            )
+        return getattr(self.paths, key)
+
 
 cfg = Config()

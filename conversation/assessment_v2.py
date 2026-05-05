@@ -61,11 +61,11 @@ OPT_IN_REASK_CAP = 2
 def assessment_node_v2(
     state: dict,
     *,
-    dean,
-    teacher,
-    retriever,
-    dean_v2: Any,
-    teacher_v2: TeacherV2,
+    dean=None,
+    teacher=None,
+    retriever=None,
+    dean_v2: Any = None,
+    teacher_v2: "TeacherV2 | None" = None,
 ) -> dict:
     """v2 assessment phase orchestrator.
 
@@ -319,6 +319,16 @@ def _enter_clinical_phase(
     })
     t0 = time.time()
     try:
+        from conversation.streaming import fire_activity as _fa_clin
+        _fa_clin(
+            "Setting up clinical scenario",
+            detail=(
+                "Student reached the answer and opted into the clinical bonus. "
+                "Dean is now drafting a clinical case (patient scenario + decision "
+                "point) that requires applying the locked concept. Heaviest LLM "
+                "call in the assessment phase — 5-10s."
+            ),
+        )
         # Mark state so Dean's prompt context indicates we're entering clinical.
         # DeanV2.plan() infers mode from context; the marker steers it.
         state["_clinical_scenario_request"] = True
@@ -454,6 +464,14 @@ def _run_clinical_turn(
         "wrapper": "assessment_v2.run_turn_start",
         "clinical_turn": clinical_turn_count,
     })
+    from conversation.streaming import fire_activity as _fa_clin_t
+    _fa_clin_t(
+        f"Continuing clinical case (turn {clinical_turn_count}/{CLINICAL_TURN_CAP})",
+        detail=(
+            f"Dean evaluating student's response and planning the next clinical "
+            f"turn. Cap is {CLINICAL_TURN_CAP} turns then natural close."
+        ),
+    )
     try:
         # Continuation plan — Dean sees the existing clinical scenario
         # in conversation history + state, evaluates student's response,
@@ -664,12 +682,29 @@ def _render_reveal_close(state: dict, teacher_v2: TeacherV2) -> dict:
         clinical_target=None,
         apply_redaction=False,
     )
-    # M1/B4 — close LLM is owned by memory_update_node. Don't draft a
-    # duplicate reveal/close here; just route with hints_exhausted reason.
-    state["close_reason"] = "hints_exhausted"
+    # M1/B4 — close LLM is owned by memory_update_node. Route with the
+    # ACTUAL reason we ended up here (don't hardcode "hints_exhausted"):
+    # turn-cap and hint-cap arrive at the same no-reach close path but the
+    # close_reason should differ so the close message + save_bucket choose
+    # the right tone.
+    hint_level_now = int(state.get("hint_level", 0) or 0)
+    max_hints_now = int(state.get("max_hints", 0) or 0)
+    turn_count_now = int(state.get("turn_count", 0) or 0)
+    max_turns_now = int(state.get("max_turns", 0) or 0)
+    if hint_level_now > max_hints_now:
+        derived_close = "hints_exhausted"
+    elif max_turns_now and turn_count_now >= max_turns_now:
+        derived_close = "tutoring_cap"
+    else:
+        derived_close = "hints_exhausted"  # fallback for unknown reach paths
+    state["close_reason"] = derived_close
     state["debug"]["turn_trace"].append({
         "wrapper": "assessment_v2.reveal_close_routed",
-        "close_reason": "hints_exhausted",
+        "close_reason": derived_close,
+        "hint_level": hint_level_now,
+        "max_hints": max_hints_now,
+        "turn_count": turn_count_now,
+        "max_turns": max_turns_now,
     })
 
     return {
@@ -678,7 +713,7 @@ def _render_reveal_close(state: dict, teacher_v2: TeacherV2) -> dict:
         "clinical_opt_in": False,
         "clinical_mastery_tier": "not_assessed",
         "phase": "memory_update",
-        "close_reason": "hints_exhausted",
+        "close_reason": derived_close,
         "pending_user_choice": {},
         "debug": state["debug"],
     }
@@ -776,6 +811,8 @@ def _teacher_inputs(
     except Exception:
         pass
 
+    # BLOCK 5 (REAL-Q5) — pass snapshots + events from state.debug
+    _debug_obj = state.get("debug") or {}
     return TeacherPromptInputs(
         chunks=chunks if chunks is not None else list(state.get("retrieved_chunks", []) or []),
         history=list(state.get("messages", []) or []),
@@ -785,6 +822,8 @@ def _teacher_inputs(
         domain_short=domain_short,
         student_descriptor="student",
         time_of_day=_time_of_day(state),
+        snapshots=list(_debug_obj.get("per_turn_snapshots", []) or []),
+        system_events=list(_debug_obj.get("system_events", []) or []),
     )
 
 
@@ -819,21 +858,35 @@ def _safe_teacher_draft(
     new contract.
     """
     _ = fallback_text  # kept for backwards-compat; no longer used
-    from conversation.teacher import fire_activity
+    from conversation.streaming import fire_activity
     _MODE_DRAFTING_LABEL = {
-        "socratic": "Drafting tutoring question",
-        "clinical": "Drafting clinical scenario",
-        "rapport": "Drafting greeting",
-        "opt_in": "Offering clinical bonus",
-        "redirect": "Redirecting back to topic",
-        "nudge": "Nudging back on topic",
-        "confirm_end": "Confirming session end",
-        "honest_close": "Reflecting on your progress",
-        "reach_close": "Reflecting on your progress",
-        "clinical_natural_close": "Reflecting on your progress",
-        "close": "Reflecting on your progress",
+        "socratic": ("Drafting tutoring question",
+                     "Teacher generating a Socratic question grounded in the locked subsection."),
+        "clinical": ("Drafting clinical scenario",
+                     "Teacher rendering a clinical case scenario with patient context + decision point."),
+        "rapport": ("Drafting greeting",
+                    "Teacher generating a warm session opener via TeacherV2 (mode=rapport)."),
+        "opt_in": ("Offering clinical bonus",
+                   "Drafting the opt-in prompt that asks the student if they want to extend with a clinical case."),
+        "redirect": ("Redirecting back to topic",
+                     "Preflight detected help-abuse — Teacher drafting a redirect that keeps the Socratic stance."),
+        "nudge": ("Nudging back on topic",
+                  "Preflight detected off-domain — Teacher drafting a brief nudge back to the locked subsection."),
+        "confirm_end": ("Confirming session end",
+                        "Drafting an end-confirmation message before routing to memory_update."),
+        "honest_close": ("Reflecting on your progress",
+                         "Drafting an honest close — student didn't reach the answer; tutor names the gap."),
+        "reach_close": ("Reflecting on your progress",
+                        "Drafting a reach-close — student got the answer; tutor confirms + frames takeaways."),
+        "clinical_natural_close": ("Reflecting on your progress",
+                                   "Drafting the natural close after the clinical bonus phase."),
+        "close": ("Reflecting on your progress",
+                  "Drafting the session close + computing demonstrated/needs_work takeaways from full history."),
     }
-    fire_activity(_MODE_DRAFTING_LABEL.get(plan.mode, "Drafting response"))
+    _label, _detail = _MODE_DRAFTING_LABEL.get(
+        plan.mode, ("Drafting response", "Teacher drafting via mode=" + str(plan.mode)),
+    )
+    fire_activity(_label, detail=_detail)
 
     try:
         result = teacher_v2.draft(plan, inputs)
@@ -849,7 +902,14 @@ def _safe_teacher_draft(
                 },
             })
             return ""
-        fire_activity("Reviewing response")
+        fire_activity(
+        "Reviewing response",
+        detail=(
+            "Final assessment-side review of the draft before sending. "
+            "Used by clinical / opt-in / close drafts which run outside the "
+            "tutoring retry orchestrator."
+        ),
+    )
         return text
     except Exception as e:
         trace.append({
@@ -933,7 +993,7 @@ def _classify_opt_in(student_msg: str, state: Optional[dict] = None) -> str:
         return "no"
 
     # Long-form / ambiguous → unified Haiku classifier with full context.
-    from conversation import classifiers as _C
+    from conversation import preflight_classifier as _C  # post-D3: haiku_intent_classify_unified lives here
     locked_sub = ""
     locked_q = ""
     history_pairs: list[tuple[str, str]] = []

@@ -171,6 +171,19 @@ class TutorState(TypedDict):
     # When it reaches cfg.dean.help_abuse_threshold, hint_level advances and counter resets.
     # Gated entirely in Python (dean.py) — not LLM logic.
     help_abuse_count: int
+    # BLOCK 6 (S1) — consecutive low-effort streak (passive "idk" non-
+    # engagement). Increments per low_effort verdict; resets on any
+    # real engagement (on_topic_engaged). Read by Dean (BLOCK 7) for
+    # escalation strategy. Distinct from help_abuse_count which counts
+    # ACTIVE answer-demand attempts.
+    consecutive_low_effort_count: int
+    # BLOCK 9 (S3) — cancel-modal lifecycle. Set True when student
+    # clicks Cancel on exit modal; Dean reads this on the next turn
+    # and switches to mode="soft_reset" for a fresh-angle bridging
+    # message. recent_cancel_at_turn tracks WHEN it happened so the
+    # flag can be cleared after one bridging turn.
+    cancel_modal_pending: bool
+    recent_cancel_at_turn: int
     # --- Off-topic tracking (Change 4, 2026-04-30) ---
     # Counts consecutive off-DOMAIN turns (category C — outside the textbook
     # subject entirely; e.g. vaping, profanity, sexual content). Domain-
@@ -355,6 +368,9 @@ def initial_state(student_id: str, cfg) -> TutorState:
         total_low_effort_turns=0,
         total_off_topic_turns=0,
         clinical_low_effort_count=0,
+        consecutive_low_effort_count=0,  # BLOCK 6 (S1)
+        cancel_modal_pending=False,      # BLOCK 9 (S3)
+        recent_cancel_at_turn=-1,
         clinical_off_topic_count=0,
         rejected_topic_paths=[],
         exploration_count=0,

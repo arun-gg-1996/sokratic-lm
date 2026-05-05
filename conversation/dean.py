@@ -3180,31 +3180,28 @@ class DeanAgent:
         else:
             location = ""
 
+        # BLOCK 13 (Q4/Q13) — naturalize the topic-ack header. Drop the
+        # "Chapter N → Section" catalog notation that reads mechanical;
+        # use plain "we're looking at X" framing instead.
         if masked:
-            # Mask the subsection — use a generic placeholder that doesn't
-            # leak the answer. Keep section/chapter context so the student
-            # still knows where they are.
-            if location:
-                header = f"Got it — let's work on a topic {location}."
+            if section:
+                header = f"Got it — we're looking at this from **{section}**."
+            elif chapter_num:
+                header = f"Got it — we're looking at this from Chapter {chapter_num}."
             else:
                 header = "Got it — let's work on this topic."
         else:
-            header = f"Got it — let's work on **{subsection}**"
-            if location:
-                header = f"{header} {location}"
-            header = header + "."
+            header = f"Got it — we're looking at **{subsection}**."
 
         locked_question = str(state.get("locked_question") or "").strip()
         if not locked_question:
-            # Defensive fallback: extremely rare since dean_node only sets
-            # topic_just_locked=True after both anchors are populated. Still,
-            # better to ask SOMETHING than nothing.
             fallback_reference = "this topic" if masked else subsection
             locked_question = (
                 f"To get started: what do you already know about {fallback_reference}?"
             )
 
-        return f"{header}\n\n{locked_question}"
+        # Bridge into the question naturally rather than abruptly:
+        return f"{header} Let's start with this:\n\n{locked_question}"
 
     # ============================================================
     # Off-domain detector (Change 4, 2026-04-30; rewritten 2026-05-01).
@@ -3246,7 +3243,7 @@ class DeanAgent:
         # questions involving substances ("how does alcohol damage liver")
         # from off-domain chitchat ("let's get drunk"). Validated 100%
         # accuracy on 27 hand-curated cases.
-        from conversation.classifiers import haiku_off_domain_check
+        from conversation.preflight_classifier import haiku_off_domain_check
         try:
             r = haiku_off_domain_check(latest_student_msg)
         except Exception:
@@ -3731,7 +3728,7 @@ class DeanAgent:
         # answer + aliases passed in. Validated 96.7% accuracy / 100%
         # leak precision on 30 hand-curated cases (see
         # data/artifacts/classifiers/2026-05-01T21-03-51).
-        from conversation.classifiers import (
+        from conversation.verifier_quartet import (
             haiku_hint_leak_check, haiku_sycophancy_check,
         )
         # Build the args once; running both classifiers in parallel
@@ -3916,7 +3913,7 @@ class DeanAgent:
         # tutoring path. Single call here (no parallel partner —
         # sycophancy isn't checked in assessment phase since the
         # student is being graded, not coached).
-        from conversation.classifiers import haiku_hint_leak_check
+        from conversation.verifier_quartet import haiku_hint_leak_check
         try:
             hint_result = haiku_hint_leak_check(
                 draft=text,

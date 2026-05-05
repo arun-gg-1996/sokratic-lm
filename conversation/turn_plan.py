@@ -45,6 +45,8 @@ MODES = {
     "reach_close",             # legacy — kept for back-compat; new code uses "close"
     "clinical_natural_close",  # legacy — kept for back-compat; new code uses "close"
     "close",                   # M1 unified close mode — reason flag picks tone/text variant
+    "soft_reset",              # BLOCK 9 (S3) — student canceled exit modal; bridging "fresh angle" turn
+    "multichoice_rescue",      # BLOCK 11 (REAL-Q4) — 2-3 specific candidates after low_effort streak
 }
 
 # `tone` shapes phrasing — orthogonal to mode.

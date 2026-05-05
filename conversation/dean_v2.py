@@ -145,6 +145,47 @@ that missed (a substantive guess, even if wrong). Do NOT advance on:
 The shown hint_level is the CURRENT level; if you advance, the NEXT turn
 sees level+1 and your hint_text should escalate one tier deeper.
 
+LOCKED-QUESTION ECHO HANDLING (BLOCK 10 / REAL-Q3):
+If the student's latest message is essentially the locked_question
+itself (verbatim or paraphrase — e.g. they clicked an anchor chip
+that contained the question), DO NOT punt with "what aspect would
+you like to think through more carefully?" That's a dead-end ask.
+
+Instead, treat it as engagement and START TEACHING:
+  * Pick ONE specific sub-aspect of the locked question
+  * Scaffold a leading sub-question about THAT sub-aspect
+  * Use socratic mode at hint_level 0-1
+
+The student showed they want to engage with this exact question.
+Honor that by giving them a real entry point, not a meta question
+back.
+
+CONSECUTIVE LOW-EFFORT ESCALATION (BLOCK 7 / S2):
+The CONVERSATION HISTORY annotates each STUDENT turn with the intent
+verdict. When you see `[intent=low_effort, consecutive_low_effort=N]`,
+the student keeps responding with "idk"/"not sure"/etc. without trying.
+
+  N=1: standard scaffold. Pick a clear, concrete hint.
+
+  N=2: SWITCH ANGLE. Do NOT use the same analogy domain you used in
+       the previous tutor turn (visible in CONVERSATION HISTORY). If
+       prior turn used a body-mechanics analogy, switch to everyday
+       objects, sports, food, etc. Acknowledge briefly: "Let me try a
+       different angle entirely". Set advance_hint_level=false.
+
+  N=3: PIVOT to multiple-choice rescue. Set scenario="multichoice_rescue"
+       and hint_text to "[option A] / [option B] / [option C]" — three
+       short concrete candidates. Teacher will format as inline choice.
+       Set advance_hint_level=false. (BLOCK 11 will format these.)
+
+  N>=4: HONEST CLOSE. The student isn't going to engage. Set
+       mode="honest_close", tone="honest", and the system will route
+       to memory_update with close_reason="hints_exhausted".
+
+These rules apply ONLY when the streak is purely passive low_effort.
+A help_abuse turn (active demand) resets the low_effort streak — handle
+help_abuse via the standard redirect mode instead.
+
 EXPLORATION RETRIEVAL (M6):
 Set needs_exploration=true ONLY when the student's question is tangential
 to the locked subsection AND the answer requires content not present in the
@@ -220,17 +261,19 @@ def _format_chunks(chunks: list[dict], max_chunks: int = 7) -> str:
     return "\n\n".join(out) or "(no chunks)"
 
 
-def _format_history(history: list[dict], max_turns: int = 6) -> str:
-    tail = history[-(max_turns * 2):]
-    out = []
-    for m in tail:
-        role = m.get("role") or "?"
-        content = (m.get("content") or "").strip()
-        if not content:
-            continue
-        prefix = {"student": "STUDENT", "tutor": "TUTOR"}.get(role, role.upper())
-        out.append(f"{prefix}: {content}")
-    return "\n\n".join(out) or "(no history)"
+def _format_history(
+    history: list[dict],
+    *,
+    snapshots: list[dict] | None = None,
+    events: list[dict] | None = None,
+    max_turns: int = 50,
+) -> str:
+    """BLOCK 4 (REAL-Q8): cap raised from 6→50.
+    BLOCK 5 (REAL-Q5): delegates to shared `history_render.render_history`
+    which weaves snapshots + events with messages.
+    """
+    from conversation.history_render import render_history
+    return render_history(history, snapshots=snapshots, events=events, max_turns=max_turns)
 
 
 def _format_prior_failures(attempts: list[str], failures: list[dict]) -> str:
@@ -343,7 +386,14 @@ class DeanV2:
         scenarios stay domain-appropriate (patient case for medical /
         anatomy, engineering problem for physics, etc.) per L74.
         """
-        system_prompt = _DEAN_SYSTEM.format(domain_name=domain_name)
+        # BLOCK 2 (REAL-Q9) — master system prompt with full vocabulary
+        # registry so Dean has system-aware context.
+        # BLOCK 3 (REAL-Q7) — keep master + dean as SEPARATE strings so
+        # _call_and_parse can put them in distinct cache blocks (Tier 1 +
+        # Tier 2 cache markers).
+        from conversation.master_prompt import build_master_prompt
+        master_block = build_master_prompt(domain_name=domain_name) + "\n---\n"
+        dean_block = _DEAN_SYSTEM.format(domain_name=domain_name)
         user_prompt = self._build_user_prompt(
             state, chunks, carryover_notes,
             clinical_scenario_style=clinical_scenario_style,
@@ -352,7 +402,7 @@ class DeanV2:
 
         # Attempt 1 — primary planning call
         result = self._call_and_parse(
-            system_prompt, user_prompt, attempt=1,
+            master_block, dean_block, user_prompt, attempt=1,
         )
         if result.turn_plan is not None and not result.used_fallback:
             return result
@@ -365,7 +415,7 @@ class DeanV2:
             "Output STRICT JSON ONLY — start with { end with } no other text.\n"
         )
         result2 = self._call_and_parse(
-            system_prompt, stricter_user, attempt=2,
+            master_block, dean_block, stricter_user, attempt=2,
         )
         if result2.turn_plan is not None and not result2.used_fallback:
             return result2
@@ -480,6 +530,9 @@ class DeanV2:
         )
         max_turns_val = int(state.get("max_turns", 0) or 0)
         turns_remaining = max(0, max_turns_val - turn_count_val) if max_turns_val else "n/a"
+        # BLOCK 5 (REAL-Q5) — pass snapshots + events so history is
+        # rendered with system-state annotations Dean can read
+        debug_obj = state.get("debug") or {}
         return _DEAN_USER_TEMPLATE.format(
             locked_subsection=locked.get("subsection") or "(unspecified)",
             locked_question=state.get("locked_question") or "(unspecified)",
@@ -493,7 +546,11 @@ class DeanV2:
             clinical_style_block=clinical_block,
             carryover_notes=carryover_notes or "(none)",
             chunks=_format_chunks(chunks),
-            history=_format_history(state.get("messages") or []),
+            history=_format_history(
+                state.get("messages") or [],
+                snapshots=debug_obj.get("per_turn_snapshots", []) or [],
+                events=debug_obj.get("system_events", []) or [],
+            ),
             prior_failures_block=_format_prior_failures(
                 prior_attempts or [], prior_failures or []
             ),
@@ -501,21 +558,33 @@ class DeanV2:
 
     def _call_and_parse(
         self,
-        system_prompt: str,
+        master_block: str,
+        dean_block: str,
         user_prompt: str,
         *,
         attempt: int,
     ) -> DeanPlanResult:
-        # PERF — cache the system prompt block (~stable across plan calls
-        # within the session) so Anthropic's prompt cache cuts input tokens
-        # ~10× and improves TTFT. system passed as content-block list
-        # with cache_control: ephemeral.
+        # BLOCK 3 (REAL-Q7) — multi-tier cache. Two cache_control markers:
+        #   Tier 1 (master + vocab): caches across SESSIONS (~2200 tokens)
+        #   Tier 2 (Dean instructions): caches across turns within session
+        #     (~2000 tokens of mostly-static planning rules)
+        # The user_prompt (locked context, chunks, history) is uncached
+        # because it varies per turn.
+        #
+        # Bedrock minimum cache block size ~2048 tokens. Tier 1 alone meets
+        # min; Tier 1 + Tier 2 cumulative (~4200 tokens) easily meets min
+        # at the second marker.
         system_blocks = [
             {
                 "type": "text",
-                "text": system_prompt,
+                "text": master_block,
                 "cache_control": {"type": "ephemeral"},
-            }
+            },
+            {
+                "type": "text",
+                "text": dean_block,
+                "cache_control": {"type": "ephemeral"},
+            },
         ]
         t0 = time.time()
         try:
