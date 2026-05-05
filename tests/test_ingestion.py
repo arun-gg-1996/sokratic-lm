@@ -51,7 +51,7 @@ REQUIRED_PROP_FIELDS = {"text", "proposition_id", "parent_chunk_id", "chapter_ti
 
 @pytest.fixture(scope="module")
 def chunks():
-    path = Path(cfg.paths.chunks_ot)
+    path = Path(cfg.paths.chunks_openstax_anatomy)
     assert path.exists(), f"chunks file not found: {path}"
     with open(path) as f:
         return [json.loads(line) for line in f]
@@ -59,7 +59,7 @@ def chunks():
 
 @pytest.fixture(scope="module")
 def propositions():
-    path = Path(cfg.paths.propositions_ot)
+    path = Path(cfg.paths.propositions_openstax_anatomy)
     assert path.exists(), f"propositions file not found: {path}"
     with open(path) as f:
         return [json.loads(line) for line in f]

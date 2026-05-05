@@ -9,7 +9,7 @@ from fastapi.encoders import jsonable_encoder
 from backend.dependencies import get_graph, get_runtime_store
 from backend.models.schemas import ClientMessage
 from config import cfg
-from conversation.teacher import (
+from conversation.streaming import (
     reset_activity_callback,
     reset_stream_callback,
     reset_stream_invalidate_callback,
@@ -115,6 +115,20 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
                 # gave the student visual feedback; transcript stays clean.
                 state.setdefault("debug", {}).setdefault("turn_trace", [])
                 state["debug"]["turn_trace"] = []
+            elif client_msg.content == "__cancel_exit__":
+                # BLOCK 9 (S3) — student clicked Cancel on exit modal.
+                # Clear exit_intent_pending and stamp cancel_modal_pending
+                # so Dean produces a soft_reset bridging message on this
+                # invocation. No student message appended (modal lifecycle
+                # is invisible to transcript). Log system event for history
+                # annotation.
+                state["exit_intent_pending"] = False
+                state["cancel_modal_pending"] = True
+                state["recent_cancel_at_turn"] = int(state.get("turn_count", 0) or 0)
+                state.setdefault("debug", {}).setdefault("turn_trace", [])
+                state["debug"]["turn_trace"] = []
+                from conversation.snapshots import log_system_event
+                log_system_event(state, "exit_modal_canceled")
             else:
                 messages = list(state.get("messages", []))
                 messages.append({"role": "student", "content": client_msg.content})
@@ -165,10 +179,11 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
                 except Exception:
                     pass
 
-            def _on_activity(label: str) -> None:
+            def _on_activity(label: str, detail: str | None = None) -> None:
                 try:
                     loop.call_soon_threadsafe(
-                        token_queue.put_nowait, {"kind": "activity", "label": label}
+                        token_queue.put_nowait,
+                        {"kind": "activity", "label": label, "detail": detail or ""},
                     )
                 except Exception:
                     pass
@@ -200,6 +215,7 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
                             await websocket.send_text(json.dumps({
                                 "type": "activity",
                                 "content": item.get("label", ""),
+                                "detail": item.get("detail", ""),
                             }))
                     except Exception:
                         return
@@ -246,7 +262,10 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
             debug_payload["off_topic_threshold"] = int(getattr(cfg.dean, "off_topic_threshold", 4))
             debug_payload["total_low_effort_turns"] = int(new_state.get("total_low_effort_turns", 0) or 0)
             debug_payload["total_off_topic_turns"] = int(new_state.get("total_off_topic_turns", 0) or 0)
-            debug_payload["clinical_low_effort_count"] = int(new_state.get("clinical_low_effort_count", 0) or 0)
+            # N2: surface consecutive_low_effort_count for sidebar — was already
+            # tracked in state but not exposed in the WS payload.
+            debug_payload["consecutive_low_effort_count"] = int(new_state.get("consecutive_low_effort_count", 0) or 0)
+            debug_payload["low_effort_threshold"] = 4  # preflight L55 strike-4 force-hint-advance            debug_payload["clinical_low_effort_count"] = int(new_state.get("clinical_low_effort_count", 0) or 0)
             debug_payload["clinical_off_topic_count"] = int(new_state.get("clinical_off_topic_count", 0) or 0)
             debug_payload["clinical_strike_threshold"] = int(getattr(cfg.dean, "clinical_strike_threshold", 2))
             # L80.a — clinical phase turn counter (separate from tutoring's

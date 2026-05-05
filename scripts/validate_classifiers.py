@@ -29,11 +29,11 @@ sys.path.insert(0, str(ROOT))
 from dotenv import load_dotenv  # noqa: E402
 load_dotenv(ROOT / ".env", override=True)
 
-from conversation.classifiers import (  # noqa: E402
+from conversation.verifier_quartet import (  # noqa: E402
     haiku_hint_leak_check,
     haiku_sycophancy_check,
-    haiku_off_domain_check,
 )
+from conversation.preflight_classifier import haiku_off_domain_check  # noqa: E402
 
 
 # ─────────────────────────────────────────────────────────────────────

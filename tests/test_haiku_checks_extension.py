@@ -14,7 +14,7 @@ import json
 
 import pytest
 
-from conversation import classifiers as C
+from conversation import verifier_quartet as C
 
 
 # ─────────────────────────────────────────────────────────────────────────────

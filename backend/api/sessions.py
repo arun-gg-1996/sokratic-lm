@@ -315,7 +315,7 @@ async def regenerate_takeaways(thread_id: str) -> RegenerateResponse:
         raise HTTPException(status_code=400, detail="thread_id required")
 
     from memory.sqlite_store import SQLiteStore
-    from conversation.nodes import _draft_close_message
+    from conversation.lifecycle_v2 import _draft_close_message
     from conversation.state import initial_state, TutorState
 
     store = SQLiteStore()

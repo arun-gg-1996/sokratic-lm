@@ -19,7 +19,7 @@ Uses cfg.models.teacher (claude-sonnet-4-5) for naturalization.
 
 import random
 import anthropic
-from simulation.profiles import StudentProfile, PROFILES
+from evaluation.simulation.profiles import StudentProfile, PROFILES
 from conversation.state import TutorState
 from config import cfg
 

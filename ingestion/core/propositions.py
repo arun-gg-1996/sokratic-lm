@@ -289,7 +289,7 @@ def run_propositions(
 ) -> dict:
     from config import cfg
 
-    base_chunks = _load_base_chunks(cfg.paths.chunks_ot)
+    base_chunks = _load_base_chunks(cfg.domain_path("chunks"))
     target_chunks = base_chunks if process_all else base_chunks[:limit]
     total_target = len(target_chunks)
     target_chunk_ids = {c["chunk_id"] for c in target_chunks}
@@ -441,8 +441,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--output",
         type=str,
-        default=cfg.paths.propositions_ot,
-        help="Output JSONL path (default: cfg.paths.propositions_ot).",
+        default=cfg.domain_path("propositions"),
+        help="Output JSONL path (default: cfg.domain_path('propositions')).",
     )
     args = parser.parse_args()
 

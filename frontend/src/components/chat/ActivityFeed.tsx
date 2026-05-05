@@ -13,20 +13,27 @@
  *               that expands on click. All items show ✓ since the
  *               turn is complete. Used by MessageBubble.
  *
+ * 2026-05-05: each entry can include an optional `detail` string
+ * (hover tooltip via title=) — used during demos to explain WHY a
+ * particular stage is happening (e.g. "Attempt 1 was rejected by
+ * the leak verifier — Teacher is rewriting"). Backward-compatible
+ * with plain string[] inputs (auto-converted to {label} entries).
+ *
  * Visual language matches the rest of the app — same Tailwind tokens,
  * subtle border, no new design system. Spinner is a pure-CSS pulsing
  * dot (no SVG dependencies).
  */
 import { useState } from "react";
+import type { ActivityEntry } from "../../types";
 
 interface Props {
-  labels: string[];
+  // Accept legacy string[] for backward compat with any caller that
+  // hasn't been updated yet. Internally we normalize to ActivityEntry[].
+  labels: ActivityEntry[] | string[];
   mode: "live" | "collapsed";
 }
 
 function StatusDot({ active }: { active: boolean }) {
-  // Active: small spinning circle (pure-CSS via animate-spin on a
-  // ring border). Done: ✓ glyph in accent color.
   if (active) {
     return (
       <span
@@ -42,11 +49,26 @@ function StatusDot({ active }: { active: boolean }) {
   );
 }
 
+function normalize(input: ActivityEntry[] | string[]): ActivityEntry[] {
+  if (input.length === 0) return [];
+  if (typeof input[0] === "string") {
+    return (input as string[]).map((label) => ({ label }));
+  }
+  return input as ActivityEntry[];
+}
+
+// Heuristic for highlighting verifier rejections / fallbacks visually.
+// Backend prefixes such labels with ⚠ or "Falling back" so we can flag
+// them without parsing structured data.
+function isWarning(label: string): boolean {
+  return label.startsWith("⚠") || label.toLowerCase().includes("falling back");
+}
+
 export function ActivityFeed({ labels, mode }: Props) {
-  // Collapsed mode: closed by default; user clicks to open.
+  const entries = normalize(labels);
   const [open, setOpen] = useState(mode === "live");
 
-  if (!labels || labels.length === 0) return null;
+  if (entries.length === 0) return null;
 
   if (mode === "collapsed") {
     return (
@@ -58,18 +80,24 @@ export function ActivityFeed({ labels, mode }: Props) {
         >
           <span>{open ? "▾" : "▸"}</span>
           <span>
-            Activity log ({labels.length} step{labels.length === 1 ? "" : "s"})
+            Activity log ({entries.length} step{entries.length === 1 ? "" : "s"})
           </span>
         </button>
         {open && (
           <ul className="mt-2 text-sm space-y-1 border-l-2 border-border pl-3">
-            {labels.map((label, idx) => (
+            {entries.map((entry, idx) => (
               <li
-                key={`${idx}-${label}`}
-                className="flex items-center gap-2 text-muted"
+                key={`${idx}-${entry.label}`}
+                className={`flex items-center gap-2 ${
+                  isWarning(entry.label) ? "text-amber-600 dark:text-amber-400" : "text-muted"
+                }`}
+                title={entry.detail || undefined}
               >
                 <StatusDot active={false} />
-                <span>{label}</span>
+                <span>{entry.label}</span>
+                {entry.detail && (
+                  <span className="text-[10px] text-muted/60 ml-1">ⓘ</span>
+                )}
               </li>
             ))}
           </ul>
@@ -78,13 +106,11 @@ export function ActivityFeed({ labels, mode }: Props) {
     );
   }
 
-  // Live mode: render in the same shape as a tutor message bubble
-  // (avatar + card) so it visually slots into the conversation rather
-  // than feeling like a popup. Latest stage is the prominent "currently
-  // doing X" line with a spinner; previous stages are checked-off
-  // sub-items collapsed below.
-  const latest = labels[labels.length - 1];
-  const previous = labels.slice(0, -1);
+  // Live mode: latest entry is the prominent "currently doing X" line
+  // with a spinner; previous entries are checked-off sub-items.
+  const latest = entries[entries.length - 1];
+  const previous = entries.slice(0, -1);
+  const latestIsWarning = isWarning(latest.label);
   return (
     <div className="flex items-start gap-3 fade-in">
       <img
@@ -93,24 +119,42 @@ export function ActivityFeed({ labels, mode }: Props) {
         className="h-8 w-8 rounded-md mt-1 shrink-0 opacity-70"
       />
       <div className="rounded-card border border-border bg-panel px-4 py-3 flex-1 max-w-md">
-        <div className="flex items-center gap-2">
+        <div
+          className="flex items-center gap-2"
+          title={latest.detail || undefined}
+        >
           <span
-            className="inline-block h-3 w-3 rounded-full border-2 border-muted border-t-accent animate-spin shrink-0"
+            className={`inline-block h-3 w-3 rounded-full border-2 border-muted ${
+              latestIsWarning ? "border-t-amber-500" : "border-t-accent"
+            } animate-spin shrink-0`}
             aria-label="In progress"
           />
-          <span className="text-sm text-text font-medium animate-pulse">
-            {latest}
+          <span
+            className={`text-sm font-medium animate-pulse ${
+              latestIsWarning ? "text-amber-700 dark:text-amber-400" : "text-text"
+            }`}
+          >
+            {latest.label}
           </span>
+          {latest.detail && (
+            <span className="text-[10px] text-muted/60 ml-1">ⓘ</span>
+          )}
         </div>
         {previous.length > 0 && (
           <ul className="mt-2 text-xs text-muted space-y-0.5 border-l-2 border-border pl-3">
-            {previous.map((label, idx) => (
+            {previous.map((entry, idx) => (
               <li
-                key={`${idx}-${label}`}
-                className="flex items-center gap-2"
+                key={`${idx}-${entry.label}`}
+                className={`flex items-center gap-2 ${
+                  isWarning(entry.label) ? "text-amber-600 dark:text-amber-400" : ""
+                }`}
+                title={entry.detail || undefined}
               >
                 <span className="text-accent shrink-0" aria-label="Done">✓</span>
-                <span>{label}</span>
+                <span>{entry.label}</span>
+                {entry.detail && (
+                  <span className="text-[10px] text-muted/60 ml-1">ⓘ</span>
+                )}
               </li>
             ))}
           </ul>

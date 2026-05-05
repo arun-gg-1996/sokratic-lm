@@ -76,7 +76,9 @@ export function useWebSocket(threadId: string | null) {
           // Backend stage label — append to the per-turn activity log.
           // Cleared by the student-submit path (see useSession), so the
           // log only shows what's happening for THIS turn.
-          if (payload.content) appendActivity(payload.content);
+          // 2026-05-05: also forwards optional detail (rendered as hover
+          // tooltip) so demo viewers can see the system-level reason.
+          if (payload.content) appendActivity(payload.content, payload.detail || undefined);
           return;
         }
         if (payload.type === "message_complete") {

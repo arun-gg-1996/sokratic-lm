@@ -67,6 +67,13 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
     return (
       <div className="flex justify-end fade-in">
         <div className="bg-accent-soft text-text rounded-2xl px-4 py-2 max-w-[520px] leading-relaxed">
+          {message.imageUrl && (
+            <img
+              src={message.imageUrl}
+              alt="Uploaded"
+              className="rounded-lg mb-2 max-h-72 max-w-full object-contain"
+            />
+          )}
           {message.content}
         </div>
       </div>

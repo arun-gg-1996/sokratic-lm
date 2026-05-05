@@ -25,7 +25,7 @@ from ingestion.sources.openstax_anatomy.parse import parse_pdf
 
 load_dotenv()
 
-RAW_SECTIONS_PATH = "data/processed/raw_sections_ot.jsonl"
+RAW_SECTIONS_PATH = cfg.domain_path("raw_sections")
 RAW_SECTIONS_DIR = "data/processed/chunks/raw_sections"
 
 

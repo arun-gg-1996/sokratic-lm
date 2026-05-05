@@ -33,19 +33,10 @@ from conversation.turn_plan import TurnPlan
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def test_use_v2_flow_default_off(monkeypatch):
-    monkeypatch.delenv("SOKRATIC_USE_V2_FLOW", raising=False)
-    assert N.use_v2_flow() is False
 
 
-def test_use_v2_flow_on_when_env_set(monkeypatch):
-    monkeypatch.setenv("SOKRATIC_USE_V2_FLOW", "1")
-    assert N.use_v2_flow() is True
 
 
-def test_use_v2_flow_off_when_env_zero(monkeypatch):
-    monkeypatch.setenv("SOKRATIC_USE_V2_FLOW", "0")
-    assert N.use_v2_flow() is False
 
 
 # ─────────────────────────────────────────────────────────────────────────────

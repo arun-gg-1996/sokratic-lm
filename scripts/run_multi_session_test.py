@@ -98,8 +98,8 @@ from conversation.graph import build_graph  # noqa: E402
 from conversation.state import initial_state  # noqa: E402
 from memory.memory_manager import MemoryManager  # noqa: E402
 from retrieval.retriever import ChunkRetriever  # noqa: E402
-from simulation.profiles import PROFILES  # noqa: E402
-from simulation.student_simulator import StudentSimulator  # noqa: E402
+from evaluation.simulation.profiles import PROFILES  # noqa: E402
+from evaluation.simulation.student_simulator import StudentSimulator  # noqa: E402
 
 MAX_TURNS = 25
 

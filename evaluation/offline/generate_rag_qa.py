@@ -365,7 +365,7 @@ def run() -> list[dict]:
     """
     random.seed(SEED)
 
-    chunks_path = cfg.paths.chunks_ot
+    chunks_path = cfg.domain_path("chunks")
     out_path = Path("data/eval/rag_qa.jsonl")
     out_path.parent.mkdir(parents=True, exist_ok=True)
 

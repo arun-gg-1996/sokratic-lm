@@ -56,14 +56,13 @@ class Retriever:
         self.embed_model = cfg.models.embeddings
         self.collection = getattr(getattr(cfg, "domain", object()), "kb_collection", cfg.memory.kb_collection)
         self.default_domain = getattr(getattr(cfg, "domain", object()), "retrieval_domain", "")
-        # Domain-aware BM25 index path (falls back to cfg.paths.bm25_ot only if dynamic path missing).
-        domain_key = (self.default_domain or "").strip().lower()
-        dynamic_bm25_attr = f"bm25_{domain_key}" if domain_key else ""
+        # Domain-aware BM25 index path (resolved via cfg.domain_path).
         bm25_path = ""
-        if dynamic_bm25_attr and hasattr(cfg.paths, dynamic_bm25_attr):
-            bm25_path = getattr(cfg.paths, dynamic_bm25_attr)
-        elif hasattr(cfg.paths, "bm25_ot"):
-            bm25_path = cfg.paths.bm25_ot
+        if self.default_domain:
+            try:
+                bm25_path = cfg.domain_path("bm25")
+            except KeyError:
+                pass
 
         self.openai = OpenAI()
         self.qdrant = QdrantClient(host=cfg.memory.qdrant_host, port=cfg.memory.qdrant_port)
@@ -646,8 +645,6 @@ class Retriever:
             candidate_paths.append(getattr(cfg.paths, path_attr))
         # Fallback: data/processed/chunks_<domain>.jsonl.
         candidate_paths.append(f"data/processed/chunks_{domain}.jsonl")
-        # Final fallback: legacy chunks_ot.jsonl.
-        candidate_paths.append("data/processed/chunks_ot.jsonl")
 
         loaded_path = None
         index: dict[str, dict] = {}

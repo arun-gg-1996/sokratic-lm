@@ -98,8 +98,8 @@ from config import cfg  # noqa: E402
 from conversation.state import initial_state  # noqa: E402
 from conversation.graph import build_graph  # noqa: E402
 from memory.memory_manager import MemoryManager  # noqa: E402
-from simulation.profiles import PROFILES  # noqa: E402
-from simulation.student_simulator import StudentSimulator  # noqa: E402
+from evaluation.simulation.profiles import PROFILES  # noqa: E402
+from evaluation.simulation.student_simulator import StudentSimulator  # noqa: E402
 
 TOPIC_BANK_PATH = ROOT / "data/eval/topic_bank_v2.jsonl"  # v2: anatomy-only (Ch3-Ch28)
 PROFILES_TO_RUN = ["S1", "S2", "S3", "S4", "S5", "S6"]

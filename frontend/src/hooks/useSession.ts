@@ -307,10 +307,23 @@ export function useSession() {
     }
   };
 
-  // M1 — clears the exit_intent_pending flag without ending the session.
-  // Frontend-only: doesn't talk to backend (backend will clear on next turn).
+  // N1 (2026-05-05): clears the exit_intent_pending flag AND notifies backend.
+  // Old version was frontend-only — the comment claimed "backend will clear on
+  // next turn" but the backend's __cancel_exit__ handler at chat.py:118 only
+  // fires when it RECEIVES the sentinel. Without sending it, backend state
+  // kept exit_intent_pending=True and every subsequent turn's payload re-popped
+  // the modal. Sending the sentinel triggers the cancel-modal soft_reset path
+  // (preflight skipped, mode=soft_reset, flag cleared) so the next student
+  // turn flows normally.
   const cancelExitIntent = () => {
     useSessionStore.getState().setExitIntentPending(false);
+    setWaiting(true);
+    useSessionStore.getState().clearActivityLog();
+    const sent = sendStudentMessage("__cancel_exit__");
+    if (!sent) {
+      // WS not ready — undo the waiting state. Modal already closed locally.
+      setWaiting(false);
+    }
   };
 
   return { threadId, studentId, submitMessage, restartSession, requestExitSession, cancelExitIntent };

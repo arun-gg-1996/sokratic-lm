@@ -1,5 +1,14 @@
 export type MessageRole = "student" | "tutor" | "system";
 
+// 2026-05-05: activity log entries carry both a short label (rendered
+// as the visible row text) and an optional detail string that the
+// frontend renders as a hover tooltip — useful for explaining during
+// a demo why a step is slow / why a retry fired / which mode Dean picked.
+export interface ActivityEntry {
+  label: string;
+  detail?: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: MessageRole;
@@ -13,7 +22,7 @@ export interface ChatMessage {
   // was finalized. Lets us show a collapsed "Activity log (N steps)"
   // affordance below the message for users who want to inspect what
   // the system did during that turn.
-  activityLog?: string[];
+  activityLog?: ActivityEntry[];
   // Optional image preview URL — set on student bubbles created from
   // a VLM upload so the picture renders inline above the caption.
   imageUrl?: string;
@@ -66,6 +75,9 @@ export interface ServerMessage {
   // a Claude-Code-style live status feed instead of an opaque spinner.
   type: "token" | "stream_reset" | "activity" | "message_complete" | "error";
   content?: string;
+  // 2026-05-05: activity events may include a longer detail string used
+  // as a hover tooltip on the activity row.
+  detail?: string;
   pending_choice?: PendingChoice | null;
   topic_confirmed?: boolean;
   phase?: string;

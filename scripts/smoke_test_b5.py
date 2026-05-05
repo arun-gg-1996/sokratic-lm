@@ -37,7 +37,7 @@ from ingestion.core.propositions_dual import (  # noqa: E402
 )
 
 
-CHUNKS_PATH = ROOT / "data/processed/chunks_ot.jsonl"
+CHUNKS_PATH = ROOT / "data/processed/chunks_openstax_anatomy.jsonl"
 
 # Sonnet 4.5 pricing (per 1M tokens, USD).
 PRICE_INPUT = 3.00

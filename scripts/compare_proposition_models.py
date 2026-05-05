@@ -29,7 +29,7 @@ load_dotenv(ROOT / ".env", override=True)
 import anthropic
 from openai import OpenAI
 
-CHUNKS_PATH = ROOT / "data/processed/chunks_ot.jsonl"
+CHUNKS_PATH = ROOT / "data/processed/chunks_openstax_anatomy.jsonl"
 OUT_PATH = ROOT / "data/artifacts/proposition_model_comparison.json"
 
 PROMPT_TEMPLATE = (

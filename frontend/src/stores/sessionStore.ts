@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { ChatMessage, PendingChoice } from "../types";
+import type { ActivityEntry, ChatMessage, PendingChoice } from "../types";
 
 function messageId(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -25,7 +25,7 @@ interface SessionState {
   // similar to Claude Code's tool-call display. Cleared at the start
   // of each new student turn so labels from a prior turn don't
   // linger.
-  activityLog: string[];
+  activityLog: ActivityEntry[];
   // L80.f — WebSocket connection lifecycle visible to the UI so we
   // can render a reconnect banner. "connecting" until first onopen,
   // "connected" while healthy, "reconnecting" after onclose while
@@ -53,7 +53,7 @@ interface SessionState {
     debugTrace?: Array<Record<string, unknown>>,
     debugTurn?: number,
     pendingChoiceAfterStream?: PendingChoice | null,
-    activityLog?: string[]
+    activityLog?: ActivityEntry[]
   ) => void;
   addSystemMessage: (content: string) => void;
   markTutorMessageStreamed: (id: string) => void;
@@ -63,7 +63,7 @@ interface SessionState {
   setDebug: (d: Record<string, unknown> | null) => void;
   appendStreamingToken: (delta: string) => void;
   clearStreamingBuffer: () => void;
-  appendActivity: (label: string) => void;
+  appendActivity: (label: string, detail?: string) => void;
   clearActivityLog: () => void;
   reset: () => void;
 }
@@ -151,8 +151,8 @@ export const useSessionStore = create<SessionState>((set) => ({
   appendStreamingToken: (delta) =>
     set((s) => ({ streamingTutorContent: s.streamingTutorContent + delta })),
   clearStreamingBuffer: () => set({ streamingTutorContent: "" }),
-  appendActivity: (label) =>
-    set((s) => ({ activityLog: [...s.activityLog, label] })),
+  appendActivity: (label, detail) =>
+    set((s) => ({ activityLog: [...s.activityLog, { label, detail }] })),
   clearActivityLog: () => set({ activityLog: [] }),
   reset: () =>
     set({

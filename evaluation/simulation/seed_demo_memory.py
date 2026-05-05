@@ -15,7 +15,7 @@ Usage:
     python -m simulation.seed_demo_memory
 """
 
-from simulation.profiles import PROFILES
+from evaluation.simulation.profiles import PROFILES
 from config import cfg
 
 

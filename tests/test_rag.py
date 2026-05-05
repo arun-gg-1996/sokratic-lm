@@ -53,7 +53,7 @@ OUT_OF_SCOPE_QUERIES = [
 @pytest.fixture(scope="module")
 def retriever():
     from retrieval.retriever import Retriever
-    return Retriever(index_dir=cfg.paths.indexes_ot)
+    return Retriever(index_dir=cfg.domain_path("indexes"))
 
 
 @pytest.fixture(scope="module")

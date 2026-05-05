@@ -20,7 +20,7 @@ Run with:
 
 import pytest
 from langgraph.graph import END
-from conversation.edges import after_dean, after_assessment
+from conversation.lifecycle_v2 import after_dean, after_assessment
 from conversation.state import initial_state
 from config import cfg
 

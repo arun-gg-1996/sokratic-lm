@@ -172,6 +172,15 @@ def _apply_prelock(state: dict, path: str) -> None:
         "anchor_variation_count": len(variations),
         "chunk_count": len(state.get("retrieved_chunks") or []),
     })
+    # BLOCK 5 (REAL-Q5) — log anchor_pick_shown event so LLM sees on
+    # the first turn that the student is choosing from cards. payload
+    # is non-sensitive (count + subsection only).
+    from conversation.snapshots import log_system_event
+    log_system_event(
+        state, "anchor_pick_shown",
+        options_count=len(variations),
+        subsection=subsection[:120],
+    )
 
 
 def _latest_tutor_message(state: dict) -> str:

@@ -225,9 +225,9 @@ async def run_all(n: int = None, profile_id: str = None):
         n:          Override total number of conversations (default: cfg.simulation.n_conversations)
         profile_id: Run only this profile (default: all 6)
     """
-    from simulation.profiles import PROFILES
-    from simulation.student_simulator import StudentSimulator
-    from simulation.logger import log_conversation, load_conversations
+    from evaluation.simulation.profiles import PROFILES
+    from evaluation.simulation.student_simulator import StudentSimulator
+    from evaluation.simulation.logger import log_conversation, load_conversations
     from conversation.graph import build_graph
     from retrieval.retriever import MockRetriever
     from memory.memory_manager import MemoryManager

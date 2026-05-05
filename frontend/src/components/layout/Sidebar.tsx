@@ -100,13 +100,16 @@ export function Sidebar() {
   const helpAbuseThreshold = num(debug, "help_abuse_threshold", 4);
   const offTopicCount = num(debug, "off_topic_count", 0);
   const offTopicThreshold = num(debug, "off_topic_threshold", 4);
+  const consecutiveLowEffort = num(debug, "consecutive_low_effort_count", 0);
+  const lowEffortThreshold = num(debug, "low_effort_threshold", 4);
   const totalLowEffort = num(debug, "total_low_effort_turns", 0);
   const totalOffTopic = num(debug, "total_off_topic_turns", 0);
 
   const phase = derivePhase(debug, topicConfirmed, assessmentTurn);
-  const showStrikePills =
-    (phase === "tutoring" || phase === "clinical") &&
-    (helpAbuseCount > 0 || offTopicCount > 0 || totalLowEffort > 0 || totalOffTopic > 0);
+  // N2: always surface counters during tutoring/clinical so the user can see
+  // them tick before they hit thresholds (was gated on > 0 — confusing when
+  // counters were silently incrementing in state but invisible in UI).
+  const showStrikePills = (phase === "tutoring" || phase === "clinical");
 
   // Color escalation: green (default muted) → amber → red as cap nears.
   const counterColor = (count: number, max: number): string => {
@@ -242,16 +245,22 @@ export function Sidebar() {
             </details>
           )}
 
-          {/* Conversation-health pills (visible when strikes accumulate
-              during tutoring / clinical). L80.h tooltips. */}
+          {/* Conversation-health pills — N2: always visible during tutoring/clinical
+              so the student can see counters tick before they hit thresholds. */}
           {showStrikePills && (
             <div className="pt-2 mt-2 border-t border-border space-y-1">
               <div className="text-xs text-muted/70">Conversation health</div>
               <div
-                className={`text-xs ${counterColor(helpAbuseCount, helpAbuseThreshold)}`}
-                title={`Consecutive low-effort turns. At ${helpAbuseThreshold}, the dean advances the hint level (with narrated transition). Counter resets on any genuine attempt.`}
+                className={`text-xs ${counterColor(consecutiveLowEffort, lowEffortThreshold)}`}
+                title={`Consecutive passive 'i don't know' / 'idk' turns. At ${lowEffortThreshold}, the dean advances the hint level. Counter resets on any genuine attempt.`}
               >
-                Low-effort: {helpAbuseCount}/{helpAbuseThreshold}
+                Low-effort: {consecutiveLowEffort}/{lowEffortThreshold}
+              </div>
+              <div
+                className={`text-xs ${counterColor(helpAbuseCount, helpAbuseThreshold)}`}
+                title={`Active 'just tell me' / 'skip' demands. At ${helpAbuseThreshold}, the dean force-advances the hint level. Counter resets on any genuine attempt.`}
+              >
+                Help-abuse: {helpAbuseCount}/{helpAbuseThreshold}
               </div>
               <div
                 className={`text-xs ${counterColor(offTopicCount, offTopicThreshold)}`}

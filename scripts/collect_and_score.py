@@ -30,8 +30,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import anthropic
 from config import cfg
 from conversation.state import initial_state
-from simulation.profiles import PROFILES
-from simulation.student_simulator import StudentSimulator
+from evaluation.simulation.profiles import PROFILES
+from evaluation.simulation.student_simulator import StudentSimulator
 
 OUTPUT_DIR = Path(cfg.paths.artifacts) / "final_convo"
 SCORES_DIR = Path(cfg.paths.artifacts) / "euler_scores"

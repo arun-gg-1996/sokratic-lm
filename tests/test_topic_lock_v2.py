@@ -3,7 +3,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 from conversation import topic_lock_v2 as T
-from conversation.edges import after_dean
+from conversation.lifecycle_v2 import after_dean
 from retrieval.topic_mapper_llm import TopicMapperResult, TopicMatchCandidate
 from retrieval.topic_matcher import TopicMatch
 

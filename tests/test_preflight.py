@@ -192,10 +192,19 @@ def test_preflight_help_abuse_fires(mock_haiku):
 
 
 def test_preflight_help_abuse_strike_4_forces_hint_advance(mock_haiku):
-    """L55: at strike 4, force hint advance."""
+    """L55: at strike 4, force hint advance.
+
+    2026-05-05: counter now resets to 0 after firing so the student gets a
+    fresh warning chain before the next hint-advance (was: counter kept
+    climbing past threshold, surfacing 'Help-abuse: 5/4' in the UI and
+    burning the 3-hint allotment in 3 consecutive strikes).
+    """
+    # 2026-05-05: post-D3 unified classifier doesn't honor the legacy
+    # mock_haiku fixture (which targets per-classifier paths). Use a real
+    # help-abuse phrase so the unified classifier itself returns help_abuse.
     mock_haiku.set_verdict(help_abuse="help_abuse")
-    out = P.run_preflight(_state(help_count=3), "idk", parallel=False)
-    assert out.new_help_abuse_count == 4
+    out = P.run_preflight(_state(help_count=3), "just give me the answer", parallel=False)
+    assert out.new_help_abuse_count == 0  # was 4; resets after fire
     assert out.should_force_hint_advance is True
 
 

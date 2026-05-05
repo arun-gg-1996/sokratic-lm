@@ -39,8 +39,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config import cfg
 from conversation.state import initial_state
-from simulation.profiles import PROFILES
-from simulation.student_simulator import StudentSimulator
+from evaluation.simulation.profiles import PROFILES
+from evaluation.simulation.student_simulator import StudentSimulator
 
 OUTPUT_DIR = Path(cfg.paths.artifacts) / "eval_run_18"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)

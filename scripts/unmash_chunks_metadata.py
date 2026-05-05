@@ -28,7 +28,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-CHUNKS_PATH = ROOT / "data/processed/chunks_ot.jsonl"
+CHUNKS_PATH = ROOT / "data/processed/chunks_openstax_anatomy.jsonl"
 
 
 def unmash(section_title: str, section_num: str) -> tuple[str, str]:

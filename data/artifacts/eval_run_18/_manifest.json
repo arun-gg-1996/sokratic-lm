@@ -1,10 +1,10 @@
 {
-  "started_at": "2026-04-30T04:31:07",
-  "completed_at": "2026-04-30T04:44:20",
-  "elapsed_s": 792.708618,
+  "started_at": "2026-05-03T05:33:41",
+  "completed_at": "2026-05-03T05:41:07",
+  "elapsed_s": 446.660148,
   "total_conversations": 18,
   "expected_conversations": 18,
-  "total_cost_usd": 8.6673,
+  "total_cost_usd": 3.5078,
   "concurrency": 4,
   "saved_files": [
     "eval18_pair1_strong_session1.json",

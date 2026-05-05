@@ -434,7 +434,7 @@ def generate_single_occurrence(chunks: list[dict]) -> list[dict]:
 
 def main() -> None:
     random.seed(SEED)
-    chunks = load_base_chunks(cfg.paths.chunks_ot)
+    chunks = load_base_chunks(cfg.domain_path("chunks"))
 
     records: list[dict] = []
     records.extend(generate_rare_topics(chunks))
