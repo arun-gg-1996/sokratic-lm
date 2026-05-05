@@ -49,7 +49,6 @@ unlocked / pre-lock paths are bounded (1-7 turns/session).
 """
 from __future__ import annotations
 
-import os
 import time
 from typing import Any, Optional
 
@@ -64,9 +63,6 @@ from conversation.topic_lock_v2 import run_topic_lock_v2
 from conversation.assessment_v2 import assessment_node_v2 as _assessment_node_v2_impl
 
 
-def use_v2_flow() -> bool:
-    """Feature flag — flip via env var at process start."""
-    return os.environ.get("SOKRATIC_USE_V2_FLOW", "0").strip() == "1"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -101,6 +97,19 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
             has_student_msg = True
             latest_student = str(m.get("content", "") or "")
             break
+
+    # BLOCK 9 (S3) — cancel-modal early bypass. When cancel_modal_pending
+    # is True, the most recent student message is the one that triggered
+    # the deflection (now canceled). If we ran preflight on it again, we'd
+    # re-trigger the modal. Skip preflight + topic_lock; force soft_reset
+    # mode directly. The latest_student stays as-is so Teacher has context.
+    if state.get("cancel_modal_pending"):
+        latest_student = "(student canceled exit modal — wants to keep going)"
+        # Synthesize a placeholder so downstream code that requires
+        # has_student_msg works. Don't append to actual messages —
+        # transcript stays clean.
+        has_student_msg = True
+
     if not has_student_msg:
         # Rapport just fired on the same graph invoke; wait for real input.
         return {}
@@ -134,7 +143,7 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
 
     # Live activity feed — first signal to the UI that we received the
     # message and are starting work. Mirrors v1 dean.py:fire_activity.
-    from conversation.teacher import fire_activity
+    from conversation.streaming import fire_activity
     fire_activity("Reading your message")
 
     # If topic isn't locked yet, Track 4.7d owns the v2 pre-lock path:
@@ -157,6 +166,68 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
     # on the same invocation when the pick is successfully resolved, and
     # (b) merge the handler's state updates into the final tutoring return.
     anchor_pick_overrides: dict = {}
+    # Bug #1 fix — deflection before topic_lock_v2: fire preflight FIRST when
+    # (a) topic isn't locked (post-greeting), or (b) anchor_pick is pending.
+    # Without this, run_topic_lock_v2 mis-routes "I want to stop" to the
+    # ambiguous-intent → topic cards path. Mirrors the post-lock deflection
+    # short-circuit at line ~273 so unlocked / anchor-pick state gets the
+    # same UX.
+    # BLOCK 9 (S3) — skip preflight when cancel_modal_pending. The previous
+    # student message ("i want to stop") would re-trigger deflection.
+    if state.get("cancel_modal_pending"):
+        debug_trace.append({"wrapper": "dean_node_v2.cancel_modal_skip_preflight"})
+    elif (not locked or not locked.get("path")) or pending_is_anchor_pick:
+        try:
+            preflight_pre = run_preflight(state, latest_student, locked_topic=locked)
+            debug_trace.append({
+                "wrapper": "preflight.pre_topic_lock",
+                "fired": preflight_pre.fired,
+                "category": preflight_pre.category,
+                "evidence": preflight_pre.evidence[:120],
+                "in_anchor_pick": pending_is_anchor_pick,
+            })
+            if preflight_pre.fired and preflight_pre.category == "deflection":
+                elapsed_ms_d = int((time.time() - t0) * 1000)
+                # BLOCK 14 (S4) — rapport-stage decline → direct close.
+                # No locked topic + deflection at greeting = student
+                # doesn't want to engage. Skip modal.
+                is_rapport_stage_pre = (
+                    not state.get("topic_confirmed")
+                    and not (state.get("locked_topic") or {}).get("path")
+                )
+                if is_rapport_stage_pre:
+                    debug_trace.append({
+                        "wrapper": "dean_node_v2.rapport_decline_direct_close_pre_lock",
+                        "category": preflight_pre.category,
+                        "evidence": preflight_pre.evidence[:120],
+                    })
+                    debug_trace.append({"wrapper": "dean_node_v2.total_elapsed_ms", "value": elapsed_ms_d})
+                    return {
+                        "phase": "memory_update",
+                        "close_reason": "exit_intent",
+                        "exit_intent_pending": True,
+                        "help_abuse_count": preflight_pre.new_help_abuse_count,
+                        "off_topic_count": preflight_pre.new_off_topic_count,
+                        "debug": state["debug"],
+                    }
+                debug_trace.append({
+                    "wrapper": "dean_node_v2.exit_intent_modal_triggered_pre_lock",
+                    "category": preflight_pre.category,
+                    "evidence": preflight_pre.evidence[:120],
+                })
+                debug_trace.append({"wrapper": "dean_node_v2.total_elapsed_ms", "value": elapsed_ms_d})
+                return {
+                    "exit_intent_pending": True,
+                    "help_abuse_count": preflight_pre.new_help_abuse_count,
+                    "off_topic_count": preflight_pre.new_off_topic_count,
+                    "debug": state["debug"],
+                }
+        except Exception as e:
+            debug_trace.append({
+                "wrapper": "preflight.pre_topic_lock.error",
+                "error": f"{type(e).__name__}: {str(e)[:160]}",
+            })
+
     if (not locked or not locked.get("path")) or pending_is_anchor_pick:
         handler_result = run_topic_lock_v2(
             state,
@@ -209,7 +280,16 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         and not skip_gate_for_ack
     ):
         try:
-            gate_result = dean.reached_answer_gate(state, latest_student)
+            # Reach-gate ported from V1 dean.reached_answer_gate during D1.
+            # Lives in conversation/reach_gate.py — self-contained module.
+            from conversation.reach_gate import reached_answer_gate
+            from conversation.llm_client import make_anthropic_client, resolve_model
+            from config import cfg as _cfg
+            _gate_client = make_anthropic_client()
+            _gate_model = resolve_model(_cfg.models.dean)
+            gate_result = reached_answer_gate(
+                state, latest_student, _gate_client, _gate_model,
+            )
         except Exception as e:
             debug_trace.append({
                 "wrapper": "dean.reached_answer_gate.error",
@@ -246,21 +326,57 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
 
     # ── 1. Pre-flight Haiku layer ────────────────────────────────────────
     fire_activity("Checking message intent")
-    preflight = run_preflight(state, latest_student, locked_topic=locked)
-    debug_trace.append({
-        "wrapper": "preflight",
-        "fired": preflight.fired,
-        "category": preflight.category,
-        "evidence": preflight.evidence[:120],
-        "rationale": preflight.rationale[:120],
-        "elapsed_s": preflight.elapsed_s,
-        "should_force_hint_advance": preflight.should_force_hint_advance,
-        "should_end_session": preflight.should_end_session,
-    })
+    # BLOCK 9 (S3) — skip preflight on cancel-modal turn. The previous
+    # student message would re-classify as deflection and ping-pong the
+    # modal. Synthesize a non-firing preflight result so downstream
+    # branches behave normally.
+    if state.get("cancel_modal_pending"):
+        from conversation.preflight import PreflightResult
+        preflight = PreflightResult(
+            fired=False, category="none",
+            new_help_abuse_count=int(state.get("help_abuse_count", 0) or 0),
+            new_off_topic_count=int(state.get("off_topic_count", 0) or 0),
+        )
+        debug_trace.append({
+            "wrapper": "preflight.skipped_for_cancel_modal",
+            "result": "synthetic_non_fire",
+        })
+    else:
+        preflight = run_preflight(state, latest_student, locked_topic=locked)
+        debug_trace.append({
+            "wrapper": "preflight",
+            "fired": preflight.fired,
+            "category": preflight.category,
+            "evidence": preflight.evidence[:120],
+            "rationale": preflight.rationale[:120],
+            "elapsed_s": preflight.elapsed_s,
+            "should_force_hint_advance": preflight.should_force_hint_advance,
+            "should_end_session": preflight.should_end_session,
+        })
 
     # Update strike counters in state regardless of branch
     new_help_count = preflight.new_help_abuse_count
     new_off_count = preflight.new_off_topic_count
+    # Apply counter updates to state BEFORE snapshot so the snapshot
+    # reflects the post-preflight counter values
+    state["help_abuse_count"] = new_help_count
+    state["off_topic_count"] = new_off_count
+
+    # BLOCK 5 (REAL-Q5) — snapshot the student turn with classifier verdict.
+    # Counters are now current; the snapshot will reflect intent + counters
+    # the LLM should see when reading history on subsequent turns.
+    from conversation.snapshots import snapshot_student_turn, log_system_event
+    snapshot_student_turn(
+        state,
+        intent=preflight.category if preflight.category else "on_topic_engaged",
+        intent_evidence=preflight.evidence[:120],
+    )
+    if preflight.fired:
+        log_system_event(
+            state,
+            "preflight_intervened",
+            category=preflight.category,
+        )
 
     # ── 2a. Pre-flight fired → Dean SKIPPED, Teacher renders redirect ───
     if preflight.fired:
@@ -272,13 +388,45 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         # tutor bubble added to transcript.
         if preflight.category == "deflection":
             elapsed_ms_e = int((time.time() - t0) * 1000)
+            # BLOCK 14 (S4) — rapport-stage decline: route DIRECTLY to
+            # memory_update (skip modal). Student hasn't invested any
+            # progress to confirm-exit over.
+            is_rapport_stage = (
+                not state.get("topic_confirmed")
+                and not (state.get("locked_topic") or {}).get("path")
+            )
+            if is_rapport_stage:
+                debug_trace.append({
+                    "wrapper": "dean_node_v2.rapport_decline_direct_close",
+                    "category": preflight.category,
+                    "evidence": preflight.evidence[:120],
+                })
+                debug_trace.append({"wrapper": "dean_node_v2.total_elapsed_ms", "value": elapsed_ms_e})
+                # Q17: preserve anchor_pick_overrides through early returns —
+                # without this, an anchor pick resolved on the same turn as
+                # a deflection would lose locked_question/locked_topic.
+                _ret = {
+                    "phase": "memory_update",
+                    "close_reason": "exit_intent",
+                    "exit_intent_pending": True,
+                    "help_abuse_count": new_help_count,
+                    "off_topic_count": new_off_count,
+                    "debug": state["debug"],
+                }
+                if anchor_pick_overrides:
+                    for _k, _v in anchor_pick_overrides.items():
+                        if _k == "messages":
+                            continue
+                        _ret[_k] = _v
+                return _ret
             debug_trace.append({
                 "wrapper": "dean_node_v2.exit_intent_modal_triggered",
                 "category": preflight.category,
                 "evidence": preflight.evidence[:120],
             })
             debug_trace.append({"wrapper": "dean_node_v2.total_elapsed_ms", "value": elapsed_ms_e})
-            return {
+            # Q17: same merge as the rapport_decline branch above.
+            _ret = {
                 "exit_intent_pending": True,
                 "help_abuse_count": new_help_count,
                 "off_topic_count": new_off_count,
@@ -287,11 +435,28 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
                 "student_reach_path": str(state.get("student_reach_path", "") or ""),
                 "debug": state["debug"],
             }
+            if anchor_pick_overrides:
+                for _k, _v in anchor_pick_overrides.items():
+                    if _k == "messages":
+                        continue
+                    _ret[_k] = _v
+            return _ret
 
-        # Force hint advance if L55 strike-4 fired
-        new_hint_level = int(state.get("hint_level", 0) or 0)
+        # Force hint advance if L55 strike-4 fired (help_abuse threshold).
+        prev_hint_level_p = int(state.get("hint_level", 0) or 0)
+        new_hint_level = prev_hint_level_p
         if preflight.should_force_hint_advance:
             new_hint_level = min(3, new_hint_level + 1)
+            # 2026-05-05: log hint_advance event so Teacher can read the trigger
+            # in CONVERSATION HISTORY and acknowledge the level-up in its draft.
+            # Was previously only logged in the engaged-tutoring path.
+            from conversation.snapshots import log_system_event
+            log_system_event(
+                state, "hint_advance",
+                from_level=prev_hint_level_p,
+                to_level=new_hint_level,
+                trigger="help_abuse_strike_4",
+            )
 
         # Build a TurnPlan for Teacher's redirect
         from conversation.llm_client import make_anthropic_client, resolve_model
@@ -307,6 +472,9 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         )
         client = make_anthropic_client()
         teacher_v2 = TeacherV2(client, model=resolve_model(_cfg.models.teacher))
+        # BLOCK 5 (REAL-Q5) — pass snapshots + events from state.debug
+        # so Teacher sees system-state annotations in history
+        _debug_obj = state.get("debug") or {}
         inputs = TeacherPromptInputs(
             chunks=[],  # redirect/nudge/confirm_end don't use chunks
             history=state.get("messages", []),
@@ -315,6 +483,8 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
             domain_name=getattr(_cfg.domain, "name", "this subject"),
             domain_short=getattr(_cfg.domain, "short", "subject"),
             student_descriptor=getattr(_cfg.domain, "student_descriptor", "student"),
+            snapshots=_debug_obj.get("per_turn_snapshots", []) or [],
+            system_events=_debug_obj.get("system_events", []) or [],
         )
         fire_activity({
             "redirect": "Redirecting back to the topic",
@@ -345,6 +515,16 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
                 "mode": draft.mode,
             },
         })
+        # BLOCK 5 (REAL-Q5) — snapshot the tutor turn (preflight-redirect
+        # path: single attempt, no verifier loop)
+        state["messages"] = msgs
+        from conversation.snapshots import snapshot_tutor_turn
+        snapshot_tutor_turn(
+            state,
+            mode=draft.mode,
+            tone=draft.tone,
+            attempts=1,
+        )
 
         # Honor end-session signal (L56 strike 4)
         new_phase = state.get("phase", "tutoring")
@@ -365,7 +545,10 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         if new_hint_level > prev_hint_level:
             last_advance_at = int(state.get("turn_count", 0) or 0)
 
-        return {
+        # Q17: preflight-fired (redirect/nudge/confirm_end) return — same
+        # anchor_pick_overrides merge pattern as the deflection branches above
+        # and the bottom engaged-tutoring return.
+        _ret = {
             "messages": msgs,
             "help_abuse_count": new_help_count,
             "off_topic_count": new_off_count,
@@ -379,6 +562,12 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
             "student_reach_path": str(state.get("student_reach_path", "") or ""),
             "debug": state["debug"],
         }
+        if anchor_pick_overrides:
+            for _k, _v in anchor_pick_overrides.items():
+                if _k == "messages":
+                    continue
+                _ret[_k] = _v
+        return _ret
 
     # ── 2b. No pre-flight fire → Dean plans + Teacher drafts via retry ──
     from conversation.llm_client import make_anthropic_client, resolve_model
@@ -438,6 +627,43 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         carryover_topic_lock, carryover_hint_advance,
     )
 
+    # 2026-05-05: PRE-PLAN low-effort hint advance.
+    # Was: post-Teacher safety net advanced hint AFTER Dean had already planned
+    # honest_close (because Dean saw cle=4 and read it as 'student won't engage,
+    # close out'). The hint advance only took effect on the NEXT turn — so the
+    # student saw a "we didn't get there" goodbye even though the system was
+    # supposed to escalate. Fix: bump hint_level + reset cle BEFORE Dean plans,
+    # so Dean plans a more concrete socratic question at the new hint level
+    # instead of choosing a close mode.
+    consecutive_low_pre = int(state.get("consecutive_low_effort_count", 0) or 0)
+    pre_advanced_low_effort = False
+    if (
+        consecutive_low_pre >= 4
+        and not state.get("student_reached_answer")
+    ):
+        max_hints_pre = int(state.get("max_hints", 3) or 3)
+        prev_hint_pre = int(state.get("hint_level", 0) or 0)
+        if prev_hint_pre < max_hints_pre:
+            new_hint_pre = prev_hint_pre + 1
+            state["hint_level"] = new_hint_pre
+            state["consecutive_low_effort_count"] = 0
+            pre_advanced_low_effort = True
+            debug_trace.append({
+                "wrapper": "dean_node_v2.low_effort_pre_plan_advance",
+                "consecutive_low_effort_at_fire": consecutive_low_pre,
+                "from_hint": prev_hint_pre,
+                "to_hint": new_hint_pre,
+            })
+            from conversation.snapshots import log_system_event
+            log_system_event(
+                state, "hint_advance",
+                from_level=prev_hint_pre,
+                to_level=new_hint_pre,
+                trigger="low_effort_streak_4_pre_plan",
+            )
+        # If hint already at cap, leave the post-plan safety net to handle
+        # session end via memory_update routing.
+
     # Plan the turn — Track 4.7f mem0 carryover + L78 domain-aware
     # clinical scenario style passed through to Dean's prompt.
     fire_activity("Planning the next question")
@@ -450,6 +676,49 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
             _cfg.domain, "clinical_scenario_style", "",
         ),
     )
+    # 2026-05-05: defensive override — if pre-advance fired but Dean STILL
+    # planned a close mode (honest_close / reach_close / etc), force socratic
+    # with the new hint level. Belt-and-suspenders against the plan-LLM
+    # interpreting "student kept saying idk" as "close session" even after
+    # the advance state is in place.
+    if pre_advanced_low_effort and plan_result.turn_plan.mode in (
+        "honest_close", "reach_close", "close", "tutoring_cap_close"
+    ):
+        from dataclasses import replace as _replace_le
+        plan_result.turn_plan = _replace_le(
+            plan_result.turn_plan,
+            mode="socratic",
+            tone="encouraging",
+            scenario=f"low_effort_advance:hint_{state.get('hint_level', 1)}",
+        )
+        debug_trace.append({
+            "wrapper": "dean_node_v2.low_effort_force_socratic",
+            "result": "overrode_close_mode_to_socratic_after_pre_advance",
+        })
+
+    # BLOCK 9 (S3) — cancel-modal override. If student just clicked
+    # Cancel on the exit modal, force mode=soft_reset on this turn so
+    # Teacher emits the bridging "fresh angle" message regardless of
+    # what Dean otherwise planned. Clear the flag here (one-shot per
+    # cancel).
+    if state.get("cancel_modal_pending"):
+        from dataclasses import replace as _replace
+        # Q19/B1: also override hint_text. Without this, Dean may have
+        # planned hint_text=locked_question (or a near-paraphrase),
+        # which Teacher's soft_reset rendering would then repeat verbatim.
+        # A neutral re-engagement framing forces fresh phrasing.
+        plan_result.turn_plan = _replace(
+            plan_result.turn_plan,
+            mode="soft_reset",
+            tone="encouraging",
+            scenario="soft_reset_after_cancel",
+            hint_text="Re-engage with a fresh angle on the locked subsection — do NOT echo locked_question verbatim.",
+        )
+        state["cancel_modal_pending"] = False
+        debug_trace.append({
+            "wrapper": "dean_node_v2.cancel_modal_soft_reset",
+            "result": "forced_mode_soft_reset_with_hint_override",
+        })
     debug_trace.append({
         "wrapper": "dean_v2.plan",
         "parse_attempts": plan_result.parse_attempts,
@@ -463,6 +732,8 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
     })
 
     # Drive the retry loop (Teacher × N + Haiku quartet × N + Dean.replan + safe probe)
+    # BLOCK 5 (REAL-Q5) — pass snapshots + events for enriched history
+    _debug_obj_for_inputs = state.get("debug") or {}
     inputs = TeacherPromptInputs(
         chunks=chunks,
         history=state.get("messages", []),
@@ -471,6 +742,8 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         domain_name=getattr(_cfg.domain, "name", "this subject"),
         domain_short=getattr(_cfg.domain, "short", "subject"),
         student_descriptor=getattr(_cfg.domain, "student_descriptor", "student"),
+        snapshots=_debug_obj_for_inputs.get("per_turn_snapshots", []) or [],
+        system_events=_debug_obj_for_inputs.get("system_events", []) or [],
     )
     aliases = state.get("locked_answer_aliases") or []
     prior_qs = []
@@ -523,7 +796,35 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         # On-topic engaged turn (no exploration requested) — decay the count.
         new_exploration_count = max(0, new_exploration_count - 1)
 
-    fire_activity("Drafting tutoring question")
+    # Layer-2 mode-aware label so the demo viewer can see WHY this turn
+    # has the shape it does (preflight intervention, soft_reset after
+    # cancel, hint-advance from low_effort_streak_4, etc.).
+    _mode = final_plan.mode
+    _tone = final_plan.tone
+    _hint_now = int(state.get("hint_level", 0) or 0)
+    _max_hints = int(state.get("max_hints", 3) or 3)
+    if pre_advanced_low_effort:
+        _label = f"Mode: socratic, hint {_hint_now}/{_max_hints} (advanced from low-effort streak)"
+        _detail = (
+            f"consecutive_low_effort hit 4. Pre-plan safety net advanced "
+            f"the hint level so Teacher's draft will be more concrete on "
+            f"this turn (not on the next). Counter reset to 0/4."
+        )
+    elif state.get("recent_cancel_at_turn") == int(state.get("turn_count", 0) or 0):
+        _label = f"Mode: {_mode} (after exit-modal cancel)"
+        _detail = (
+            "Student clicked Cancel on the exit-confirm modal. Teacher is "
+            "drafting a soft_reset bridging message — fresh angle, no "
+            "echo of the locked question."
+        )
+    else:
+        _label = f"Mode: {_mode}, tone: {_tone}, hint {_hint_now}/{_max_hints}"
+        _detail = (
+            f"Dean planned a {_mode}-mode turn with {_tone} tone. "
+            "Teacher will now draft 1-3 attempts, each verified by the "
+            "Haiku quartet. If all fail, Dean replans and Teacher tries once more."
+        )
+    fire_activity(_label, detail=_detail)
     turn_result = run_turn(
         teacher=teacher_v2,
         dean=dean_v2,
@@ -554,7 +855,19 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         ],
     })
 
-    fire_activity("Reviewing draft for accuracy")
+    # 2026-05-05: this used to be "Reviewing draft for accuracy" — now
+    # redundant since retry_orchestrator emits per-attempt + per-verifier
+    # labels with full detail. Keeping a finalize line for clean closure.
+    fire_activity(
+        "Finalizing reply",
+        detail=(
+            f"Retry loop done in {turn_result.elapsed_ms}ms across "
+            f"{len(turn_result.attempts)} attempt(s). "
+            + ("Dean replanned once. " if turn_result.used_dean_replan else "")
+            + ("Used safe-probe fallback." if turn_result.used_safe_generic_probe
+               else "Final draft passed all checks.")
+        ),
+    )
 
     # M-FB — when retry exhausts (used_safe_generic_probe=True), do NOT
     # ship templated tutor text. Emit an error_card system message so
@@ -599,6 +912,15 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
                 "safe_probe": turn_result.used_safe_generic_probe,
             },
         })
+        # BLOCK 5 (REAL-Q5) — snapshot the tutor turn (main tutoring path)
+        state["messages"] = msgs
+        from conversation.snapshots import snapshot_tutor_turn
+        snapshot_tutor_turn(
+            state,
+            mode=turn_result.final_turn_plan.mode if turn_result.final_turn_plan else "socratic",
+            tone=turn_result.final_turn_plan.tone if turn_result.final_turn_plan else "neutral",
+            attempts=int(turn_result.final_attempt or 1),
+        )
 
     elapsed_ms = int((time.time() - t0) * 1000)
     debug_trace.append({"wrapper": "dean_node_v2.total_elapsed_ms", "value": elapsed_ms})
@@ -619,6 +941,43 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
             "to": new_hint_level_engaged,
             "trigger": "dean_signal",
         })
+        # BLOCK 5 (REAL-Q5) — log hint_advance event
+        from conversation.snapshots import log_system_event
+        log_system_event(
+            state, "hint_advance",
+            from_level=prev_hint_level_engaged,
+            to_level=new_hint_level_engaged,
+        )
+
+    # BLOCK 7 (S2) — deterministic safety net for consecutive low-effort
+    # escalation. 2026-05-05: changed from force-session-end to symmetric
+    # hint-advance behavior (mirrors help_abuse strike-4). 4 passive "idk"s
+    # in a row now bumps the hint level and resets the counter — gives the
+    # student a more concrete scaffold instead of bailing out on them. The
+    # session ends naturally only when hints are exhausted (hint_level=3 +
+    # next strike triggers no further advance — Dean's plan or after_dean
+    # handles the end on its own terms).
+    consecutive_low = int(state.get("consecutive_low_effort_count", 0) or 0)
+    if consecutive_low >= 4 and not state.get("student_reached_answer"):
+        max_hints = int(state.get("max_hints", 3) or 3)
+        prev_hint_low = new_hint_level_engaged
+        new_hint_level_engaged = min(max_hints, new_hint_level_engaged + 1)
+        # Reset the counter for a fresh warning chain (same pattern as
+        # help_abuse strike-4 reset in preflight.py).
+        state["consecutive_low_effort_count"] = 0
+        debug_trace.append({
+            "wrapper": "dean_node_v2.low_effort_force_hint_advance",
+            "consecutive_low_effort_at_fire": consecutive_low,
+            "from_hint": prev_hint_low,
+            "to_hint": new_hint_level_engaged,
+        })
+        from conversation.snapshots import log_system_event
+        log_system_event(
+            state, "hint_advance",
+            from_level=prev_hint_low,
+            to_level=new_hint_level_engaged,
+            trigger="low_effort_streak_4",
+        )
 
     final_return = {
         "messages": msgs,
@@ -634,6 +993,15 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         "student_reach_path": str(state.get("student_reach_path", "") or ""),
         # M6 — exploration count incremented on tangent / decayed on on-topic
         "exploration_count": new_exploration_count,
+        # BLOCK 6 (S1) — propagate consecutive_low_effort_count so
+        # snapshot annotations reflect the latest streak in next turn
+        "consecutive_low_effort_count": int(state.get("consecutive_low_effort_count", 0) or 0),
+        # BLOCK 9 (S3) — clear cancel_modal_pending after one-shot
+        # soft_reset turn so subsequent turns return to normal flow.
+        # Also explicitly carry exit_intent_pending = False (cancel
+        # cleared it; ensure LangGraph reducer doesn't revert).
+        "cancel_modal_pending": False,
+        "exit_intent_pending": bool(state.get("exit_intent_pending", False)),
         "debug": state["debug"],
     }
     # When an anchor_pick was just resolved on this same invocation, the

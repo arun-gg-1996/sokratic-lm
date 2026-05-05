@@ -38,8 +38,8 @@ from config import cfg
 
 load_dotenv()
 
-RAW_SECTIONS_PATH = "data/processed/raw_sections_ot.jsonl"
-CHUNKS_PATH = cfg.paths.chunks_ot
+RAW_SECTIONS_PATH = cfg.domain_path("raw_sections")
+CHUNKS_PATH = cfg.domain_path("chunks")
 MAX_CHUNK_TOKENS = 440
 OVERLAP_SENTENCE_COUNT = 2
 MIN_CHUNK_CHARS = 40

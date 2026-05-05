@@ -7,7 +7,7 @@ Requirements implemented:
 - Index ONLY base-chunk propositions (no overlap chunk propositions)
 - Embed with OpenAI text-embedding-3-large (3072 dims)
 - Upsert into Qdrant collection cfg.memory.kb_collection
-- Build BM25Okapi and save to cfg.paths.bm25_ot
+- Build BM25Okapi and save to cfg.domain_path("bm25")
 - Preserve full PropositionSchema payload (including parent_chunk_text)
 """
 
@@ -170,7 +170,7 @@ def build_indexes(propositions: list[dict], domain: str = "ot") -> None:
     # Ensure final progress line.
     print(f"Embedded {embedded}/{total} | upserted {upserted}/{total}")
 
-    build_bm25_only(propositions, bm25_path=cfg.paths.bm25_ot)
+    build_bm25_only(propositions, bm25_path=cfg.domain_path("bm25"))
 
 
 def build_bm25_only(propositions: list[dict], bm25_path: str) -> None:
@@ -268,7 +268,7 @@ def run_index_tests(expected_count: int, propositions: list[dict]) -> None:
         print(f"  parent_chunk_text present: {'parent_chunk_text' in keys}")
 
     print("\n=== INDEX TEST 2 — BM25 health ===")
-    bm25_file = Path(cfg.paths.bm25_ot)
+    bm25_file = Path(cfg.domain_path("bm25"))
     print(f"BM25 file exists: {bm25_file.exists()} ({bm25_file})")
     bm25, bm25_props = load_bm25(str(bm25_file))
     print(f"BM25 loads: {bm25 is not None}")
@@ -289,7 +289,7 @@ def run_index_tests(expected_count: int, propositions: list[dict]) -> None:
             client=qdrant,
             collection=collection,
             query_vector=q_vec,
-            domain="ot",
+            domain=cfg.domain.retrieval_domain,
             limit=2,
         )
         print(f"\nQuery: {q}")
@@ -326,8 +326,8 @@ if __name__ == "__main__":
     parser.add_argument("--bm25-only", action="store_true", help="Rebuild BM25 only (no embedding/upsert).")
     args = parser.parse_args()
 
-    all_props = _load_jsonl(cfg.paths.propositions_ot)
-    base_chunk_ids = _load_base_chunk_ids(cfg.paths.chunks_ot)
+    all_props = _load_jsonl(cfg.domain_path("propositions"))
+    base_chunk_ids = _load_base_chunk_ids(cfg.domain_path("chunks"))
     propositions = _filter_base_propositions(all_props, base_chunk_ids)
 
     print(f"Loaded propositions (raw): {len(all_props)}")
@@ -335,7 +335,7 @@ if __name__ == "__main__":
     print(f"Indexing propositions (base only): {len(propositions)}")
 
     if args.bm25_only:
-        build_bm25_only(propositions, bm25_path=cfg.paths.bm25_ot)
+        build_bm25_only(propositions, bm25_path=cfg.domain_path("bm25"))
     else:
-        build_indexes(propositions, domain="ot")
+        build_indexes(propositions, domain=cfg.domain.retrieval_domain)
         run_index_tests(expected_count=len(propositions), propositions=propositions)

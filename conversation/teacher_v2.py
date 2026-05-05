@@ -32,7 +32,7 @@ pure-Python — easy to unit-test by inspecting the rendered prompt.
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Optional
 
 from conversation.turn_plan import TurnPlan
@@ -116,6 +116,45 @@ Strict rules:
 - Do NOT advance the hint level.
 - Do NOT reveal the locked answer or FORBIDDEN TERMS.
 - Maximum 3 sentences. End with one question that invites engagement.
+""",
+
+    "multichoice_rescue": """\
+You are a Socratic {domain_short} tutor. The student has given low-
+effort responses ("idk") multiple times in a row. Open-ended questions
+aren't working. Pivot to a CLOSED CHOICE — give them 2-3 specific
+candidates and ask which one fits.
+
+The HINT TEXT contains slash-separated candidate options (e.g.
+"option A / option B / option C"). Format these naturally into a
+multi-choice ask.
+
+Strict rules:
+- Acknowledge briefly ("Let's narrow it down" or similar — vary it).
+- Present the 2-3 candidates as a clean inline choice.
+- Do NOT include the locked answer in the choices (forbidden).
+- Maximum 3 sentences. End with one question of the form "is it A,
+  B, or C?" or "which fits best?"
+- Do NOT advance hint_level — this is a rescue, not a hint advance.
+""",
+
+    "soft_reset": """\
+You are a Socratic {domain_short} tutor. The student JUST clicked
+Cancel on the exit confirmation modal — they considered ending the
+session but decided to keep going. They want a fresh path forward,
+not the same scaffold that wasn't clicking.
+
+Strict rules:
+- Acknowledge they're continuing in ONE short sentence — warm but
+  not over-praising. (Examples: "Glad you decided to keep going.",
+  "Got it — let's try a fresh angle.")
+- Provide a COMPLETELY FRESH angle on the locked question. If you've
+  used a particular analogy domain in prior turns (visible in
+  CONVERSATION HISTORY), pick a NEW domain. Do NOT echo the same
+  hint that the student just declined.
+- One question at the end.
+- Maximum 3 sentences total.
+- Do NOT mention the modal or the cancel action explicitly — the
+  acknowledgment should feel natural, not transactional.
 """,
 
     "nudge": """\
@@ -227,6 +266,25 @@ Universal rules:
 - Do NOT congratulate them on reaching anything they didn't reach.
 - Do NOT say "we didn't get to..." if reason indicates they did reach.
 
+EVIDENCE-BASED JUDGMENT (CRITICAL — 2026-05-05):
+- The `demonstrated` field MUST quote or paraphrase something the STUDENT
+  actually wrote. Things the TUTOR said are NOT evidence of student
+  understanding. If the student's messages are all "idk", "i don't know",
+  "tell me", "give me the answer", or similar non-substantive content,
+  set `demonstrated` to "" (empty string) — do NOT invent engagement.
+- Check the SYSTEM_EVENT lines in CONVERSATION HISTORY. If you see
+  `hint_advance` events with trigger=`help_abuse_strike_4` or
+  `low_effort_streak_4`, the student forced hint escalations through
+  passive non-engagement or direct-answer demands — note this honestly
+  in `needs_work` (e.g. "Repeatedly asked for the answer instead of
+  attempting; revisit ___").
+- Check STUDENT annotation lines in history (intent=low_effort,
+  intent=help_abuse) and the `consecutive_low_effort` / `help_abuse_count`
+  values. High counts → the session was about evasion, not learning.
+  Reflect that honestly in `needs_work`. Do NOT paper over it.
+- The `needs_work` field should ALWAYS be populated when the student
+  did not reach the answer — name the specific concept gap.
+
 Output STRICT JSON only — no markdown, no preamble:
 {{
   "message":      "<tutor goodbye message — 2-4 sentences>",
@@ -243,6 +301,69 @@ _PROMPT_PREAMBLE = """\
 {instructions}
 TONE: {tone}
 SHAPE: max {max_sentences} sentences, exactly one question = {exactly_one_question}.
+
+ANTI-REPETITION (BLOCK 8 / REAL-Q2):
+  Do NOT start your draft with the same first 8 words as the previous
+  TUTOR turn (visible in CONVERSATION HISTORY). If you've already used
+  a specific analogy domain (everyday objects, body mechanics, sports,
+  food), pick a NEW domain. Reading the prior tutor turn and producing
+  near-identical text is a system failure.
+
+VOICE (BLOCK 8 / REAL-Q1):
+  Write like a real grad-student TA having a conversation, not a
+  textbook narrator. Match the student's register — if they wrote
+  "i am not sure man", you can be casual back. Reference what they
+  JUST said before pivoting. Vary your openers — don't begin two
+  messages in a row with the same soft-cushion phrase ("That's okay",
+  "No worries", "Let me reframe"). When the student gives a correct
+  partial answer, acknowledge it warmly ("Yeah! Friction.") before
+  building on it.
+
+  FORBIDDEN PHRASES (BLOCK 13 / Q11) — these read condescending
+  when the student is struggling:
+    * "you already know this"
+    * "this should be easy"
+    * "obviously"
+    * "you should be able to"
+    * "this is basic"
+  Use empathetic phrasing instead ("let's try a different angle",
+  "no rush", "this one's tricky") when the student needs reassurance.
+
+LOCKED-QUESTION ECHO (Q19 fix):
+  NEVER echo `locked_question` verbatim. The locked question shows the
+  topic anchor — your job is to scaffold AROUND it with fresh framing,
+  not parrot it. After a soft_reset (post-Cancel) or any retry, if you
+  catch yourself starting with the same opening words as the locked
+  question, rewrite — pick a different angle, analogy, or sub-step.
+
+EVENT-AWARE READING (Q21 fix):
+  CONVERSATION HISTORY may include SYSTEM_EVENT lines like:
+    SYSTEM_EVENT: anchor_pick_shown, options_count=3, subsection=...
+    SYSTEM_EVENT: topic_locked, subsection=..., via=anchor_pick
+    SYSTEM_EVENT: exit_modal_canceled
+    SYSTEM_EVENT: hint_advance, from_level=0, to_level=1, trigger=help_abuse_strike_4
+  When `anchor_pick_shown` immediately precedes a student message, the
+  student is PICKING from those options — do NOT accuse them of "jumping
+  straight to the question" or "skipping the warmup". The system rendered
+  the cards; their text IS engagement.
+  When `topic_locked, via=anchor_pick` appears, the locked question came
+  from the student's chip click — treat the next student turn as their
+  first attempt, not a tangent.
+  When `exit_modal_canceled` appears, the student just confirmed they
+  want to keep going — open with warmth, not with the locked question.
+
+HINT-ADVANCE ACKNOWLEDGMENT (2026-05-05):
+  When a `SYSTEM_EVENT: hint_advance` line appears in CONVERSATION HISTORY
+  for THIS turn (i.e., it was just emitted before your draft), open your
+  reply with a brief, warm signal that you're escalating to a more concrete
+  hint. Examples (use one, NEVER all):
+    "New angle —"
+    "Let me make this more concrete:"
+    "Here's a clearer hint:"
+    "Hint 2 of 3:"  (use to_level/3 when natural)
+  ONE phrase, then immediately the question. Do NOT lecture about why you're
+  advancing or reveal the answer. The student should feel a gentle gear-shift,
+  not a chastisement. Skip this if no hint_advance event fired this turn.
 """
 
 _PROMPT_FORBIDDEN_BLOCK = """\
@@ -324,6 +445,8 @@ _MODES_USING_CHUNKS = {"socratic", "clinical"}
 _MODES_USING_HISTORY = {
     "socratic", "clinical", "redirect", "nudge", "confirm_end",
     "honest_close", "reach_close", "clinical_natural_close", "close",
+    "soft_reset",  # BLOCK 9 (S3) — needs history to forbid prior analogy
+    "multichoice_rescue",  # BLOCK 11 (REAL-Q4) — same need
 }
 
 # Modes that need locked-topic context fields. M4: rapport added so
@@ -331,7 +454,9 @@ _MODES_USING_HISTORY = {
 # greeting instead of asking "what topic do you want to study?"
 _MODES_USING_LOCKED = {"socratic", "clinical", "redirect", "opt_in",
                        "confirm_end", "honest_close", "reach_close",
-                       "clinical_natural_close", "close", "rapport"}
+                       "clinical_natural_close", "close", "rapport",
+                       "soft_reset",          # BLOCK 9 (S3)
+                       "multichoice_rescue"}  # BLOCK 11 (REAL-Q4)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -354,6 +479,11 @@ class TeacherPromptInputs:
     domain_short: str = "subject"
     student_descriptor: str = "student"
     time_of_day: str = "afternoon"    # for rapport mode greeting
+    # BLOCK 5 (REAL-Q5) — system provenance for enriched history
+    # rendering. Both lists default empty (renderer falls back to plain
+    # history if absent).
+    snapshots: list[dict] = field(default_factory=list)
+    system_events: list[dict] = field(default_factory=list)
 
 
 def build_teacher_prompt(turn_plan: TurnPlan, inputs: TeacherPromptInputs) -> str:
@@ -412,8 +542,14 @@ def build_teacher_prompt(turn_plan: TurnPlan, inputs: TeacherPromptInputs) -> st
             chunks=_format_chunks(inputs.chunks),
         ))
     if turn_plan.mode in _MODES_USING_HISTORY and inputs.history:
+        # BLOCK 5 (REAL-Q5) — pass snapshots + events so history is
+        # rendered with system-state annotations
         parts.append(_PROMPT_HISTORY_BLOCK.format(
-            history=_format_history(inputs.history),
+            history=_format_history(
+                inputs.history,
+                snapshots=inputs.snapshots,
+                events=inputs.system_events,
+            ),
         ))
     # L77 — surface image context when present and the mode is one that
     # benefits from grounding in visual structures (socratic + clinical).
@@ -449,18 +585,23 @@ def _format_chunks(chunks: list[dict], max_chunks: int = 7) -> str:
     return "\n\n".join(out) or "(no chunks)"
 
 
-def _format_history(history: list[dict], max_turns: int = 8) -> str:
-    """Render the last N student/tutor exchanges as plain text."""
-    tail = history[-(max_turns * 2):]  # max_turns × 2 (student + tutor)
-    out = []
-    for m in tail:
-        role = m.get("role") or "?"
-        content = (m.get("content") or "").strip()
-        if not content:
-            continue
-        prefix = {"student": "STUDENT", "tutor": "TUTOR"}.get(role, role.upper())
-        out.append(f"{prefix}: {content}")
-    return "\n\n".join(out) or "(no history)"
+def _format_history(
+    history: list[dict],
+    *,
+    snapshots: list[dict] | None = None,
+    events: list[dict] | None = None,
+    max_turns: int = 50,
+) -> str:
+    """Render conversation history with optional system-state annotations.
+
+    BLOCK 5 (REAL-Q5): delegates to `history_render.render_history()`
+    which weaves snapshots + events with messages. Falls back to plain
+    history when snapshots/events are empty (legacy state, early turns).
+
+    BLOCK 4 (REAL-Q8): cap default raised 8→50.
+    """
+    from conversation.history_render import render_history
+    return render_history(history, snapshots=snapshots, events=events, max_turns=max_turns)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -499,7 +640,7 @@ class TeacherV2:
         *,
         model: str = "claude-sonnet-4-6",
         max_tokens: int = 800,
-        temperature: float = 0.4,
+        temperature: float = 0.7,  # Q19/B3: was 0.4 — caused verbatim regen on Cancel/soft_reset turns. 0.7 gives variation without harming coherence.
     ):
         self.client = client
         self.model = model
@@ -520,13 +661,28 @@ class TeacherV2:
         feedback loop (Track 4.6) — empty on first attempt; populated
         when a check failed and we're retrying with the failure detail.
         """
-        # PERF — split the prompt into (stable, variable) so Anthropic's
-        # prompt cache can hit on the heavy chunks/history/locked block
-        # across retries within the same turn AND across turns within
-        # the 5-min TTL. Stable part = the rendered Teacher prompt (chunks,
-        # locked context, history). Variable part = retry-feedback addendum
-        # which changes per attempt. ~10× cheaper input + faster TTFT.
-        stable_prompt = build_teacher_prompt(turn_plan, inputs)
+        # BLOCK 3 (REAL-Q7) — multi-tier cache. Two cache_control markers:
+        #   Tier 1 (master + vocab): caches across SESSIONS (5-min TTL).
+        #     ~2200 tokens. Identical for every Teacher call regardless
+        #     of domain (well, varies by domain_name, but same per-domain).
+        #   Tier 2 (mode + locked + chunks + hint + forbidden): caches
+        #     within a turn's retries. Tier 2 changes turn-to-turn but
+        #     stable across attempts 1-4 within a single turn.
+        #   UNCACHED (after Tier 2): variable_tail (retry feedback) which
+        #     changes per attempt.
+        #
+        # NOTE: history is currently part of build_teacher_prompt() output
+        # (Tier 2). It's stable across retries within a turn (history doesn't
+        # grow during retries) so cache hits within turns. BLOCK 5 may
+        # restructure if we want history outside Tier 2 to enable
+        # cross-turn cache hits on Tier 2.
+        #
+        # Bedrock minimum cache block size is ~2048 tokens. Tier 1 alone
+        # ~2200 tokens meets minimum. Tier 1 + Tier 2 always ≥4000 tokens
+        # so the cumulative prefix at marker 2 always exceeds minimum.
+        from conversation.master_prompt import build_master_prompt
+        tier1_master = build_master_prompt(domain_name=inputs.domain_name)
+        tier2_body = build_teacher_prompt(turn_plan, inputs)
 
         variable_tail = ""
         if prior_attempts:
@@ -541,13 +697,22 @@ class TeacherV2:
                     )
 
         content_blocks: list[dict] = [
+            # Tier 1 cache marker — caches across sessions
             {
                 "type": "text",
-                "text": stable_prompt,
+                "text": tier1_master + "\n---\n",
+                "cache_control": {"type": "ephemeral"},
+            },
+            # Tier 2 cache marker — caches within turn retries (and across
+            # turns IF nothing in body changed, which is rare)
+            {
+                "type": "text",
+                "text": tier2_body,
                 "cache_control": {"type": "ephemeral"},
             },
         ]
         if variable_tail:
+            # Variable retry feedback — uncached
             content_blocks.append({"type": "text", "text": variable_tail})
 
         t0 = time.time()

@@ -52,7 +52,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
-from conversation import classifiers as C
+from conversation import verifier_quartet as C  # post-D3: verifier funcs live here
 from conversation.dean_v2 import DeanV2
 from conversation.teacher_v2 import (
     TeacherDraftResult,
@@ -243,11 +243,32 @@ def run_turn(
     prior_drafts: list[str] = []
     prior_failures: list[dict] = []
 
+    # 2026-05-05: per-attempt activity labels for demo visibility.
+    from conversation.streaming import fire_activity as _fa
     for n in range(1, MAX_TEACHER_ATTEMPTS + 1):
         if not _within_timeout():
             return _safe_probe_result(
                 attempts, started, used_replan=used_replan,
                 final_plan=final_plan, timed_out=True,
+            )
+
+        if n == 1:
+            _fa(
+                f"Drafting attempt {n}",
+                detail=(
+                    f"Teacher generating reply (mode={current_plan.mode}, "
+                    f"tone={current_plan.tone}). Streaming via Sonnet."
+                ),
+            )
+        else:
+            prev_fail = prior_failures[-1] if prior_failures else {}
+            prev_check = prev_fail.get("_check_name", "verifier")
+            _fa(
+                f"Drafting attempt {n} (after {prev_check} failed)",
+                detail=(
+                    f"Attempt {n-1} was rejected by the {prev_check} verifier. "
+                    f"Teacher is rewriting with retry feedback."
+                ),
             )
 
         draft_result: TeacherDraftResult = teacher.draft(
@@ -277,6 +298,14 @@ def run_turn(
                 final_plan=final_plan, timed_out=True,
             )
 
+        _fa(
+            "Verifying draft (4 parallel checks)",
+            detail=(
+                "Running Haiku verifier quartet in parallel: hint-leak, "
+                "sycophancy, shape, pedagogy. Each check retries on a lenient "
+                "verdict to reduce false-clean rate."
+            ),
+        )
         check_results = _run_haiku_quartet(
             draft_result.text,
             locked_answer=locked_answer,
@@ -298,6 +327,13 @@ def run_turn(
         attempts.append(att)
 
         if att.all_passed:
+            _fa(
+                "All checks passed — sending reply",
+                detail=(
+                    f"Draft passed all 4 verifier checks on attempt {n}. "
+                    f"Shipping to student."
+                ),
+            )
             return TurnRunResult(
                 final_text=draft_result.text,
                 final_attempt=n,
@@ -309,6 +345,20 @@ def run_turn(
                 attempts=attempts,
                 final_turn_plan=current_plan,
             )
+
+        # Surface which check rejected the draft so the demo viewer can
+        # see WHY a retry is happening.
+        fs = att.failure_summary() or {}
+        rejected_by = fs.get("_check_name", "verifier")
+        _fa(
+            f"⚠ Verifier rejected: {rejected_by}",
+            detail=(
+                f"Attempt {n} draft failed the {rejected_by} check. "
+                + ("Maxed retries — Dean will replan with different mode/tone."
+                   if n == MAX_TEACHER_ATTEMPTS
+                   else "Teacher will retry with the feedback inline.")
+            ),
+        )
 
         # Failed → feed forward
         prior_drafts.append(draft_result.text)
@@ -324,6 +374,13 @@ def run_turn(
         )
 
     used_replan = True
+    _fa(
+        "Replanning with Dean",
+        detail=(
+            "Three drafts failed verification. Dean is regenerating the turn "
+            "plan with a different mode/tone/scenario before Teacher tries again."
+        ),
+    )
     replan_result = dean.replan(
         dean_state, dean_chunks,
         prior_plan=current_plan,
@@ -339,6 +396,13 @@ def run_turn(
         )
 
     # ── Attempt 4 with the new TurnPlan ────────────────────────────────
+    _fa(
+        "Drafting attempt 4 (after replan)",
+        detail=(
+            f"Teacher generating reply with the replanned TurnPlan "
+            f"(mode={final_plan.mode}, tone={final_plan.tone})."
+        ),
+    )
     draft4 = teacher.draft(
         final_plan, teacher_inputs,
         prior_attempts=prior_drafts, prior_failures=prior_failures,
@@ -417,6 +481,35 @@ def _safe_probe_result(
     leak_cap_fired: bool = False,
 ) -> TurnRunResult:
     """Build the safe-generic-probe TurnRunResult per L50."""
+    # 2026-05-05: surface the fallback in the activity log so the demo
+    # viewer can see WHY the system shipped a generic probe.
+    from conversation.streaming import fire_activity as _fa
+    if timed_out:
+        _fa(
+            "Falling back to safe response (timed out)",
+            detail=(
+                "Hit the per-turn wall-clock cap before any draft passed "
+                "verification. Shipping a neutral re-anchor message to keep "
+                "the conversation moving."
+            ),
+        )
+    elif leak_cap_fired:
+        _fa(
+            "Falling back to safe response (leak cap)",
+            detail=(
+                "Attempt 4 still failed the hint-leak verifier after Dean "
+                "replanned. Cannot risk shipping a draft that reveals the "
+                "answer — using a neutral re-anchor message instead."
+            ),
+        )
+    else:
+        _fa(
+            "Falling back to safe response",
+            detail=(
+                "All 4 Teacher attempts failed verification. Using the "
+                "deterministic SAFE_GENERIC_PROBE message as a backstop."
+            ),
+        )
     return TurnRunResult(
         final_text=SAFE_GENERIC_PROBE,
         final_attempt=5,

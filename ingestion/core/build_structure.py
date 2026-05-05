@@ -136,7 +136,7 @@ if __name__ == "__main__":
     # source modules so build_structure.py stays generic.
     from ingestion.sources.openstax_anatomy.extract import extract_pdf
 
-    cached_raw = Path("data/processed/raw_elements_ot.jsonl")
+    cached_raw = Path(cfg.domain_path("raw_elements"))
     elements = _load_cached_elements(cached_raw)
     if elements:
         print(f"Loaded cached raw elements: {len(elements)} from {cached_raw}")

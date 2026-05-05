@@ -44,6 +44,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, Optional
 
 from conversation import classifiers as C
+from conversation.preflight_classifier import haiku_intent_classify_unified
 
 # Strike thresholds per L55 / L56
 HELP_ABUSE_HINT_ADVANCE_STRIKE = 4    # at strike 4 → force hint_level += 1
@@ -159,20 +160,28 @@ def haiku_help_abuse_check(student_message: str) -> dict:
 _DEFLECTION_SYSTEM = """\
 You are a teaching-quality classifier for a Socratic tutor. Your sole
 task: detect DEFLECTION patterns where the student is signaling they
-want to end the session.
+want to end or decline the session.
 
 DEFLECTION patterns (verdict="deflection"):
-  * Explicit: "let's stop", "I want to end this", "can we finish?",
-    "I'm done", "let's wrap up", "stop"
-  * Implicit fatigue: "I'm tired, can we stop?", "this is taking
-    too long, let's wrap up", "can we be done with this?"
-  * Time signals: "I have to go", "I need to leave"
+  * Explicit end-request: "let's stop", "I want to end this",
+    "can we finish?", "I'm done", "let's wrap up", "stop"
+  * Implicit fatigue + end signal: "I'm tired, can we stop?",
+    "this is taking too long, let's wrap up", "can we be done"
+  * Time signals: "I have to go", "I need to leave", "gotta run"
+  * Decline-to-engage at session start: "no thanks, not today",
+    "not really", "maybe another time", "no I'm good", "I'll pass" —
+    treat as deflection when student declines the tutor's offer to
+    begin a session, even without explicit "stop" wording. This is
+    the rapport-decline path: student doesn't want to engage at all.
 
 NOT deflection (verdict="continuing"):
   * Just expressing fatigue without end-request: "this is hard"
   * Asking for break in pacing: "can we slow down"
   * Frustration without end-request: "I don't get it"
   * Tangent questions: "what about X?"
+  * Declining ONE option but still engaging: "not that topic, how
+    about Y instead" — student wants to continue, just on a different
+    topic.
 
 Output STRICT JSON only — no markdown, no preamble:
 {
@@ -359,7 +368,61 @@ def run_preflight(
             cur_tutor = ""
     history_pairs = history_pairs[-2:]
 
-    result = C.haiku_intent_classify_unified(
+    # BLOCK 14 (S4) — deterministic rapport-decline shortcut.
+    # When phase=rapport AND message clearly declines the session
+    # (NOT just declining one topic), short-circuit directly to close.
+    # No modal — student hasn't invested any progress to confirm-exit
+    # over. The unified classifier is conservative on ambiguous "no
+    # thanks" at the rapport stage and under-fires; this shortcut
+    # catches the clear decline patterns deterministically.
+    # Detect "rapport-stage" — phase technically transitions to "tutoring"
+    # after rapport_node runs the greeting, but no topic is locked yet.
+    # That's the moment "no thanks" should mean "decline session" not
+    # "decline this topic".
+    cur_phase = str(state.get("phase") or "tutoring").lower()
+    is_rapport_stage = (
+        cur_phase == "rapport"
+        or (cur_phase == "tutoring"
+            and not state.get("topic_confirmed")
+            and not (state.get("locked_topic") or {}).get("path"))
+    )
+    if is_rapport_stage:
+        msg_lower = (student_message or "").strip().lower()
+        # Patterns that mean "I don't want to do this session"
+        # (not "I want a different topic")
+        rapport_decline_patterns = [
+            "no thanks",
+            "no thank you",
+            "not today",
+            "maybe later",
+            "maybe another time",
+            "i'll pass",
+            "i will pass",
+            "no i'm good",
+            "no im good",
+            "not interested",
+        ]
+        if any(p in msg_lower for p in rapport_decline_patterns):
+            # Force-route to memory_update with exit_intent close (no save).
+            # Caller in nodes.py rapport_node respects state.phase.
+            state["phase"] = "memory_update"
+            state["exit_intent_pending"] = True
+            state["close_reason"] = "exit_intent"
+            return PreflightResult(
+                fired=True,
+                category="deflection",
+                evidence=student_message[:120],
+                rationale="rapport-decline pattern (BLOCK 14 deterministic shortcut, direct-to-close)",
+                new_help_abuse_count=help_count,
+                new_off_topic_count=off_count,
+                suggested_mode="honest_close",
+                suggested_tone="neutral",
+                should_end_session=True,
+                checks={"rapport_decline_shortcut": True},
+                elapsed_s=round(time.time() - t0, 3),
+            )
+
+    result = haiku_intent_classify_unified(
         student_message,
         history_pairs=history_pairs,
         locked_subsection=locked_subsection,
@@ -411,6 +474,15 @@ def run_preflight(
     if verdict == "help_abuse":
         new_help = help_count + 1
         force_hint = new_help >= HELP_ABUSE_HINT_ADVANCE_STRIKE
+        # 2026-05-05: when threshold fires, reset the counter so the student
+        # gets a fresh warning chain before the NEXT hint-advance. Without
+        # this, every strike past 4 immediately re-fires force_hint_advance
+        # — burning the student's 3-hint allotment in 3 consecutive strikes
+        # and surfacing a confusing "Help-abuse: 5/4" UI. Tone selection
+        # uses the pre-reset count so the message still escalates correctly.
+        reported_count = new_help
+        if force_hint:
+            new_help = 0
         return PreflightResult(
             fired=True,
             category="help_abuse",
@@ -419,8 +491,27 @@ def run_preflight(
             new_help_abuse_count=new_help,
             new_off_topic_count=off_count,
             suggested_mode="redirect",
-            suggested_tone=_select_tone_for_strike("help_abuse", new_help),
+            suggested_tone=_select_tone_for_strike("help_abuse", reported_count),
             should_force_hint_advance=force_hint,
+            checks=checks,
+            elapsed_s=elapsed,
+        )
+
+    # BLOCK 6 (S1) — low_effort: passive non-engagement ("idk", "i don't
+    # know"). Increment consecutive_low_effort_count so Dean (BLOCK 7)
+    # can escalate strategy after the 2nd-3rd in a row. NOT firing
+    # preflight intervention itself — Dean still plans normally but with
+    # awareness of the streak.
+    if verdict == "low_effort":
+        prev_streak = int(state.get("consecutive_low_effort_count", 0) or 0)
+        state["consecutive_low_effort_count"] = prev_streak + 1
+        return PreflightResult(
+            fired=False,         # Dean still plans; this is a soft signal
+            category="low_effort",  # but trace + history annotation reflect it
+            evidence=result.get("evidence", ""),
+            rationale=result.get("rationale", ""),
+            new_help_abuse_count=help_count,
+            new_off_topic_count=off_count,
             checks=checks,
             elapsed_s=elapsed,
         )
@@ -428,10 +519,12 @@ def run_preflight(
     # on_topic_engaged or opt_in_* in preflight context — let Dean handle.
     # M7 strike decay: on engagement, decrement off_topic_count (max 0)
     # so a single old misclassification doesn't accumulate to strike 4.
+    # BLOCK 6: also reset consecutive_low_effort_count on real engagement.
     new_off = max(0, off_count - 1)
+    state["consecutive_low_effort_count"] = 0
     return PreflightResult(
         fired=False,
-        category="none",
+        category=verdict if verdict in {"on_topic_engaged", "opt_in_yes", "opt_in_no", "opt_in_ambiguous"} else "none",
         new_help_abuse_count=0,        # reset (existing L55 behavior)
         new_off_topic_count=new_off,   # M7 decay
         checks=checks,
