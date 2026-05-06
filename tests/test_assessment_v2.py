@@ -92,6 +92,12 @@ def _dean_returns(plan: TurnPlan) -> MagicMock:
 
 
 def test_reveal_close_when_not_reached():
+    """F8 (POST_DEMO_FIXES.md, 2026-05-06): post-B4/M1, the close
+    rendering moved from assessment_v2 to memory_update_node. So
+    `_render_reveal_close` no longer appends a tutor message — it just
+    sets close_reason + routes to memory_update. Tests now assert the
+    routing, not the message text.
+    """
     state = _state(student_reached_answer=False)
     teacher = _teacher_returns("The answer was X. Tough one — revisit later.")
     dean = MagicMock()  # not used for reveal path
@@ -105,10 +111,10 @@ def test_reveal_close_when_not_reached():
     assert result["clinical_opt_in"] is False
     assert result["clinical_mastery_tier"] == "not_assessed"
     assert result["assessment_turn"] == 3
-    msgs = result["messages"]
-    assert msgs[-1]["role"] == "tutor"
-    assert msgs[-1]["metadata"]["mode"] == "honest_close"
-    assert msgs[-1]["metadata"]["is_closing"] is True
+    # close_reason is set so memory_update_node can render the right close.
+    assert result["close_reason"] in {"hints_exhausted", "tutoring_cap"}
+    # No new tutor message appended — close text comes from memory_update_node.
+    assert result["messages"] == state["messages"]
     # Dean should not have been called
     dean.plan.assert_not_called()
 
@@ -146,6 +152,10 @@ def test_opt_in_rendered_when_reached_first_entry():
 
 
 def test_opt_in_no_routes_to_reach_close():
+    """F8 (POST_DEMO_FIXES.md, 2026-05-06): post-B4/M1, opt-in 'no' path
+    routes to memory_update without rendering its own close text — the
+    close LLM in memory_update_node owns that.
+    """
     state = _state(
         student_reached_answer=True,
         assessment_turn=1,
@@ -165,9 +175,8 @@ def test_opt_in_no_routes_to_reach_close():
     assert result["clinical_opt_in"] is False
     assert result["clinical_mastery_tier"] == "not_assessed"
     assert result["assessment_turn"] == 3
-    msgs = result["messages"]
-    assert msgs[-1]["metadata"]["is_closing"] is True
-    assert msgs[-1]["metadata"]["mode"] == "honest_close"
+    # close_reason = reach_skipped (student reached but declined clinical bonus)
+    assert result["close_reason"] == "reach_skipped"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -289,7 +298,22 @@ def test_opt_in_ambiguous_reask_keeps_state():
 
 
 def test_clinical_loop_runs_turn_via_orchestrator(monkeypatch):
-    """assessment_turn=2 should call DeanV2.plan + run_turn."""
+    """assessment_turn=2 should call DeanV2.plan + run_turn.
+
+    F8 (POST_DEMO_FIXES.md, 2026-05-06): student message changed so it
+    does NOT contain the locked answer or its aliases — otherwise
+    `_clinical_response_hits_locked_target` would short-circuit to
+    memory_update with assessment_turn=3, defeating the test intent.
+
+    Also mocks N3's `haiku_intent_classify_unified` (called by
+    `_run_clinical_preflight`) so we don't hit Bedrock.
+    """
+    # N3 — mock the unified classifier called from _run_clinical_preflight
+    from conversation import preflight_classifier as PC
+    monkeypatch.setattr(
+        PC, "haiku_intent_classify_unified",
+        lambda msg, **kw: {"verdict": "on_topic_engaged", "evidence": "", "rationale": "test"},
+    )
     state = _state(
         student_reached_answer=True,
         assessment_turn=2,
@@ -300,7 +324,8 @@ def test_clinical_loop_runs_turn_via_orchestrator(monkeypatch):
         ],
         messages=[
             {"role": "tutor", "content": "A 55yo with chest pain..."},
-            {"role": "student", "content": "I think it's LAD because anterior wall."},
+            # F8: avoid locked_answer + aliases ("LAD") in student msg.
+            {"role": "student", "content": "Maybe ischemia of the anterior wall — what EKG leads should I focus on?"},
         ],
     )
     next_plan = TurnPlan(
@@ -348,13 +373,21 @@ def test_clinical_loop_runs_turn_via_orchestrator(monkeypatch):
     dean.plan.assert_called_once()
 
 
-def test_clinical_loop_caps_at_seven_turns():
-    """Per L67, clinical_turn_count > 7 triggers clinical close."""
+def test_clinical_loop_caps_at_max_turns():
+    """Per L67, clinical_turn_count > CLINICAL_TURN_CAP triggers clinical
+    close.
+
+    F8 (POST_DEMO_FIXES.md, 2026-05-06): renamed from `_caps_at_seven_turns`
+    after N3 bumped the cap 7 → 15. Test now references the constant
+    so it tracks future cap moves. Also: post-B4/M1 the cap-close routes
+    via `_render_clinical_close` which calls memory_update_node — the
+    closing tutor text is no longer rendered here.
+    """
     state = _state(
         student_reached_answer=True,
         assessment_turn=2,
         clinical_opt_in=True,
-        clinical_turn_count=A.CLINICAL_TURN_CAP,  # 7 already; next will be 8
+        clinical_turn_count=A.CLINICAL_TURN_CAP,  # next bump triggers cap
         messages=[
             {"role": "tutor", "content": "Last clinical Q"},
             {"role": "student", "content": "uh I dunno"},
@@ -369,8 +402,6 @@ def test_clinical_loop_caps_at_seven_turns():
 
     assert result["phase"] == "memory_update"
     assert result["assessment_turn"] == 3
-    msgs = result["messages"]
-    assert msgs[-1]["metadata"]["is_closing"] is True
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -404,7 +435,14 @@ def test_classify_opt_in_primitive(msg, expected):
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def test_opt_in_falls_back_when_teacher_errors():
+def test_opt_in_when_teacher_errors_routes_with_empty_content():
+    """F8 (POST_DEMO_FIXES.md, 2026-05-06): per the M-FB rule
+    ('no templated tutor-text fallback'), `_safe_teacher_draft` now
+    returns "" when teacher.draft raises — the frontend renders an
+    error card, NOT a fake tutor reply. The routing (assessment_turn=1
+    + pending_user_choice='opt_in') still completes; only the message
+    content is empty.
+    """
     state = _state(student_reached_answer=True, assessment_turn=0)
     teacher = MagicMock()
     teacher.draft.side_effect = RuntimeError("network down")
@@ -414,12 +452,15 @@ def test_opt_in_falls_back_when_teacher_errors():
         retriever=MagicMock(), dean_v2=MagicMock(), teacher_v2=teacher,
     )
 
-    # Still produces a tutor message via fallback text + still routes to opt-in
+    # Still routes to opt-in turn even though teacher errored.
     assert result["assessment_turn"] == 1
     assert result["pending_user_choice"]["kind"] == "opt_in"
     msgs = result["messages"]
     assert msgs[-1]["role"] == "tutor"
-    assert "clinical" in msgs[-1]["content"].lower() or "wrap" in msgs[-1]["content"].lower()
+    assert msgs[-1]["metadata"]["mode"] == "opt_in"
+    # M-FB: no templated fallback text on LLM failure — content is empty
+    # so the frontend renders an error card.
+    assert msgs[-1]["content"] == ""
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -427,9 +468,15 @@ def test_opt_in_falls_back_when_teacher_errors():
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def test_reveal_close_fallback_includes_locked_answer():
-    """If teacher errors, the deterministic fallback should still surface
-    the locked answer (so student sees what they missed)."""
+def test_reveal_close_does_not_render_text_in_assessment_v2():
+    """F8 (POST_DEMO_FIXES.md, 2026-05-06): post-B4/M1 the close text is
+    rendered by memory_update_node, not assessment_v2. The reveal-close
+    path here just sets close_reason + locks the locked_answer for the
+    downstream close LLM to surface. Renamed from
+    `test_reveal_close_fallback_includes_locked_answer` because the
+    'fallback' concept doesn't apply — assessment_v2 never calls
+    teacher.draft on this path.
+    """
     state = _state(student_reached_answer=False)
     teacher = MagicMock()
     teacher.draft.side_effect = RuntimeError("teacher down")
@@ -439,10 +486,10 @@ def test_reveal_close_fallback_includes_locked_answer():
         retriever=MagicMock(), dean_v2=MagicMock(), teacher_v2=teacher,
     )
 
-    msgs = result["messages"]
-    assert msgs[-1]["role"] == "tutor"
-    # Either the locked_question or locked_answer should appear
-    content = msgs[-1]["content"]
-    assert (state["locked_answer"] in content
-            or state["locked_question"] in content)
-    assert msgs[-1]["metadata"]["is_closing"] is True
+    # No tutor message appended on this path — memory_update_node owns it.
+    assert result["messages"] == state["messages"]
+    # close_reason + tier set so memory_update can produce the right close.
+    assert result["close_reason"] in {"hints_exhausted", "tutoring_cap"}
+    assert result["clinical_mastery_tier"] == "not_assessed"
+    # teacher.draft was never called (per the new no-render contract).
+    teacher.draft.assert_not_called()

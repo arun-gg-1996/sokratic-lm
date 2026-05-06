@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 
 from backend.api.users import known_student_id
@@ -205,7 +205,7 @@ def _strip_internal(value: Any) -> Any:
 
 
 @router.post("/session/start", response_model=StartSessionResponse)
-async def start_session(req: StartSessionRequest):
+async def start_session(req: StartSessionRequest, request: Request):
     # Defensive: reject empty / whitespace / unknown student_ids before
     # they reach mem0 and create a dangling namespace. The frontend
     # always sets student_id from listUsers().id, so a value here that
@@ -222,6 +222,9 @@ async def start_session(req: StartSessionRequest):
                 "GET /api/users."
             ),
         )
+    auth_user = str(getattr(request.state, "auth_user", "") or "")
+    if auth_user and sid != auth_user:
+        raise HTTPException(status_code=403, detail="Cannot start a session for another user")
 
     thread_id = f"{sid}_{uuid.uuid4().hex[:8]}"
     # L21: insert session row at session start (status='in_progress',
@@ -389,8 +392,16 @@ async def start_session(req: StartSessionRequest):
     debug_payload["off_topic_threshold"] = int(getattr(cfg.dean, "off_topic_threshold", 4))
     debug_payload["total_low_effort_turns"] = int(state.get("total_low_effort_turns", 0) or 0)
     debug_payload["total_off_topic_turns"] = int(state.get("total_off_topic_turns", 0) or 0)
+    # F6 (POST_DEMO_FIXES.md, 2026-05-06): non-resetting help_abuse counter.
+    debug_payload["total_help_abuse_turns"] = int(state.get("total_help_abuse_turns", 0) or 0)
     debug_payload["clinical_low_effort_count"] = int(state.get("clinical_low_effort_count", 0) or 0)
     debug_payload["clinical_off_topic_count"] = int(state.get("clinical_off_topic_count", 0) or 0)
+    # N3 (POST_DEMO_FIXES.md, 2026-05-06): clinical phase mirror of
+    # tutoring's help_abuse + the three non-resetting totals.
+    debug_payload["clinical_help_abuse_count"] = int(state.get("clinical_help_abuse_count", 0) or 0)
+    debug_payload["total_clinical_help_abuse_turns"] = int(state.get("total_clinical_help_abuse_turns", 0) or 0)
+    debug_payload["total_clinical_low_effort_turns"] = int(state.get("total_clinical_low_effort_turns", 0) or 0)
+    debug_payload["total_clinical_off_topic_turns"] = int(state.get("total_clinical_off_topic_turns", 0) or 0)
     debug_payload["clinical_strike_threshold"] = int(getattr(cfg.dean, "clinical_strike_threshold", 2))
     # M1 — same lifecycle flags as chat.py debug_payload so the frontend
     # can read them consistently from session-start AND from per-turn

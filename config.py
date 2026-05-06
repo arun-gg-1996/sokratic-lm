@@ -42,6 +42,20 @@ def _load() -> dict:
 
     merged = _deep_merge(base, domain_cfg)
 
+    # M-T2 (POST_DEMO_FIXES.md, 2026-05-06): substitute the canonical
+    # `{{architecture}}` token with the architecture_block content.
+    # Any prompt that embeds `{{architecture}}` in its text gets the
+    # single source of truth at load time. Updates to the architecture
+    # block propagate automatically — no per-prompt edits needed when
+    # the system flow changes.
+    prompts = merged.get("prompts") or {}
+    arch_block = (prompts.get("architecture_block") or "").rstrip()
+    if arch_block:
+        for k, v in list(prompts.items()):
+            if isinstance(v, str) and "{{architecture}}" in v:
+                prompts[k] = v.replace("{{architecture}}", arch_block)
+        merged["prompts"] = prompts
+
     # Optional: load evaluation prompts from a sibling yaml so the
     # quality scorer can read them via cfg.eval_prompts.<key>.
     # This file is OPTIONAL — production runs without the eval scorer

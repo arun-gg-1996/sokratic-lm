@@ -47,7 +47,9 @@ def test_prompt_parity_teacher_and_dean_wrappers():
         ("dean_quality_check_assessment_static", "dean_quality_check_assessment_delta"),
         ("dean_clinical_turn_static", "dean_clinical_turn_delta"),
         ("dean_assessment_static", "dean_assessment_delta"),
-        ("dean_memory_summary", "dean_memory_summary_delta"),
+        # M-T3 (POST_DEMO_FIXES.md, 2026-05-06): dean_memory_summary +
+        # _delta removed from base.yaml. Replaced by the L4 Haiku
+        # observation extractor in memory/observation_extractor.py.
     ]
 
     for static_key, delta_key in teacher_pairs:

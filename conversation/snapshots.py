@@ -58,13 +58,31 @@ def _ensure_debug_lists(state: dict) -> tuple[list[dict], list[dict]]:
 
 
 def _common_counter_snapshot(state: dict) -> dict[str, Any]:
-    """Snapshot generic counters that apply to both student and tutor turns."""
+    """Snapshot generic counters that apply to both student and tutor turns.
+
+    R8 (2026-05-06 demo-feedback): clinical-phase counters AND F6
+    cumulative totals were missing from per-turn snapshots, so the
+    JSON export couldn't show whether they ticked. Surfaces all six
+    consecutive + cumulative fields plus the N3 clinical mirror set.
+    """
     return {
         "hint_level": int(state.get("hint_level", 0) or 0),
         "consecutive_low_effort": int(state.get("consecutive_low_effort_count", 0) or 0),
         "help_abuse_count": int(state.get("help_abuse_count", 0) or 0),
         "off_topic_count": int(state.get("off_topic_count", 0) or 0),
+        # F6 cumulative (non-resetting) totals
+        "total_low_effort_turns": int(state.get("total_low_effort_turns", 0) or 0),
+        "total_off_topic_turns": int(state.get("total_off_topic_turns", 0) or 0),
+        "total_help_abuse_turns": int(state.get("total_help_abuse_turns", 0) or 0),
+        # N3 clinical-phase mirror counters
+        "clinical_help_abuse_count": int(state.get("clinical_help_abuse_count", 0) or 0),
+        "clinical_off_topic_count": int(state.get("clinical_off_topic_count", 0) or 0),
+        "clinical_low_effort_count": int(state.get("clinical_low_effort_count", 0) or 0),
+        "total_clinical_help_abuse_turns": int(state.get("total_clinical_help_abuse_turns", 0) or 0),
+        "total_clinical_off_topic_turns": int(state.get("total_clinical_off_topic_turns", 0) or 0),
+        "total_clinical_low_effort_turns": int(state.get("total_clinical_low_effort_turns", 0) or 0),
         "phase": str(state.get("phase", "") or ""),
+        "assessment_turn": int(state.get("assessment_turn", 0) or 0),
     }
 
 

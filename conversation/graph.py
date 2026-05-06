@@ -64,8 +64,7 @@ from conversation.lifecycle_v2 import (
     after_dean,
     after_assessment,
 )
-from conversation.nodes_v2 import dean_node_v2
-from conversation.assessment_v2 import assessment_node_v2
+from conversation.nodes_v2 import dean_node_v2, assessment_node_v2
 
 # V1 agents — retained until the D1-bootstrap migration ports the 4
 # legacy dean methods used by topic_lock_v2 (and the teacher callback

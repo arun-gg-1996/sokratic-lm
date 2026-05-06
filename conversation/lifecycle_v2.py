@@ -97,29 +97,71 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
         try:
             from memory.sqlite_store import SQLiteStore
             store = SQLiteStore()
-            # Most recent completed session — surface as "session summary"
-            recent = store.list_sessions(student_id, limit=1, completed_only=True)
-            for s in recent:
+            # A2 (POST_DEMO_FIXES.md, 2026-05-06): pull up to 3 recent
+            # completed sessions instead of just 1 so the rapport LLM can
+            # reference recency naturally and prioritize the most recent
+            # subtopic (per the user's priority: same subtopic > parent
+            # section > chapter). The prompt's "reference ONE prior" rule
+            # still applies — the LLM picks the best one, but now it has
+            # a richer context to choose from.
+            recent = store.list_sessions(student_id, limit=3, completed_only=True)
+            recent_topics_seen: set[str] = set()
+            for idx, s in enumerate(recent):
                 topic = (
                     s.get("locked_subsection_path")
                     or s.get("locked_topic_path")
                     or ""
                 )
-                if not topic:
+                if not topic or topic in recent_topics_seen:
                     continue
+                recent_topics_seen.add(topic)
                 tier = s.get("mastery_tier") or "not_assessed"
+                # The most-recent session gets the canonical "[Recent session]"
+                # prefix so the rapport prompt's "reference ONE specific
+                # past topic" instruction can latch onto it deterministically
+                # (per F11). Older completed sessions get a softer
+                # "[Earlier session]" prefix — the LLM can mention them
+                # only as alternatives ("...or something we touched earlier").
+                prefix = "[Recent session]" if idx == 0 else "[Earlier session]"
                 past_memories.append({
                     "memory": (
-                        f"[Recent session] Last covered: {topic}. "
+                        f"{prefix} Covered: {topic}. "
                         f"Mastery tier: {tier}. "
                         f"Reach: {'yes' if s.get('reach_status') else 'partial/no'}."
                     )
                 })
-            # Open threads — sessions with no ended_at OR unresolved-status
+            # A2: also expose a count cue so the LLM can naturally scale
+            # the language ("you've worked through 5 topics" vs "you've
+            # got one prior session"). Pull total completed count, not
+            # just the recent 3.
+            try:
+                all_completed = store.list_sessions(student_id, limit=100, completed_only=True)
+                total_completed = len(all_completed)
+                if total_completed > 0:
+                    past_memories.append({
+                        "memory": (
+                            f"[Session history] Student has completed "
+                            f"{total_completed} prior tutoring session"
+                            f"{'s' if total_completed != 1 else ''}."
+                        )
+                    })
+            except Exception:
+                pass
+            # Open threads — sessions with no ended_at OR unresolved-status.
+            # F11 (POST_DEMO_FIXES.md, 2026-05-06): added `ended_by_student`
+            # so a student who clicks End session mid-tutoring also surfaces
+            # as an open thread on the next rapport. Without it, the
+            # rapport opener fell back to generic "what topic?" because
+            # the previous session's exit-intent was filtered out.
             open_sessions = store.list_sessions(
                 student_id,
                 limit=3,
-                status=("abandoned_no_lock", "ended_off_domain", "ended_turn_limit"),
+                status=(
+                    "abandoned_no_lock",
+                    "ended_off_domain",
+                    "ended_turn_limit",
+                    "ended_by_student",
+                ),
             )
             in_progress = store.list_sessions(student_id, limit=3, status="in_progress")
             for s in (in_progress + open_sessions)[:3]:
@@ -402,6 +444,14 @@ def _draft_close_message(state: TutorState, close_reason: str) -> dict:
         m for m in (state.get("messages") or [])
         if (m or {}).get("role") == "student"
     ]
+    # F5b (POST_DEMO_FIXES.md, 2026-05-06): include clinical_target +
+    # locked_answer in the close-LLM context. The PROMPT decides whether
+    # to surface them: clinical_target IS revealed on clinical_cap (per
+    # design); locked_answer is NOT revealed on tutoring no-reach
+    # closes (Socratic discipline — student finds it via My Mastery →
+    # past session if they want).
+    _clinical_target = str(state.get("clinical_target") or "").strip()
+    _locked_answer = str(state.get("locked_answer") or "").strip()
     metrics_line = (
         f"close_reason: {close_reason}\n"
         f"final_hint_level: {int(state.get('hint_level', 0) or 0)}/3\n"
@@ -413,6 +463,8 @@ def _draft_close_message(state: TutorState, close_reason: str) -> dict:
         f"total_off_topic_turns: {int(state.get('total_off_topic_turns', 0) or 0)}\n"
         f"student_reached_answer: {bool(state.get('student_reached_answer', False))}\n"
         f"student_message_count: {len(_student_msgs)}\n"
+        f"locked_answer: {_locked_answer or '(none)'}\n"
+        f"clinical_target: {_clinical_target or '(none)'}\n"
     )
     plan = TurnPlan(
         scenario=f"close:{close_reason}",
@@ -638,12 +690,71 @@ def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
         "result": transcript_status,
     })
 
-    # ── M1: no-save bucket → skip all persistence ─────────────────────────
+    # ── M1: no-save bucket → skip mem0 / mastery, but STILL terminate SQLite ──
+    # Codex Sim 7 fix: previously we returned without writing ended_at, leaving
+    # the session row at status=in_progress with a dangling ended_at. The
+    # transcript snapshot was already written above (line 635), so analysis
+    # pages can still render, but the session was never marked terminal in
+    # SQLite — which polluted /sessions lists and broke the
+    # "no in_progress rows after a closed thread" invariant.
+    #
+    # Fix: write a minimal end_session call with the appropriate terminal
+    # status (no mastery score, no key_takeaways — those belong to the save
+    # bucket). The transcript already lives in the snapshot file.
     if close_reason in _NO_SAVE_REASONS:
+        no_save_status = (
+            "ended_by_student"
+            if close_reason == "exit_intent"
+            else "ended_off_domain"
+        )
+        sqlite_no_save_status = "skipped_no_thread_id"
+        thread_id = state.get("thread_id") or state.get("debug", {}).get("thread_id")
+        if thread_id:
+            try:
+                from memory.sqlite_store import (
+                    SQLiteStore,
+                    normalize_subsection_path,
+                )
+                store = SQLiteStore()
+                # F9 (POST_DEMO_FIXES.md): preserve locked_topic metadata
+                # on no-save closes so the analysis page (M5) and the
+                # repeat-topic detector (F11/A2) can still find these
+                # sessions by subsection. Mastery score + key_takeaways
+                # remain skipped per M1 — only the WHAT-AND-WHERE
+                # metadata gets persisted, not the HOW-IT-WENT signal.
+                _locked = state.get("locked_topic") or {}
+                if not _locked:
+                    _locked = (state.get("debug") or {}).get(
+                        "locked_topic_snapshot"
+                    ) or {}
+                _legacy_path = str(_locked.get("path") or "")
+                _canonical_path = (
+                    normalize_subsection_path(_legacy_path)
+                    if _legacy_path else ""
+                )
+                store.end_session(
+                    thread_id,
+                    status=no_save_status,
+                    locked_topic_path=_canonical_path or None,
+                    locked_subsection_path=_canonical_path or None,
+                    locked_question=state.get("locked_question") or None,
+                    locked_answer=state.get("locked_answer") or None,
+                    # Stamp the close_reason in key_takeaways so the
+                    # analysis page can render WHY it ended without
+                    # the LLM-generated demonstrated/needs_work pair.
+                    key_takeaways={"close_reason": close_reason},
+                )
+                sqlite_no_save_status = (
+                    f"sqlite_no_save_end ok status={no_save_status} "
+                    f"path_set={bool(_canonical_path)}"
+                )
+            except Exception as e:
+                sqlite_no_save_status = f"error: {type(e).__name__}: {str(e)[:80]}"
         state["debug"]["turn_trace"].append({
             "wrapper": "memory_update_node.no_save",
             "close_reason": close_reason,
-            "result": "skipped_save_per_M1_design",
+            "result": "skipped_mem0_and_mastery_per_M1_design",
+            "sqlite_status": sqlite_no_save_status,
         })
         return {
             "phase": "memory_update",
@@ -911,6 +1022,37 @@ def _persist_session_end_to_sqlite(
     score = float(judgment["mastery"]) if judgment and "mastery" in judgment else None
     tier = score_to_tier(score) if score is not None else "not_assessed"
 
+    # F4 (POST_DEMO_FIXES.md, 2026-05-06): derive clinical_mastery_tier
+    # + clinical_score from clinical_state. Previously these were
+    # hardcoded "not_assessed" / None below, which meant a successful
+    # clinical bonus didn't surface in the analysis page or mastery
+    # rollup. Score derivation:
+    #   clinical_completed=False  → not_assessed, None (no clinical ran)
+    #   clinical_state="correct"           → 0.85, proficient
+    #   clinical_state="partial_correct"   → 0.55, developing
+    #   clinical_state="incorrect"         → 0.20, needs_review
+    # Independent of judgment["mastery"] (which is the overall score
+    # for the locked subsection — clinical is a per-attempt signal).
+    clinical_completed = bool(state.get("clinical_completed", False))
+    clinical_state_val = str(state.get("clinical_state") or "").lower()
+    if not clinical_completed:
+        clinical_score: float | None = None
+        clinical_tier = "not_assessed"
+    elif clinical_state_val == "correct":
+        clinical_score = 0.85
+        clinical_tier = score_to_tier(clinical_score)
+    elif clinical_state_val == "partial_correct":
+        clinical_score = 0.55
+        clinical_tier = score_to_tier(clinical_score)
+    elif clinical_state_val == "incorrect":
+        clinical_score = 0.20
+        clinical_tier = score_to_tier(clinical_score)
+    else:
+        # clinical_completed=True but no clinical_state set — defensive
+        # fallback (shouldn't happen in current code paths).
+        clinical_score = None
+        clinical_tier = "not_assessed"
+
     # --- Write the session row + upsert subsection_mastery ---
     try:
         store = SQLiteStore()
@@ -930,9 +1072,9 @@ def _persist_session_end_to_sqlite(
             reach_status=bool(reach) if reach is not None else None,
             mastery_tier=tier,
             core_mastery_tier=tier,
-            clinical_mastery_tier="not_assessed",
+            clinical_mastery_tier=clinical_tier,
             core_score=score,
-            clinical_score=None,
+            clinical_score=clinical_score,
             hint_level_final=int(state.get("hint_level") or 0),
             turn_count=turn_count,
         )

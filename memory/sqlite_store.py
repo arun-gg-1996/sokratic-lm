@@ -34,7 +34,7 @@ SQLiteStore()                               picks cfg.domain.retrieval_domain
   .get_session(thread_id) → dict | None
   .list_sessions(student_id, *, limit=20, status=None) → list[dict]
   .upsert_subsection_mastery(student_id, subsection_path, fresh_score, outcome,
-                             session_at=None, alpha=0.6) → dict
+                             session_at=None, alpha=0.7) → dict
   .get_subsection_mastery(student_id, subsection_path) → dict | None
   .list_subsection_mastery(student_id) → list[dict]
   .student_stats(student_id) → dict (counts: total / completed / unfinished /
@@ -457,11 +457,17 @@ class SQLiteStore:
         outcome: str,
         *,
         session_at: Optional[str] = None,
-        alpha: float = 0.6,
+        alpha: float = 0.7,
     ) -> dict:
         """Apply EWMA blend per L3: new = alpha * fresh + (1 - alpha) * prior.
 
         First touch (no prior row) inserts with new = fresh.
+
+        F14 (POST_DEMO_FIXES.md, 2026-05-06): bumped alpha 0.6 → 0.7 so
+        the current session contributes more. Reduces mastery dilution
+        from non-reach sessions that we still save (per user decision
+        to keep saving tutoring_cap / hints_exhausted for the mem0 +
+        SQLite signal value).
         """
         if outcome not in {"reached", "partial", "not_reached"}:
             raise ValueError(f"Invalid outcome {outcome!r}")

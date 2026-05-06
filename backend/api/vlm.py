@@ -30,7 +30,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/vlm", tags=["vlm"])
@@ -69,6 +69,7 @@ def _route_decision(result: dict) -> str:
 
 @router.post("/upload", response_model=VlmUploadResponse)
 async def upload_image(
+    request: Request,
     thread_id: str = Form(...),
     file: UploadFile = File(...),
 ) -> VlmUploadResponse:
@@ -89,6 +90,9 @@ async def upload_image(
     tid = (thread_id or "").strip()
     if not tid:
         raise HTTPException(status_code=400, detail="thread_id required")
+    auth_user = str(getattr(request.state, "auth_user", "") or "")
+    if auth_user and not tid.startswith(f"{auth_user}_"):
+        raise HTTPException(status_code=403, detail="Forbidden")
 
     suffix = Path(file.filename or "upload.png").suffix.lower() or ".png"
     if suffix not in {".png", ".jpg", ".jpeg", ".webp", ".gif"}:

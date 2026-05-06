@@ -36,11 +36,19 @@ def test_modes_match_l46_spec():
     clinical_natural_close) added to fix B2 false-negative closeout
     where honest_close was being reused for paths where the student
     actually reached the answer / engaged with the clinical bonus.
+
+    F8/full-sweep (POST_DEMO_FIXES.md, 2026-05-06): updated to include
+    M1's unified `close` mode, BLOCK 9 (S3) `soft_reset`, and BLOCK 11
+    (REAL-Q4) `multichoice_rescue` — all added to MODES post-L46 but
+    not reflected in this assertion.
     """
     assert MODES == {
         "socratic", "clinical", "rapport", "opt_in",
         "redirect", "nudge", "confirm_end", "honest_close",
         "reach_close", "clinical_natural_close",
+        "close",                # M1 unified close
+        "soft_reset",           # BLOCK 9 (S3)
+        "multichoice_rescue",   # BLOCK 11 (REAL-Q4)
     }
 
 

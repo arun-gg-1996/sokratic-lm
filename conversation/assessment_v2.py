@@ -41,8 +41,10 @@ from conversation.turn_plan import TurnPlan
 # Constants
 # ─────────────────────────────────────────────────────────────────────────────
 
-# L67 — clinical phase has its own 7-turn budget, separate from tutoring
-CLINICAL_TURN_CAP = 7
+# L67 — clinical phase has its own turn budget, separate from tutoring.
+# N3 (POST_DEMO_FIXES.md, 2026-05-06): bumped 7 → 15 per user request —
+# clinical loop needs more room for back-and-forth on application reasoning.
+CLINICAL_TURN_CAP = 15
 
 # Sentinel labels used in pending_user_choice for clinical opt-in
 OPT_IN_OPTIONS = ["Yes", "No"]
@@ -349,7 +351,8 @@ def _enter_clinical_phase(
     plan = getattr(plan_result, "turn_plan", None) if plan_result else None
     if plan is None or plan.mode != "clinical" or not plan.clinical_scenario:
         # Dean either failed to plan or didn't switch to clinical mode.
-        # Fall back to a deterministic neutral close — never block session-end.
+        # Do not fake a deterministic clinical case here. Route to a visible
+        # close so the failure is honest rather than silently blank.
         state["debug"]["turn_trace"].append({
             "wrapper": "assessment_v2.clinical_scenario_gen_fallback",
             "reason": "dean_did_not_emit_clinical_plan",
@@ -358,12 +361,21 @@ def _enter_clinical_phase(
         return _render_reach_close(state, teacher_v2, messages=messages)
 
     # Render the first clinical question via TeacherV2.
-    inputs = _teacher_inputs(state, locked, chunks=chunks)
+    # N4 (POST_DEMO_FIXES.md, 2026-05-06): mark as first clinical turn
+    # so Teacher's prompt opens with a brief bridging phrase before
+    # presenting the scenario.
+    inputs = _teacher_inputs(state, locked, chunks=chunks, is_first_clinical_turn=True)
     text = _safe_teacher_draft(
         teacher_v2, plan, inputs,
         fallback_text=plan.clinical_scenario,
         trace=state["debug"]["turn_trace"],
     )
+    if not text:
+        text = _render_dean_clinical_scenario(plan)
+        state["debug"]["turn_trace"].append({
+            "wrapper": "assessment_v2.clinical_entry_text_fallback",
+            "reason": "teacher_returned_empty_clinical_entry_using_dean_scenario",
+        })
 
     messages.append({
         "role": "tutor",
@@ -404,6 +416,107 @@ def _enter_clinical_phase(
     }
 
 
+def _render_dean_clinical_scenario(plan: TurnPlan) -> str:
+    scenario = (plan.clinical_scenario or "").strip()
+    target = (plan.clinical_target or "").strip()
+    if scenario and target:
+        return f"{scenario}\n\nClinical question: {target}"
+    if scenario:
+        return f"{scenario}\n\nClinical question: how would you apply the concept here?"
+    return ""
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# N3 — clinical preflight (telemetry-only counters)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def _run_clinical_preflight(state: dict, student_message: str, locked: dict) -> None:
+    """N3 (POST_DEMO_FIXES.md, 2026-05-06): Option 1 — run the unified
+    intent classifier on every clinical turn so clinical-phase counters
+    mirror tutoring exactly.
+
+    UNLIKE tutoring's `run_preflight`:
+      * counter increments go to `clinical_*_count` and `total_clinical_*_turns`,
+        NOT the regular tutoring counters
+      * NO termination effects — verdicts are read for telemetry only;
+        the natural CLINICAL_TURN_CAP is still the only loop terminator
+      * NO escalation effects — `should_force_hint_advance` /
+        `should_end_session` are ignored
+
+    Cost: one Haiku call per clinical turn (~1.5s). Per the user
+    decision logged in POST_DEMO_FIXES.md "Resume state".
+
+    Mutates state in place; returns None. Fails open on any error
+    (no counter movement on classifier failure).
+    """
+    if not student_message or not student_message.strip():
+        return
+    try:
+        from conversation import preflight_classifier as _PC
+        # Build last 2 (tutor, student) pairs from history for context.
+        msgs = list(state.get("messages") or [])
+        history_pairs: list[tuple[str, str]] = []
+        cur_tutor = ""
+        for m in msgs[-8:]:
+            role = (m or {}).get("role") or ""
+            content = str((m or {}).get("content") or "").strip()
+            if role == "tutor":
+                cur_tutor = content
+            elif role == "student" and cur_tutor:
+                history_pairs.append((cur_tutor, content))
+                cur_tutor = ""
+        history_pairs = history_pairs[-2:]
+        locked_subsection = ""
+        if locked:
+            locked_subsection = (
+                locked.get("subsection") or locked.get("section") or ""
+            )
+        result = _PC.haiku_intent_classify_unified(
+            student_message,
+            history_pairs=history_pairs,
+            locked_subsection=locked_subsection,
+            locked_question=str(state.get("locked_question") or ""),
+            phase="assessment",  # signal clinical context to the classifier
+        )
+    except Exception as e:
+        state["debug"]["turn_trace"].append({
+            "wrapper": "assessment_v2.clinical_preflight.error",
+            "error": f"{type(e).__name__}: {str(e)[:120]}",
+        })
+        return
+
+    verdict = str(result.get("verdict") or "on_topic_engaged").lower()
+    if verdict == "help_abuse":
+        state["clinical_help_abuse_count"] = int(state.get("clinical_help_abuse_count", 0) or 0) + 1
+        state["total_clinical_help_abuse_turns"] = int(state.get("total_clinical_help_abuse_turns", 0) or 0) + 1
+    elif verdict == "off_domain":
+        state["clinical_off_topic_count"] = int(state.get("clinical_off_topic_count", 0) or 0) + 1
+        state["total_clinical_off_topic_turns"] = int(state.get("total_clinical_off_topic_turns", 0) or 0) + 1
+    elif verdict == "low_effort":
+        state["clinical_low_effort_count"] = int(state.get("clinical_low_effort_count", 0) or 0) + 1
+        state["total_clinical_low_effort_turns"] = int(state.get("total_clinical_low_effort_turns", 0) or 0) + 1
+    else:
+        # on_topic_engaged or opt_in_* → reset consecutive counters
+        # (mirrors tutoring's M7 decay semantics, but we only reset the
+        # clinical_* fields).
+        state["clinical_help_abuse_count"] = 0
+        state["clinical_low_effort_count"] = 0
+        # Off-topic uses M7 decay (decrement by 1, min 0) so a single
+        # old misclassification doesn't accumulate.
+        state["clinical_off_topic_count"] = max(
+            0, int(state.get("clinical_off_topic_count", 0) or 0) - 1,
+        )
+
+    state["debug"]["turn_trace"].append({
+        "wrapper": "assessment_v2.clinical_preflight",
+        "verdict": verdict,
+        "clinical_help_abuse_count": state.get("clinical_help_abuse_count", 0),
+        "clinical_off_topic_count": state.get("clinical_off_topic_count", 0),
+        "clinical_low_effort_count": state.get("clinical_low_effort_count", 0),
+    })
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # L72 — clinical loop turn (reuses run_turn from retry_orchestrator)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -439,6 +552,37 @@ def _run_clinical_turn(
         "content": _latest_student(messages),
     })
 
+    latest_student_msg = _latest_student(messages)
+    if clinical_turn_count >= 1 and _clinical_response_hits_locked_target(
+        state, latest_student_msg,
+    ):
+        state["clinical_turn_count"] = clinical_turn_count
+        state["clinical_completed"] = True
+        state["clinical_state"] = "correct"
+        state["clinical_confidence"] = 0.9
+        state["clinical_history"] = clinical_history
+        state["close_reason"] = "reach_full"
+        state["debug"]["turn_trace"].append({
+            "wrapper": "assessment_v2.clinical_target_reached",
+            "clinical_turn": clinical_turn_count,
+            "reason": "student_response_contains_locked_answer_or_alias",
+        })
+        return {
+            "messages": messages,
+            "assessment_turn": 3,
+            "phase": "memory_update",
+            "clinical_opt_in": True,
+            "clinical_completed": True,
+            "clinical_state": "correct",
+            "clinical_confidence": 0.9,
+            "clinical_turn_count": clinical_turn_count,
+            "clinical_max_turns": CLINICAL_TURN_CAP,
+            "clinical_history": clinical_history,
+            "close_reason": "reach_full",
+            "pending_user_choice": {},
+            "debug": state["debug"],
+        }
+
     # L67 — cap check BEFORE running the turn so we don't burn an extra LLM
     # call on a turn that would just close anyway.
     if clinical_turn_count > CLINICAL_TURN_CAP:
@@ -453,13 +597,40 @@ def _run_clinical_turn(
         # — the mastery scorer at memory_update derives it from history.
         return _render_clinical_close(state, teacher_v2, messages=messages)
 
+    # N3 (POST_DEMO_FIXES.md, 2026-05-06): Option 1 — clinical phase
+    # now runs the unified intent classifier on every clinical turn so
+    # `clinical_help_abuse_count`, `clinical_low_effort_count`,
+    # `clinical_off_topic_count` (plus `total_clinical_*_turns`) tick
+    # in lockstep with tutoring's counters. This OVERRIDES the original
+    # L70 design (telemetry-only, no LLM cost in clinical) per the user
+    # decision logged in POST_DEMO_FIXES.md "Resume state" block. We
+    # still HONOR the L70 termination semantics: clinical does NOT
+    # terminate on help_abuse strike 4 — only the natural CLINICAL_TURN_CAP
+    # ends the loop. Counter increments here are PURELY for visibility
+    # in the debug payload + Sidebar mirror.
+    _run_clinical_preflight(state, latest_student_msg, locked)
+
+    # R8 (2026-05-06 demo-feedback): record per-turn snapshot during
+    # clinical phase so the JSON export captures clinical counter
+    # ticks. Without this the snapshots stop at the tutoring→assessment
+    # transition and clinical_off_topic_count never appears in the
+    # exported per_turn_snapshots list.
+    try:
+        from conversation.snapshots import snapshot_student_turn as _snap_st_clin
+        _snap_st_clin(
+            state,
+            intent="clinical_turn",
+            intent_evidence=(latest_student_msg or "")[:120],
+        )
+    except Exception:
+        # Defensive: snapshot is observability-only; never break clinical
+        # flow on a snapshot failure.
+        pass
+
     # L72 — call the same retry orchestrator used for tutoring. Dean
     # plans first (mints a fresh clinical TurnPlan continuing the scenario),
     # then run_turn drives Teacher draft + 4 Haiku checks + 1 Dean replan
-    # + safe-generic-probe fallback (L50/L62). Pre-flight is owned by
-    # dean_node_v2 in tutoring; in the clinical loop we skip pre-flight
-    # entirely per L70 (counters ticking is informational; the natural
-    # 7-turn cap (L67) is the only termination trigger).
+    # + safe-generic-probe fallback (L50/L62).
     state["debug"]["turn_trace"].append({
         "wrapper": "assessment_v2.run_turn_start",
         "clinical_turn": clinical_turn_count,
@@ -797,9 +968,17 @@ def _teacher_inputs(
     locked: dict,
     *,
     chunks: Optional[list[dict]] = None,
+    is_first_clinical_turn: bool = False,
 ) -> TeacherPromptInputs:
     """Build TeacherPromptInputs from state. Defaults sourced from
-    state where possible; safe fallbacks otherwise."""
+    state where possible; safe fallbacks otherwise.
+
+    N4 (POST_DEMO_FIXES.md, 2026-05-06): callers pass
+    `is_first_clinical_turn=True` from `_enter_clinical_phase` so the
+    Teacher's first clinical-mode turn opens with a brief bridging
+    phrase before presenting the scenario. Subsequent clinical turns
+    leave the flag at its False default.
+    """
     # L78 — generic fallbacks so a missing cfg.domain.* slot still yields
     # a parseable prompt; production callers always override via cfg.
     domain_name = "this subject"
@@ -824,6 +1003,7 @@ def _teacher_inputs(
         time_of_day=_time_of_day(state),
         snapshots=list(_debug_obj.get("per_turn_snapshots", []) or []),
         system_events=list(_debug_obj.get("system_events", []) or []),
+        is_first_clinical_turn=is_first_clinical_turn,
     )
 
 
@@ -958,6 +1138,22 @@ def _last_scenario_from_history(state: dict) -> str:
         if isinstance(entry, dict) and entry.get("scenario"):
             return str(entry["scenario"])
     return ""
+
+
+def _clinical_response_hits_locked_target(state: dict, student_msg: str) -> bool:
+    """Fast completion gate for the first clinical application answer.
+
+    The clinical scenario is generated from the same locked concept. If the
+    student explicitly uses the locked answer or an alias in their clinical
+    explanation, the bonus objective is satisfied and the phase can close.
+    """
+    txt = re.sub(r"\s+", " ", (student_msg or "").strip().lower())
+    if not txt:
+        return False
+    terms = [str(state.get("locked_answer") or "").strip().lower()]
+    terms.extend(str(a).strip().lower() for a in state.get("locked_answer_aliases", []) or [])
+    terms = [t for t in terms if t]
+    return any(term in txt for term in terms)
 
 
 _YES_TOKENS = {

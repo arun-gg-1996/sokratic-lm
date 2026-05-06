@@ -24,8 +24,37 @@ from retrieval.topic_mapper_llm import TopicMapperResult, map_topic
 from retrieval.topic_matcher import TopicMatch, get_topic_matcher
 
 
-PRELOCK_CAP = 7
+# F13 (POST_DEMO_FIXES.md, 2026-05-06): bumped 7 → 10 so students have
+# more room to find their topic before guided-pick cards fire. Pairs
+# with the progressive nudge in _prelock_nudge_intro below.
+PRELOCK_CAP = 10
 GUIDED_PICK_COUNT = 6
+# F13 — nudge thresholds (relative to PRELOCK_CAP):
+PRELOCK_WARN_AT = 7   # start adding "let's pick a topic soon" to copy
+PRELOCK_URGENT_AT = 9  # start adding "we'll need to wrap if no pick"
+
+
+def _prelock_nudge_intro(base: str, prelock_count: int) -> str:
+    """F13 — graduated nudge appended to pre-lock copy as count climbs.
+
+    Empty append for early turns (1-6) — let the student explore.
+    At PRELOCK_WARN_AT: gentle "we should land on something" hint.
+    At PRELOCK_URGENT_AT: explicit "next try or I'll show topic cards"
+    so the cap doesn't catch them by surprise.
+    """
+    if prelock_count < PRELOCK_WARN_AT:
+        return base
+    if prelock_count < PRELOCK_URGENT_AT:
+        return (
+            base
+            + " (We've been hunting for a topic for a few turns now — "
+            "give me a more specific anatomy concept and we'll lock in.)"
+        )
+    return (
+        base
+        + " (Heads up: a couple more attempts and I'll switch to a "
+        "topic-pick card so we can get started.)"
+    )
 NORMAL_CARD_COUNT = 3
 GIVE_UP_VALUE = "__sokratic_give_up__"
 TOPIC_MAPPER_MODEL = "claude-haiku-4-5-20251001"
@@ -234,7 +263,10 @@ def run_topic_lock_v2(
             state["rejected_topic_paths"] = rejected
             messages.append({
                 "role": "tutor",
-                "content": "Ok, what topic would you like to work on instead?",
+                "content": _prelock_nudge_intro(
+                    "Ok, what topic would you like to work on instead?",
+                    prelock_count,
+                ),
                 "phase": "tutoring",
             })
             return _base_update(
@@ -358,8 +390,9 @@ def run_topic_lock_v2(
         fire_activity(
         "Showing a guided picker",
         detail=(
-            "Hit the 7-attempt prelock cap. Surfacing the chapter-level "
-            "TOC so the student can pick a topic directly instead of typing."
+            f"Hit the {PRELOCK_CAP}-attempt prelock cap. Surfacing the "
+            "chapter-level TOC so the student can pick a topic directly "
+            "instead of typing."
         ),
     )
         return _render_guided_pick(state, messages, retriever, latest_student, prelock_count)
@@ -401,7 +434,10 @@ def run_topic_lock_v2(
         return _render_confirm(state, messages, topics[0], result, prelock_count)
 
     if decision == "show_top_matches" and topics:
-        intro = "I found a few close matches. Which one did you mean?"
+        intro = _prelock_nudge_intro(
+            "I found a few close matches. Which one did you mean?",
+            prelock_count,
+        )
         return _render_topic_cards(state, messages, topics[:NORMAL_CARD_COUNT], intro, prelock_count)
 
     return _render_refuse_cards(
@@ -573,6 +609,21 @@ def _lock_topic(
                 "wrapper": "topic_lock_v2.mem0_carryover_seeded",
                 "carryover_chars": len(carryover),
             })
+            # A3 (POST_DEMO_FIXES.md, 2026-05-06): visible activity-log
+            # signal that mem0 carryover was loaded for THIS subsection.
+            # Only fires when carryover is non-empty (i.e. the student
+            # actually has prior observations on this subsection). The
+            # tooltip-detail explains what got loaded.
+            fire_activity(
+                f"Recalling what worked last time on {(state.get('locked_topic') or {}).get('subsection') or 'this topic'}",
+                detail=(
+                    f"Loaded {len(carryover)} chars of prior-session "
+                    "observations (misconception + learning_style cues) "
+                    "for this subsection. Will inform Dean's hint planning "
+                    "this turn and carry through subsequent turns until "
+                    "the topic changes."
+                ),
+            )
     except Exception as e:
         trace.append({
             "wrapper": "topic_lock_v2.mem0_carryover_error",
@@ -763,6 +814,11 @@ def _render_refuse_cards(
         )
     else:
         intro = "I could not find a strong textbook match for that. Pick one of these or type a more specific topic:"
+    # F13 (POST_DEMO_FIXES.md, 2026-05-06): graduate the nudge as
+    # prelock_count climbs toward the cap. Tutor pressure increases:
+    # the closer to cap, the more directly we ask the student to pick.
+    # Cap=10 today; warn at 7+, urgent at 9+.
+    intro = _prelock_nudge_intro(intro, prelock_count)
     try:
         refuse = dean._prelock_refuse_call(
             state,

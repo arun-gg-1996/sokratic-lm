@@ -268,12 +268,16 @@ def test_first_touch_inserts_with_fresh_score(store):
 
 
 def test_ewma_blend_math(store):
-    """EWMA per L3: new = 0.6*fresh + 0.4*prior."""
+    """EWMA per L3 (F14, 2026-05-06): new = 0.7*fresh + 0.3*prior.
+
+    Bumped from 0.6 → 0.7 so the current session weighs more heavily,
+    reducing mastery dilution from non-reach saved sessions.
+    """
     store.ensure_student("alice")
     p = "Ch1 > Sec > Sub"
     store.upsert_subsection_mastery("alice", p, fresh_score=0.4, outcome="not_reached")
     out = store.upsert_subsection_mastery("alice", p, fresh_score=0.9, outcome="reached")
-    expected = 0.6 * 0.9 + 0.4 * 0.4   # = 0.54 + 0.16 = 0.70
+    expected = 0.7 * 0.9 + 0.3 * 0.4   # = 0.63 + 0.12 = 0.75
     assert math.isclose(out["ewma_score"], expected, abs_tol=1e-9)
     assert out["attempt_count"] == 2
     assert out["last_outcome"] == "reached"

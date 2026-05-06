@@ -103,6 +103,14 @@ Strict rules:
 - 1-2 sentences total. One question.
 - Make clear it's optional — student can decline and end the session.
 - Do NOT start the clinical content yet — just the opt-in.
+- N4 (POST_DEMO_FIXES.md, 2026-05-06): this is a PHASE TRANSITION
+  (tutoring → assessment). Begin with a brief acknowledgment of what
+  the student just accomplished + signal the shift. Examples:
+    - "Nice work landing that — want to try a clinical scenario?"
+    - "Got it — ready for a quick clinical application?"
+    - "Solid. Curious to try how that plays out clinically?"
+  The ack is part of the 1-2 sentences total — don't add a third
+  sentence just for the bridging phrase.
 """,
 
     "redirect": """\
@@ -247,17 +255,39 @@ ending. Tailor tone and content accordingly:
                         celebratory close. Confirm they nailed it.
   reach_skipped       — student reached the core answer but declined the
                         clinical bonus. Warm. No reproach for skipping.
-  clinical_cap        — clinical phase hit turn cap. Acknowledge the
-                        reasoning work. No congrats they didn't earn.
+  clinical_cap        — clinical phase hit turn cap WITHOUT student
+                        reaching the clinical target. Acknowledge their
+                        core-tutoring reach (they DID get the underlying
+                        concept right — that's why they made it to
+                        clinical at all) but be honest that the
+                        application step didn't land. **REVEAL the
+                        clinical_target in the message** (provided in
+                        the metrics block as `clinical_target: ...`)
+                        with one sentence linking it to the core
+                        concept. F5b 2026-05-06: clinical reveal is
+                        intentional — clinical is one-shot application,
+                        not a reusable concept; revealing it gives
+                        closure without breaking future attempts.
   hints_exhausted     — student didn't reach the answer; hints used up.
                         Honest, encouraging. Name the gap explicitly.
                         Suggest a fresh start from My Mastery.
-  tutoring_cap        — turn budget hit, no reach. Same as above.
+                        **DO NOT reveal locked_answer** (provided in
+                        metrics — it's there for context, NOT for the
+                        message). The student can see the answer by
+                        opening this session from My Mastery → past
+                        sessions; revealing in-conversation breaks
+                        Socratic discipline and contaminates repeat
+                        attempts. F5b 2026-05-06.
+  tutoring_cap        — turn budget hit, no reach. Same rules as
+                        hints_exhausted: no answer reveal in the
+                        message, point them at My Mastery.
   off_domain_strike   — student kept going off-domain. Firm but kind.
-                        Suggest the right time to come back.
+                        Suggest the right time to come back. No answer
+                        reveal — they barely engaged.
   exit_intent         — student clicked End session. Brief, neutral.
                         No save-or-don't-save framing — frontend banner
-                        handles that.
+                        handles that. No answer reveal — they chose to
+                        leave; reveal would be presumptuous.
 
 Universal rules:
 - Read the CONVERSATION HISTORY. Name something SPECIFIC the student
@@ -435,6 +465,29 @@ Output ONLY the message you want to send to the student. No preamble,
 no markdown, no JSON, no explanations.
 """
 
+# N4 (POST_DEMO_FIXES.md, 2026-05-06) — phase-transition cues. Surfaced
+# only on the FIRST turn of a new phase so the student feels a smooth
+# bridge instead of an abrupt subject change.
+_PROMPT_RAPPORT_TO_TUTORING_BLOCK = """\
+
+PHASE TRANSITION (rapport → tutoring): this is the FIRST turn after
+locking onto LOCKED SUBSECTION. Open with a brief one-clause
+acknowledgment of the locked topic before your Socratic question
+(e.g. "Great — let's dig into LOCKED SUBSECTION." or
+"Got it — starting with LOCKED SUBSECTION."). The acknowledgment is
+PART of the response budget; do NOT exceed the SHAPE max_sentences.
+"""
+
+_PROMPT_FIRST_CLINICAL_BLOCK = """\
+
+PHASE TRANSITION (assessment → clinical): the student JUST said yes
+to the clinical-application offer. Open with a brief bridging phrase
+that frames the clinical scenario (e.g. "Here's the scenario:" or
+"Picture this clinical case:") before presenting the scenario itself.
+The bridge is PART of the response budget; do NOT exceed the SHAPE
+max_sentences.
+"""
+
 
 # Modes that use chunks (other modes don't need them — saves tokens).
 _MODES_USING_CHUNKS = {"socratic", "clinical"}
@@ -484,6 +537,15 @@ class TeacherPromptInputs:
     # history if absent).
     snapshots: list[dict] = field(default_factory=list)
     system_events: list[dict] = field(default_factory=list)
+    # N4 (POST_DEMO_FIXES.md, 2026-05-06) — phase-transition signals.
+    # `topic_just_locked` = first turn after the topic-lock retrieval
+    # fired (rapport → tutoring transition). `is_first_clinical_turn` =
+    # first clinical-mode turn after opt-in YES (assessment → clinical
+    # transition). Both surface a brief bridging-phrase instruction in
+    # the corresponding mode prompt so the student feels the phase
+    # change without an abrupt subject switch.
+    topic_just_locked: bool = False
+    is_first_clinical_turn: bool = False
 
 
 def build_teacher_prompt(turn_plan: TurnPlan, inputs: TeacherPromptInputs) -> str:
@@ -537,6 +599,12 @@ def build_teacher_prompt(turn_plan: TurnPlan, inputs: TeacherPromptInputs) -> st
             clinical_scenario=turn_plan.clinical_scenario,
             clinical_target=turn_plan.clinical_target or "(unspecified)",
         ))
+    # N4 — phase-transition cues. Append AFTER the topic/scenario blocks
+    # so the LLM has full context before the bridging instruction.
+    if turn_plan.mode == "socratic" and inputs.topic_just_locked:
+        parts.append(_PROMPT_RAPPORT_TO_TUTORING_BLOCK)
+    if turn_plan.mode == "clinical" and inputs.is_first_clinical_turn:
+        parts.append(_PROMPT_FIRST_CLINICAL_BLOCK)
     if turn_plan.mode in _MODES_USING_CHUNKS and inputs.chunks:
         parts.append(_PROMPT_CHUNKS_BLOCK.format(
             chunks=_format_chunks(inputs.chunks),

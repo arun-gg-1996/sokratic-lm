@@ -6,8 +6,9 @@ import { useUserStore } from "../stores/userStore";
 
 export function ChatView() {
   const studentId = useUserStore((s) => s.studentId);
+  const authToken = useUserStore((s) => s.authToken);
 
-  if (!studentId) return <Navigate to="/" replace />;
+  if (!studentId || !authToken) return <Navigate to="/" replace />;
 
   return (
     <AppShell>

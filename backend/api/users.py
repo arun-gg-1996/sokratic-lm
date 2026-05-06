@@ -25,23 +25,42 @@ to the new person.
 Future: a "create local account" admin page will append here. Until
 then this file is the source of truth.
 """
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+
+from backend.auth import authenticate, configured_user_ids
 
 router = APIRouter()
 
-USERS = [
-    {"id": "arun", "display_name": "Arun"},
-    {"id": "nidhi", "display_name": "Nidhi"},
-]
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+def configured_users() -> list[dict[str, str]]:
+    return [
+        {"id": uid, "display_name": uid.replace("_", " ").title()}
+        for uid in configured_user_ids()
+    ]
 
 
 def known_student_id(student_id: str) -> bool:
     """Returns True if the given id is a known user. Used by the session
     endpoint to reject random / spoofed ids before they create dangling
     mem0 namespaces."""
-    return any(u["id"] == student_id for u in USERS)
+    return student_id in set(configured_user_ids())
 
 
 @router.get("/users")
 async def list_users():
-    return USERS
+    return configured_users()
+
+
+@router.post("/auth/login")
+async def login(req: LoginRequest):
+    username = (req.username or "").strip().lower()
+    token = authenticate(username, req.password or "")
+    if not token or not known_student_id(username):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    user = next(u for u in configured_users() if u["id"] == username)
+    return {"token": token, "user": user}

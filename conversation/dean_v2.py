@@ -113,6 +113,14 @@ Decision flow:
   7. Set carryover_notes from the provided mem0 context if it's relevant
      to this turn; empty string otherwise.
 
+CLINICAL OPT-IN CONTRACT:
+When the user prompt says "Clinical scenario request: true", the student
+has already opted into the clinical bonus. You MUST emit:
+  - mode="clinical"
+  - non-empty clinical_scenario
+  - non-empty clinical_target
+Do not emit socratic, opt_in, or close modes in that case.
+
 Output STRICT JSON only — no markdown fences, no preamble:
 
 {{
@@ -216,6 +224,7 @@ CURRENT TURN CONTEXT
   Turn number: {turn_count}
   Turns remaining: {turns_remaining}
   Phase: {phase}
+  Clinical scenario request: {clinical_scenario_request}
   Exploration count: {exploration_count}
 {clinical_style_block}
 CARRYOVER NOTES (mem0 — empty if cold-start):
@@ -543,6 +552,7 @@ class DeanV2:
             turns_remaining=turns_remaining,
             exploration_count=int(state.get("exploration_count", 0) or 0),
             phase=state.get("phase") or "tutoring",
+            clinical_scenario_request="true" if state.get("_clinical_scenario_request") else "false",
             clinical_style_block=clinical_block,
             carryover_notes=carryover_notes or "(none)",
             chunks=_format_chunks(chunks),

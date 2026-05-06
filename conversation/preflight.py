@@ -182,6 +182,29 @@ NOT deflection (verdict="continuing"):
   * Declining ONE option but still engaging: "not that topic, how
     about Y instead" — student wants to continue, just on a different
     topic.
+  * Questioning the relevance / value / application / motivation of
+    the current topic — domain-agnostic patterns:
+      - "why does this actually matter?"
+      - "why do we even need to know this?"
+      - "where would I ever use this?"
+      - "what's the practical point of this?"
+      - "but why should I care about <topic>?"
+      - "okay but why does it matter for <field>?"
+    These are CURIOSITY / grounding questions asking the tutor to
+    motivate the material, NOT requests to end the session. The
+    student is leaning IN (asking for more context), not out.
+    Verdict MUST be "continuing" regardless of domain.
+  * Hedging-during-engagement: any message of the form
+    "<filler> but <follow-up>" where <follow-up> is a question or
+    push-back about the topic — e.g. "okay but ...", "fine but ...",
+    "yeah but ...", "alright but what if ...". The leading hedge
+    word is NOT a deflection signal on its own; it's the body of
+    the message that decides. If the body engages with the topic,
+    verdict is "continuing".
+  * Hesitant or partial agreement that continues the session even
+    if delivered grudgingly: "yeah i guess", "i suppose so", "fine",
+    "okay sure", "alright", "if you say so". These are continued
+    engagement at lower energy, not an end-request.
 
 Output STRICT JSON only — no markdown, no preamble:
 {
@@ -457,6 +480,12 @@ def run_preflight(
     if verdict == "off_domain":
         new_off = off_count + 1
         end_session = new_off >= OFF_TOPIC_END_SESSION_STRIKE
+        # F6 (POST_DEMO_FIXES.md, 2026-05-06): bump non-resetting
+        # diagnostic counter. Legacy dean.run_turn (v1) wrote this; v2
+        # never invokes that path so the counter was dead. Wire it here
+        # alongside the consecutive-strike counter so debug payloads +
+        # mastery scorer see the right cumulative value.
+        state["total_off_topic_turns"] = int(state.get("total_off_topic_turns", 0) or 0) + 1
         return PreflightResult(
             fired=True,
             category="off_domain",
@@ -474,6 +503,11 @@ def run_preflight(
     if verdict == "help_abuse":
         new_help = help_count + 1
         force_hint = new_help >= HELP_ABUSE_HINT_ADVANCE_STRIKE
+        # F6 (POST_DEMO_FIXES.md, 2026-05-06): bump non-resetting
+        # diagnostic counter so help_abuse activity stays visible in
+        # the debug payload even after consecutive `help_abuse_count`
+        # resets on engagement.
+        state["total_help_abuse_turns"] = int(state.get("total_help_abuse_turns", 0) or 0) + 1
         # 2026-05-05: when threshold fires, reset the counter so the student
         # gets a fresh warning chain before the NEXT hint-advance. Without
         # this, every strike past 4 immediately re-fires force_hint_advance
@@ -505,6 +539,9 @@ def run_preflight(
     if verdict == "low_effort":
         prev_streak = int(state.get("consecutive_low_effort_count", 0) or 0)
         state["consecutive_low_effort_count"] = prev_streak + 1
+        # F6 (POST_DEMO_FIXES.md, 2026-05-06): bump non-resetting
+        # diagnostic counter (see off_domain branch above for context).
+        state["total_low_effort_turns"] = int(state.get("total_low_effort_turns", 0) or 0) + 1
         return PreflightResult(
             fired=False,         # Dean still plans; this is a soft signal
             category="low_effort",  # but trace + history annotation reflect it

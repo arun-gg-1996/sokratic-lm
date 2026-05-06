@@ -473,12 +473,21 @@ class TeacherAgent:
     def draft_clinical_opt_in(self, state: TutorState) -> str:
         """
         Ask whether the student wants to do an optional clinical application question.
+
+        R7 (POST_DEMO_FIXES.md, 2026-05-06): now also passes retrieved
+        chunks so the opt-in message can carry a one-sentence textbook-
+        grounded enrichment before offering the challenge. Without
+        chunks the prompt's "textbook-grounded" requirement has nothing
+        to draw from, and the LLM falls back to either generic ack or
+        parametric knowledge.
         """
+        chunks_str = _format_chunks(state.get("retrieved_chunks", []))
         return self._call(
             role_base=getattr(cfg.prompts, "teacher_base", ""),
             wrapper_delta=getattr(
                 cfg.prompts, "teacher_clinical_opt_in_delta", cfg.prompts.teacher_clinical_opt_in_static
             ),
+            chunks=cfg.prompts.teacher_clinical_chunks.format(retrieved_chunks=chunks_str),
             turn_deltas=cfg.prompts.teacher_clinical_opt_in_dynamic.format(
                 locked_answer=state.get("locked_answer", ""),
                 **_domain_prompt_vars(),

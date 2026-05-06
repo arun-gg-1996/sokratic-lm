@@ -78,7 +78,11 @@ def _reciprocal_rank(results: list[dict], source_chunk_id: str) -> float:
     return 0.0
 
 
+@pytest.mark.data_quality
 def test_rag_qa_hit_and_mrr(retriever, rag_qa):
+    # F8 (POST_DEMO_FIXES.md, 2026-05-06): marked `data_quality` — needs
+    # live Qdrant + fresh ingestion of the chunks the eval QA pairs
+    # reference. Run with `pytest -m data_quality`.
     top_k = cfg.retrieval.top_chunks_final  # dynamic — matches what retriever returns
     hits_at_1 = hits_at_3 = hits_at_k = 0
     mrr_sum = 0.0
@@ -118,6 +122,7 @@ def test_rag_qa_hit_and_mrr(retriever, rag_qa):
     )
 
 
+@pytest.mark.data_quality
 def test_retrieval_latency(retriever, rag_qa):
     """Every single retrieval call must complete in < 200ms."""
     # Sample 20 questions for latency test (not all 150 — that would take 30s)
@@ -156,6 +161,7 @@ def test_no_duplicate_chunks(retriever, rag_qa):
         )
 
 
+@pytest.mark.data_quality
 def test_result_count_in_range(retriever, rag_qa):
     """Every in-scope query returns between 1 and top_chunks_final results."""
     top_k = cfg.retrieval.top_chunks_final

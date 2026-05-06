@@ -2,6 +2,7 @@ import { create } from "zustand";
 
 interface UserState {
   studentId: string | null;
+  authToken: string | null;
   debugMode: boolean;
   // Cross-session memory toggle. When false, the next session_start
   // request sends memory_enabled=false and the tutor opens with a
@@ -14,6 +15,8 @@ interface UserState {
   // Firefox partial; consumer hides the toggle when API unavailable.
   ttsEnabled: boolean;
   setStudentId: (id: string | null) => void;
+  setAuth: (id: string, token: string) => void;
+  logout: () => void;
   setDebugMode: (enabled: boolean) => void;
   setMemoryEnabled: (enabled: boolean) => void;
   setTtsEnabled: (enabled: boolean) => void;
@@ -21,6 +24,7 @@ interface UserState {
 
 const DEBUG_KEY = "sokratic_debug";
 const STUDENT_KEY = "sokratic_student_id";
+const AUTH_TOKEN_KEY = "sokratic_auth_token";
 const MEMORY_KEY = "sokratic_memory_enabled";
 const TTS_KEY = "sokratic_tts_enabled";
 
@@ -38,6 +42,7 @@ function readTtsEnabled(): boolean {
 
 export const useUserStore = create<UserState>((set) => ({
   studentId: typeof window !== "undefined" ? localStorage.getItem(STUDENT_KEY) : null,
+  authToken: typeof window !== "undefined" ? localStorage.getItem(AUTH_TOKEN_KEY) : null,
   debugMode: typeof window !== "undefined" ? localStorage.getItem(DEBUG_KEY) === "true" : false,
   memoryEnabled: readMemoryEnabled(),
   ttsEnabled: readTtsEnabled(),
@@ -47,6 +52,20 @@ export const useUserStore = create<UserState>((set) => ({
       else localStorage.removeItem(STUDENT_KEY);
     }
     set({ studentId: id });
+  },
+  setAuth: (id, token) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STUDENT_KEY, id);
+      localStorage.setItem(AUTH_TOKEN_KEY, token);
+    }
+    set({ studentId: id, authToken: token });
+  },
+  logout: () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(STUDENT_KEY);
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+    }
+    set({ studentId: null, authToken: null });
   },
   setDebugMode: (enabled) => {
     if (typeof window !== "undefined") {

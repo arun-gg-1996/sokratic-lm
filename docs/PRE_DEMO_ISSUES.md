@@ -126,17 +126,30 @@ prompts or code paths.
        - tutoring turn-cap hit (no reach within budget)
 
   **B. Explicit-exit** — student types something like "I have to go",
-     "let's stop", "I'm tired", "can we end this?" mid-phase, before
-     terminal condition. ONLY here does the "wrap up" intent live.
+     "let's stop", "I'm tired", "can we end this?" mid-phase, OR clicks
+     the End session button. ONLY here does the "wrap up" intent live.
      System path:
-       1. Intent classifier detects `exit_intent`
-       2. Frontend renders **Option B confirm modal** (3 buttons):
-            - [End & save progress]
-            - [End without saving]
+       1. Intent classifier detects `exit_intent` (or button sentinel)
+       2. Frontend renders **2-button confirm modal**:
             - [Cancel]
-       3. On End-with-save → memory_update → goodbye → exit
-       4. On End-without-save → goodbye → exit (skip memory_update)
-       5. On Cancel → resume current phase
+            - [End session] (red, no save)
+            Modal copy: *"Your conversation won't be saved. You can
+            start a new one anytime from My Mastery."*
+       3. On End session → close LLM fires (with conversation history
+          per M-FB) → no mem0 / mastery save → SQLite row marked
+          `ended_by_student` → exit
+       4. On Cancel → resume current phase
+
+**Design correction (2026-05-06, supersedes earlier 3-button proposal):**
+Explicit exit is ALWAYS no-save. The earlier 3-button proposal
+([End & save] [End without saving] [Cancel]) was REJECTED by user.
+Reasoning: exits are exits — students who want progress saved have to
+FINISH the session naturally (terminal condition: reach + close, or
+clinical bonus complete). This keeps save-vs-no-save semantics binary:
+terminal-condition reach = saved; mid-session exit = not saved. No
+half-states, no extra friction. Current 2-button modal in
+[ExitConfirmModal](../frontend/src/components/chat/ExitConfirmModal.tsx)
+matches this design.
 
 **Goodbye message rule (both paths):**
 

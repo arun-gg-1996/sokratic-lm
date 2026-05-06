@@ -64,6 +64,14 @@ class FakeMatcher:
     def sample_related(self, retriever, query, n=3, min_chunk_count=3, exclude_paths=None):
         return self._entries[:n]
 
+    def match(self, query, k=3, **kw):
+        # F8/F13 (POST_DEMO_FIXES.md, 2026-05-06): topic_lock_v2 at the
+        # prelock cap now calls matcher.match(query, k=...) and reads
+        # `.matches`. Return a MatchResult-shaped object with the
+        # cached entries.
+        from retrieval.topic_matcher import MatchResult
+        return MatchResult(query=query, tier="strong", matches=list(self._entries[:k]))
+
 
 class FakeDean:
     def __init__(self):
@@ -111,7 +119,7 @@ def _mapper_result(verdict: str, confidence: float, topic: TopicMatch | None = N
 def test_l9_strong_locks_topic_and_resets_prelock_counter(monkeypatch):
     topic = _topic()
     monkeypatch.setattr(T, "get_topic_matcher", lambda: FakeMatcher([topic]))
-    monkeypatch.setattr(T, "_map_topic", lambda query, trace: _mapper_result("strong", 0.93, topic))
+    monkeypatch.setattr(T, "_map_topic", lambda query, trace, **kwargs: _mapper_result("strong", 0.93, topic))
 
     result = T.run_topic_lock_v2(
         _state(), dean=FakeDean(), retriever=MagicMock(), latest_student="SA node"
@@ -126,7 +134,7 @@ def test_l9_strong_locks_topic_and_resets_prelock_counter(monkeypatch):
 def test_none_route_increments_prelock_and_surfaces_cards(monkeypatch):
     topics = [_topic("Aorta", 1), _topic("Pulmonary Circulation", 2), _topic("Cardiac Cycle", 3)]
     monkeypatch.setattr(T, "get_topic_matcher", lambda: FakeMatcher(topics))
-    monkeypatch.setattr(T, "_map_topic", lambda query, trace: _mapper_result("none", 0.0, None))
+    monkeypatch.setattr(T, "_map_topic", lambda query, trace, **kwargs: _mapper_result("none", 0.0, None))
 
     result = T.run_topic_lock_v2(
         _state(), dean=FakeDean(), retriever=MagicMock(), latest_student="pizza"
@@ -142,7 +150,7 @@ def test_borderline_high_confirm_yes_locks(monkeypatch):
     topic = _topic()
     matcher = FakeMatcher([topic])
     monkeypatch.setattr(T, "get_topic_matcher", lambda: matcher)
-    monkeypatch.setattr(T, "_map_topic", lambda query, trace: _mapper_result("borderline", 0.8, topic))
+    monkeypatch.setattr(T, "_map_topic", lambda query, trace, **kwargs: _mapper_result("borderline", 0.8, topic))
 
     first = T.run_topic_lock_v2(
         _state(), dean=FakeDean(), retriever=MagicMock(), latest_student="conduction"
@@ -164,7 +172,7 @@ def test_borderline_high_confirm_yes_locks(monkeypatch):
 def test_borderline_high_confirm_no_reprompts_without_lock(monkeypatch):
     topic = _topic()
     monkeypatch.setattr(T, "get_topic_matcher", lambda: FakeMatcher([topic]))
-    monkeypatch.setattr(T, "_map_topic", lambda query, trace: _mapper_result("borderline", 0.8, topic))
+    monkeypatch.setattr(T, "_map_topic", lambda query, trace, **kwargs: _mapper_result("borderline", 0.8, topic))
 
     first = T.run_topic_lock_v2(
         _state(), dean=FakeDean(), retriever=MagicMock(), latest_student="conduction"
@@ -183,19 +191,21 @@ def test_borderline_high_confirm_no_reprompts_without_lock(monkeypatch):
     assert "what topic" in second["messages"][-1]["content"].lower()
 
 
-def test_cap_7_renders_guided_pick_without_custom_escape(monkeypatch):
+def test_cap_renders_guided_pick_without_custom_escape(monkeypatch):
+    # F13 (POST_DEMO_FIXES.md, 2026-05-06): PRELOCK_CAP bumped 7 → 10.
+    # Trigger the cap by entering the call with prelock_loop_count = CAP-1.
     topics = [_topic(f"Topic {i}", i) for i in range(1, 7)]
     monkeypatch.setattr(T, "get_topic_matcher", lambda: FakeMatcher(topics))
 
     result = T.run_topic_lock_v2(
-        _state(prelock_loop_count=6),
+        _state(prelock_loop_count=T.PRELOCK_CAP - 1),
         dean=FakeDean(),
         retriever=MagicMock(),
         latest_student="still vague",
     )
 
     pending = result["pending_user_choice"]
-    assert result["prelock_loop_count"] == 7
+    assert result["prelock_loop_count"] == T.PRELOCK_CAP
     assert pending["mode"] == "guided_pick"
     assert pending["allow_custom"] is False
     assert pending["end_session_label"] == "Give up / End session"

@@ -107,7 +107,7 @@ session:
   summarizer_keep_recent: 10
   max_hints: 3
   proactive_revisit_every_n: 3
-  clinical_max_turns: 3
+  clinical_max_turns: 15  # N3 (POST_DEMO_FIXES.md, 2026-05-06): bumped 3 → 15. Source of truth lives in assessment_v2.py:CLINICAL_TURN_CAP; this is informational.
   # "clinical" | "conceptual" | "none"
   # clinical:    opt-in clinical application question after core answer
   # conceptual:  follow-up conceptual question (no clinical framing)
@@ -230,6 +230,53 @@ qdrant:
   on_disk: false
 
 prompts:
+  # M-T2 (POST_DEMO_FIXES.md, 2026-05-06): canonical architecture block.
+  # Any prompt that references the system flow (phases, counters, save
+  # buckets, memory split) should embed `{{architecture}}` and let the
+  # prompt loader substitute this single source of truth. When the
+  # architecture changes, update THIS block — not every individual prompt.
+  architecture_block: |
+    Sokratic system architecture (canonical reference):
+
+    Phase machine:
+      rapport → tutoring → assessment (opt-in → clinical) → memory_update
+    Each turn flows: preflight (Haiku intent classifier) → Dean.plan →
+    Teacher.draft → 4 Haiku verifier checks → optional Dean replan.
+
+    Hint scaffold (tutoring phase):
+      hint_level 0 = pristine; 1-3 = progressive scaffolding;
+      level > max_hints = exhausted, route to memory_update.
+      Advance via rule (help_abuse/low_effort threshold) OR Dean override.
+
+    Counters (consecutive — reset on engagement):
+      help_abuse_count       — active answer demands ("just tell me")
+      consecutive_low_effort — passive non-engagement ("idk")
+      off_topic_count        — off-DOMAIN turns (in-domain tangents
+                               handled by exploration_judge instead)
+
+    Counters (non-resetting — session totals for telemetry):
+      total_low_effort_turns, total_off_topic_turns, total_help_abuse_turns
+      Plus clinical mirrors (clinical_*_count + total_clinical_*_turns).
+
+    Save vs no-save buckets (lifecycle.py):
+      no-save: {exit_intent, off_domain_strike} — locked metadata still
+        persists (F9), but no mastery score / mem0 observations.
+      save:    everything else — full mastery EWMA upsert + mem0
+        atomic per-claim observations + key_takeaways from close LLM.
+
+    Memory split (L1):
+      mem0:  misconception + learning_style atomic per-claim observations
+             across sessions (cross-session retrieval at lock + hint
+             advance turns).
+      SQL:   per-session row + EWMA mastery score + key_takeaways
+             aggregate. List sessions by subsection_path for analysis
+             page (M5).
+
+    Reach gate: token-overlap match against locked_answer + aliases
+    determines `student_reached_answer`. On reach, route to assessment
+    (opt-in offer); on no-reach + cap, route to memory_update with
+    close_reason in {hints_exhausted, tutoring_cap, clinical_cap}.
+
   # --- Retrieval-side prompts ---
   hyde_reformulate: |
     You are a query reformulator for a {domain_short} retrieval system.
@@ -280,6 +327,9 @@ prompts:
     You are
     a Socratic tutor in {domain_name} working with a {student_descriptor}.
     This is an evaluated learning session.
+
+    {{architecture}}
+
     Global rules for all teacher wrappers:
     - Keep language academically focused and concise.
     - Do not reveal final answers unless wrapper-specific instructions explicitly allow it.
@@ -357,15 +407,21 @@ prompts:
        or imply the student has already failed anything.
        Do NOT invent historical difficulties.
 
-    2. If "Past session context" contains real prior session data, you MAY
-       (but are not required to) briefly reference ONE specific past topic or
-       open thread when offering the student a starting point. Examples of
-       acceptable phrasings:
+    2. If "Past session context" contains real prior session data, you
+       SHOULD reference ONE specific past topic or open thread when
+       offering the student a starting point. This isn't optional — the
+       memory system's value comes from the student feeling recognized.
+       (F11, 2026-05-06: tightened from MAY to SHOULD because the
+       opener was inconsistent across sessions; the data layer already
+       surfaces recent + open-thread context, the prompt just needs to
+       use it reliably.)
+       Examples of acceptable phrasings:
          - "...last time you were working through X — want to pick that up,
             or start something new?"
          - "...you'd left off on Y. Continue there, or shift?"
        Constraints:
-         - Reference at most ONE prior item.
+         - Reference at most ONE prior item (the most recent or most
+           relevant — don't list multiples).
          - Do NOT recap the full past session, list multiple topics, or
            summarize the student's learning style — keep it natural.
          - Do NOT reveal answers from past sessions.
@@ -389,11 +445,14 @@ prompts:
     fresh session, do NOT mention prior struggles, weak topics, or invent
     historical difficulties.
 
-    If "Past session context" contains real prior data: you MAY briefly
-    reference ONE specific past topic or open thread when offering a
-    starting point ("...last time you were working through X — pick that
-    up or start fresh?"). At most ONE prior item; no recap, no list, no
-    learning-style summary; do NOT reveal past answers.
+    If "Past session context" contains real prior data: you SHOULD
+    briefly reference ONE specific past topic or open thread when
+    offering a starting point ("...last time you were working through
+    X — pick that up or start fresh?"). The student SHOULD feel
+    recognized when prior context exists — don't skip the reference.
+    At most ONE prior item; no recap, no list, no learning-style
+    summary; do NOT reveal past answers. (F11, 2026-05-06: changed
+    from MAY to SHOULD for opener consistency.)
 
   teacher_socratic_static: |
     You are a Socratic {domain_short} tutor.
@@ -605,23 +664,41 @@ prompts:
 
   teacher_clinical_opt_in_static: |
     You are a {domain_short} tutor.
-    The student has reached the core answer.
-    Ask whether they want to do an optional {assessment_dimension} challenge.
+    The student has just reached the core answer — celebrate that, briefly
+    deepen their understanding, then offer the optional {assessment_dimension}
+    challenge.
 
     Rules:
-    - Keep to 2 sentences max.
-    - Do not restate the answer.
-    - End with exactly one question that offers a clear yes/no choice.
+    - Open with a SPECIFIC, warm acknowledgement that names what the
+      student got right (not a generic "Got it" / "Nice work"). Reference
+      a concrete piece of their reasoning or a phrase they used. Tone is
+      genuine and pedagogical, not sycophantic.
+    - Add ONE sentence of value: either a short textbook-grounded
+      enrichment (a related fact from the retrieved chunks the student
+      hasn't seen yet) OR a clean conceptual bridge that connects the
+      core answer to its broader significance / canonical real-world
+      use. Prefer textbook-grounded; fall back to broader knowledge only
+      when the textbook excerpt would just restate the locked answer.
+    - Then offer the {assessment_dimension} challenge as a clear yes/no.
+    - Do NOT restate the locked answer verbatim.
+    - 3 sentences max total. End with exactly one question with a
+      yes/no shape.
 
   teacher_clinical_opt_in_delta: |
     a {domain_short} tutor.
-    The student has reached the core answer.
-    Ask whether they want to do an optional {assessment_dimension} challenge.
+    The student has just reached the core answer — celebrate that, briefly
+    deepen their understanding, then offer the optional {assessment_dimension}
+    challenge.
 
     Rules:
-    - Keep to 2 sentences max.
-    - Do not restate the answer.
-    - End with exactly one question that offers a clear yes/no choice.
+    - Specific warm ack naming what the student got right (NOT generic
+      "Got it"/"Nice work").
+    - One sentence of value: textbook-grounded enrichment from chunks
+      OR clean conceptual bridge to broader significance / real-world
+      use. Prefer textbook over parametric.
+    - Then offer the challenge as a clean yes/no.
+    - Never restate the locked answer.
+    - 3 sentences max. End with one yes/no question.
 
   teacher_clinical_opt_in_dynamic: |
     Correct answer already reached (do not restate): {locked_answer}
@@ -684,6 +761,9 @@ prompts:
     You are
     the Dean supervising tutoring quality in {domain_name}.
     This is an evaluation setting.
+
+    {{architecture}}
+
     Global rules for all dean wrappers:
     - Enforce wrapper instructions strictly and consistently.
     - Ground judgments in the student's latest message plus provided context.
@@ -1202,6 +1282,9 @@ prompts:
         aliases=["SA node", "sinus node", "pacemaker of the heart", "cardiac pacemaker"]
       locked_answer="coronary arteries" →
         aliases=["left coronary artery", "right coronary artery", "LCA", "RCA"]
+      locked_answer="Classification of Connective Tissues" →
+        aliases=["connective tissue proper", "supportive connective tissue", "fluid connective tissue", "proper", "supportive", "fluid"]
+        (For classification / "what are the types of X" / "name the categories of X" questions, EVERY category name is itself a leak surface — include each one as its own alias so the leak check can match it.)
 
     Return strict JSON only:
     {{
@@ -1237,6 +1320,13 @@ prompts:
       contain a clear answer to the topic question, return empty anchors.
     - If signal is insufficient, return empty anchors with rationale.
     - rationale must be brief (max 25 words).
+    - **F5c (2026-05-06): For classification / "name the types of X" /
+      "list the categories of X" questions, EVERY category name is a
+      leak surface — include each category as its own alias so the
+      downstream leak check can match it. Example:
+      Q="What are the three classifications of connective tissue?"
+      locked_answer="Classification of Connective Tissues"
+      aliases=["connective tissue proper", "supportive connective tissue", "fluid connective tissue", "proper", "supportive", "fluid"]**
 
     Return strict JSON only:
     {{
@@ -1653,6 +1743,8 @@ prompts:
     You are the Dean evaluating a {student_descriptor}'s {assessment_dimension} response.
     This is an evaluation setting: be strict and specific.
 
+    {{architecture}}
+
     Classify the latest response as exactly one:
     - correct
     - partial_correct
@@ -1735,6 +1827,8 @@ prompts:
     You are the Dean closing out a tutoring session.
     This is an evaluated learning session: report performance honestly and specifically.
 
+    {{architecture}}
+
     Return strict JSON only:
     {{
       "core_mastery_tier": "strong|proficient|developing|needs_review|not_assessed|ungraded",
@@ -1807,41 +1901,12 @@ prompts:
     Conversation history:
     {conversation_history}
 
-  dean_memory_summary: |
-    You are writing a session summary to store in a student's long-term memory.
-    The summary will be retrieved at the start of future sessions to personalize tutoring.
-
-    Session data:
-    - Topics covered: {topics_covered}
-    - Topics mastered: {mastered_topics}
-    - Topics struggled with (weak): {weak_topics}
-    - Final hint levels reached per topic: {hint_levels}
-    - Core mastery tier: {core_mastery_tier}
-    - Clinical mastery tier: {clinical_mastery_tier}
-    - Overall mastery tier: {mastery_tier}
-    - Turn count: {turn_count}
-
-    Write a concise natural-language summary (3-5 sentences) suitable for storage.
-    Format: "Session [date]. Covered: X. Mastered: Y. Struggled with: Z (failure count updated)."
-    Include specific topic names, not just counts.
-
-  dean_memory_summary_delta: |
-    writing a session summary to store in a student's long-term memory.
-    The summary will be retrieved at the start of future sessions to personalize tutoring.
-
-    Session data:
-    - Topics covered: {topics_covered}
-    - Topics mastered: {mastered_topics}
-    - Topics struggled with (weak): {weak_topics}
-    - Final hint levels reached per topic: {hint_levels}
-    - Core mastery tier: {core_mastery_tier}
-    - Clinical mastery tier: {clinical_mastery_tier}
-    - Overall mastery tier: {mastery_tier}
-    - Turn count: {turn_count}
-
-    Write a concise natural-language summary (3-5 sentences) suitable for storage.
-    Format: "Session [date]. Covered: X. Mastered: Y. Struggled with: Z (failure count updated)."
-    Include specific topic names, not just counts.
+  # M-T3 (POST_DEMO_FIXES.md, 2026-05-06): dean_memory_summary +
+  # dean_memory_summary_delta removed. Both were superseded by the L4
+  # Haiku observation extractor in memory/observation_extractor.py
+  # (see EXTRACTION_PROMPT). The session_summary / topics_covered /
+  # weak_topics fields are now stored in SQL per L1 — no separate
+  # natural-language summary prompt needed.
 
   summarizer_system: |
     The following is the beginning of a tutoring conversation that has grown too long.
@@ -1911,6 +1976,8 @@ prompts:
     You are evaluating a tutoring session for the purpose of knowledge tracing.
     Your job is to judge how much the student has demonstrated mastery of a
     specific subsection of the textbook.
+
+    {{architecture}}
 
     A subsection typically contains MULTIPLE concepts (e.g. "Conduction System
     of the Heart" includes the SA node, AV node delay, bundle branches, and

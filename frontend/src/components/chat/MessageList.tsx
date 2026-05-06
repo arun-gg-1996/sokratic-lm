@@ -1,14 +1,25 @@
 import { useEffect, useRef } from "react";
 import { useSessionStore } from "../../stores/sessionStore";
 import { useTTS } from "../../hooks/useTTS";
+import { useSession } from "../../hooks/useSession";
 import { ActivityFeed } from "./ActivityFeed";
 import { MessageBubble } from "./MessageBubble";
+import { SuggestionBubbles } from "./SuggestionBubbles";
 import { ThinkingIndicator } from "./ThinkingIndicator";
 import { ErrorCard } from "../cards/ErrorCard";
 
 export function MessageList() {
   const messages = useSessionStore((s) => s.messages);
   const isWaiting = useSessionStore((s) => s.isWaitingForTutor);
+  // N8 — suggest-answers toggle state + submitMessage so suggestion
+  // clicks dispatch as student messages through the same WebSocket
+  // path as the composer.
+  const suggestEnabled = useSessionStore((s) => s.suggestEnabled);
+  const suggestProfile = useSessionStore((s) => s.suggestProfile);
+  const threadId = useSessionStore((s) => s.threadId);
+  const sessionEnded = useSessionStore((s) => s.sessionEnded);
+  const pendingChoice = useSessionStore((s) => s.pendingChoice);
+  const { submitMessage } = useSession();
   // L79 — read tutor messages aloud when ttsEnabled. Hook is a no-op
   // when the user has the toggle off or when speechSynthesis is missing
   // (Firefox partial support).
@@ -46,10 +57,23 @@ export function MessageList() {
   // and lingered in the wrong contexts). The Composer button gates on
   // the same conditions: no student turns yet AND no topic locked.
 
+  // N8 — id of the most recent tutor message (used to anchor the
+  // SuggestionBubbles fetch + caching). Skip if streaming/waiting,
+  // pending choice cards already cover the input, or session ended.
+  const lastTutorMessage = [...messages].reverse().find((m) => m.role === "tutor");
+  const lastTutorId = lastTutorMessage?.id || "";
+  const showSuggestions =
+    suggestEnabled
+    && !!lastTutorId
+    && !isWaiting
+    && !pendingChoice
+    && !sessionEnded
+    && !lastTutorMessage?.shouldStream;  // wait for streaming to finish
+
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-lane mx-auto px-6 py-8 space-y-4">
-        {messages.map((m) => {
+        {messages.map((m, idx) => {
           // M-FB — system messages with error_card metadata render as the
           // dedicated ErrorCard component instead of a plain bubble. The
           // backend emits these in lieu of templated tutor fallbacks.
@@ -63,7 +87,26 @@ export function MessageList() {
               />
             );
           }
-          return <MessageBubble key={m.id} message={m} />;
+          // N8 — render SuggestionBubbles right after the last tutor
+          // message (only that one — keeps the LLM-call count to 1
+          // per turn).
+          const renderSuggestionsAfter =
+            showSuggestions && m.id === lastTutorId && m.role === "tutor"
+            && idx === messages.length - 1;  // truly the last message overall
+          return (
+            <div key={m.id}>
+              <MessageBubble message={m} />
+              {renderSuggestionsAfter && (
+                <SuggestionBubbles
+                  threadId={threadId}
+                  profile={suggestProfile}
+                  enabled={true}
+                  tutorMessageId={m.id}
+                  onPick={(text) => submitMessage(text)}
+                />
+              )}
+            </div>
+          );
         })}
         {showActivity && <ActivityFeed labels={activityLog} mode="live" />}
         {streaming && (

@@ -31,7 +31,7 @@ def test_full_lifecycle_completed_session(store, monkeypatch, tmp_path):
     """Reach=True session: insert at start, end with status='completed',
     mastery_tier derived from judgment, subsection_mastery upserted."""
     # Patch the helper's SQLiteStore() default-factory to land on our test DB
-    from conversation import nodes as _nodes
+    from conversation import lifecycle_v2 as _nodes  # F8: moved in v2 consolidation
     from memory import sqlite_store as _ss
     monkeypatch.setattr(
         _ss.SQLiteStore, "__init__",
@@ -95,7 +95,7 @@ def test_full_lifecycle_completed_session(store, monkeypatch, tmp_path):
 
 def test_full_lifecycle_pre_lock_termination(store, monkeypatch, tmp_path):
     """No locked topic → status='abandoned_no_lock', no mastery row written."""
-    from conversation import nodes as _nodes
+    from conversation import lifecycle_v2 as _nodes  # F8: moved in v2 consolidation
     from memory import sqlite_store as _ss
     store.start_session("t2", "bob")
 
@@ -126,7 +126,7 @@ def test_full_lifecycle_pre_lock_termination(store, monkeypatch, tmp_path):
 def test_full_lifecycle_legacy_path_normalized(store, monkeypatch, tmp_path):
     """Legacy 'Ch20|Section|Subsection' path gets normalized to canonical
     'Full Title > Section > Subsection' before SQLite write."""
-    from conversation import nodes as _nodes
+    from conversation import lifecycle_v2 as _nodes  # F8: moved in v2 consolidation
     from memory import sqlite_store as _ss
     store.start_session("t3", "carol")
 
@@ -174,7 +174,7 @@ def test_full_lifecycle_legacy_path_normalized(store, monkeypatch, tmp_path):
 def test_helper_handles_missing_thread_id_gracefully(store, monkeypatch):
     """Defensive path: state with no thread_id should report a clear status,
     not raise."""
-    from conversation import nodes as _nodes
+    from conversation import lifecycle_v2 as _nodes  # F8: moved in v2 consolidation
     state = {"student_id": "x", "messages": [], "debug": {}}
     status = _nodes._persist_session_end_to_sqlite(state, judgment=None)
     assert "skipped" in status
@@ -183,7 +183,7 @@ def test_helper_handles_missing_thread_id_gracefully(store, monkeypatch):
 def test_dual_write_does_not_corrupt_on_sqlite_error(monkeypatch):
     """If SQLite raises mid-write, helper returns an error string but the
     caller (memory_update_node) continues."""
-    from conversation import nodes as _nodes
+    from conversation import lifecycle_v2 as _nodes  # F8: moved in v2 consolidation
 
     class BoomStore:
         def update_session(self, *a, **kw):

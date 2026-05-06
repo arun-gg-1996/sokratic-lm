@@ -155,6 +155,9 @@ evidence.
 
 
 _HINT_LEAK_USER_TEMPLATE = """\
+LOCKED QUESTION (what the student is being asked to produce):
+{locked_question}
+
 LOCKED ANSWER (the term the student should still deduce):
 {locked_answer}
 
@@ -164,10 +167,27 @@ KNOWN ALIASES / paraphrases (also leaks if revealed by letter / morphology):
 DRAFT TUTOR RESPONSE TO REVIEW:
 {draft}
 
+CONTEXT-AWARE LEAK CHECK:
+- If LOCKED QUESTION asks the student to CLASSIFY, NAME the types of,
+  LIST the categories of, or ENUMERATE parts of something, then any
+  draft that names those categories / types / parts IS a leak — even
+  if the literal LOCKED ANSWER (the umbrella term) wasn't named.
+  Example: Q="What are the three classifications of connective
+  tissue?", locked_answer="Classification of Connective Tissues".
+  Draft that says "proper, supportive, and fluid" is a LEAK because
+  those three terms ARE the answer the student should deduce.
+- A leak doesn't require matching `aliases` literally; it requires
+  that the draft hands over what the LOCKED QUESTION asks for.
+
 Return only the JSON object."""
 
 
-def haiku_hint_leak_check(draft: str, locked_answer: str, aliases: list[str] | None = None) -> dict:
+def haiku_hint_leak_check(
+    draft: str,
+    locked_answer: str,
+    aliases: list[str] | None = None,
+    locked_question: str = "",
+) -> dict:
     """Detect verbatim mention / hint-3 / morphology / etymology / blank /
     MCQ / synonym / acronym leaks. Asymmetric retry-on-clean for safety.
 
@@ -189,7 +209,7 @@ def haiku_hint_leak_check(draft: str, locked_answer: str, aliases: list[str] | N
     `_consensus` field: "first_leak" | "split_first_clean_second_leak"
     | "both_clean".
     """
-    first = _haiku_hint_leak_check_once(draft, locked_answer, aliases)
+    first = _haiku_hint_leak_check_once(draft, locked_answer, aliases, locked_question)
     if first.get("verdict") == "leak":
         first["_consensus"] = "first_leak"
         return first
@@ -198,7 +218,7 @@ def haiku_hint_leak_check(draft: str, locked_answer: str, aliases: list[str] | N
     if first.get("_error"):
         first["_consensus"] = "first_clean_errored"
         return first
-    second = _haiku_hint_leak_check_once(draft, locked_answer, aliases)
+    second = _haiku_hint_leak_check_once(draft, locked_answer, aliases, locked_question)
     if second.get("verdict") == "leak":
         # Two-call disagreement → prefer leak (asymmetric stakes).
         second["_consensus"] = "split_first_clean_second_leak"
@@ -212,7 +232,12 @@ def haiku_hint_leak_check(draft: str, locked_answer: str, aliases: list[str] | N
     return first
 
 
-def _haiku_hint_leak_check_once(draft: str, locked_answer: str, aliases: list[str] | None = None) -> dict:
+def _haiku_hint_leak_check_once(
+    draft: str,
+    locked_answer: str,
+    aliases: list[str] | None = None,
+    locked_question: str = "",
+) -> dict:
     """Single-shot leak check (no retry). The public wrapper above adds
     a confirmation pass on `clean` verdicts. Use this directly only when
     you specifically need the raw single-call behavior (e.g. from a
@@ -240,7 +265,10 @@ def _haiku_hint_leak_check_once(draft: str, locked_answer: str, aliases: list[st
         }
     aliases_str = ", ".join(a for a in (aliases or []) if isinstance(a, str)) or "(none)"
     user_text = _HINT_LEAK_USER_TEMPLATE.format(
-        locked_answer=locked_answer, aliases=aliases_str, draft=draft,
+        locked_question=(locked_question or "(not provided)"),
+        locked_answer=locked_answer,
+        aliases=aliases_str,
+        draft=draft,
     )
     try:
         raw = _haiku_call(_cached_system_block(_HINT_LEAK_SYSTEM), user_text)

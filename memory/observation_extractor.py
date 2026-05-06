@@ -53,6 +53,9 @@ EXTRACTION_PROMPT = """\
 You are reviewing a student-tutor session and extracting durable
 observations to persist into the student's long-term memory.
 
+{architecture}
+
+
 You will produce TWO categories of observations:
 
   1. "misconception" — concrete factual errors or persistent confusions
@@ -165,7 +168,19 @@ def extract_observations(
 
     transcript = _format_transcript(state.get("messages") or [], max_turns=max_turns)
 
+    # M-T2 (POST_DEMO_FIXES.md, 2026-05-06): pull the canonical
+    # architecture block from cfg.prompts so this prompt stays in
+    # lockstep with all other architecture references. Importing
+    # lazily keeps observation_extractor importable without config in
+    # unit-test contexts.
+    try:
+        from config import cfg as _cfg
+        _arch_block = getattr(_cfg.prompts, "architecture_block", "") or ""
+    except Exception:
+        _arch_block = ""
+
     prompt = EXTRACTION_PROMPT.format(
+        architecture=_arch_block,
         topic=topic,
         locked_question=locked_question or "(none)",
         locked_answer=locked_answer or "(none)",

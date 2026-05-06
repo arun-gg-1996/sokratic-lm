@@ -200,19 +200,28 @@ def test_clinical_prompt_omits_clinical_block_when_fields_empty():
 
 
 def test_rapport_prompt_uses_time_of_day():
+    """F8/full-sweep (POST_DEMO_FIXES.md, 2026-05-06): the universal
+    `_PROMPT_PREAMBLE` instructional text mentions "CONVERSATION HISTORY"
+    in a natural-language note ("...visible in CONVERSATION HISTORY..."),
+    so the literal string appears in every mode's prompt. The structural
+    check is that the SECTION HEADER `CONVERSATION HISTORY (most recent
+    last):` is absent — that's what `_MODES_USING_HISTORY` gates.
+    """
     plan = TurnPlan(scenario="opening", hint_text="", mode="rapport", tone="encouraging")
     p = build_teacher_prompt(plan, _inputs(time_of_day="morning"))
     assert "Good morning" in p
-    assert "RETRIEVED CHUNKS" not in p  # rapport doesn't use chunks
-    assert "CONVERSATION HISTORY" not in p  # nor history
+    assert "RETRIEVED CHUNKS (ground every claim" not in p  # rapport doesn't use chunks
+    assert "CONVERSATION HISTORY (most recent last)" not in p  # nor history
 
 
 def test_opt_in_prompt_short_and_no_chunks():
+    """F8/full-sweep: same pattern — assert SECTION HEADER absence, not
+    just any occurrence of the string."""
     plan = TurnPlan(scenario="reached answer", hint_text="", mode="opt_in", tone="encouraging")
     p = build_teacher_prompt(plan, _inputs())
     assert "clinical-application" in p
-    assert "RETRIEVED CHUNKS" not in p
-    assert "CONVERSATION HISTORY" not in p
+    assert "RETRIEVED CHUNKS (ground every claim" not in p
+    assert "CONVERSATION HISTORY (most recent last)" not in p
     # Opt-in still surfaces the locked subsection so question is anchored
     assert "LOCKED SUBSECTION" in p
 
@@ -323,12 +332,24 @@ def test_draft_happy_path_returns_text_and_diagnostics():
 
 
 def test_draft_passes_prompt_to_client():
+    """F8/full-sweep (POST_DEMO_FIXES.md, 2026-05-06): post-cache-block
+    refactor, the message content is a list of cached blocks (each a
+    dict with `text` + `cache_control`) instead of a single string.
+    Assert against the joined text payload.
+    """
     client = MockClient()
     teacher = TeacherV2(client, model="sonnet")
     teacher.draft(_socratic_plan(), _inputs())
     sent = client.last_messages[0]["content"]
-    assert "FORBIDDEN TERMS" in sent
-    assert "Socratic anatomy tutor" in sent
+    if isinstance(sent, list):
+        sent_text = "\n".join(
+            (b.get("text") or "") if isinstance(b, dict) else str(b)
+            for b in sent
+        )
+    else:
+        sent_text = str(sent)
+    assert "FORBIDDEN TERMS" in sent_text
+    assert "Socratic anatomy tutor" in sent_text
 
 
 def test_draft_handles_llm_exception_gracefully():
@@ -358,9 +379,17 @@ def test_draft_appends_prior_attempts_to_prompt():
         ],
     )
     sent = client.last_messages[0]["content"]
-    assert "PRIOR ATTEMPTS" in sent
-    assert "Attempt 1: What's the SA node?" in sent
-    assert "leaked SA node" in sent
+    # F8/full-sweep — content is now a list of cached blocks; join text.
+    if isinstance(sent, list):
+        sent_text = "\n".join(
+            (b.get("text") or "") if isinstance(b, dict) else str(b)
+            for b in sent
+        )
+    else:
+        sent_text = str(sent)
+    assert "PRIOR ATTEMPTS" in sent_text
+    assert "Attempt 1: What's the SA node?" in sent_text
+    assert "leaked SA node" in sent_text
 
 
 def test_draft_no_prior_attempts_no_addendum():

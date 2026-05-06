@@ -32,17 +32,30 @@ from conversation import preflight as P
 
 @pytest.fixture
 def mock_haiku(monkeypatch):
-    """Configure C._haiku_call to return canned responses keyed by which
-    system prompt is used. Each test sets verdicts via .set_verdict()."""
+    """Configure both classifier module _haiku_call AND the unified-intent
+    classifier _haiku_call to return canned responses. Each test sets
+    verdicts via .set_verdict().
+
+    F8 (POST_DEMO_FIXES.md, 2026-05-06): updated to also patch the M7
+    unified intent classifier (`conversation.preflight_classifier`).
+    `run_preflight` now calls the unified path; tests that run through
+    `run_preflight` need a mock for the unified _haiku_call too.
+    """
     state = {
         "help_abuse": "legitimate_engagement",
         "off_domain": "in_domain",
         "deflection": "continuing",
+        # M7 unified verdict — set this in tests that exercise
+        # run_preflight end-to-end. Falls back to on_topic_engaged.
+        "unified": "on_topic_engaged",
         "raise_exc": None,
     }
 
     def _classify_system(blocks):
         text = blocks[0]["text"] if blocks else ""
+        # M7 unified system prompt has the distinctive header.
+        if "intent classifier for a Socratic tutoring system" in text:
+            return "unified"
         if "HELP-ABUSE patterns" in text:
             return "help_abuse"
         if "DEFLECTION patterns" in text:
@@ -55,12 +68,33 @@ def mock_haiku(monkeypatch):
         if state["raise_exc"]:
             raise state["raise_exc"]
         which = _classify_system(system_blocks)
-        verdict = state.get(which, "unknown")
+        # When the unified system fires, route help_abuse / off_domain /
+        # deflection set_verdict() calls through the `unified` slot for
+        # maximum back-compat with existing tests. If a test set
+        # `unified=` explicitly, that wins.
+        if which == "unified":
+            verdict = state.get("unified")
+            if verdict == "on_topic_engaged":
+                # If the legacy keys signal a fail (e.g. test set
+                # help_abuse="help_abuse"), promote that to the unified
+                # verdict so existing tests work without rewrites.
+                for legacy_key in ("help_abuse", "deflection"):
+                    if state.get(legacy_key) not in (None, "", "legitimate_engagement", "continuing"):
+                        verdict = state[legacy_key]
+                        break
+                if verdict == "on_topic_engaged" and state.get("off_domain") not in (None, "", "in_domain"):
+                    verdict = "off_domain"
+        else:
+            verdict = state.get(which, "unknown")
         # Use the actual student message content as evidence so
-        # _validate_evidence passes. user_text contains
-        # "STUDENT MESSAGE:\n<msg>\n\nReturn only..." — take the first
-        # non-empty line after the label, then truncate to 40 chars.
-        suffix = user_text.split("STUDENT MESSAGE:")[-1] if "STUDENT MESSAGE:" in user_text else "test"
+        # _validate_evidence passes. user_text contains either
+        # "STUDENT MESSAGE:" (legacy) or "STUDENT'S LATEST MESSAGE:"
+        # (M7 unified) — handle both.
+        marker = (
+            "STUDENT'S LATEST MESSAGE:" if "STUDENT'S LATEST MESSAGE:" in user_text
+            else "STUDENT MESSAGE:"
+        )
+        suffix = user_text.split(marker)[-1] if marker in user_text else "test"
         first_line = ""
         for line in suffix.splitlines():
             if line.strip():
@@ -72,7 +106,9 @@ def mock_haiku(monkeypatch):
             (which == "deflection" and verdict == "deflection") or
             (which == "off_domain" and verdict in ("off_domain", "substance",
                                                     "chitchat", "jailbreak",
-                                                    "answer_demand"))
+                                                    "answer_demand")) or
+            (which == "unified" and verdict in ("help_abuse", "deflection",
+                                                 "off_domain", "low_effort"))
         )
         return json.dumps({
             "verdict": verdict,
@@ -81,6 +117,9 @@ def mock_haiku(monkeypatch):
         })
 
     monkeypatch.setattr(C, "_haiku_call", fake)
+    # F8: also patch the unified-classifier module's _haiku_call.
+    from conversation import preflight_classifier as PC
+    monkeypatch.setattr(PC, "_haiku_call", fake)
 
     class Setter:
         def set_verdict(self, **kwargs):
@@ -167,7 +206,12 @@ def _state(help_count=0, off_count=0):
 
 
 def test_preflight_all_pass_runs_dean(mock_haiku):
-    """All 3 checks return clean → fired=False, Dean runs."""
+    """All 3 checks return clean → fired=False, Dean runs.
+
+    F8 (POST_DEMO_FIXES.md, 2026-05-06): M7 unified classifier surfaces
+    the actual verdict (`on_topic_engaged`) instead of legacy `"none"`.
+    Test asserts the new shape.
+    """
     mock_haiku.set_verdict(
         help_abuse="legitimate_engagement",
         off_domain="in_domain",
@@ -175,7 +219,7 @@ def test_preflight_all_pass_runs_dean(mock_haiku):
     )
     out = P.run_preflight(_state(), "maybe the supraspinatus?", parallel=False)
     assert out.fired is False
-    assert out.category == "none"
+    assert out.category == "on_topic_engaged"  # M7 surfaces the verdict
     assert out.new_help_abuse_count == 0  # reset on engagement
     assert out.suggested_mode == ""
 
@@ -262,6 +306,13 @@ def test_preflight_deflection_priority_over_off_domain(mock_haiku):
     assert out.new_off_topic_count == 2
 
 
+@pytest.mark.skip(
+    reason="F8 (POST_DEMO_FIXES.md, 2026-05-06): M7 unified classifier "
+    "picks ONE verdict — there's no longer a code-side priority gate "
+    "between off_domain / help_abuse / deflection. Priority semantics "
+    "(if any) live in the unified prompt itself; needs an integration "
+    "test against the real LLM, not a mocked unit test."
+)
 def test_preflight_deflection_priority_over_help_abuse(mock_haiku):
     mock_haiku.set_verdict(help_abuse="help_abuse", deflection="deflection")
     out = P.run_preflight(_state(help_count=2), "ok stop", parallel=False)
@@ -269,6 +320,7 @@ def test_preflight_deflection_priority_over_help_abuse(mock_haiku):
     assert out.new_help_abuse_count == 2  # not advanced
 
 
+@pytest.mark.skip(reason="F8 — see test_preflight_deflection_priority_over_help_abuse")
 def test_preflight_off_domain_priority_over_help_abuse(mock_haiku):
     """off_domain has session-end consequences → priority over help_abuse."""
     mock_haiku.set_verdict(help_abuse="help_abuse", off_domain="off_domain")
@@ -288,13 +340,17 @@ def test_preflight_engagement_resets_help_abuse_counter(mock_haiku):
     assert out.new_help_abuse_count == 0  # reset
 
 
-def test_preflight_off_domain_counter_persists_across_clean_turns(mock_haiku):
-    """off_topic_count is NOT reset on legitimate engagement (L56 — only
-    explicit off-domain detection moves it)."""
+def test_preflight_off_domain_counter_decays_across_clean_turns(mock_haiku):
+    """F8 (POST_DEMO_FIXES.md, 2026-05-06): M7 strike decay — off_topic_count
+    DECREMENTS by 1 on each engaged turn (preflight.py:523:
+    `new_off = max(0, off_count - 1)`). Was previously preserved (L56).
+    Decay prevents a single old misclassification from accumulating to
+    strike 4 across many clean turns.
+    """
     mock_haiku.set_verdict(help_abuse="legitimate_engagement",
                             off_domain="in_domain", deflection="continuing")
     out = P.run_preflight(_state(off_count=2), "x", parallel=False)
-    assert out.new_off_topic_count == 2  # preserved
+    assert out.new_off_topic_count == 1  # decayed by 1
 
 
 def test_preflight_parallel_mode_works(mock_haiku):

@@ -268,14 +268,79 @@ async def analysis_chat(thread_id: str, req: AnalysisChatRequest) -> AnalysisCha
         if isinstance(h, dict) and h.get("content")
     )
 
+    # A4 (POST_DEMO_FIXES.md, 2026-05-06): query mem0 for prior
+    # observations on THIS subsection so the analysis chat can answer
+    # questions that span multiple sessions on the same topic. The
+    # docstring at the top of this module promised this; the code
+    # didn't deliver until now.
+    #
+    # Filters:
+    #   subsection_path = locked_subsection (exact match)
+    #   category in (misconception, learning_style)
+    # Excludes the current thread_id so this isn't just echoing back
+    # the same session's observations.
+    student_id = sess.get("student_id") or ""
+    mem0_block = ""
+    if student_id and locked_subsection:
+        try:
+            from memory.mem0_safe import safe_mem0_read
+            from memory.persistent_memory import PersistentMemory
+            persistent = PersistentMemory()
+            if getattr(persistent, "available", False):
+                hits = safe_mem0_read(
+                    persistent,
+                    student_id=student_id,
+                    query=msg,  # let semantic similarity surface relevant observations
+                    filters={
+                        "subsection_path": locked_subsection,
+                        "category": ["misconception", "learning_style"],
+                    },
+                    top_k=5,
+                )
+                # Drop hits from THIS thread_id — analysis is about
+                # cross-session synthesis, and this thread's observations
+                # are already implicit in the transcript above.
+                lines = []
+                for h in hits or []:
+                    if not isinstance(h, dict):
+                        continue
+                    md = h.get("metadata") if isinstance(h.get("metadata"), dict) else {}
+                    if str(md.get("thread_id") or "") == tid:
+                        continue
+                    text = str(h.get("text") or h.get("memory") or "").strip()
+                    if not text:
+                        continue
+                    cat = str(md.get("category") or "").strip()
+                    label = (
+                        "Misconception" if cat == "misconception"
+                        else "Learning style" if cat == "learning_style"
+                        else "Note"
+                    )
+                    when = str(md.get("session_at") or "")[:10] or "earlier"
+                    lines.append(f"  - [{label} · {when}] {text[:200]}")
+                if lines:
+                    mem0_block = (
+                        "\nPRIOR-SESSION OBSERVATIONS ON THIS SUBSECTION "
+                        "(across all the student's past sessions, NOT "
+                        "this thread):\n" + "\n".join(lines)
+                    )
+        except Exception:
+            # Never block the analysis chat on mem0 failure. Trace it
+            # via safe wrapper; just continue without the cross-session
+            # block.
+            pass
+
     user_prompt = (
         f"LOCKED SUBSECTION: {locked_sub_leaf}\n"
         f"LOCKED QUESTION:   {locked_q}\n"
         f"TEXTBOOK ANSWER:   {locked_a}\n\n"
-        f"PAST SESSION TRANSCRIPT:\n{transcript_block}\n\n"
-        + (f"\nPRIOR ANALYSIS CHAT:\n{prior_history}\n" if prior_history else "")
-        + f"\nSTUDENT'S CURRENT QUESTION:\n{msg}\n\n"
-        "Respond in 2-4 sentences. Reference turn numbers when useful."
+        f"PAST SESSION TRANSCRIPT:\n{transcript_block}\n"
+        + mem0_block
+        + (f"\n\nPRIOR ANALYSIS CHAT:\n{prior_history}" if prior_history else "")
+        + f"\n\nSTUDENT'S CURRENT QUESTION:\n{msg}\n\n"
+        "Respond in 2-4 sentences. Reference turn numbers when useful. "
+        "If cross-session observations above are relevant, weave them "
+        "in naturally (e.g. 'in your earlier session you struggled with X')."
     )
 
     from conversation.llm_client import make_anthropic_client, resolve_model
@@ -372,4 +437,252 @@ async def regenerate_takeaways(thread_id: str) -> RegenerateResponse:
         )
     return RegenerateResponse(
         thread_id=tid, success=True, key_takeaways=takeaways,
+    )
+
+
+# ─── N8 — Suggest replies (LLM-driven student-profile suggestions) ───────────
+
+class SuggestRepliesRequest(BaseModel):
+    profile: Optional[str] = "S2"  # default: Moderate
+
+
+class SuggestionItem(BaseModel):
+    text: str
+    kind: str  # "correct" | "partial" | "wrong_engaged" | "low_effort" | "help_abuse" | "off_topic" | "opt_in_yes" | "opt_in_no" | "exit_intent"
+    color: str  # CSS class hint (resolved by frontend)
+    rationale: Optional[str] = ""
+
+
+class SuggestRepliesResponse(BaseModel):
+    thread_id: str
+    profile: str
+    suggestions: list[SuggestionItem] = []
+    error: Optional[str] = None
+
+
+# Profile labels (mirrored from evaluation/simulation/profiles.py for
+# stand-alone fidelity — the suggester uses these as natural-language
+# pedagogical descriptors, not as code dependencies).
+_N8_PROFILES = {
+    "S1": ("Strong",
+           "answers precisely on the first prompt, uses textbook "
+           "vocabulary, asks clarifying questions when stuck"),
+    "S2": ("Moderate",
+           "produces partial answers needing 1-2 hints, sometimes "
+           "guesses with adjacent terms, engages but not deeply"),
+    "S3": ("Weak",
+           "rarely lands the answer unprompted, hedges heavily, "
+           "needs hints 2-3 to converge, occasionally asks for help"),
+    "S4": ("Overconfident",
+           "states wrong answers with high certainty, doubles down "
+           "rather than reconsidering, rarely hedges"),
+    "S5": ("Disengaged",
+           "produces 'idk' / 'just tell me' / one-word responses, "
+           "occasionally drifts off-topic, low engagement"),
+    "S6": ("Anxious-Correct",
+           "knows the answer but adds qualifiers ('I think', 'maybe'), "
+           "asks meta-questions about whether they're on track"),
+}
+
+
+_SUGGEST_SYSTEM = """\
+You are a SIMULATOR generating realistic student replies for a
+Socratic anatomy tutoring app. The user is testing the tutor and has
+toggled "Suggest answers" on so they can act as different student
+profiles.
+
+Your output is a JSON list of 4 suggested student replies. Each must
+have a different intent class so the user can see how the tutor
+handles each branch. The intent classes are:
+
+  correct        — the actual locked answer (or close paraphrase)
+  partial        — partially correct / on-track but incomplete
+  wrong_engaged  — a real attempt that misses (NOT a related concept,
+                   ideally an in-domain confusion the profile would make)
+  low_effort     — passive non-engagement: "idk", "i don't know",
+                   "not sure", one-word filler
+  help_abuse     — active demand for the answer: "just tell me",
+                   "what's the answer", "skip"
+  off_topic      — clearly off-domain (NOT a domain tangent — outside
+                   the textbook subject entirely)
+  opt_in_yes     — accept the clinical-bonus offer (only valid in opt_in)
+  opt_in_no      — decline the clinical-bonus offer
+  exit_intent    — "I want to stop", "no thanks", "let's end"
+
+CRITICAL rules:
+- The 4 suggestions MUST be intent-class-diverse (no two with the
+  same kind). Pick the 4 most-instructive classes for the current
+  phase + profile.
+- Each suggestion is what a STUDENT would type — short, plausible,
+  in the profile's voice. NOT what the tutor would say.
+- Profile-weight the mix: a Strong student gets more correct/partial,
+  a Disengaged student gets more low_effort/help_abuse/off_topic.
+- If phase is "opt_in" (the tutor just asked Yes/No for clinical),
+  return ONLY 2 suggestions: opt_in_yes + opt_in_no.
+- If phase is "rapport" or pre-lock, suggestions should be topic
+  choices ("the heart", "skin layers"), NOT answers to a Q.
+
+Output STRICT JSON only:
+{
+  "suggestions": [
+    {"text": "...", "kind": "correct", "rationale": "..."},
+    {"text": "...", "kind": "partial", "rationale": "..."},
+    {"text": "...", "kind": "low_effort", "rationale": "..."},
+    {"text": "...", "kind": "off_topic", "rationale": "..."}
+  ]
+}
+"""
+
+
+def _color_for_kind(kind: str) -> str:
+    """Map intent class → frontend color token. Mirrored in
+    SuggestionBubbles.tsx for consistency."""
+    return {
+        "correct": "green",
+        "partial": "yellow-green",
+        "wrong_engaged": "yellow",
+        "low_effort": "orange",
+        "help_abuse": "red-orange",
+        "off_topic": "red",
+        "opt_in_yes": "blue",
+        "opt_in_no": "blue",
+        "exit_intent": "purple",
+    }.get(kind, "muted")
+
+
+@router.post("/sessions/{thread_id}/suggest_replies", response_model=SuggestRepliesResponse)
+async def suggest_replies(thread_id: str, request: SuggestRepliesRequest) -> SuggestRepliesResponse:
+    """N8 (POST_DEMO_FIXES.md, 2026-05-06): student-profile reply
+    suggester for testing.
+
+    Pulls the live thread state from the runtime store, builds a
+    context-aware prompt, fires Haiku, returns 4 intent-class-diverse
+    student-reply suggestions. Intended for QA / demo use only — every
+    call is one Haiku request (~$0.001). No DB writes."""
+    tid = (thread_id or "").strip()
+    if not tid:
+        raise HTTPException(status_code=400, detail="thread_id required")
+
+    profile_id = (request.profile or "S2").strip().upper()
+    if profile_id not in _N8_PROFILES:
+        profile_id = "S2"
+    profile_name, profile_desc = _N8_PROFILES[profile_id]
+
+    # Pull live state. If the thread isn't in the runtime store, fall
+    # back to empty context — suggestions will be generic but still
+    # diverse-by-class.
+    from backend.dependencies import get_runtime_store
+    runtime = get_runtime_store()
+    state = runtime.get(tid) or {}
+
+    locked_q = str(state.get("locked_question") or "").strip()
+    locked_a = str(state.get("locked_answer") or "").strip()
+    full_a = str(state.get("full_answer") or "").strip()
+    phase = str(state.get("phase") or "tutoring").strip()
+    hint_level = int(state.get("hint_level", 0) or 0)
+    pending = state.get("pending_user_choice") or {}
+    is_opt_in = pending.get("kind") == "opt_in"
+
+    # Last 3 (tutor, student) pairs for grounding. Skip if no messages.
+    msgs = list(state.get("messages") or [])[-6:]
+    convo_lines: list[str] = []
+    for m in msgs:
+        role = (m or {}).get("role") or ""
+        content = str((m or {}).get("content") or "").strip()
+        if role and content:
+            tag = "TUTOR" if role == "tutor" else "STUDENT"
+            convo_lines.append(f"{tag}: {content[:240]}")
+    convo_block = "\n".join(convo_lines) if convo_lines else "(no prior turns yet)"
+
+    user_prompt = f"""\
+PROFILE: {profile_id} — {profile_name}
+PROFILE PATTERN: {profile_desc}
+
+PHASE: {phase} (hint_level={hint_level}, opt_in_pending={is_opt_in})
+
+LOCKED QUESTION: {locked_q or '(not yet locked)'}
+LOCKED ANSWER (the term the student should reach):
+{locked_a or '(not yet locked)'}
+FULL ANSWER (richer textbook answer — may be a list):
+{full_a or '(not provided)'}
+
+RECENT CONVERSATION (last 3 pairs):
+{convo_block}
+
+Generate 4 intent-class-diverse student-reply suggestions per the
+system rules. Output strict JSON only.
+"""
+
+    # Fire Haiku via the existing LLM client. Wrap in try/except so any
+    # error degrades to "no suggestions" rather than crashing the UI.
+    try:
+        from conversation.llm_client import make_anthropic_client, resolve_model, beta_headers
+        client = make_anthropic_client()
+        model_id = resolve_model("claude-haiku-4-5-20251001")
+        # Some clients accept extra_headers; guard with try/except.
+        kwargs = {
+            "model": model_id,
+            "max_tokens": 600,
+            "temperature": 0.7,
+            "system": _SUGGEST_SYSTEM,
+            "messages": [{"role": "user", "content": user_prompt}],
+        }
+        try:
+            kwargs["extra_headers"] = beta_headers()
+        except Exception:
+            pass
+        resp = client.messages.create(**kwargs)
+        raw = (resp.content[0].text or "").strip()
+    except Exception as e:
+        return SuggestRepliesResponse(
+            thread_id=tid, profile=profile_id, suggestions=[],
+            error=f"haiku_call_error: {type(e).__name__}: {str(e)[:120]}",
+        )
+
+    # Tolerant JSON extraction (LLM may wrap in ```json fences).
+    parsed: dict | None = None
+    try:
+        # Strip code fences if present.
+        text = raw
+        if "```" in text:
+            # Take the content between the first ``` pair.
+            parts = text.split("```")
+            for chunk in parts:
+                chunk_str = chunk.strip()
+                if chunk_str.startswith("json"):
+                    chunk_str = chunk_str[4:].strip()
+                if chunk_str.startswith("{") and chunk_str.endswith("}"):
+                    text = chunk_str
+                    break
+        # Find the first '{' and last '}' as a final fallback.
+        start = text.find("{")
+        end = text.rfind("}")
+        if start >= 0 and end > start:
+            parsed = json.loads(text[start:end + 1])
+    except Exception:
+        parsed = None
+
+    if not parsed or not isinstance(parsed.get("suggestions"), list):
+        return SuggestRepliesResponse(
+            thread_id=tid, profile=profile_id, suggestions=[],
+            error="suggest_parse_failed",
+        )
+
+    items: list[SuggestionItem] = []
+    for s in parsed["suggestions"]:
+        if not isinstance(s, dict):
+            continue
+        text = str(s.get("text") or "").strip()
+        kind = str(s.get("kind") or "").strip().lower()
+        if not text or not kind:
+            continue
+        items.append(SuggestionItem(
+            text=text[:200],  # hard cap to keep bubbles compact
+            kind=kind,
+            color=_color_for_kind(kind),
+            rationale=str(s.get("rationale") or "")[:140],
+        ))
+
+    return SuggestRepliesResponse(
+        thread_id=tid, profile=profile_id, suggestions=items[:6],
     )

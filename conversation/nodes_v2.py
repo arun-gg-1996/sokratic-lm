@@ -324,6 +324,35 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
             ),
         })
 
+    # ── 0b. Reach short-circuit — Codex Sim 2/5 fix ──────────────────────
+    # If the reach gate just fired with reached=True, skip Dean planning +
+    # Teacher draft entirely. The graph routes to assessment_node next,
+    # which will render the opt-in. Without this short-circuit, Dean drafts
+    # an acknowledgment + assessment_node also drafts opt-in → duplicate
+    # tutor messages (one tagged phase=tutoring, one tagged phase=assessment).
+    # Counters preserved; turn_count NOT incremented (assessment_node owns
+    # the turn count for its own state machine).
+    if state.get("student_reached_answer") and not skip_gate_for_ack:
+        debug_trace.append({
+            "wrapper": "dean_node_v2.reach_short_circuit",
+            "result": "suppressing_teacher_draft_assessment_node_will_render_opt_in",
+        })
+        # Match the existing engaged-tutoring return shape so the merge is
+        # consistent (LangGraph reducer expects fields in the return dict).
+        return {
+            "messages": list(state.get("messages", []) or []),  # no new tutor msg
+            "help_abuse_count": int(state.get("help_abuse_count", 0) or 0),
+            "off_topic_count": int(state.get("off_topic_count", 0) or 0),
+            "hint_level": int(state.get("hint_level", 0) or 0),
+            "last_hint_advance_at_turn": int(state.get("last_hint_advance_at_turn", -1) or -1),
+            "phase": state.get("phase", "tutoring"),
+            "student_reached_answer": True,
+            "student_reach_coverage": float(state.get("student_reach_coverage", 0.0) or 0.0),
+            "student_reach_path": str(state.get("student_reach_path", "") or ""),
+            "session_ended_off_domain": bool(state.get("session_ended_off_domain", False)),
+            "debug": state["debug"],
+        }
+
     # ── 1. Pre-flight Haiku layer ────────────────────────────────────────
     fire_activity("Checking message intent")
     # BLOCK 9 (S3) — skip preflight on cancel-modal turn. The previous
@@ -443,10 +472,20 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
             return _ret
 
         # Force hint advance if L55 strike-4 fired (help_abuse threshold).
+        # F5 (POST_DEMO_FIXES.md, 2026-05-06): cap at max_hints+1 (was 3
+        # hardcoded). When the next strike fires after hint=3, level
+        # bumps to 4 — after_dean routes to memory_update with
+        # close_reason=hints_exhausted. Previously stuck at 3 forever
+        # → no termination, infinite stonewall (Codex Sim 4).
         prev_hint_level_p = int(state.get("hint_level", 0) or 0)
         new_hint_level = prev_hint_level_p
+        rule_hint_advance_count_pf = int(state.get("rule_hint_advance_count", 0) or 0)
         if preflight.should_force_hint_advance:
-            new_hint_level = min(3, new_hint_level + 1)
+            max_hints_p = int(state.get("max_hints", 3) or 3)
+            new_hint_level = min(max_hints_p + 1, new_hint_level + 1)
+            # Block G — diagnostic counter. Only count if level actually moved.
+            if new_hint_level > prev_hint_level_p:
+                rule_hint_advance_count_pf += 1
             # 2026-05-05: log hint_advance event so Teacher can read the trigger
             # in CONVERSATION HISTORY and acknowledge the level-up in its draft.
             # Was previously only logged in the engaged-tutoring path.
@@ -531,7 +570,9 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         if preflight.should_end_session:
             new_phase = "memory_update"
             msgs[-1]["metadata"]["is_closing"] = True
-            state.setdefault("session_ended_off_domain", True)
+            # F1 — plain assignment (not setdefault, which is a no-op
+            # when the key was initialized to False in state.py).
+            state["session_ended_off_domain"] = True
 
         elapsed_ms = int((time.time() - t0) * 1000)
         debug_trace.append({"wrapper": "dean_node_v2.total_elapsed_ms", "value": elapsed_ms})
@@ -560,6 +601,18 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
             "student_reached_answer": bool(state.get("student_reached_answer", False)),
             "student_reach_coverage": float(state.get("student_reach_coverage", 0.0) or 0.0),
             "student_reach_path": str(state.get("student_reach_path", "") or ""),
+            # Block G (POST_DEMO_FIXES.md) — diagnostic counters. Carry
+            # forward; rule_hint_advance_count may have been bumped above
+            # if preflight strike-4 fired. dean_override + engaged_wrong
+            # don't increment in this branch (we're in a deflection path).
+            "engaged_wrong_count": int(state.get("engaged_wrong_count", 0) or 0),
+            "dean_hint_override_count": int(state.get("dean_hint_override_count", 0) or 0),
+            "rule_hint_advance_count": rule_hint_advance_count_pf,
+            # Codex Sim 6 fix: must propagate session_ended_off_domain so
+            # _derive_close_reason at lifecycle_v2.py:334 picks
+            # off_domain_strike instead of falling through to tutoring_cap
+            # on a 4-strike off-topic close.
+            "session_ended_off_domain": bool(state.get("session_ended_off_domain", False)),
             "debug": state["debug"],
         }
         if anchor_pick_overrides:
@@ -618,6 +671,21 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
                     "wrapper": "mem0_inject.hint_advance_carryover",
                     "carryover_chars": len(carryover_hint_advance),
                 })
+                # A3 (POST_DEMO_FIXES.md, 2026-05-06): visible activity
+                # signal that learning-style cues from prior sessions
+                # are informing this hint. Fires only when prior memory
+                # exists for this student; silently skipped otherwise.
+                fire_activity(
+                    "Loading your learning style from past sessions",
+                    detail=(
+                        f"Hint just advanced to level {prev_hint_level}. "
+                        f"Pulled {len(carryover_hint_advance)} chars of "
+                        "learning-style cues from prior sessions to "
+                        "shape this turn's scaffolding (e.g. 'student "
+                        "responds to clinical framing', 'prefers concrete "
+                        "analogies before abstractions')."
+                    ),
+                )
         except Exception as e:
             debug_trace.append({
                 "wrapper": "mem0_inject.hint_advance_carryover_error",
@@ -744,6 +812,10 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         student_descriptor=getattr(_cfg.domain, "student_descriptor", "student"),
         snapshots=_debug_obj_for_inputs.get("per_turn_snapshots", []) or [],
         system_events=_debug_obj_for_inputs.get("system_events", []) or [],
+        # N4 (POST_DEMO_FIXES.md, 2026-05-06) — surface phase-transition
+        # signal so Teacher's first post-lock turn opens with a brief
+        # bridging acknowledgment of the locked subsection.
+        topic_just_locked=bool(state.get("topic_just_locked", False)),
     )
     aliases = state.get("locked_answer_aliases") or []
     prior_qs = []
@@ -767,6 +839,9 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
     # when student went tangential. Append exploration chunks (don't replace
     # locked-time chunks — Teacher sees both contexts).
     new_exploration_count = int(state.get("exploration_count", 0) or 0)
+    # Block G — per-turn exploration flag (drives sidebar EXPLORING badge).
+    new_currently_exploring = False
+    new_exploration_query_last = str(state.get("exploration_query_last", "") or "")
     if final_plan.needs_exploration and final_plan.exploration_query:
         fire_activity("Searching textbook for related context")
         try:
@@ -786,6 +861,8 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
             chunks = list(chunks) + tagged
             inputs.chunks = chunks
             new_exploration_count += 1
+            new_currently_exploring = True
+            new_exploration_query_last = str(final_plan.exploration_query or "")[:120]
             debug_trace.append({
                 "wrapper": "exploration_retrieval",
                 "n_added": len(tagged),
@@ -795,6 +872,9 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
     else:
         # On-topic engaged turn (no exploration requested) — decay the count.
         new_exploration_count = max(0, new_exploration_count - 1)
+        # Block G — clear per-turn flag on non-exploration turns.
+        new_currently_exploring = False
+        new_exploration_query_last = ""
 
     # Layer-2 mode-aware label so the demo viewer can see WHY this turn
     # has the shape it does (preflight intervention, soft_reset after
@@ -931,10 +1011,17 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
     prev_hint_level_engaged = int(state.get("hint_level", 0) or 0)
     new_hint_level_engaged = prev_hint_level_engaged
     last_advance_at_engaged = int(state.get("last_hint_advance_at_turn", -1) or -1)
+    # Block G — diagnostic counters. Carry forward from state, increment
+    # below at the right branch site so we know which path fired.
+    dean_hint_override_count_eng = int(state.get("dean_hint_override_count", 0) or 0)
+    rule_hint_advance_count_eng = int(state.get("rule_hint_advance_count", 0) or 0)
     if final_plan.advance_hint_level and not state.get("student_reached_answer"):
         max_hints = int(state.get("max_hints", 3) or 3)
         new_hint_level_engaged = min(max_hints + 1, prev_hint_level_engaged + 1)
         last_advance_at_engaged = int(state.get("turn_count", 0) or 0)
+        # Block G — only count if the level actually moved (cap may pin it).
+        if new_hint_level_engaged > prev_hint_level_engaged:
+            dean_hint_override_count_eng += 1
         debug_trace.append({
             "wrapper": "dean_node_v2.hint_level_advance",
             "from": prev_hint_level_engaged,
@@ -959,9 +1046,18 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
     # handles the end on its own terms).
     consecutive_low = int(state.get("consecutive_low_effort_count", 0) or 0)
     if consecutive_low >= 4 and not state.get("student_reached_answer"):
+        # F5 (POST_DEMO_FIXES.md, 2026-05-06): cap at max_hints+1 to
+        # match the Dean-signal advance path at line ~972. Previously
+        # capped at max_hints, which meant low_effort streaks could
+        # never push hint past 3 → after_dean's "hint_level > max_hints"
+        # termination never tripped → session continued indefinitely
+        # (Codex Sim 4 stonewall).
         max_hints = int(state.get("max_hints", 3) or 3)
         prev_hint_low = new_hint_level_engaged
-        new_hint_level_engaged = min(max_hints, new_hint_level_engaged + 1)
+        new_hint_level_engaged = min(max_hints + 1, new_hint_level_engaged + 1)
+        # Block G — count rule-based advance if level actually moved.
+        if new_hint_level_engaged > prev_hint_low:
+            rule_hint_advance_count_eng += 1
         # Reset the counter for a fresh warning chain (same pattern as
         # help_abuse strike-4 reset in preflight.py).
         state["consecutive_low_effort_count"] = 0
@@ -978,6 +1074,14 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
             to_level=new_hint_level_engaged,
             trigger="low_effort_streak_4",
         )
+
+    # Block G — engaged_wrong_count: increment when student gave a
+    # substantive on-topic turn that didn't reach. We're in the
+    # engaged-tutoring path here (preflight passed, reach gate ran),
+    # so a non-reach engaged turn is exactly "tried, missed".
+    engaged_wrong_count_eng = int(state.get("engaged_wrong_count", 0) or 0)
+    if not state.get("student_reached_answer"):
+        engaged_wrong_count_eng += 1
 
     final_return = {
         "messages": msgs,
@@ -1002,6 +1106,12 @@ def dean_node_v2(state: dict, dean, teacher, retriever) -> dict:
         # cleared it; ensure LangGraph reducer doesn't revert).
         "cancel_modal_pending": False,
         "exit_intent_pending": bool(state.get("exit_intent_pending", False)),
+        # Block G (POST_DEMO_FIXES.md) — diagnostic counters.
+        "engaged_wrong_count": engaged_wrong_count_eng,
+        "dean_hint_override_count": dean_hint_override_count_eng,
+        "rule_hint_advance_count": rule_hint_advance_count_eng,
+        "currently_exploring": new_currently_exploring,
+        "exploration_query_last": new_exploration_query_last,
         "debug": state["debug"],
     }
     # When an anchor_pick was just resolved on this same invocation, the

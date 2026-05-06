@@ -152,7 +152,16 @@ def _run_haiku_quartet(
     ~max(individual call times) ≈ 0.5-1.5s.
     """
     def _leak():
-        raw = C.haiku_hint_leak_check(draft, locked_answer, aliases=forbidden_terms_aliases)
+        # F5c (POST_DEMO_FIXES.md, 2026-05-06): pass locked_question so
+        # the leak check can reason about classification / list /
+        # enumeration questions where naming the categories IS the
+        # answer (e.g. Q="classify connective tissues" + draft naming
+        # "proper, supportive, fluid" — should fire `leak`).
+        raw = C.haiku_hint_leak_check(
+            draft, locked_answer,
+            aliases=forbidden_terms_aliases,
+            locked_question=locked_question,
+        )
         return C.to_universal_check_result(raw, check_name="haiku_leak_check")
 
     def _sycophancy():

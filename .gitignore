@@ -22,6 +22,8 @@ env/
 *accessKeys*.csv
 *credentials*.csv
 *_aws_keys*.csv
+*gcp-service-account*.json
+*service-account*.json
 
 # Local rollback backups (created by data-prep scripts before destructive writes)
 *.bak
@@ -75,6 +77,41 @@ data/artifacts/proposition_model_comparison.json
 # in the HF corpus snapshot, not git
 data/artifacts/raptor_section_summaries.jsonl
 data/artifacts/raptor_subsection_summaries.jsonl
+
+# 2026-05-06 demo-prep additions: WS/in-process sweep harness output
+# (per-turn transcripts, debug payloads, run logs). Regenerable,
+# contain real LLM conversations and can be large; never push.
+data/artifacts/sweep_*/
+data/artifacts/sweep_ws_*/
+
+# Simulated-conversation dumps from offline evals (pre-demo dogfood
+# runs, scenario JSONs). Regenerable from scripts/run_*.py.
+data/artifacts/simulated_convos/
+
+# Eval batch outputs (stress_test, stress_test_verifier, etc.) are
+# multi-MB per run; the markdown writeups elsewhere capture the
+# conclusions worth keeping in history.
+data/artifacts/eval/
+
+# Health-check probe dumps written ad-hoc by check_conversation_health.py.
+# Regenerable, ephemeral — keep out of git.
+data/artifacts/health_check_*.json
+data/artifacts/health_check_hc_*.json
+
+# SQLite store at runtime — created by L21 session lifecycle, contains
+# per-user session/mastery data. Belongs to runtime state, not source.
+# Production deploys should mount this from a persistent volume / pull
+# the seeded-demo .db from HF (scripts/demo_seed_*.py).
+data/sokratic_anatomy.db
+data/*.db
+data/*.db-journal
+data/*.db-wal
+
+# Per-session image uploads (VLM L77 path). User-content; never commit.
+data/uploads/
+
+# Local sweep run logs (stdout captures from scripts/sweep_*.py)
+/tmp/sweep_logs/
 
 # Cache smoke test logs are small, durable, paper-relevant — keep tracked
 !data/artifacts/cache_smoke/

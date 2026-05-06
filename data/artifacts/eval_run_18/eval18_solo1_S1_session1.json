@@ -1,16 +1,16 @@
 {
   "student_id": "eval18_solo1_S1",
-  "conv_id": "7c65e9bb",
+  "conv_id": "6d63a6af",
   "profile_id": "S1",
   "topic": "How does the immune system distinguish self from non-self?",
   "session_index": 1,
-  "timestamp": "2026-05-04T13:16:14",
+  "timestamp": "2026-05-05T16:50:01",
   "turns_log": [
     {
       "turn": 0,
       "phase": "rapport",
       "role": "tutor",
-      "content": "Good afternoon. Whether you're prepping for an upcoming practical, solidifying lecture material, or working through a conceptual gap, we can make this time count. What human anatomy topic would you like to tackle today?"
+      "content": "Good afternoon! No pressure to have a plan \u2014 we can start anywhere. What human anatomy topic do you want to dig into today?"
     },
     {
       "turn": 0,
@@ -35,19 +35,19 @@
       "turn": 0,
       "phase": "prelock_1_tutor",
       "role": "tutor",
-      "content": "Got it \u2014 let's work on **B Cell Differentiation and Activation** from Chapter 21 \u2192 The Adaptive Immune Response: B-lymphocytes and Antibodies.\n\nWhat process eliminates immature B cells that strongly bind to self-antigens in the bone marrow?"
+      "content": "Got it \u2014 we're looking at **B Cell Differentiation and Activation**. Let's start with this:\n\nWhat process destroys immature B cells in the bone marrow that bind strongly to self-antigens, preventing them from attacking the body's own tissues?"
     },
     {
       "turn": 1,
       "phase": "tutoring",
       "role": "student",
-      "content": "Oh, I think it's called clonal deletion? I remember reading about that in the textbook \u2014 it's basically where those self-reactive B cells get wiped out before they can cause problems. That sounds right to me, but I'm not totally sure if there's a more specific term for it happening in the bone marrow specifically."
+      "content": "Oh, I think it's clonal deletion, right? That's what I remember reading in the textbook \u2014 where the self-reactive B cells basically get eliminated before they can cause any damage."
     },
     {
       "turn": 1,
       "phase": "assessment",
       "role": "tutor",
-      "content": "You've earned a bonus round \u2014 would you like to try a clinical question exploring what might happen when self-reactive immature B cells escape destruction in the bone marrow, or would you prefer to end the session here?",
+      "content": "Spot on \u2014 that's the right process. Now let's dig one level deeper: when an immature B cell in the bone marrow binds strongly to a self-antigen, what actually happens at the cellular level that destroys it, and why does removing those cells matter for the overall B cell repertoire?",
       "student_state": "question",
       "hint_level": 0,
       "student_reached_answer": true
@@ -56,7 +56,7 @@
       "turn": 1,
       "phase": "assessment",
       "role": "tutor",
-      "content": "Great work \u2014 clonal deletion is the core answer here. If you'd like, there's a brief clinical bonus question connecting this process to autoimmune disease; would you like to try it, or would you prefer to end the session?",
+      "content": "",
       "student_state": "question",
       "hint_level": 0,
       "student_reached_answer": true
@@ -69,111 +69,9 @@
     },
     {
       "turn": 1,
-      "phase": "assessment",
-      "role": "tutor",
-      "content": "Consider this patient: a 28-year-old woman arrives with joint pain, a butterfly-shaped facial rash, and lab results showing circulating antibodies targeting her own nuclear proteins. Her physician suspects that the bone-marrow checkpoint responsible for destroying strongly self-reactive immature B cells failed at some point during her immune development. You already know that when immature B cells bind strongly to self-antigens in the bone marrow, they are normally signaled to undergo apoptosis before they can mature and enter circulation. In this patient, some of those self-reactive cells appear to have escaped that fate, matured into plasma cells, and are now producing antibodies against self-antigens \u2014 driving the tissue damage she's experiencing. Clonal anergy and peripheral tolerance serve as backup safeguards, but they clearly weren't enough here. Given what you know about how self-reactive immature B cells are normally eliminated in the bone marrow, what do you think happens to a patient's risk of autoimmune disease when that elimination process is incomplete?",
-      "student_state": "question",
-      "hint_level": 0,
-      "student_reached_answer": true
-    },
-    {
-      "turn": 2,
-      "phase": "assessment",
-      "role": "student",
-      "content": "Oh, I think I remember this from the textbook \u2014 isn't the process you're describing called clonal deletion? So if that's the step that's failing in this patient, it makes sense that her risk of autoimmune disease would go up, because those self-reactive B cells that should have been eliminated are now slipping through and causing problems. Like in her case, they're producing antinuclear antibodies and that's what's driving the lupus-like symptoms, right?"
-    },
-    {
-      "turn": 1,
-      "phase": "assessment",
-      "role": "tutor",
-      "content": "Let me reframe \u2014 what aspect of this would you like to think through more carefully? Pick a piece you're less sure about and we can explore it together.",
-      "student_state": "question",
-      "hint_level": 0,
-      "student_reached_answer": true
-    },
-    {
-      "turn": 2,
-      "phase": "assessment",
-      "role": "student",
-      "content": "Honestly, I'm pretty sure it's clonal deletion \u2014 I remember reading that in the textbook \u2014 but I'm not totally confident I understand *why* that's the mechanism. Like, I can recall the term but I'm not sure I could explain the actual process behind it if you asked me to."
-    },
-    {
-      "turn": 1,
-      "phase": "assessment",
-      "role": "tutor",
-      "content": "You've recalled the term well \u2014 now let's build the mechanism underneath it. In the bone marrow, immature B cells whose receptors bind strongly to a self-antigen receive a signal that drives them toward apoptosis rather than continued maturation, preventing self-reactive cells from ever reaching circulation. In this patient, that signal apparently failed at some point, allowing self-reactive B cells to survive, mature, and eventually become plasma cells producing anti-dsDNA antibodies against her own nuclear proteins. What do you think must happen at the cellular level \u2014 specifically regarding the signal an immature B cell receives upon strongly binding a self-antigen \u2014 for that cell to be destroyed rather than allowed to continue its maturation?",
-      "student_state": "question",
-      "hint_level": 0,
-      "student_reached_answer": true
-    },
-    {
-      "turn": 2,
-      "phase": "assessment",
-      "role": "student",
-      "content": "Oh, I think it's clonal deletion, right? That's the term that's sticking out to me from the textbook \u2014 like, the self-reactive cell gets deleted from the repertoire before it can cause problems. I'm a little fuzzy on the exact signaling details of *how* it happens at the molecular level though."
-    },
-    {
-      "turn": 2,
-      "phase": "assessment",
-      "role": "student",
-      "content": "Honestly, I'm pretty sure the answer is clonal deletion \u2014 I remember reading that in the textbook \u2014 but I guess I'm less confident about *why* that's the mechanism specifically, like what's actually happening at the cellular level that makes it clonal deletion and not something else."
-    },
-    {
-      "turn": 2,
-      "phase": "assessment",
-      "role": "student",
-      "content": "Hmm, I think it's clonal deletion? That's what I remember reading in the textbook, but I'm not totally confident in that \u2014 like, I know it's one of the mechanisms for self-tolerance, but I'm a little fuzzy on exactly how it fits in here and whether there are other processes happening at the same time."
-    },
-    {
-      "turn": 1,
-      "phase": "assessment",
-      "role": "tutor",
-      "content": "In this patient, an immature B cell whose BCR bound strongly to a self-antigen in the bone marrow apparently survived that checkpoint, matured, and eventually became a plasma cell secreting anti-dsDNA antibodies against her own nuclear proteins. The mechanism you're recalling involves what happens internally to that immature B cell at the moment of strong self-antigen binding during maturation in the bone marrow. Thinking about what distinguishes a cell that gets removed from the repertoire versus one that continues developing, what kind of signal would that strong BCR\u2013self-antigen interaction need to generate inside the immature B cell for it to be destroyed rather than allowed to mature?",
-      "student_state": "question",
-      "hint_level": 0,
-      "student_reached_answer": true
-    },
-    {
-      "turn": 2,
-      "phase": "assessment",
-      "role": "student",
-      "content": "Oh, I think it's clonal deletion, right? That's at least what I remember from the textbook \u2014 like, the immature B cell that binds too strongly to self-antigen gets deleted from the repertoire entirely. But I'm not totally sure what the specific intracellular signal would be that triggers that process."
-    },
-    {
-      "turn": 1,
-      "phase": "assessment",
-      "role": "tutor",
-      "content": "Strong BCR crosslinking by a self-antigen during maturation in the bone marrow tips the balance inside an immature B cell away from survival signals and toward a death signal, ultimately driving that cell toward apoptosis before it can join the mature repertoire. In this patient, something disrupted that balance \u2014 allowing self-reactive B cells to escape, mature, and eventually secrete anti-dsDNA antibodies against her own nuclear proteins. Thinking about the two possible outcomes an immature B cell faces when its BCR encounters a self-antigen in the bone marrow, what specific difference between a weak, transient BCR interaction and a strong, persistent one do you think determines whether the cell receives a survival signal or a death signal?",
-      "student_state": "question",
-      "hint_level": 0,
-      "student_reached_answer": true
-    },
-    {
-      "turn": 2,
-      "phase": "assessment",
-      "role": "student",
-      "content": "Oh, I think I remember this from the textbook \u2014 isn't the answer clonal deletion? Like, that's the mechanism where the self-reactive B cell just gets eliminated outright. Is that what determines whether it gets the survival signal versus the death signal?"
-    },
-    {
-      "turn": 1,
-      "phase": "assessment",
-      "role": "tutor",
-      "content": "You've named the term several times now \u2014 let's see if you can explain what's underneath it. An immature B cell in the bone marrow can receive either a survival signal that lets it continue maturation or a death signal that removes it from the repertoire, and the outcome depends on what happens when its BCR engages a self-antigen. In this patient, that checkpoint clearly failed, allowing self-reactive B cells to mature into plasma cells secreting anti-dsDNA antibodies against her own nuclear proteins. What do you think is different about a strong, persistent BCR interaction with a tissue-bound self-antigen versus a weak, transient one that determines which signal the immature B cell ultimately receives?",
-      "student_state": "question",
-      "hint_level": 0,
-      "student_reached_answer": true
-    },
-    {
-      "turn": 2,
-      "phase": "assessment",
-      "role": "student",
-      "content": "Yeah, I think the term for this is clonal deletion \u2014 that's what I remember from reading the textbook. But I'm honestly not super confident about the details of *why* a strong persistent signal leads to deletion versus a weak one leading to survival \u2014 like, is it something about the intensity of the BCR signaling cascade itself that tips the cell toward apoptosis?"
-    },
-    {
-      "turn": 1,
       "phase": "memory_update",
       "role": "tutor",
-      "content": "You showed real persistence today, and you correctly identified 'clonal deletion' as the mechanism multiple times \u2014 that term is genuinely locked in. What we ran out of time to build was the mechanistic layer underneath it: specifically, how the intensity and persistence of BCR crosslinking by a tissue-bound self-antigen tips the intracellular signaling balance toward apoptosis rather than survival. That's the piece worth revisiting \u2014 you're close, but the 'why' behind the term is where the understanding needs to deepen.",
+      "content": "You got it \u2014 clonal deletion was exactly right, and you explained the logic clearly: self-reactive B cells get eliminated before they can cause damage. That's the core of central tolerance in B cell development. Come back anytime to dig into what happens to the B cells that survive selection, or how peripheral tolerance picks up where the bone marrow leaves off.",
       "student_state": "question",
       "hint_level": 0,
       "student_reached_answer": true
@@ -194,10 +92,10 @@
     "total_off_topic_turns": 0
   },
   "debug_summary": {
-    "api_calls": 2,
-    "input_tokens": 4273,
-    "output_tokens": 171,
-    "cost_usd": 0.015383999999999998,
+    "api_calls": 1,
+    "input_tokens": 3799,
+    "output_tokens": 139,
+    "cost_usd": 0.013482,
     "interventions": 0
   },
   "bugs_noted": [],
@@ -207,7 +105,7 @@
     "messages": [
       {
         "role": "tutor",
-        "content": "Good afternoon. Whether you're prepping for an upcoming practical, solidifying lecture material, or working through a conceptual gap, we can make this time count. What human anatomy topic would you like to tackle today?",
+        "content": "Good afternoon! No pressure to have a plan \u2014 we can start anywhere. What human anatomy topic do you want to dig into today?",
         "phase": "rapport"
       },
       {
@@ -225,7 +123,7 @@
       },
       {
         "role": "tutor",
-        "content": "Got it \u2014 let's work on **B Cell Differentiation and Activation** from Chapter 21 \u2192 The Adaptive Immune Response: B-lymphocytes and Antibodies.\n\nWhat process eliminates immature B cells that strongly bind to self-antigens in the bone marrow?",
+        "content": "Got it \u2014 we're looking at **B Cell Differentiation and Activation**. Let's start with this:\n\nWhat process destroys immature B cells in the bone marrow that bind strongly to self-antigens, preventing them from attacking the body's own tissues?",
         "phase": "tutoring",
         "metadata": {
           "mode": "topic_ack",
@@ -234,14 +132,14 @@
       },
       {
         "role": "student",
-        "content": "Oh, I think it's called clonal deletion? I remember reading about that in the textbook \u2014 it's basically where those self-reactive B cells get wiped out before they can cause problems. That sounds right to me, but I'm not totally sure if there's a more specific term for it happening in the bone marrow specifically."
+        "content": "Oh, I think it's clonal deletion, right? That's what I remember reading in the textbook \u2014 where the self-reactive B cells basically get eliminated before they can cause any damage."
       },
       {
         "role": "tutor",
-        "content": "You've earned a bonus round \u2014 would you like to try a clinical question exploring what might happen when self-reactive immature B cells escape destruction in the bone marrow, or would you prefer to end the session here?",
+        "content": "Spot on \u2014 that's the right process. Now let's dig one level deeper: when an immature B cell in the bone marrow binds strongly to a self-antigen, what actually happens at the cellular level that destroys it, and why does removing those cells matter for the overall B cell repertoire?",
         "phase": "tutoring",
         "metadata": {
-          "mode": "opt_in",
+          "mode": "socratic",
           "tone": "encouraging",
           "final_attempt": 4,
           "safe_probe": false
@@ -249,7 +147,7 @@
       },
       {
         "role": "tutor",
-        "content": "Great work \u2014 clonal deletion is the core answer here. If you'd like, there's a brief clinical bonus question connecting this process to autoimmune disease; would you like to try it, or would you prefer to end the session?",
+        "content": "",
         "phase": "assessment",
         "metadata": {
           "mode": "opt_in",
@@ -263,124 +161,11 @@
       },
       {
         "role": "tutor",
-        "content": "Consider this patient: a 28-year-old woman arrives with joint pain, a butterfly-shaped facial rash, and lab results showing circulating antibodies targeting her own nuclear proteins. Her physician suspects that the bone-marrow checkpoint responsible for destroying strongly self-reactive immature B cells failed at some point during her immune development. You already know that when immature B cells bind strongly to self-antigens in the bone marrow, they are normally signaled to undergo apoptosis before they can mature and enter circulation. In this patient, some of those self-reactive cells appear to have escaped that fate, matured into plasma cells, and are now producing antibodies against self-antigens \u2014 driving the tissue damage she's experiencing. Clonal anergy and peripheral tolerance serve as backup safeguards, but they clearly weren't enough here. Given what you know about how self-reactive immature B cells are normally eliminated in the bone marrow, what do you think happens to a patient's risk of autoimmune disease when that elimination process is incomplete?",
-        "phase": "assessment",
-        "metadata": {
-          "mode": "clinical",
-          "tone": "encouraging",
-          "source": "assessment_v2",
-          "clinical_scenario": "A 28-year-old woman presents with joint pain, a butterfly-shaped facial rash, and fatigue. Lab work reveals circulating antibodies that target her own nuclear proteins (anti-dsDNA antibodies). Her physician suspects a failure in the normal process by which self-reactive immune cells are eliminated before they mature and enter circulation."
-        }
-      },
-      {
-        "role": "student",
-        "content": "Oh, I think I remember this from the textbook \u2014 isn't the process you're describing called clonal deletion? So if that's the step that's failing in this patient, it makes sense that her risk of autoimmune disease would go up, because those self-reactive B cells that should have been eliminated are now slipping through and causing problems. Like in her case, they're producing antinuclear antibodies and that's what's driving the lupus-like symptoms, right?"
-      },
-      {
-        "role": "tutor",
-        "content": "Let me reframe \u2014 what aspect of this would you like to think through more carefully? Pick a piece you're less sure about and we can explore it together.",
-        "phase": "assessment",
-        "metadata": {
-          "mode": "clinical",
-          "source": "assessment_v2",
-          "clinical_turn": 1
-        }
-      },
-      {
-        "role": "student",
-        "content": "Honestly, I'm pretty sure it's clonal deletion \u2014 I remember reading that in the textbook \u2014 but I'm not totally confident I understand *why* that's the mechanism. Like, I can recall the term but I'm not sure I could explain the actual process behind it if you asked me to."
-      },
-      {
-        "role": "tutor",
-        "content": "You've recalled the term well \u2014 now let's build the mechanism underneath it. In the bone marrow, immature B cells whose receptors bind strongly to a self-antigen receive a signal that drives them toward apoptosis rather than continued maturation, preventing self-reactive cells from ever reaching circulation. In this patient, that signal apparently failed at some point, allowing self-reactive B cells to survive, mature, and eventually become plasma cells producing anti-dsDNA antibodies against her own nuclear proteins. What do you think must happen at the cellular level \u2014 specifically regarding the signal an immature B cell receives upon strongly binding a self-antigen \u2014 for that cell to be destroyed rather than allowed to continue its maturation?",
-        "phase": "assessment",
-        "metadata": {
-          "mode": "clinical",
-          "source": "assessment_v2",
-          "clinical_turn": 2
-        }
-      },
-      {
-        "role": "student",
-        "content": "Oh, I think it's clonal deletion, right? That's the term that's sticking out to me from the textbook \u2014 like, the self-reactive cell gets deleted from the repertoire before it can cause problems. I'm a little fuzzy on the exact signaling details of *how* it happens at the molecular level though."
-      },
-      {
-        "role": "tutor",
-        "content": "Let me reframe \u2014 what aspect of this would you like to think through more carefully? Pick a piece you're less sure about and we can explore it together.",
-        "phase": "assessment",
-        "metadata": {
-          "mode": "clinical",
-          "source": "assessment_v2",
-          "clinical_turn": 3
-        }
-      },
-      {
-        "role": "student",
-        "content": "Honestly, I'm pretty sure the answer is clonal deletion \u2014 I remember reading that in the textbook \u2014 but I guess I'm less confident about *why* that's the mechanism specifically, like what's actually happening at the cellular level that makes it clonal deletion and not something else."
-      },
-      {
-        "role": "tutor",
-        "content": "Let me reframe \u2014 what aspect of this would you like to think through more carefully? Pick a piece you're less sure about and we can explore it together.",
-        "phase": "assessment",
-        "metadata": {
-          "mode": "clinical",
-          "source": "assessment_v2",
-          "clinical_turn": 4
-        }
-      },
-      {
-        "role": "student",
-        "content": "Hmm, I think it's clonal deletion? That's what I remember reading in the textbook, but I'm not totally confident in that \u2014 like, I know it's one of the mechanisms for self-tolerance, but I'm a little fuzzy on exactly how it fits in here and whether there are other processes happening at the same time."
-      },
-      {
-        "role": "tutor",
-        "content": "In this patient, an immature B cell whose BCR bound strongly to a self-antigen in the bone marrow apparently survived that checkpoint, matured, and eventually became a plasma cell secreting anti-dsDNA antibodies against her own nuclear proteins. The mechanism you're recalling involves what happens internally to that immature B cell at the moment of strong self-antigen binding during maturation in the bone marrow. Thinking about what distinguishes a cell that gets removed from the repertoire versus one that continues developing, what kind of signal would that strong BCR\u2013self-antigen interaction need to generate inside the immature B cell for it to be destroyed rather than allowed to mature?",
-        "phase": "assessment",
-        "metadata": {
-          "mode": "clinical",
-          "source": "assessment_v2",
-          "clinical_turn": 5
-        }
-      },
-      {
-        "role": "student",
-        "content": "Oh, I think it's clonal deletion, right? That's at least what I remember from the textbook \u2014 like, the immature B cell that binds too strongly to self-antigen gets deleted from the repertoire entirely. But I'm not totally sure what the specific intracellular signal would be that triggers that process."
-      },
-      {
-        "role": "tutor",
-        "content": "Strong BCR crosslinking by a self-antigen during maturation in the bone marrow tips the balance inside an immature B cell away from survival signals and toward a death signal, ultimately driving that cell toward apoptosis before it can join the mature repertoire. In this patient, something disrupted that balance \u2014 allowing self-reactive B cells to escape, mature, and eventually secrete anti-dsDNA antibodies against her own nuclear proteins. Thinking about the two possible outcomes an immature B cell faces when its BCR encounters a self-antigen in the bone marrow, what specific difference between a weak, transient BCR interaction and a strong, persistent one do you think determines whether the cell receives a survival signal or a death signal?",
-        "phase": "assessment",
-        "metadata": {
-          "mode": "clinical",
-          "source": "assessment_v2",
-          "clinical_turn": 6
-        }
-      },
-      {
-        "role": "student",
-        "content": "Oh, I think I remember this from the textbook \u2014 isn't the answer clonal deletion? Like, that's the mechanism where the self-reactive B cell just gets eliminated outright. Is that what determines whether it gets the survival signal versus the death signal?"
-      },
-      {
-        "role": "tutor",
-        "content": "You've named the term several times now \u2014 let's see if you can explain what's underneath it. An immature B cell in the bone marrow can receive either a survival signal that lets it continue maturation or a death signal that removes it from the repertoire, and the outcome depends on what happens when its BCR engages a self-antigen. In this patient, that checkpoint clearly failed, allowing self-reactive B cells to mature into plasma cells secreting anti-dsDNA antibodies against her own nuclear proteins. What do you think is different about a strong, persistent BCR interaction with a tissue-bound self-antigen versus a weak, transient one that determines which signal the immature B cell ultimately receives?",
-        "phase": "assessment",
-        "metadata": {
-          "mode": "clinical",
-          "source": "assessment_v2",
-          "clinical_turn": 7
-        }
-      },
-      {
-        "role": "student",
-        "content": "Yeah, I think the term for this is clonal deletion \u2014 that's what I remember from reading the textbook. But I'm honestly not super confident about the details of *why* a strong persistent signal leads to deletion versus a weak one leading to survival \u2014 like, is it something about the intensity of the BCR signaling cascade itself that tips the cell toward apoptosis?"
-      },
-      {
-        "role": "tutor",
-        "content": "You showed real persistence today, and you correctly identified 'clonal deletion' as the mechanism multiple times \u2014 that term is genuinely locked in. What we ran out of time to build was the mechanistic layer underneath it: specifically, how the intensity and persistence of BCR crosslinking by a tissue-bound self-antigen tips the intracellular signaling balance toward apoptosis rather than survival. That's the piece worth revisiting \u2014 you're close, but the 'why' behind the term is where the understanding needs to deepen.",
+        "content": "You got it \u2014 clonal deletion was exactly right, and you explained the logic clearly: self-reactive B cells get eliminated before they can cause damage. That's the core of central tolerance in B cell development. Come back anytime to dig into what happens to the B cells that survive selection, or how peripheral tolerance picks up where the bone marrow leaves off.",
         "phase": "memory_update",
         "metadata": {
           "mode": "close",
-          "close_reason": "clinical_cap",
+          "close_reason": "reach_skipped",
           "source": "memory_update_node"
         }
       }
@@ -507,13 +292,13 @@
         "_primary_chunk_id": "022f242f-d9bb-44eb-975f-21380456a3fb"
       }
     ],
-    "locked_question": "What process eliminates immature B cells that strongly bind to self-antigens in the bone marrow?",
+    "locked_question": "What process destroys immature B cells in the bone marrow that bind strongly to self-antigens, preventing them from attacking the body's own tissues?",
     "locked_answer": "clonal deletion",
     "locked_answer_aliases": [
       "central tolerance",
-      "apoptosis of self-reactive B cells",
-      "negative selection of B cells",
-      "clonal purging"
+      "B cell apoptosis",
+      "self-reactive B cell elimination",
+      "negative selection of B cells"
     ],
     "full_answer": "clonal deletion",
     "locked_topic": {
@@ -558,10 +343,10 @@
     "exploration_max": 3,
     "exploration_used": 0,
     "debug": {
-      "api_calls": 2,
-      "input_tokens": 4273,
-      "output_tokens": 171,
-      "cost_usd": 0.015383999999999998,
+      "api_calls": 1,
+      "input_tokens": 3799,
+      "output_tokens": 139,
+      "cost_usd": 0.013482,
       "interventions": 0,
       "retrieval_calls": 1,
       "coverage_gap_events": 0,
@@ -572,98 +357,187 @@
       "last_routing": "",
       "turn_trace": [
         {
+          "wrapper": "dean.reached_answer_gate",
+          "reached": true,
+          "path": "overlap",
+          "coverage": 1.0,
+          "evidence": "clonal deletion",
+          "n_matched": null,
+          "n_total": null
+        },
+        {
+          "wrapper": "preflight",
+          "fired": false,
+          "category": "on_topic_engaged",
+          "evidence": "",
+          "rationale": "",
+          "elapsed_s": 1.377,
+          "should_force_hint_advance": false,
+          "should_end_session": false
+        },
+        {
+          "wrapper": "retriever.reused_lock_time_chunks",
+          "n": 9
+        },
+        {
+          "wrapper": "dean_v2.plan",
+          "parse_attempts": 1,
+          "used_fallback": false,
+          "mode": "opt_in",
+          "tone": "neutral",
+          "elapsed_ms": 5010,
+          "tokens_in": 1725,
+          "tokens_out": 233,
+          "error": null
+        },
+        {
+          "wrapper": "retry_orchestrator.run_turn",
+          "final_attempt": 4,
+          "used_safe_generic_probe": false,
+          "used_dean_replan": true,
+          "leak_cap_fallback_fired": false,
+          "timed_out": false,
+          "elapsed_ms": 30449,
+          "n_attempts": 4,
+          "attempt_summaries": [
+            {
+              "attempt": 1,
+              "passed": false,
+              "failed_checks": [
+                "haiku_sycophancy_check",
+                "haiku_shape_check",
+                "haiku_pedagogy_check"
+              ]
+            },
+            {
+              "attempt": 2,
+              "passed": false,
+              "failed_checks": [
+                "haiku_pedagogy_check"
+              ]
+            },
+            {
+              "attempt": 3,
+              "passed": false,
+              "failed_checks": [
+                "haiku_pedagogy_check"
+              ]
+            },
+            {
+              "attempt": 4,
+              "passed": false,
+              "failed_checks": [
+                "haiku_sycophancy_check"
+              ]
+            }
+          ]
+        },
+        {
+          "wrapper": "dean_node_v2.total_elapsed_ms",
+          "value": 36866
+        },
+        {
           "wrapper": "assessment_v2.entry",
           "reached": true,
-          "assessment_turn": 2,
-          "clinical_turn_count": 7
+          "assessment_turn": 0,
+          "clinical_turn_count": 0
         },
         {
-          "wrapper": "assessment_v2.clinical_cap_reached",
-          "cap": 7
+          "wrapper": "assessment_v2.teacher_draft_error",
+          "mode": "opt_in",
+          "error": "AttributeError: 'NoneType' object has no attribute 'draft'",
+          "_error_card": {
+            "component": "Teacher.draft[opt_in]",
+            "error_class": "AttributeError",
+            "message": "'NoneType' object has no attribute 'draft'"
+          }
         },
         {
-          "wrapper": "assessment_v2.clinical_natural_close_routed",
-          "close_reason": "clinical_cap"
+          "wrapper": "assessment_v2.opt_in_rendered",
+          "preview": ""
+        },
+        {
+          "wrapper": "assessment_v2.entry",
+          "reached": true,
+          "assessment_turn": 1,
+          "clinical_turn_count": 0
+        },
+        {
+          "wrapper": "assessment_v2.opt_in_response",
+          "intent": "yes",
+          "student_msg_preview": "Yes"
+        },
+        {
+          "wrapper": "assessment_v2.clinical_scenario_gen_start",
+          "locked_path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation",
+          "chunk_count": 9
+        },
+        {
+          "wrapper": "assessment_v2.clinical_scenario_gen_error",
+          "error": "AttributeError: 'NoneType' object has no attribute 'plan'"
+        },
+        {
+          "wrapper": "assessment_v2.clinical_scenario_gen_fallback",
+          "reason": "dean_did_not_emit_clinical_plan",
+          "elapsed_ms": 0
+        },
+        {
+          "wrapper": "assessment_v2.reach_close_routed",
+          "close_reason": "reach_skipped"
         },
         {
           "wrapper": "teacher_v2.close_draft",
-          "close_reason": "clinical_cap",
+          "close_reason": "reach_skipped",
           "attempts": 1,
           "error": "",
-          "text_len": 868
+          "text_len": 748
+        },
+        {
+          "wrapper": "memory_update_node.transcript_snapshot",
+          "result": "wrote eval18_solo1_S1_solo1_S1_s1_6d63a6af_turn_4.json (10 msgs)"
         },
         {
           "wrapper": "mem0_write",
-          "text": "The student relies heavily on textbook recall to anchor answers, repeatedly citing 'I remember reading that' rather than",
+          "text": "The student prefers to anchor questions in broad conceptual framing before narrowing to specifics, as shown by opening w",
           "metadata": {
             "subsection_path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation",
             "section_path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies",
-            "session_at": "2026-05-04T17:15:57Z",
-            "thread_id": "eval18_solo1_S1_s1_7c65e9bb",
+            "session_at": "2026-05-05T20:49:47Z",
+            "thread_id": "eval18_solo1_S1_s1_6d63a6af",
             "chapter_num": 0,
             "category": "learning_style"
           },
-          "elapsed_ms": 2021,
+          "elapsed_ms": 4166,
           "error": null,
           "success": true
         },
         {
           "wrapper": "mem0_write",
-          "text": "The student demonstrates shallow retention in B Cell Differentiation topics \u2014 able to reproduce terminology (clonal dele",
+          "text": "The student gives terse, minimal responses when asked to elaborate, suggesting low engagement with follow-up depth quest",
           "metadata": {
             "subsection_path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation",
             "section_path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies",
-            "session_at": "2026-05-04T17:15:57Z",
-            "thread_id": "eval18_solo1_S1_s1_7c65e9bb",
+            "session_at": "2026-05-05T20:49:47Z",
+            "thread_id": "eval18_solo1_S1_s1_6d63a6af",
             "chapter_num": 0,
             "category": "learning_style"
           },
-          "elapsed_ms": 7165,
+          "elapsed_ms": 4967,
           "error": null,
           "success": true
         },
         {
           "wrapper": "mem0_write",
-          "text": "The student shows self-aware knowledge gaps, explicitly flagging uncertainty about mechanisms while expressing confidenc",
+          "text": "The student demonstrates fast uptake on recall-level questions, answering correctly and confidently without needing hint",
           "metadata": {
             "subsection_path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation",
             "section_path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies",
-            "session_at": "2026-05-04T17:15:57Z",
-            "thread_id": "eval18_solo1_S1_s1_7c65e9bb",
+            "session_at": "2026-05-05T20:49:47Z",
+            "thread_id": "eval18_solo1_S1_s1_6d63a6af",
             "chapter_num": 0,
             "category": "learning_style"
           },
-          "elapsed_ms": 550,
-          "error": null,
-          "success": true
-        },
-        {
-          "wrapper": "mem0_write",
-          "text": "The student does not take initiative to explore unfamiliar sub-questions when prompted, instead looping back to the one ",
-          "metadata": {
-            "subsection_path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation",
-            "section_path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies",
-            "session_at": "2026-05-04T17:15:57Z",
-            "thread_id": "eval18_solo1_S1_s1_7c65e9bb",
-            "chapter_num": 0,
-            "category": "learning_style"
-          },
-          "elapsed_ms": 681,
-          "error": null,
-          "success": true
-        },
-        {
-          "wrapper": "mem0_write",
-          "text": "The student shows slow conceptual uptake when asked to reason about mechanism, requiring many scaffolded hints before be",
-          "metadata": {
-            "subsection_path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation",
-            "section_path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies",
-            "session_at": "2026-05-04T17:15:57Z",
-            "thread_id": "eval18_solo1_S1_s1_7c65e9bb",
-            "chapter_num": 0,
-            "category": "learning_style"
-          },
-          "elapsed_ms": 952,
+          "elapsed_ms": 1013,
           "error": null,
           "success": true
         },
@@ -671,13 +545,13 @@
           "wrapper": "memory.session_summary",
           "reads_ok": 0,
           "reads_failed": 0,
-          "writes_ok": 5,
+          "writes_ok": 3,
           "writes_failed": 0,
           "writes_dropped_missing_fields": 0
         },
         {
           "wrapper": "memory_manager.flush",
-          "result": "wrote_5_failed_0_dropped_0_of_5",
+          "result": "wrote_3_failed_0_dropped_0_of_3",
           "flushed": true
         },
         {
@@ -686,7 +560,7 @@
         },
         {
           "wrapper": "sqlite_store.session_end",
-          "result": "sqlite_session_end ok status=completed score=0.42 path_set=True"
+          "result": "sqlite_session_end ok status=completed score=0.45 path_set=True"
         }
       ],
       "all_turn_traces": [
@@ -695,45 +569,12 @@
           "phase": "tutoring",
           "trace": [
             {
-              "wrapper": "teacher.draft_rapport",
-              "decision_effect": null,
-              "input_hash": "3a62e3620754532a",
-              "elapsed_s": 2.19,
-              "in_tok": 440,
-              "out_tok": 47,
-              "cache_read": 0,
-              "cache_write": 0,
-              "cost_usd": 0.00202,
-              "s_per_tok": 0.0465,
-              "cached_est_tokens": 0,
-              "system_blocks": [
-                {
-                  "index": 1,
-                  "cached": false,
-                  "est_tokens": 413
-                },
-                {
-                  "index": 2,
-                  "cached": false,
-                  "est_tokens": 43
-                }
-              ],
-              "system_prompt": "You are\na Socratic tutor in human anatomy working with a student.\nThis is an evaluated learning session.\nGlobal rules for all teacher wrappers:\n- Keep language academically focused and concise.\n- Do not reveal final answers unless wrapper-specific instructions explicitly allow it.\n- Follow wrapper output contracts exactly.\n- If strict JSON is requested by the wrapper, return strict JSON only.\n- Avoid generic motivational filler; prioritize targeted reasoning prompts.\n\n\na Socratic human anatomy tutor opening a new session with a student.\nWrite a brief, natural opener (2-3 sentences max). Vary your tone.\nFirst words must be exactly the \"Good {time_of_day}\" greeting provided\nin the runtime context block below (e.g., \"Good morning\").\nDo NOT start with \"Hello\" or \"Welcome\". Do NOT use generic tutor clich\u00e9s.\nKeep it relevant and concrete for a student audience (coursework, exams, conceptual understanding).\nAssume a classroom/learning context by default.\nEnd with exactly one question asking what human anatomy topic the student wants to tackle today.\n\nPast session context (extracted from prior sessions \u2014 may be empty):\nNo previous history \u2014 new student.\n\nIf \"Past session context\" is empty / \"No previous history\": treat as a\nfresh session, do NOT mention prior struggles, weak topics, or invent\nhistorical difficulties.\n\nIf \"Past session context\" contains real prior data: you MAY briefly\nreference ONE specific past topic or open thread when offering a\nstarting point (\"...last time you were working through X \u2014 pick that\nup or start fresh?\"). At most ONE prior item; no recap, no list, no\nlearning-style summary; do NOT reveal past answers.\n\n\n---\n\nRuntime context for this session:\n  time_of_day: afternoon\nUse the corresponding 'Good morning' / 'Good afternoon' / 'Good evening' as the first words of your reply, exactly.",
-              "messages_sent": [
-                {
-                  "role": "user",
-                  "content": "Start the session."
-                }
-              ],
-              "response_text": "Good afternoon. Whether you're prepping for an upcoming practical, solidifying lecture material, or working through a conceptual gap, we can make this time count. What human anatomy topic would you like to tackle today?",
-              "tool_calls_made": []
-            }
-          ]
-        },
-        {
-          "turn": 0,
-          "phase": "tutoring",
-          "trace": [
+              "wrapper": "preflight.pre_topic_lock",
+              "fired": false,
+              "category": "on_topic_engaged",
+              "evidence": "",
+              "in_anchor_pick": false
+            },
             {
               "wrapper": "topic_lock_v2.entry",
               "prelock_loop_count": 1,
@@ -745,7 +586,7 @@
               "verdict": "borderline",
               "confidence": 0.72,
               "n_matches": 3,
-              "elapsed_ms": 5202,
+              "elapsed_ms": 5097,
               "tokens_in": 28,
               "tokens_out": 314,
               "cache_read_tokens": 0,
@@ -757,6 +598,13 @@
           "turn": 0,
           "phase": "tutoring",
           "trace": [
+            {
+              "wrapper": "preflight.pre_topic_lock",
+              "fired": false,
+              "category": "on_topic_engaged",
+              "evidence": "",
+              "in_anchor_pick": false
+            },
             {
               "wrapper": "topic_lock_v2.entry",
               "prelock_loop_count": 2,
@@ -858,14 +706,14 @@
             {
               "wrapper": "dean._lock_anchors_call",
               "decision_effect": null,
-              "input_hash": "7279d52aa8ee5719",
-              "elapsed_s": 3.33,
-              "in_tok": 3833,
-              "out_tok": 124,
+              "input_hash": "cb56e1631adfc781",
+              "elapsed_s": 3.2,
+              "in_tok": 3799,
+              "out_tok": 139,
               "cache_read": 0,
               "cache_write": 0,
-              "cost_usd": 0.01336,
-              "s_per_tok": 0.0269,
+              "cost_usd": 0.01348,
+              "s_per_tok": 0.023,
               "cached_est_tokens": 2139,
               "system_blocks": [
                 {
@@ -876,22 +724,22 @@
                 {
                   "index": 2,
                   "cached": false,
-                  "est_tokens": 107
+                  "est_tokens": 83
                 },
                 {
                   "index": 3,
                   "cached": false,
-                  "est_tokens": 1820
+                  "est_tokens": 1796
                 }
               ],
-              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean establishing pedagogical anchors for a new Socratic tutoring session.\nThe student has just selected a specific topic.\nRetrieval has fired and returned textbook excerpts.\n\nYour job: extract THREE anchors that guide the session.\n\n1) locked_question: a specific, answerable question for this session.\n2) locked_answer: the target answer term/concept the student must reach.\n3) locked_answer_aliases: 4-5 alternate phrasings the student might use\n   (synonyms, abbreviations, common shorthand). Do NOT include\n   locked_answer itself. Return [] if locked_answer is empty.\n\nStrict rules:\n- locked_answer must be a SHORT term or noun phrase: typically 2-5 words,\n  hard max 10 words. Examples: \"Purkinje fibers\", \"sinoatrial node\",\n  \"skeletal muscle pump\", \"ATP synthase\".\n- locked_answer must NOT be a sentence or clause. No verbs, no commas\n  separating multiple ideas. If you find yourself writing \"X does Y to\n  Z\", you've gone too far \u2014 pick the X (the structure or term itself).\n- locked_answer must be grounded in the retrieved chunks.\n- DO NOT use parametric / training-data knowledge: if the chunks do not\n  contain a clear answer to the topic question, return empty anchors.\n- If signal is insufficient, return empty anchors with rationale.\n- rationale must be brief (max 25 words).\n\nReturn strict JSON only:\n{{\n  \"locked_question\": \"string\",\n  \"locked_answer\": \"string\",\n  \"locked_answer_aliases\": [\"alias1\", \"alias2\", \"alias3\", \"alias4\"],\n  \"rationale\": \"string\"\n}}\n\n\n[1] (p.937) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nWhen a B cell binds to a self-antigen but receives no signals from a nearby Th2 cell to produce antibody, the cell is signaled to undergo apoptosis and is destroyed. This is yet another example of the control that T cells have over the adaptive immune response.\n\n===\n\n[2] (p.937) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nIn peripheral tolerance, functional, mature B cells leave the bone marrow but have yet to be exposed to self-antigen. Most protein antigens require signals from helper T cells (Th2) to proceed to make antibody. When a B cell binds to a self-antigen but receives no signals from a nearby Th2 cell to produce antibody, the cell is signaled to undergo apoptosis and is destroyed. This is yet another example of the control that T cells have over the adaptive immune response.\n\n===\n\n[3] (p.937, score=1.00) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nAfter B cells are activated by their binding to antigen, they differentiate into plasma cells. Plasma cells often leave the secondary lymphoid organs, where the response is generated, and migrate back to the bone marrow, where the whole differentiation process started. After secreting antibodies for a specific period, they die, as most of their energy is devoted to making antibodies and not to maintaining themselves. Thus, plasma cells are said to be terminally differentiated. The final B cell of interest is the memory B cell, which results from the clonal expansion of an activated B cell. They lead to a stronger and faster secondary response when compared to the primary response.\n\n===\n\n[4] (p.937) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nContext from previous chunk: When a B cell binds to a self-antigen but receives no signals from a nearby Th2 cell to produce antibody, the cell is signaled to undergo apoptosis and is destroyed. This is yet another example of the control that T cells have over the adaptive immune response. After B cells are activated by their binding to antigen, they differentiate into plasma cells. Plasma cells often leave the secondary lymphoid organs, where the response is generated, and migrate back to the bone marrow, where the whole differentiation process started. After secreting antibodies for a specific period, they die, as most of their energy is devoted to making antibodies and not to maintaining themselves. Thus, plasma cells are said to be terminally differentiated. The final B cell of interest is the memory B cell, which results from the clonal expansion of an activated B cell. They lead to a stronger and faster secondary response when compared to the primary response, as illustrated below.\n\n===\n\n[5] (p.937, score=0.98) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nB cells differentiate in the bone marrow. During the process of maturation, up to 100 trillion different clones of B cells are generated, which is similar to the diversity of antigen receptors seen in T cells. B cell differentiation and the development of tolerance are not quite as well understood as it is in T cells. Central tolerance is the destruction or inactivation of B cells that recognize self-antigens in the bone marrow, and its role is critical and well established. In the process of clonal deletion, immature B cells that bind strongly to self-antigens expressed on tissues are signaled to induce their own destruction by apoptosis, removing them from the population. In the process of clonal anergy, however, B cells exposed to soluble antigen in the bone marrow are not physically deleted, but become unable to function. Another mechanism called peripheral tolerance is a direct result of T cell tolerance. In peripheral tolerance, functional, mature B cells leave the bone marrow but have yet to be exposed to self-antigen. Most protein antigens require signals from helper T cells (Th2) to proceed to make antibody.\n\n===\n\n[6] (p.937) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nContext from previous chunk: B cells can recognize native, unprocessed antigen and do not require the participation of MHC molecules and antigen-presenting cells. B cells differentiate in the bone marrow. During the process of maturation, up to 100 trillion different clones of B cells are generated, which is similar to the diversity of antigen receptors seen in T cells. B cell differentiation and the development of tolerance are not quite as well understood as it is in T cells. Central tolerance is the destruction or inactivation of B cells that recognize self-antigens in the bone marrow, and its role is critical and well established. In the process of clonal deletion , immature B cells that bind strongly to self-antigens expressed on tissues are signaled to induce their own destruction by apoptosis, removing them from the population. In the process of clonal anergy , however, B cells exposed to soluble antigen in the bone marrow are not physically deleted, but become unable to function. Another mechanism called peripheral tolerance is a direct result of T cell tolerance. In peripheral tolerance , functional, mature B cells leave the bone marrow but have yet to be exposed to self-antigen. Most protein antigens require signals from helper T cells (Th2) to proceed to make antibody.\n\n===\n\n[7] (p.936) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nB cells can recognize native, unprocessed antigen and do not require the participation of MHC molecules and antigen-presenting cells.\n\n===\n\n[8] (p.936, score=0.22) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nContext from previous chunk: Each of these has specific functions in the immune response, so by learning about them, researchers can learn about the great variety of antibody functions critical to many adaptive immune responses. B cells do not recognize antigen in the complex fashion of T cells. B cells can recognize native, unprocessed antigen and do not require the participation of MHC molecules and antigen-presenting cells.\n\n---\n\nTutor: Good afternoon. Whether you're prepping for an upcoming practical, solidifying lecture material, or working through a conceptual gap, we can make this time count. What human anatomy topic would you like to tackle today?\nStudent: How does the immune system distinguish self from non-self?\nTutor: It sounds like you mean **B Cell Differentiation and Activation** - is that right?\nStudent: B Cell Differentiation and Activation\n\n---\n\nStudent selected topic: B Cell Differentiation and Activation\nConversation history:\nTutor: Good afternoon. Whether you're prepping for an upcoming practical, solidifying lecture material, or working through a conceptual gap, we can make this time count. What human anatomy topic would you like to tackle today?\nStudent: How does the immune system distinguish self from non-self?\nTutor: It sounds like you mean **B Cell Differentiation and Activation** - is that right?\nStudent: B Cell Differentiation and Activation\n\nRetrieved propositions:\n[1] (p.937) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nWhen a B cell binds to a self-antigen but receives no signals from a nearby Th2 cell to produce antibody, the cell is signaled to undergo apoptosis and is destroyed. This is yet another example of the control that T cells have over the adaptive immune response.\n\n===\n\n[2] (p.937) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nIn peripheral tolerance, functional, mature B cells leave the bone marrow but have yet to be exposed to self-antigen. Most protein antigens require signals from helper T cells (Th2) to proceed to make antibody. When a B cell binds to a self-antigen but receives no signals from a nearby Th2 cell to produce antibody, the cell is signaled to undergo apoptosis and is destroyed. This is yet another example of the control that T cells have over the adaptive immune response.\n\n===\n\n[3] (p.937, score=1.00) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nAfter B cells are activated by their binding to antigen, they differentiate into plasma cells. Plasma cells often leave the secondary lymphoid organs, where the response is generated, and migrate back to the bone marrow, where the whole differentiation process started. After secreting antibodies for a specific period, they die, as most of their energy is devoted to making antibodies and not to maintaining themselves. Thus, plasma cells are said to be terminally differentiated. The final B cell of interest is the memory B cell, which results from the clonal expansion of an activated B cell. They lead to a stronger and faster secondary response when compared to the primary response.\n\n===\n\n[4] (p.937) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nContext from previous chunk: When a B cell binds to a self-antigen but receives no signals from a nearby Th2 cell to produce antibody, the cell is signaled to undergo apoptosis and is destroyed. This is yet another example of the control that T cells have over the adaptive immune response. After B cells are activated by their binding to antigen, they differentiate into plasma cells. Plasma cells often leave the secondary lymphoid organs, where the response is generated, and migrate back to the bone marrow, where the whole differentiation process started. After secreting antibodies for a specific period, they die, as most of their energy is devoted to making antibodies and not to maintaining themselves. Thus, plasma cells are said to be terminally differentiated. The final B cell of interest is the memory B cell, which results from the clonal expansion of an activated B cell. They lead to a stronger and faster secondary response when compared to the primary response, as illustrated below.\n\n===\n\n[5] (p.937, score=0.98) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nB cells differentiate in the bone marrow. During the process of maturation, up to 100 trillion different clones of B cells are generated, which is similar to the diversity of antigen receptors seen in T cells. B cell differentiation and the development of tolerance are not quite as well understood as it is in T cells. Central tolerance is the destruction or inactivation of B cells that recognize self-antigens in the bone marrow, and its role is critical and well established. In the process of clonal deletion, immature B cells that bind strongly to self-antigens expressed on tissues are signaled to induce their own destruction by apoptosis, removing them from the population. In the process of clonal anergy, however, B cells exposed to soluble antigen in the bone marrow are not physically deleted, but become unable to function. Another mechanism called peripheral tolerance is a direct result of T cell tolerance. In peripheral tolerance, functional, mature B cells leave the bone marrow but have yet to be exposed to self-antigen. Most protein antigens require signals from helper T cells (Th2) to proceed to make antibody.\n\n===\n\n[6] (p.937) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nContext from previous chunk: B cells can recognize native, unprocessed antigen and do not require the participation of MHC molecules and antigen-presenting cells. B cells differentiate in the bone marrow. During the process of maturation, up to 100 trillion different clones of B cells are generated, which is similar to the diversity of antigen receptors seen in T cells. B cell differentiation and the development of tolerance are not quite as well understood as it is in T cells. Central tolerance is the destruction or inactivation of B cells that recognize self-antigens in the bone marrow, and its role is critical and well established. In the process of clonal deletion , immature B cells that bind strongly to self-antigens expressed on tissues are signaled to induce their own destruction by apoptosis, removing them from the population. In the process of clonal anergy , however, B cells exposed to soluble antigen in the bone marrow are not physically deleted, but become unable to function. Another mechanism called peripheral tolerance is a direct result of T cell tolerance. In peripheral tolerance , functional, mature B cells leave the bone marrow but have yet to be exposed to self-antigen. Most protein antigens require signals from helper T cells (Th2) to proceed to make antibody.\n\n===\n\n[7] (p.936) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nB cells can recognize native, unprocessed antigen and do not require the participation of MHC molecules and antigen-presenting cells.\n\n===\n\n[8] (p.936, score=0.22) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nContext from previous chunk: Each of these has specific functions in the immune response, so by learning about them, researchers can learn about the great variety of antibody functions critical to many adaptive immune responses. B cells do not recognize antigen in the complex fashion of T cells. B cells can recognize native, unprocessed antigen and do not require the participation of MHC molecules and antigen-presenting cells.\n\nLock anchors and return strict JSON only.\n",
+              "system_prompt": "You are\nthe Dean supervising tutoring quality in human anatomy.\nThis is an evaluation setting.\nGlobal rules for all dean wrappers:\n- Enforce wrapper instructions strictly and consistently.\n- Ground judgments in the student's latest message plus provided context.\n- When strict JSON is required, return strict JSON only.\n- Keep critiques precise, non-generic, and actionable.\n\n\nthe Dean establishing pedagogical anchors for a new Socratic tutoring session.\nThe student has just selected a specific topic.\nRetrieval has fired and returned textbook excerpts.\n\nYour job: extract THREE anchors that guide the session.\n\n1) locked_question: a specific, answerable question for this session.\n2) locked_answer: the target answer term/concept the student must reach.\n3) locked_answer_aliases: 4-5 alternate phrasings the student might use\n   (synonyms, abbreviations, common shorthand). Do NOT include\n   locked_answer itself. Return [] if locked_answer is empty.\n\nStrict rules:\n- locked_answer must be a SHORT term or noun phrase: typically 2-5 words,\n  hard max 10 words. Examples: \"Purkinje fibers\", \"sinoatrial node\",\n  \"skeletal muscle pump\", \"ATP synthase\".\n- locked_answer must NOT be a sentence or clause. No verbs, no commas\n  separating multiple ideas. If you find yourself writing \"X does Y to\n  Z\", you've gone too far \u2014 pick the X (the structure or term itself).\n- locked_answer must be grounded in the retrieved chunks.\n- DO NOT use parametric / training-data knowledge: if the chunks do not\n  contain a clear answer to the topic question, return empty anchors.\n- If signal is insufficient, return empty anchors with rationale.\n- rationale must be brief (max 25 words).\n\nReturn strict JSON only:\n{{\n  \"locked_question\": \"string\",\n  \"locked_answer\": \"string\",\n  \"locked_answer_aliases\": [\"alias1\", \"alias2\", \"alias3\", \"alias4\"],\n  \"rationale\": \"string\"\n}}\n\n\n[1] (p.937) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nWhen a B cell binds to a self-antigen but receives no signals from a nearby Th2 cell to produce antibody, the cell is signaled to undergo apoptosis and is destroyed. This is yet another example of the control that T cells have over the adaptive immune response.\n\n===\n\n[2] (p.937) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nIn peripheral tolerance, functional, mature B cells leave the bone marrow but have yet to be exposed to self-antigen. Most protein antigens require signals from helper T cells (Th2) to proceed to make antibody. When a B cell binds to a self-antigen but receives no signals from a nearby Th2 cell to produce antibody, the cell is signaled to undergo apoptosis and is destroyed. This is yet another example of the control that T cells have over the adaptive immune response.\n\n===\n\n[3] (p.937, score=1.00) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nAfter B cells are activated by their binding to antigen, they differentiate into plasma cells. Plasma cells often leave the secondary lymphoid organs, where the response is generated, and migrate back to the bone marrow, where the whole differentiation process started. After secreting antibodies for a specific period, they die, as most of their energy is devoted to making antibodies and not to maintaining themselves. Thus, plasma cells are said to be terminally differentiated. The final B cell of interest is the memory B cell, which results from the clonal expansion of an activated B cell. They lead to a stronger and faster secondary response when compared to the primary response.\n\n===\n\n[4] (p.937) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nContext from previous chunk: When a B cell binds to a self-antigen but receives no signals from a nearby Th2 cell to produce antibody, the cell is signaled to undergo apoptosis and is destroyed. This is yet another example of the control that T cells have over the adaptive immune response. After B cells are activated by their binding to antigen, they differentiate into plasma cells. Plasma cells often leave the secondary lymphoid organs, where the response is generated, and migrate back to the bone marrow, where the whole differentiation process started. After secreting antibodies for a specific period, they die, as most of their energy is devoted to making antibodies and not to maintaining themselves. Thus, plasma cells are said to be terminally differentiated. The final B cell of interest is the memory B cell, which results from the clonal expansion of an activated B cell. They lead to a stronger and faster secondary response when compared to the primary response, as illustrated below.\n\n===\n\n[5] (p.937, score=0.98) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nB cells differentiate in the bone marrow. During the process of maturation, up to 100 trillion different clones of B cells are generated, which is similar to the diversity of antigen receptors seen in T cells. B cell differentiation and the development of tolerance are not quite as well understood as it is in T cells. Central tolerance is the destruction or inactivation of B cells that recognize self-antigens in the bone marrow, and its role is critical and well established. In the process of clonal deletion, immature B cells that bind strongly to self-antigens expressed on tissues are signaled to induce their own destruction by apoptosis, removing them from the population. In the process of clonal anergy, however, B cells exposed to soluble antigen in the bone marrow are not physically deleted, but become unable to function. Another mechanism called peripheral tolerance is a direct result of T cell tolerance. In peripheral tolerance, functional, mature B cells leave the bone marrow but have yet to be exposed to self-antigen. Most protein antigens require signals from helper T cells (Th2) to proceed to make antibody.\n\n===\n\n[6] (p.937) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nContext from previous chunk: B cells can recognize native, unprocessed antigen and do not require the participation of MHC molecules and antigen-presenting cells. B cells differentiate in the bone marrow. During the process of maturation, up to 100 trillion different clones of B cells are generated, which is similar to the diversity of antigen receptors seen in T cells. B cell differentiation and the development of tolerance are not quite as well understood as it is in T cells. Central tolerance is the destruction or inactivation of B cells that recognize self-antigens in the bone marrow, and its role is critical and well established. In the process of clonal deletion , immature B cells that bind strongly to self-antigens expressed on tissues are signaled to induce their own destruction by apoptosis, removing them from the population. In the process of clonal anergy , however, B cells exposed to soluble antigen in the bone marrow are not physically deleted, but become unable to function. Another mechanism called peripheral tolerance is a direct result of T cell tolerance. In peripheral tolerance , functional, mature B cells leave the bone marrow but have yet to be exposed to self-antigen. Most protein antigens require signals from helper T cells (Th2) to proceed to make antibody.\n\n===\n\n[7] (p.936) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nB cells can recognize native, unprocessed antigen and do not require the participation of MHC molecules and antigen-presenting cells.\n\n===\n\n[8] (p.936, score=0.22) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nContext from previous chunk: Each of these has specific functions in the immune response, so by learning about them, researchers can learn about the great variety of antibody functions critical to many adaptive immune responses. B cells do not recognize antigen in the complex fashion of T cells. B cells can recognize native, unprocessed antigen and do not require the participation of MHC molecules and antigen-presenting cells.\n\n---\n\nTutor: Good afternoon! No pressure to have a plan \u2014 we can start anywhere. What human anatomy topic do you want to dig into today?\nStudent: How does the immune system distinguish self from non-self?\nTutor: It sounds like you mean **B Cell Differentiation and Activation** - is that right?\nStudent: B Cell Differentiation and Activation\n\n---\n\nStudent selected topic: B Cell Differentiation and Activation\nConversation history:\nTutor: Good afternoon! No pressure to have a plan \u2014 we can start anywhere. What human anatomy topic do you want to dig into today?\nStudent: How does the immune system distinguish self from non-self?\nTutor: It sounds like you mean **B Cell Differentiation and Activation** - is that right?\nStudent: B Cell Differentiation and Activation\n\nRetrieved propositions:\n[1] (p.937) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nWhen a B cell binds to a self-antigen but receives no signals from a nearby Th2 cell to produce antibody, the cell is signaled to undergo apoptosis and is destroyed. This is yet another example of the control that T cells have over the adaptive immune response.\n\n===\n\n[2] (p.937) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nIn peripheral tolerance, functional, mature B cells leave the bone marrow but have yet to be exposed to self-antigen. Most protein antigens require signals from helper T cells (Th2) to proceed to make antibody. When a B cell binds to a self-antigen but receives no signals from a nearby Th2 cell to produce antibody, the cell is signaled to undergo apoptosis and is destroyed. This is yet another example of the control that T cells have over the adaptive immune response.\n\n===\n\n[3] (p.937, score=1.00) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nAfter B cells are activated by their binding to antigen, they differentiate into plasma cells. Plasma cells often leave the secondary lymphoid organs, where the response is generated, and migrate back to the bone marrow, where the whole differentiation process started. After secreting antibodies for a specific period, they die, as most of their energy is devoted to making antibodies and not to maintaining themselves. Thus, plasma cells are said to be terminally differentiated. The final B cell of interest is the memory B cell, which results from the clonal expansion of an activated B cell. They lead to a stronger and faster secondary response when compared to the primary response.\n\n===\n\n[4] (p.937) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nContext from previous chunk: When a B cell binds to a self-antigen but receives no signals from a nearby Th2 cell to produce antibody, the cell is signaled to undergo apoptosis and is destroyed. This is yet another example of the control that T cells have over the adaptive immune response. After B cells are activated by their binding to antigen, they differentiate into plasma cells. Plasma cells often leave the secondary lymphoid organs, where the response is generated, and migrate back to the bone marrow, where the whole differentiation process started. After secreting antibodies for a specific period, they die, as most of their energy is devoted to making antibodies and not to maintaining themselves. Thus, plasma cells are said to be terminally differentiated. The final B cell of interest is the memory B cell, which results from the clonal expansion of an activated B cell. They lead to a stronger and faster secondary response when compared to the primary response, as illustrated below.\n\n===\n\n[5] (p.937, score=0.98) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nB cells differentiate in the bone marrow. During the process of maturation, up to 100 trillion different clones of B cells are generated, which is similar to the diversity of antigen receptors seen in T cells. B cell differentiation and the development of tolerance are not quite as well understood as it is in T cells. Central tolerance is the destruction or inactivation of B cells that recognize self-antigens in the bone marrow, and its role is critical and well established. In the process of clonal deletion, immature B cells that bind strongly to self-antigens expressed on tissues are signaled to induce their own destruction by apoptosis, removing them from the population. In the process of clonal anergy, however, B cells exposed to soluble antigen in the bone marrow are not physically deleted, but become unable to function. Another mechanism called peripheral tolerance is a direct result of T cell tolerance. In peripheral tolerance, functional, mature B cells leave the bone marrow but have yet to be exposed to self-antigen. Most protein antigens require signals from helper T cells (Th2) to proceed to make antibody.\n\n===\n\n[6] (p.937) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nContext from previous chunk: B cells can recognize native, unprocessed antigen and do not require the participation of MHC molecules and antigen-presenting cells. B cells differentiate in the bone marrow. During the process of maturation, up to 100 trillion different clones of B cells are generated, which is similar to the diversity of antigen receptors seen in T cells. B cell differentiation and the development of tolerance are not quite as well understood as it is in T cells. Central tolerance is the destruction or inactivation of B cells that recognize self-antigens in the bone marrow, and its role is critical and well established. In the process of clonal deletion , immature B cells that bind strongly to self-antigens expressed on tissues are signaled to induce their own destruction by apoptosis, removing them from the population. In the process of clonal anergy , however, B cells exposed to soluble antigen in the bone marrow are not physically deleted, but become unable to function. Another mechanism called peripheral tolerance is a direct result of T cell tolerance. In peripheral tolerance , functional, mature B cells leave the bone marrow but have yet to be exposed to self-antigen. Most protein antigens require signals from helper T cells (Th2) to proceed to make antibody.\n\n===\n\n[7] (p.936) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nB cells can recognize native, unprocessed antigen and do not require the participation of MHC molecules and antigen-presenting cells.\n\n===\n\n[8] (p.936, score=0.22) The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation\n---\nContext from previous chunk: Each of these has specific functions in the immune response, so by learning about them, researchers can learn about the great variety of antibody functions critical to many adaptive immune responses. B cells do not recognize antigen in the complex fashion of T cells. B cells can recognize native, unprocessed antigen and do not require the participation of MHC molecules and antigen-presenting cells.\n\nLock anchors and return strict JSON only.\n",
               "messages_sent": [
                 {
                   "role": "user",
                   "content": "Lock anchors and return strict JSON."
                 }
               ],
-              "response_text": "```json\n{\n  \"locked_question\": \"What process eliminates immature B cells that strongly bind to self-antigens in the bone marrow?\",\n  \"locked_answer\": \"clonal deletion\",\n  \"locked_answer_aliases\": [\"central tolerance\", \"apoptosis of self-reactive B cells\", \"negative selection of B cells\", \"clonal purging\"],\n  \"rationale\": \"Chunks explicitly name clonal deletion as the bone marrow mechanism destroying self-reactive immature B cells via apoptosis.\"\n}\n```",
+              "response_text": "```json\n{\n  \"locked_question\": \"What process destroys immature B cells in the bone marrow that bind strongly to self-antigens, preventing them from attacking the body's own tissues?\",\n  \"locked_answer\": \"clonal deletion\",\n  \"locked_answer_aliases\": [\"central tolerance\", \"B cell apoptosis\", \"self-reactive B cell elimination\", \"negative selection of B cells\"],\n  \"rationale\": \"Chunks 5 and 6 explicitly name clonal deletion as the bone marrow mechanism destroying self-reactive immature B cells via apoptosis.\"\n}\n```",
               "tool_calls_made": []
             },
             {
@@ -906,12 +754,12 @@
             },
             {
               "wrapper": "topic_lock_v2.anchors_locked",
-              "locked_question": "What process eliminates immature B cells that strongly bind to self-antigens in the bone marrow?",
+              "locked_question": "What process destroys immature B cells in the bone marrow that bind strongly to self-antigens, preventing them from attacking the body's own tissues?",
               "locked_answer": "clonal deletion"
             },
             {
               "wrapper": "mem0_read",
-              "query": "What process eliminates immature B cells that strongly bind to self-antigens in the bone marrow? B Cell Differentiation ",
+              "query": "What process destroys immature B cells in the bone marrow that bind strongly to self-antigens, preventing them from atta",
               "filters": {
                 "category": [
                   "misconception",
@@ -920,295 +768,49 @@
                 "subsection_path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation"
               },
               "hit_count": 0,
-              "elapsed_ms": 909,
+              "elapsed_ms": 1201,
               "error": null
-            }
-          ]
-        },
-        {
-          "turn": 1,
-          "phase": "tutoring",
-          "trace": [
-            {
-              "wrapper": "dean.reached_answer_gate",
-              "reached": true,
-              "path": "overlap",
-              "coverage": 1.0,
-              "evidence": "clonal deletion",
-              "n_matched": null,
-              "n_total": null
-            },
-            {
-              "wrapper": "preflight",
-              "fired": false,
-              "category": "none",
-              "evidence": "",
-              "rationale": "",
-              "elapsed_s": 1.54,
-              "should_force_hint_advance": false,
-              "should_end_session": false
-            },
-            {
-              "wrapper": "retriever.reused_lock_time_chunks",
-              "n": 9
-            },
-            {
-              "wrapper": "dean_v2.plan",
-              "parse_attempts": 1,
-              "used_fallback": false,
-              "mode": "opt_in",
-              "tone": "encouraging",
-              "elapsed_ms": 6087,
-              "tokens_in": 2588,
-              "tokens_out": 306,
-              "error": null
-            },
-            {
-              "wrapper": "retry_orchestrator.run_turn",
-              "final_attempt": 4,
-              "used_safe_generic_probe": false,
-              "used_dean_replan": true,
-              "leak_cap_fallback_fired": false,
-              "timed_out": false,
-              "elapsed_ms": 25867,
-              "n_attempts": 4,
-              "attempt_summaries": [
-                {
-                  "attempt": 1,
-                  "passed": false,
-                  "failed_checks": [
-                    "haiku_sycophancy_check",
-                    "haiku_shape_check",
-                    "haiku_pedagogy_check"
-                  ]
-                },
-                {
-                  "attempt": 2,
-                  "passed": false,
-                  "failed_checks": [
-                    "haiku_leak_check",
-                    "haiku_sycophancy_check",
-                    "haiku_shape_check",
-                    "haiku_pedagogy_check"
-                  ]
-                },
-                {
-                  "attempt": 3,
-                  "passed": false,
-                  "failed_checks": [
-                    "haiku_pedagogy_check"
-                  ]
-                },
-                {
-                  "attempt": 4,
-                  "passed": false,
-                  "failed_checks": [
-                    "haiku_sycophancy_check",
-                    "haiku_shape_check",
-                    "haiku_pedagogy_check"
-                  ]
-                }
-              ]
-            },
-            {
-              "wrapper": "dean_node_v2.total_elapsed_ms",
-              "value": 33503
-            }
-          ]
-        },
-        {
-          "turn": 1,
-          "phase": "assessment",
-          "trace": [
-            {
-              "wrapper": "assessment_v2.entry",
-              "reached": true,
-              "assessment_turn": 0,
-              "clinical_turn_count": 0
-            },
-            {
-              "wrapper": "assessment_v2.opt_in_rendered",
-              "preview": "Great work \u2014 clonal deletion is the core answer here. If you'd like, there's a brief clinical bonus question connecting "
-            }
-          ]
-        },
-        {
-          "turn": 1,
-          "phase": "assessment",
-          "trace": [
-            {
-              "wrapper": "assessment_v2.entry",
-              "reached": true,
-              "assessment_turn": 1,
-              "clinical_turn_count": 0
-            },
-            {
-              "wrapper": "assessment_v2.opt_in_response",
-              "intent": "yes",
-              "student_msg_preview": "Yes"
-            },
-            {
-              "wrapper": "assessment_v2.clinical_scenario_gen_start",
-              "locked_path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation",
-              "chunk_count": 9
-            },
-            {
-              "wrapper": "assessment_v2.clinical_phase_entered",
-              "clinical_scenario_preview": "A 28-year-old woman presents with joint pain, a butterfly-shaped facial rash, and fatigue. Lab work reveals circulating ",
-              "elapsed_ms": 8028
-            }
-          ]
-        },
-        {
-          "turn": 1,
-          "phase": "assessment",
-          "trace": [
-            {
-              "wrapper": "assessment_v2.entry",
-              "reached": true,
-              "assessment_turn": 2,
-              "clinical_turn_count": 0
-            },
-            {
-              "wrapper": "assessment_v2.run_turn_start",
-              "clinical_turn": 1
-            },
-            {
-              "wrapper": "assessment_v2.clinical_turn_rendered",
-              "clinical_turn": 1,
-              "preview": "Let me reframe \u2014 what aspect of this would you like to think through more carefully? Pick a piece you're less sure about"
-            }
-          ]
-        },
-        {
-          "turn": 1,
-          "phase": "assessment",
-          "trace": [
-            {
-              "wrapper": "assessment_v2.entry",
-              "reached": true,
-              "assessment_turn": 2,
-              "clinical_turn_count": 1
-            },
-            {
-              "wrapper": "assessment_v2.run_turn_start",
-              "clinical_turn": 2
-            },
-            {
-              "wrapper": "assessment_v2.clinical_turn_rendered",
-              "clinical_turn": 2,
-              "preview": "You've recalled the term well \u2014 now let's build the mechanism underneath it. In the bone marrow, immature B cells whose "
-            }
-          ]
-        },
-        {
-          "turn": 1,
-          "phase": "assessment",
-          "trace": [
-            {
-              "wrapper": "assessment_v2.entry",
-              "reached": true,
-              "assessment_turn": 2,
-              "clinical_turn_count": 2
-            },
-            {
-              "wrapper": "assessment_v2.run_turn_start",
-              "clinical_turn": 3
-            },
-            {
-              "wrapper": "assessment_v2.clinical_turn_rendered",
-              "clinical_turn": 3,
-              "preview": "Let me reframe \u2014 what aspect of this would you like to think through more carefully? Pick a piece you're less sure about"
-            }
-          ]
-        },
-        {
-          "turn": 1,
-          "phase": "assessment",
-          "trace": [
-            {
-              "wrapper": "assessment_v2.entry",
-              "reached": true,
-              "assessment_turn": 2,
-              "clinical_turn_count": 3
-            },
-            {
-              "wrapper": "assessment_v2.run_turn_start",
-              "clinical_turn": 4
-            },
-            {
-              "wrapper": "assessment_v2.clinical_turn_rendered",
-              "clinical_turn": 4,
-              "preview": "Let me reframe \u2014 what aspect of this would you like to think through more carefully? Pick a piece you're less sure about"
-            }
-          ]
-        },
-        {
-          "turn": 1,
-          "phase": "assessment",
-          "trace": [
-            {
-              "wrapper": "assessment_v2.entry",
-              "reached": true,
-              "assessment_turn": 2,
-              "clinical_turn_count": 4
-            },
-            {
-              "wrapper": "assessment_v2.run_turn_start",
-              "clinical_turn": 5
-            },
-            {
-              "wrapper": "assessment_v2.clinical_turn_rendered",
-              "clinical_turn": 5,
-              "preview": "In this patient, an immature B cell whose BCR bound strongly to a self-antigen in the bone marrow apparently survived th"
-            }
-          ]
-        },
-        {
-          "turn": 1,
-          "phase": "assessment",
-          "trace": [
-            {
-              "wrapper": "assessment_v2.entry",
-              "reached": true,
-              "assessment_turn": 2,
-              "clinical_turn_count": 5
-            },
-            {
-              "wrapper": "assessment_v2.run_turn_start",
-              "clinical_turn": 6
-            },
-            {
-              "wrapper": "assessment_v2.clinical_turn_rendered",
-              "clinical_turn": 6,
-              "preview": "Strong BCR crosslinking by a self-antigen during maturation in the bone marrow tips the balance inside an immature B cel"
-            }
-          ]
-        },
-        {
-          "turn": 1,
-          "phase": "assessment",
-          "trace": [
-            {
-              "wrapper": "assessment_v2.entry",
-              "reached": true,
-              "assessment_turn": 2,
-              "clinical_turn_count": 6
-            },
-            {
-              "wrapper": "assessment_v2.run_turn_start",
-              "clinical_turn": 7
-            },
-            {
-              "wrapper": "assessment_v2.clinical_turn_rendered",
-              "clinical_turn": 7,
-              "preview": "You've named the term several times now \u2014 let's see if you can explain what's underneath it. An immature B cell in the b"
             }
           ]
         }
       ],
       "hint_progress": [],
       "hint_plan": [],
+      "per_turn_snapshots": [
+        {
+          "turn_index": 5,
+          "role": "student",
+          "intent": "on_topic_engaged",
+          "intent_evidence": "",
+          "hint_level": 0,
+          "consecutive_low_effort": 0,
+          "help_abuse_count": 0,
+          "off_topic_count": 0,
+          "phase": "tutoring"
+        },
+        {
+          "turn_index": 6,
+          "role": "tutor",
+          "mode": "socratic",
+          "tone": "encouraging",
+          "attempts": 4,
+          "hint_level": 0,
+          "consecutive_low_effort": 0,
+          "help_abuse_count": 0,
+          "off_topic_count": 0,
+          "phase": "tutoring"
+        }
+      ],
+      "system_events": [
+        {
+          "after_turn": 3,
+          "kind": "topic_locked",
+          "payload": {
+            "subsection": "B Cell Differentiation and Activation",
+            "via": "confirm_topic"
+          }
+        }
+      ],
       "locked_topic_snapshot": {
         "path": "Chapter 21: The Lymphatic and Immune System > The Adaptive Immune Response: B-lymphocytes and Antibodies > B Cell Differentiation and Activation",
         "chapter": "The Lymphatic and Immune System",

@@ -65,9 +65,14 @@ class TestAfterDeanRouting:
         state = _make_state(student_reached_answer=True)
         assert after_dean(state) == "assessment_node"
 
-    def test_routes_to_assessment_on_hints_exhausted(self):
+    def test_routes_to_memory_update_on_hints_exhausted(self):
+        """F8 (POST_DEMO_FIXES.md, 2026-05-06): post-M1, hints-exhausted
+        routes STRAIGHT to memory_update (was assessment). The M1 change
+        avoids offering an opt-in clinical bonus to a student who didn't
+        reach the core answer. See lifecycle_v2.py:1149-1150.
+        """
         state = _make_state(student_reached_answer=False, hint_level=4, max_hints=3)
-        assert after_dean(state) == "assessment_node"
+        assert after_dean(state) == "memory_update_node"
 
     def test_routes_to_assessment_on_turn_limit(self):
         state = _make_state(student_reached_answer=False, hint_level=1, turn_count=25, max_turns=25)
@@ -77,10 +82,12 @@ class TestAfterDeanRouting:
         state = _make_state(student_reached_answer=False, hint_level=1, turn_count=3, max_turns=25)
         assert after_dean(state) == END
 
-    def test_hint_at_max_still_routes_to_assessment(self):
-        # hint_level == max_hints + 1 → assessment
+    def test_hint_at_max_routes_to_memory_update(self):
+        """F8 (POST_DEMO_FIXES.md, 2026-05-06): hint_level == max_hints + 1
+        triggers the M1 hint-exhausted route → memory_update.
+        """
         state = _make_state(student_reached_answer=False, hint_level=4, max_hints=3)
-        assert after_dean(state) == "assessment_node"
+        assert after_dean(state) == "memory_update_node"
 
     def test_hint_exactly_at_max_stays_in_tutoring(self):
         # hint_level == max_hints (not yet exceeded) → END
@@ -114,11 +121,15 @@ class TestHelpAbuseLogic:
     """Test help abuse counter logic (pure Python, no LLM)."""
 
     def test_help_abuse_counter_increments_on_low_effort(self):
-        """Three consecutive low_effort turns → help_abuse_count reaches threshold."""
-        help_abuse_threshold = cfg.dean.help_abuse_threshold  # 3
+        """F8 (POST_DEMO_FIXES.md, 2026-05-06): threshold bumped 3 → 4
+        per Change 4 (2026-04-30). Pure-Python loop test; drives N
+        consecutive low_effort turns where N = current threshold.
+        """
+        help_abuse_threshold = cfg.dean.help_abuse_threshold  # currently 4
 
         count = 0
-        student_states = ["low_effort", "low_effort", "low_effort"]
+        # N consecutive low_effort turns to trigger the advance.
+        student_states = ["low_effort"] * help_abuse_threshold
         advanced = False
 
         for ss in student_states:
@@ -130,7 +141,10 @@ class TestHelpAbuseLogic:
                 advanced = True
                 count = 0
 
-        assert advanced, "hint_level should advance after 3 consecutive low_effort turns"
+        assert advanced, (
+            f"hint_level should advance after {help_abuse_threshold} "
+            "consecutive low_effort turns"
+        )
         assert count == 0, "counter should reset after advancing"
 
     def test_help_abuse_counter_resets_on_real_attempt(self):

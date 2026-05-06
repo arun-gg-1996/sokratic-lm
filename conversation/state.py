@@ -202,6 +202,12 @@ class TutorState(TypedDict):
     # threshold.
     total_low_effort_turns: int
     total_off_topic_turns: int
+    # F6 (POST_DEMO_FIXES.md, 2026-05-06): non-resetting counter for
+    # ACTIVE answer-demand turns ("just tell me", "what's the answer").
+    # Distinct from total_low_effort_turns (passive "idk"). Surfaces in
+    # the debug payload so help_abuse activity is visible even after
+    # the consecutive `help_abuse_count` resets on engagement.
+    total_help_abuse_turns: int
     # --- Clinical phase counters (Change 5.1, 2026-04-30) ---
     # Mirror help_abuse_count / off_topic_count but for the clinical
     # (assessment) phase. At cfg.dean.clinical_strike_threshold (default 2),
@@ -209,6 +215,14 @@ class TutorState(TypedDict):
     # session continues to memory_update — student keeps tutoring credit.
     clinical_low_effort_count: int
     clinical_off_topic_count: int
+    # N3 (POST_DEMO_FIXES.md, 2026-05-06): clinical phase mirrors
+    # tutoring's help_abuse counter exactly. Increments when preflight
+    # verdict=help_abuse during a clinical turn.
+    clinical_help_abuse_count: int
+    # Non-resetting clinical totals (mirror the F6 totals in tutoring).
+    total_clinical_low_effort_turns: int
+    total_clinical_off_topic_turns: int
+    total_clinical_help_abuse_turns: int
 
     # --- Topic-lock rejection tracking ---
     # TOC paths that failed the coverage gate in this session. Used by
@@ -232,6 +246,34 @@ class TutorState(TypedDict):
     session_ended: bool
     exit_intent_pending: bool
     close_reason: str
+    # F1 (POST_DEMO_FIXES.md): set True when off-topic strikes hit the
+    # end-session threshold. Read by lifecycle_v2._derive_close_reason
+    # to pick close_reason="off_domain_strike" instead of falling
+    # through to "tutoring_cap". Must be in the schema so LangGraph's
+    # reducer doesn't drop the propagated value between nodes.
+    session_ended_off_domain: bool
+    # N7 / Block G (POST_DEMO_FIXES.md, 2026-05-06): diagnostic counters
+    # for the engagement-details sidebar panel (gated by debugMode).
+    # NOT used for control logic — pure observability. See N7 for the
+    # control-vs-diagnostic split rationale.
+    #
+    # engaged_wrong_count       — turns where preflight=on_topic_engaged
+    #                              AND reach gate didn't fire (student
+    #                              tried, didn't reach yet)
+    # dean_hint_override_count  — times Dean's TurnPlan.advance_hint_level
+    #                              caused the hint to bump
+    # rule_hint_advance_count   — times preflight strike-4 OR
+    #                              consecutive_low_effort streak-4 caused
+    #                              the hint to bump
+    engaged_wrong_count: int
+    dean_hint_override_count: int
+    rule_hint_advance_count: int
+    # Block G — per-turn exploration flag (true ONLY for the turn Dean
+    # signaled needs_exploration; cleared on next non-exploration turn).
+    # Drives the sidebar EXPLORING sub-badge. cumulative count lives in
+    # exploration_count.
+    currently_exploring: bool
+    exploration_query_last: str
 
     # --- Pre-lock loop counter (L11) ---
     # Counts student round-trips before a topic is locked. Separate from
@@ -367,7 +409,12 @@ def initial_state(student_id: str, cfg) -> TutorState:
         off_topic_count=0,
         total_low_effort_turns=0,
         total_off_topic_turns=0,
+        total_help_abuse_turns=0,  # F6
         clinical_low_effort_count=0,
+        clinical_help_abuse_count=0,  # N3
+        total_clinical_low_effort_turns=0,  # N3
+        total_clinical_off_topic_turns=0,  # N3
+        total_clinical_help_abuse_turns=0,  # N3
         consecutive_low_effort_count=0,  # BLOCK 6 (S1)
         cancel_modal_pending=False,      # BLOCK 9 (S3)
         recent_cancel_at_turn=-1,
@@ -377,6 +424,12 @@ def initial_state(student_id: str, cfg) -> TutorState:
         session_ended=False,
         exit_intent_pending=False,
         close_reason="",
+        session_ended_off_domain=False,  # F1 — off-topic strike-4 marker
+        engaged_wrong_count=0,           # N7 / Block G — diagnostic
+        dean_hint_override_count=0,      # N7 / Block G — diagnostic
+        rule_hint_advance_count=0,       # N7 / Block G — diagnostic
+        currently_exploring=False,       # Block G — per-turn flag
+        exploration_query_last="",       # Block G — last tangent query
         prelock_loop_count=0,
         mem0_carryover_notes="",
         last_hint_advance_at_turn=-1,

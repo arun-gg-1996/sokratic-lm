@@ -17,6 +17,7 @@ context guarantees the warm-up runs before the server accepts
 requests.
 """
 from contextlib import asynccontextmanager
+import os
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -25,6 +26,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv(Path(__file__).parent.parent / ".env", override=True)
 
+from backend.auth import require_api_auth
 from backend.api import chat, mastery, memory, session, sessions, users, vlm
 from backend.dependencies import get_graph, get_memory_manager, get_retriever
 
@@ -46,13 +48,23 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="Sokratic Backend", version="0.1", lifespan=lifespan)
 
+cors_origins_raw = os.environ.get("SOKRATIC_CORS_ORIGINS", "").strip()
+if not cors_origins_raw:
+    cors_origins_raw = "http://localhost:5173"
+cors_origins = [
+    origin.strip()
+    for origin in cors_origins_raw.split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.middleware("http")(require_api_auth)
 
 app.include_router(users.router, prefix="/api")
 app.include_router(session.router, prefix="/api")

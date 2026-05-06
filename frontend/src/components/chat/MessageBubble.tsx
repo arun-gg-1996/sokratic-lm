@@ -3,6 +3,7 @@ import type { MouseEvent } from "react";
 import type { ChatMessage } from "../../types";
 import { useSessionStore } from "../../stores/sessionStore";
 import { useUserStore } from "../../stores/userStore";
+import { renderMarkdown } from "../../utils/renderMarkdown";
 import { ActivityFeed } from "./ActivityFeed";
 import { StreamingText } from "./StreamingText";
 
@@ -114,6 +115,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
             onComplete={() => {
               if (message.shouldStream) markStreamed(message.id);
             }}
+            renderer={renderMarkdown}
           />
           {message.activityLog && message.activityLog.length > 0 && (
             <ActivityFeed labels={message.activityLog} mode="collapsed" />

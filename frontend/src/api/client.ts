@@ -9,14 +9,39 @@ import type {
   StudentOverviewResponse,
   User,
 } from "../types";
+import { useUserStore } from "../stores/userStore";
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
+const DEFAULT_API_BASE =
+  import.meta.env.DEV ? "http://localhost:8000" : window.location.origin;
+const API_BASE = (import.meta.env.VITE_API_BASE || DEFAULT_API_BASE).replace(/\/$/, "");
 
 export { API_BASE };
+
+function authHeaders(extra: HeadersInit = {}): HeadersInit {
+  const token = useUserStore.getState().authToken;
+  return token ? { ...extra, Authorization: `Bearer ${token}` } : extra;
+}
+
+async function authFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+  return fetch(input, {
+    ...init,
+    headers: authHeaders(init.headers || {}),
+  });
+}
 
 export async function listUsers(): Promise<User[]> {
   const res = await fetch(`${API_BASE}/api/users`);
   if (!res.ok) throw new Error("Failed to fetch users");
+  return res.json();
+}
+
+export async function loginUser(username: string, password: string): Promise<{ token: string; user: User }> {
+  const res = await fetch(`${API_BASE}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!res.ok) throw new Error("Invalid username or password");
   return res.json();
 }
 
@@ -45,7 +70,7 @@ export async function startSession(
   };
   if (prelockedTopic) body.prelocked_topic = prelockedTopic;
   if (imageContext) body.image_context = imageContext;
-  const res = await fetch(`${API_BASE}/api/session/start`, {
+  const res = await authFetch(`${API_BASE}/api/session/start`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -79,7 +104,7 @@ export async function uploadVlmImage(
   const form = new FormData();
   form.append("thread_id", threadId);
   form.append("file", file);
-  const res = await fetch(`${API_BASE}/api/vlm/upload`, {
+  const res = await authFetch(`${API_BASE}/api/vlm/upload`, {
     method: "POST",
     body: form,
   });
@@ -91,7 +116,7 @@ export async function uploadVlmImage(
 }
 
 export async function getMemory(studentId: string): Promise<MemoryListResponse> {
-  const res = await fetch(
+  const res = await authFetch(
     `${API_BASE}/api/memory/${encodeURIComponent(studentId)}`
   );
   if (!res.ok) throw new Error("Failed to fetch memory");
@@ -99,7 +124,7 @@ export async function getMemory(studentId: string): Promise<MemoryListResponse> 
 }
 
 export async function forgetMemory(studentId: string): Promise<MemoryDeleteResponse> {
-  const res = await fetch(
+  const res = await authFetch(
     `${API_BASE}/api/memory/${encodeURIComponent(studentId)}`,
     { method: "DELETE" }
   );
@@ -110,7 +135,7 @@ export async function forgetMemory(studentId: string): Promise<MemoryDeleteRespo
 export async function getMastery(
   studentId: string
 ): Promise<MasteryDashboardResponse> {
-  const res = await fetch(
+  const res = await authFetch(
     `${API_BASE}/api/mastery/${encodeURIComponent(studentId)}`
   );
   if (!res.ok) throw new Error("Failed to fetch mastery");
@@ -122,7 +147,7 @@ export async function getMastery(
 export async function getMasteryTree(
   studentId: string
 ): Promise<MasteryTreeResponse> {
-  const res = await fetch(
+  const res = await authFetch(
     `${API_BASE}/api/mastery/v2/${encodeURIComponent(studentId)}/tree`
   );
   if (!res.ok) throw new Error("Failed to fetch mastery tree");
@@ -138,7 +163,7 @@ export async function getMasterySessions(
   if (opts.completedOnly) params.set("completed_only", "true");
   if (opts.subsectionPath) params.set("subsection_path", opts.subsectionPath);
   const qs = params.toString() ? `?${params.toString()}` : "";
-  const res = await fetch(
+  const res = await authFetch(
     `${API_BASE}/api/mastery/v2/${encodeURIComponent(studentId)}/sessions${qs}`
   );
   if (!res.ok) throw new Error("Failed to fetch mastery sessions");
@@ -161,7 +186,7 @@ export interface TranscriptResponse {
 }
 
 export async function getSessionTranscript(threadId: string): Promise<TranscriptResponse> {
-  const res = await fetch(`${API_BASE}/api/sessions/${encodeURIComponent(threadId)}/transcript`);
+  const res = await authFetch(`${API_BASE}/api/sessions/${encodeURIComponent(threadId)}/transcript`);
   if (!res.ok) throw new Error("Failed to fetch transcript");
   return res.json();
 }
@@ -178,7 +203,7 @@ export async function postAnalysisChat(
   message: string,
   history: { role: string; content: string }[] = []
 ): Promise<AnalysisChatResponse> {
-  const res = await fetch(`${API_BASE}/api/sessions/${encodeURIComponent(threadId)}/analysis_chat`, {
+  const res = await authFetch(`${API_BASE}/api/sessions/${encodeURIComponent(threadId)}/analysis_chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message, history }),
@@ -195,17 +220,48 @@ export interface RegenerateResponse {
 }
 
 export async function regenerateTakeaways(threadId: string): Promise<RegenerateResponse> {
-  const res = await fetch(`${API_BASE}/api/sessions/${encodeURIComponent(threadId)}/regenerate_takeaways`, {
+  const res = await authFetch(`${API_BASE}/api/sessions/${encodeURIComponent(threadId)}/regenerate_takeaways`, {
     method: "POST",
   });
   if (!res.ok) throw new Error("Failed to regenerate takeaways");
   return res.json();
 }
 
+// N8 (POST_DEMO_FIXES.md, 2026-05-06) — student-profile reply suggestions
+export interface SuggestionItem {
+  text: string;
+  kind: string;   // intent class — see backend _color_for_kind for mapping
+  color: string;  // resolved color token
+  rationale?: string;
+}
+
+export interface SuggestRepliesResponse {
+  thread_id: string;
+  profile: string;
+  suggestions: SuggestionItem[];
+  error?: string | null;
+}
+
+export async function postSuggestReplies(
+  threadId: string,
+  profile: string = "S2",
+): Promise<SuggestRepliesResponse> {
+  const res = await authFetch(
+    `${API_BASE}/api/sessions/${encodeURIComponent(threadId)}/suggest_replies`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profile }),
+    },
+  );
+  if (!res.ok) throw new Error(`suggest_replies failed: ${res.status}`);
+  return res.json();
+}
+
 export async function getMasterySession(
   threadId: string
 ): Promise<MasterySessionRow> {
-  const res = await fetch(
+  const res = await authFetch(
     `${API_BASE}/api/mastery/v2/session/${encodeURIComponent(threadId)}`
   );
   if (!res.ok) throw new Error("Failed to fetch mastery session");
@@ -213,13 +269,13 @@ export async function getMasterySession(
 }
 
 export async function exportSession(threadId: string): Promise<Record<string, unknown>> {
-  const res = await fetch(`${API_BASE}/api/session/${threadId}/export`);
+  const res = await authFetch(`${API_BASE}/api/session/${threadId}/export`);
   if (!res.ok) throw new Error("Failed to export session");
   return res.json();
 }
 
 export async function getStudentOverview(studentId: string): Promise<StudentOverviewResponse> {
-  const res = await fetch(`${API_BASE}/api/students/${studentId}/overview`);
+  const res = await authFetch(`${API_BASE}/api/students/${studentId}/overview`);
   if (!res.ok) throw new Error("Failed to fetch overview");
   return res.json();
 }

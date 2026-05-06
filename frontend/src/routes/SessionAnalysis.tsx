@@ -16,6 +16,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { AppShell } from "../components/layout/AppShell";
+import { renderMarkdown } from "../utils/renderMarkdown";
 import {
   getMasterySession,
   getSessionTranscript,
@@ -161,7 +162,10 @@ export function SessionAnalysis() {
             <span>{subsectionLabel}</span>
           </div>
 
-          {/* Transcript panel */}
+          {/* Transcript panel — A6 (POST_DEMO_FIXES.md, 2026-05-06):
+              styled to mirror the live chat MessageBubble look. Read-only,
+              no Listen / debug-click affordances. Tutor: icon + panel
+              card. Student: right-aligned accent-soft pill. */}
           <section className="border border-border rounded-lg p-4 bg-panel">
             <h2 className="text-sm font-semibold uppercase text-muted tracking-wide mb-3">
               Transcript
@@ -171,22 +175,34 @@ export function SessionAnalysis() {
                 No transcript available for this session.
               </div>
             ) : (
-              <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
-                {transcript.map((m, i) => (
-                  <div
-                    key={i}
-                    className={
-                      m.role === "tutor"
-                        ? "text-sm bg-muted/30 rounded px-3 py-2"
-                        : "text-sm bg-accent/10 rounded px-3 py-2 ml-8"
-                    }
-                  >
-                    <div className="text-xs text-muted mb-1">
-                      {m.role === "tutor" ? "Tutor" : "You"}
+              <div className="space-y-3 max-h-[28rem] overflow-y-auto pr-2">
+                {transcript.map((m, i) =>
+                  m.role === "tutor" ? (
+                    <div key={i} className="flex items-start gap-3">
+                      <img
+                        src="/sokratic_bot_icon.png"
+                        alt="Sokratic Tutor"
+                        className="h-7 w-7 rounded-md mt-1 shrink-0 opacity-80"
+                      />
+                      <div className="flex-1 text-text leading-relaxed rounded-card bg-bg border border-border px-4 py-3 text-sm">
+                        {renderMarkdown(m.content)}
+                      </div>
                     </div>
-                    <div className="whitespace-pre-wrap">{m.content}</div>
-                  </div>
-                ))}
+                  ) : m.role === "student" ? (
+                    <div key={i} className="flex justify-end">
+                      <div className="bg-accent-soft text-text rounded-2xl px-4 py-2 max-w-[520px] leading-relaxed text-sm whitespace-pre-wrap">
+                        {m.content}
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      key={i}
+                      className="rounded-card border border-border bg-bg px-4 py-2 text-xs text-muted italic"
+                    >
+                      {m.content}
+                    </div>
+                  ),
+                )}
               </div>
             )}
           </section>

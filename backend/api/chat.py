@@ -6,6 +6,7 @@ import json
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.encoders import jsonable_encoder
 
+from backend.auth import websocket_auth
 from backend.dependencies import get_graph, get_runtime_store
 from backend.models.schemas import ClientMessage
 from config import cfg
@@ -75,6 +76,10 @@ def _append_full_turn_trace(state: dict, student_message: str, tutor_message: st
 
 @router.websocket("/ws/chat/{thread_id}")
 async def chat_ws(websocket: WebSocket, thread_id: str):
+    auth_user = await websocket_auth(websocket)
+    if not auth_user or not thread_id.startswith(f"{auth_user}_"):
+        await websocket.close(code=1008)
+        return
     await websocket.accept()
     graph = get_graph()
     runtime = get_runtime_store()
@@ -262,11 +267,20 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
             debug_payload["off_topic_threshold"] = int(getattr(cfg.dean, "off_topic_threshold", 4))
             debug_payload["total_low_effort_turns"] = int(new_state.get("total_low_effort_turns", 0) or 0)
             debug_payload["total_off_topic_turns"] = int(new_state.get("total_off_topic_turns", 0) or 0)
+            # F6 — non-resetting help_abuse counter so visibility doesn't
+            # drop to 0 the moment the student engages.
+            debug_payload["total_help_abuse_turns"] = int(new_state.get("total_help_abuse_turns", 0) or 0)
             # N2: surface consecutive_low_effort_count for sidebar — was already
             # tracked in state but not exposed in the WS payload.
             debug_payload["consecutive_low_effort_count"] = int(new_state.get("consecutive_low_effort_count", 0) or 0)
             debug_payload["low_effort_threshold"] = 4  # preflight L55 strike-4 force-hint-advance            debug_payload["clinical_low_effort_count"] = int(new_state.get("clinical_low_effort_count", 0) or 0)
             debug_payload["clinical_off_topic_count"] = int(new_state.get("clinical_off_topic_count", 0) or 0)
+            # N3 (POST_DEMO_FIXES.md, 2026-05-06): clinical phase mirror
+            # of tutoring's help_abuse + the three non-resetting totals.
+            debug_payload["clinical_help_abuse_count"] = int(new_state.get("clinical_help_abuse_count", 0) or 0)
+            debug_payload["total_clinical_help_abuse_turns"] = int(new_state.get("total_clinical_help_abuse_turns", 0) or 0)
+            debug_payload["total_clinical_low_effort_turns"] = int(new_state.get("total_clinical_low_effort_turns", 0) or 0)
+            debug_payload["total_clinical_off_topic_turns"] = int(new_state.get("total_clinical_off_topic_turns", 0) or 0)
             debug_payload["clinical_strike_threshold"] = int(getattr(cfg.dean, "clinical_strike_threshold", 2))
             # L80.a — clinical phase turn counter (separate from tutoring's
             # turn_count per L67). Surfaced so the sidebar can render
@@ -281,6 +295,19 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
             debug_payload["exit_intent_pending"] = bool(new_state.get("exit_intent_pending", False))
             debug_payload["session_ended"] = bool(new_state.get("session_ended", False))
             debug_payload["close_reason"] = str(new_state.get("close_reason", "") or "")
+
+            # Block G (POST_DEMO_FIXES.md, 2026-05-06) — exploration
+            # meta + diagnostic engagement counters. Always sent;
+            # frontend gates rendering by debugMode for the diagnostic
+            # ones. EXPLORING sub-badge IS shown to students when
+            # currently_exploring=true (provides context for what the
+            # tutor is doing — not technical noise).
+            debug_payload["exploration_count"] = int(new_state.get("exploration_count", 0) or 0)
+            debug_payload["currently_exploring"] = bool(new_state.get("currently_exploring", False))
+            debug_payload["exploration_query"] = str(new_state.get("exploration_query_last", "") or "")
+            debug_payload["engaged_wrong_count"] = int(new_state.get("engaged_wrong_count", 0) or 0)
+            debug_payload["dean_hint_override_count"] = int(new_state.get("dean_hint_override_count", 0) or 0)
+            debug_payload["rule_hint_advance_count"] = int(new_state.get("rule_hint_advance_count", 0) or 0)
 
             payload = {
                 "type": "message_complete",

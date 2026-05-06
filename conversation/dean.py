@@ -1518,8 +1518,26 @@ class DeanAgent:
                     "debug": state["debug"],
                 }
 
+            # F7 (POST_DEMO_FIXES.md): fetch prior locked_questions for this
+            # student × subsection so the LLM can avoid re-asking the same
+            # anchor on repeat visits. Empty list on first visit; pulled
+            # from SQLite via the M5 subsection_path filter.
+            from conversation.anchor_history import fetch_prior_locked_questions
+            _locked_topic = state.get("locked_topic") or {}
+            _subsection_path = str(_locked_topic.get("path", "") or "").strip()
+            _student_id = str(state.get("student_id", "") or "").strip()
+            prior_questions = fetch_prior_locked_questions(
+                _student_id, _subsection_path,
+            ) if (_student_id and _subsection_path) else []
+            if prior_questions:
+                state["debug"]["turn_trace"].append({
+                    "wrapper": "dean._lock_anchors_call.prior_questions",
+                    "count": len(prior_questions),
+                    "subsection_path": _subsection_path,
+                })
+
             _fire_activity_pre("Setting up the anchor question")
-            anchors = self._lock_anchors_call(state)
+            anchors = self._lock_anchors_call(state, prior_questions=prior_questions)
             state["locked_question"] = str(anchors.get("locked_question", "") or "").strip()
             state["locked_answer"] = str(anchors.get("locked_answer", "") or "").strip()
             # Aliases consumed by reached_answer_gate Step A (token-overlap).
@@ -2611,7 +2629,12 @@ class DeanAgent:
             "rationale": str(parsed.get("rationale", "") or "").strip(),
         }
 
-    def _lock_anchors_call(self, state: TutorState) -> dict:
+    def _lock_anchors_call(
+        self,
+        state: TutorState,
+        *,
+        prior_questions: list[str] | None = None,
+    ) -> dict:
         """
         Lock both question and answer anchors immediately after topic-lock retrieval.
         Returns a dict with: locked_question, locked_answer, rationale.
@@ -2625,6 +2648,16 @@ class DeanAgent:
         before passing to the lock LLM. This forces the lock to be
         grounded in the actually-locked subsection, not whatever
         adjacent content the chunker pulled in.
+
+        F7 (2026-05-06, POST_DEMO_FIXES.md): added `prior_questions`
+        parameter so repeat visits to a subsection produce a different
+        anchor question instead of the same one (temperature=0 made the
+        LLM deterministic on identical inputs).
+          * empty / None     → temperature=0 (today's behavior)
+          * 1-3 prior        → temperature=0.5 + AVOID block in prompt
+          * 4+ prior         → temperature=0.5 + AVOID + reframe-lens
+                               instruction (honest reuse with different
+                               angle: clinical / mechanistic / comparative)
         """
         topic_selection = str(state.get("topic_selection", "") or "").strip()
 
@@ -2679,17 +2712,52 @@ class DeanAgent:
             **_domain_prompt_vars(),
         )
 
+        # F7 — branch prompt + temperature on prior history for this
+        # student × subsection. Empty list → today's deterministic path.
+        # 1-3 prior → AVOID block + temp=0.5. 4+ prior → AVOID + reframe
+        # instruction (LLM picks a different lens rather than pretend
+        # novelty).
+        _prior = list(prior_questions or [])
+        _prior_block = ""
+        _temp = 0
+        if _prior:
+            _temp = 0.5
+            _avoid_lines = "\n".join(
+                f"  {i + 1}. {q}" for i, q in enumerate(_prior)
+            )
+            if len(_prior) >= 4:
+                _prior_block = (
+                    "\n\nPRIOR QUESTIONS THIS STUDENT HAS COVERED ON THIS SUBSECTION:\n"
+                    f"{_avoid_lines}\n"
+                    "\nThe student has worked through the natural angles. Reframe one "
+                    "of the prior questions from a DIFFERENT LENS — pick the most "
+                    "useful next angle from: clinical application, mechanistic 'why', "
+                    "or comparative across types. Output the reframed question; do "
+                    "NOT pretend it is a new topic, but make sure it asks something "
+                    "the student has not already answered."
+                )
+            else:
+                _prior_block = (
+                    "\n\nAVOID THESE PRIOR QUESTIONS — the student has already "
+                    "worked through these in past sessions on this subsection:\n"
+                    f"{_avoid_lines}\n"
+                    "\nPick a DIFFERENT angle on the same subsection. Do not "
+                    "rephrase any of the above; choose a genuinely new angle "
+                    "(different mechanism, different comparison, different "
+                    "clinical scenario, etc.)."
+                )
+
         resp = _timed_create(
             self.client, state, "dean._lock_anchors_call",
             model=self.model,
-            temperature=0,
+            temperature=_temp,
             max_tokens=360,
             system=_cached_system(
                 getattr(cfg.prompts, "dean_base", ""),
                 wrapper_delta,
                 chunks_str,
                 conversation_history,
-                dynamic_prompt,
+                dynamic_prompt + _prior_block,
             ),
             messages=[{"role": "user", "content": "Lock anchors and return strict JSON."}],
         )
@@ -3737,6 +3805,11 @@ class DeanAgent:
             "draft": text,
             "locked_answer": state.get("locked_answer", "") or "",
             "aliases": state.get("locked_answer_aliases") or [],
+            # F5c (POST_DEMO_FIXES.md, 2026-05-06): pass locked_question
+            # so the leak check can reason about classification / list
+            # / enumeration questions where naming the categories IS
+            # the answer (even if `aliases` doesn't list them literally).
+            "locked_question": state.get("locked_question", "") or "",
         }
         # Sycophancy classifier needs student_state + reach_fired so it
         # can apply asymmetric stakes (affirmation is OK only when
@@ -3919,6 +3992,8 @@ class DeanAgent:
                 draft=text,
                 locked_answer=state.get("locked_answer", "") or "",
                 aliases=state.get("locked_answer_aliases") or [],
+                # F5c — see hint_kwargs comment above (line ~3805).
+                locked_question=state.get("locked_question", "") or "",
             )
         except Exception:
             hint_result = {"verdict": "clean", "evidence": "", "rationale": "classifier_error"}

@@ -17,7 +17,7 @@ export function AccountPopover({ studentId }: { studentId: string | null }) {
   const { theme, toggleTheme } = useTheme();
   const debugMode = useUserStore((s) => s.debugMode);
   const setDebugMode = useUserStore((s) => s.setDebugMode);
-  const setStudentId = useUserStore((s) => s.setStudentId);
+  const logout = useUserStore((s) => s.logout);
   const memoryEnabled = useUserStore((s) => s.memoryEnabled);
   const setMemoryEnabled = useUserStore((s) => s.setMemoryEnabled);
   const ttsEnabled = useUserStore((s) => s.ttsEnabled);
@@ -54,12 +54,12 @@ export function AccountPopover({ studentId }: { studentId: string | null }) {
           <button
             className="w-full rounded-lg border border-border px-3 py-2 text-left hover:border-accent"
             onClick={() => {
-              setStudentId(null);
+              logout();
               setOpen(false);
               navigate("/");
             }}
           >
-            Switch user
+            Sign out
           </button>
           <button
             className="w-full rounded-lg border border-border px-3 py-2 text-left hover:border-accent"

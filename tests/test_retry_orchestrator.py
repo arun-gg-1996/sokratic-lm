@@ -384,9 +384,19 @@ def test_max_attempts_constant_is_3():
     assert MAX_TEACHER_ATTEMPTS == 3
 
 
-def test_safe_generic_probe_is_non_leaking():
-    """Sanity: the templated fallback must not contain anything that
-    could possibly be a leak-pattern."""
-    assert "answer" not in SAFE_GENERIC_PROBE.lower()
-    assert "the" in SAFE_GENERIC_PROBE.lower()  # at least non-empty natural language
-    assert "?" in SAFE_GENERIC_PROBE  # has a question
+def test_safe_generic_probe_is_empty_per_m_fb():
+    """M-FB (POST_DEMO_FIXES.md, 2026-05-06 ref): SAFE_GENERIC_PROBE is
+    INTENTIONALLY empty — when the retry chain exhausts, nodes_v2
+    detects `used_safe_generic_probe=True` and emits an ErrorCard
+    system message instead of fake tutor text. Asserting an empty
+    sentinel is the new contract.
+
+    Originally this test asserted the probe was non-empty + non-leaking;
+    that reflected the pre-M-FB design where a templated fallback was
+    used. Updated to match the current M-FB sentinel pattern.
+    """
+    assert SAFE_GENERIC_PROBE == "", (
+        "SAFE_GENERIC_PROBE must be empty per M-FB (no templated tutor "
+        "fallback). nodes_v2 is responsible for emitting an ErrorCard "
+        "when this sentinel fires."
+    )
