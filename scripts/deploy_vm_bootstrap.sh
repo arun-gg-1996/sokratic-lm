@@ -91,7 +91,13 @@ warn() { printf "\033[1;33m[bootstrap]\033[0m %s\n" "$*"; }
 fail() { printf "\033[1;31m[bootstrap]\033[0m %s\n" "$*" >&2; exit 1; }
 need_root() { [[ $(id -u) -eq 0 ]] || fail "must be run with sudo"; }
 have()   { command -v "$1" >/dev/null 2>&1; }
-as_user() { sudo -u "$DEPLOY_USER" -E "$@"; }
+# `sudo -E -u USER` preserves the calling shell's env — including HOME,
+# which for `sudo bash bootstrap.sh` is /root. npm/pip/git then write
+# caches into /root/.npm, /root/.cache, etc, owned by root, breaking
+# subsequent runs of the same script as the deploy user. Adding `-H`
+# tells sudo to reset HOME to the target user's passwd-entry home dir
+# while -E preserves everything else (PATH, TERM, ANTHROPIC_API_KEY etc.).
+as_user() { sudo -H -u "$DEPLOY_USER" -E "$@"; }
 
 # ---------------------------------------------------------------------------
 # Step 0 — sanity
@@ -114,15 +120,35 @@ fi
 if [[ "$SKIP_SYSTEM" == "0" ]]; then
   log "step 1/8: system packages"
   apt-get update -y
+  # Core packages from Ubuntu repos. We deliberately do NOT install
+  # nodejs/npm from apt here — Ubuntu 24.04 (Noble) ships node 18, and
+  # vite 7 (frontend tooling) requires node >=20.19. NodeSource is
+  # added below for that.
   apt-get install -y \
     git curl ca-certificates gnupg \
     "$PY_BIN" "${PY_BIN}-venv" "${PY_BIN}-dev" python3-pip \
-    nodejs npm \
     nginx docker.io \
     build-essential
-  # docker group for the deploy user (so they can run docker compose
-  # without sudo). Effective on next login; the script uses `docker`
-  # via root anyway during this run.
+
+  # Node 20 from NodeSource — required for vite 7. Idempotent: skip
+  # the setup script if /etc/apt/sources.list.d/nodesource.list already
+  # points at v20+, otherwise (re)install.
+  NEED_NODE=1
+  if command -v node >/dev/null 2>&1; then
+    CUR_NODE_MAJOR=$(node --version | sed -E 's/^v([0-9]+)\..*/\1/')
+    if [[ "$CUR_NODE_MAJOR" -ge 20 ]]; then
+      log "  node $(node --version) already installed — skipping NodeSource"
+      NEED_NODE=0
+    fi
+  fi
+  if [[ "$NEED_NODE" == "1" ]]; then
+    log "  installing Node 20 from NodeSource"
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+    apt-get install -y nodejs
+  fi
+
+  # docker group for the deploy user (effective next login; the script
+  # uses docker via root anyway during this run).
   usermod -aG docker "$DEPLOY_USER" || true
 else
   log "step 1/8: system packages — SKIPPED"
