@@ -7,16 +7,25 @@
 # Idempotent — safe to re-run after partial failures. Each step
 # checks for the artifact it produces and skips if already present.
 #
-# What this DOES:
+# What this DOES (gated pipeline — every gate is a hard fail):
 #   1. Installs system packages (python3.11, node, docker, nginx, git)
-#   2. Clones the repo into /opt/sokratic (or pulls if already cloned)
+#   2. Clones / fast-forwards the repo into /opt/sokratic
 #   3. Creates Python venv + installs requirements.txt + scispacy model
 #   4. Builds the frontend (npm ci + npm run build)
-#   5. Pulls expensive artifacts from HuggingFace via bootstrap_corpus.py
-#      (NO ingestion / chunk rebuild on the VM — pull-only)
-#   6. Starts Qdrant (docker) and restores the kb_chunks snapshot
-#   7. Runs scripts/smoke_post_demo_fixes.py to validate
-#   8. Installs the sokratic-backend systemd unit + nginx site
+#   5. .env presence check (warns if missing)
+#  ─5b. PREFLIGHT GATE  → scripts/preflight_check.py
+#       Verifies python/node/docker/disk/network/.env-keys/MANIFEST.
+#       Hard-fail before any byte pulled from HuggingFace.
+#   6. Pulls expensive artifacts from HuggingFace via bootstrap_corpus.py
+#      (idempotent, sha256-aware — only fetches missing or mismatched)
+#   7. Starts Qdrant (docker) and restores the kb_chunks snapshot if
+#      the collection is empty
+#  ─7b. POSTFLIGHT GATE → scripts/postflight_check.py
+#       Verifies manifest sha + topic_index + bm25 + qdrant points +
+#       LIVE retrieval probe + LLM round-trip + smoke harness.
+#       Hard-fail before systemd starts uvicorn.
+#   8. Installs the sokratic-backend systemd unit + nginx site, starts
+#      services, waits for /health = 200.
 #
 # What this does NOT do (left to the operator):
 #   - Write /opt/sokratic/.env (place secrets manually before step 6/7;
@@ -192,17 +201,28 @@ if [[ ! -f "$INSTALL_DIR/.env" ]]; then
 fi
 
 # ---------------------------------------------------------------------------
+# Step 5b — PREFLIGHT GATE
+# ---------------------------------------------------------------------------
+# Verify prerequisites BEFORE we pull a single byte from HuggingFace
+# or restore a qdrant snapshot. Cheap, deterministic, all-or-nothing.
+
+log "step 5b/8: preflight gate"
+if ! as_user .venv/bin/python scripts/preflight_check.py; then
+  fail "preflight check failed — fix the ✗ items above and re-run. "\
+"Common fixes:  (a) populate /opt/sokratic/.env  "\
+"(b) install missing system binary  (c) start docker daemon  "\
+"(d) free up disk space."
+fi
+
+# ---------------------------------------------------------------------------
 # Step 6 — pull expensive artifacts from HuggingFace
 # ---------------------------------------------------------------------------
 
 if [[ "$SKIP_BOOTSTRAP" == "0" ]]; then
-  log "step 6/8: pull corpus artifacts from HuggingFace"
-  if [[ ! -f .env ]]; then
-    warn "  .env missing — bootstrap_corpus may fail on private HF repos"
-  fi
-  # bootstrap_corpus.py is sha256-aware and skips files that already match.
-  # On a fresh VM it pulls chunks JSONL, BM25 pickle, topic_index,
-  # textbook_structure, and the qdrant snapshot.
+  log "step 6/8: pull corpus artifacts from HuggingFace (idempotent)"
+  # bootstrap_corpus.py is sha256-aware and skips files that already match,
+  # so re-runs cost nothing on the network. Only pulls files missing or
+  # mis-hashed against data/MANIFEST.json.
   as_user .venv/bin/python scripts/bootstrap_corpus.py
 else
   log "step 6/8: HF bootstrap — SKIPPED"
@@ -246,16 +266,23 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Step 8a — smoke validation
+# Step 7b — POSTFLIGHT GATE
 # ---------------------------------------------------------------------------
+# Verify the *running* environment (data files sha-correct, qdrant
+# populated, retriever can actually retrieve, LLMs reachable, smoke
+# harness green). Hard fail before we start uvicorn.
 
 if [[ "$SKIP_SMOKE" == "0" ]]; then
-  log "step 8/8: smoke validation"
-  if as_user .venv/bin/python scripts/smoke_post_demo_fixes.py; then
-    log "  smoke harness PASSED"
-  else
-    warn "  smoke harness reported failures — investigate before starting backend"
+  log "step 7b/8: postflight gate"
+  if ! as_user .venv/bin/python scripts/postflight_check.py; then
+    fail "postflight check failed — do NOT start the backend until "\
+"the ✗ items above are resolved.  Common fixes:  (a) re-run bootstrap "\
+"(missing/mismatched files),  (b) restore the qdrant snapshot manually "\
+"from data/indexes/qdrant_*.snapshot,  (c) verify .env keys for the "\
+"failing LLM provider."
   fi
+else
+  log "step 7b/8: postflight — SKIPPED"
 fi
 
 # ---------------------------------------------------------------------------
