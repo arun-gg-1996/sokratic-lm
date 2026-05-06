@@ -27,6 +27,28 @@ pdfplumber==0.11.6
 mem0ai==0.1.103
 qdrant-client==1.17.1
 
+# Web server / API
+# 2026-05-06 deploy-readiness: fastapi + uvicorn were transitively pulled
+# in via dev installs but were never declared. The VM bootstrap won't
+# install them unless they're listed here. Pinning to currently-validated
+# versions; uvicorn[standard] picks up uvloop + httptools for prod perf.
+fastapi==0.136.0
+uvicorn[standard]==0.44.0
+pydantic==2.13.1
+websockets==16.0
+httpx==0.28.1
+# python-multipart: required by FastAPI for VLM upload form parsing
+# (backend/api/vlm.py UploadFile). Loose pin in backend/requirements.txt;
+# this hard-pin is the production-of-record version.
+python-multipart==0.0.26
+
+# NLP utilities — required by retrieval (PorterStemmer in retriever.py)
+nltk==3.9.4
+
+# HuggingFace artifact distribution — used by scripts/bootstrap_corpus.py
+# (idempotent VM-side pull) and scripts/publish_corpus.py (push).
+huggingface_hub==0.36.2
+
 # UI
 
 # Evaluation
