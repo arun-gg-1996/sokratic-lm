@@ -2,6 +2,12 @@
 langchain==0.3.25
 langgraph==0.2.60
 anthropic==0.52.2
+# anthropic[bedrock] needs boto3 — not a hard dep of anthropic, so we
+# declare it explicitly. Without this the AnthropicBedrock client raises
+# ModuleNotFoundError('botocore') on first call, which gets swallowed by
+# the rapport-draft try/except and the session boots with an empty
+# initial_message (silent failure, no log line).
+boto3==1.43.2
 openai>=1.108.1
 
 # Retrieval
