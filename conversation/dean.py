@@ -2706,12 +2706,50 @@ LLM judge says the latest message is on-topic / venting / OOD.
             "full_answer_present": bool(full_answer_raw),
         })
 
-        # Repair once if the LLM came back with no locked_answer. Same
-        # system prompt → all constraints already encoded — we just nudge
-        # the model to try harder. Whatever the second attempt produces
-        # is accepted verbatim; per design we don't run it through any
-        # rule gate, and we don't retry beyond this single repair.
-        if not locked_answer:
+        # Repair once if the LLM came back with no locked_answer, OR with a
+        # "thin" answer that the reach gate can't work with: ≤ 2 content
+        # tokens AND no aliases AND no full_answer. A bone-remodeling
+        # session that locked locked_answer="same surface" with empty
+        # aliases and empty full_answer left the reach gate with nothing
+        # to paraphrase against — the student said "same spot" (correct)
+        # and the LLM judge defaulted to reached=False, so the phase
+        # never promoted to clinical. Same system prompt → constraints
+        # already encoded — we just nudge the model to try harder.
+        # Whatever the second attempt produces is accepted verbatim; per
+        # design we don't run it through any rule gate, and we don't
+        # retry beyond this single repair.
+        thin_answer = (
+            bool(locked_answer)
+            and len(_content_tokens(locked_answer)) <= 2
+            and not locked_answer_aliases
+            and not full_answer_raw
+        )
+        if not locked_answer or thin_answer:
+            # Distinct repair messages: empty needs ANY answer; thin needs
+            # richer aliases + a full_answer so the reach gate has something
+            # to paraphrase against.
+            if thin_answer:
+                repair_user = (
+                    f"Your previous attempt locked_answer={locked_answer!r} but "
+                    f"emitted no aliases and no full_answer. The reach gate "
+                    f"can't paraphrase a 2-word answer with nothing else to "
+                    f"anchor on (a student saying a synonym like 'same spot' "
+                    f"for 'same surface' would be falsely rejected). Re-emit "
+                    f"the JSON now with: (1) 3-5 surface-form ALIASES "
+                    f"covering common student paraphrases of the answer, and "
+                    f"(2) a complete-sentence FULL_ANSWER from the chunks. "
+                    f"Keep locked_answer minimal. Return strict JSON only."
+                )
+            else:
+                repair_user = (
+                    "Your previous attempt produced an empty or unusable "
+                    "locked_answer. Re-emit the JSON now, paying close "
+                    "attention to the constraints in the system prompt: "
+                    "minimal phrasing that fully resolves the question, "
+                    "grounded in the supplied chunks, with each component "
+                    "of an enumerated answer as its own alias rather than "
+                    "joined by 'and'. Return strict JSON only."
+                )
             repair_resp = _timed_create(
                 self.client,
                 state,
@@ -2726,18 +2764,7 @@ LLM judge says the latest message is on-topic / venting / OOD.
                     conversation_history,
                     dynamic_prompt,
                 ),
-                messages=[{
-                    "role": "user",
-                    "content": (
-                        "Your previous attempt produced an empty or unusable "
-                        "locked_answer. Re-emit the JSON now, paying close "
-                        "attention to the constraints in the system prompt: "
-                        "minimal phrasing that fully resolves the question, "
-                        "grounded in the supplied chunks, with each component "
-                        "of an enumerated answer as its own alias rather than "
-                        "joined by 'and'. Return strict JSON only."
-                    ),
-                }],
+                messages=[{"role": "user", "content": repair_user}],
             )
             repair_text = (repair_resp.content[0].text or "").strip()
             repair = _extract_json_object(repair_text)
