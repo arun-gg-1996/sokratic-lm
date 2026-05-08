@@ -53,6 +53,13 @@ INCLUDE_FILES: list[str] = [
     "data/indexes/bm25_chunks_openstax_anatomy.pkl",
     "data/textbook_structure.json",
     "data/topic_index.json",
+    # Post-2026-05-08 SQL-backed memory: the curriculum / summaries / abbreviations
+    # live in SQLite now and are seeded from these artifacts on a fresh deploy.
+    # `bootstrap_corpus.py` pulls them, then `seed_curriculum.py` +
+    # `seed_summaries_and_abbreviations.py` populate `data/student_state/sokratic_*.sqlite3`.
+    "data/artifacts/raptor_subsection_summaries.jsonl",
+    "data/artifacts/raptor_section_summaries.jsonl",
+    "data/artifacts/sokratic_seed_openstax_anatomy.sql",
 ]
 
 # Optional — uploaded if present locally. The Qdrant snapshot saves teammates

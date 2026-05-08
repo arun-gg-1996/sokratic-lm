@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-04-30T09:17:49+00:00",
-  "git_commit": "3e0d73dace6b545ed2bea8872a03fde4c417d076",
+  "generated_at": "2026-05-08T21:50:29+00:00",
+  "git_commit": "969e006c94e47e7351b2f53f7a562aa2dda503cc",
   "files": [
     {
       "path": "data/processed/chunks_openstax_anatomy.jsonl",
@@ -23,9 +23,24 @@
       "sha256": "14342238e3ce2851b7dcea9ad34c06a9a93431c6f7cf8c4b9034741b8e299b39"
     },
     {
+      "path": "data/artifacts/raptor_subsection_summaries.jsonl",
+      "size": 1533356,
+      "sha256": "5d1f86aaa28f3d67193d33095816c296acfa2ab2034ac078204547b765fd5c32"
+    },
+    {
+      "path": "data/artifacts/raptor_section_summaries.jsonl",
+      "size": 309602,
+      "sha256": "888f4b28651f7f1cc92b81087d1fb2ebccfba29ffc68ebdaed8edb9d08da3219"
+    },
+    {
+      "path": "data/artifacts/sokratic_seed_openstax_anatomy.sql",
+      "size": 827101,
+      "sha256": "deb3a41d6b1f91913937b642efb983e6b7f833b5ce35f74834316b17bffbf900"
+    },
+    {
       "path": "data/indexes/qdrant_sokratic_kb_chunks.snapshot",
-      "size": 378130432,
-      "sha256": "0101ef9f8185d49394e176368a28acb8260f7fbdc43eafb7c7fe4990713dfd0b"
+      "size": 146952704,
+      "sha256": "41cdd2b615c56b3a393c5a9b75f6ffa1604fb3386f5b512c814592e91052cd75"
     }
   ],
   "files_on_disk": [
@@ -46,8 +61,20 @@
       "size": 121873
     },
     {
+      "path": "data/artifacts/raptor_subsection_summaries.jsonl",
+      "size": 1533356
+    },
+    {
+      "path": "data/artifacts/raptor_section_summaries.jsonl",
+      "size": 309602
+    },
+    {
+      "path": "data/artifacts/sokratic_seed_openstax_anatomy.sql",
+      "size": 827101
+    },
+    {
       "path": "data/indexes/qdrant_sokratic_kb_chunks.snapshot",
-      "size": 378130432
+      "size": 146952704
     }
   ]
 }
