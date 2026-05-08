@@ -49,12 +49,10 @@ OUT_OF_SCOPE_QUERIES = [
     "Who won the World Cup in 2018?",
 ]
 
-
 @pytest.fixture(scope="module")
 def retriever():
     from retrieval.retriever import Retriever
     return Retriever(index_dir=cfg.domain_path("indexes"))
-
 
 @pytest.fixture(scope="module")
 def rag_qa():
@@ -69,7 +67,6 @@ def rag_qa():
     )
     return records
 
-
 def _reciprocal_rank(results: list[dict], source_chunk_id: str) -> float:
     """Return 1/rank if source_chunk_id is in results, else 0."""
     for i, chunk in enumerate(results, start=1):
@@ -77,10 +74,9 @@ def _reciprocal_rank(results: list[dict], source_chunk_id: str) -> float:
             return 1.0 / i
     return 0.0
 
-
 @pytest.mark.data_quality
 def test_rag_qa_hit_and_mrr(retriever, rag_qa):
-    # F8 (POST_DEMO_FIXES.md, 2026-05-06): marked `data_quality` — needs
+    # marked `data_quality` — needs
     # live Qdrant + fresh ingestion of the chunks the eval QA pairs
     # reference. Run with `pytest -m data_quality`.
     top_k = cfg.retrieval.top_chunks_final  # dynamic — matches what retriever returns
@@ -121,7 +117,6 @@ def test_rag_qa_hit_and_mrr(retriever, rag_qa):
         f"Right chunks found but ranked too low — check cross-encoder."
     )
 
-
 @pytest.mark.data_quality
 def test_retrieval_latency(retriever, rag_qa):
     """Every single retrieval call must complete in < 200ms."""
@@ -140,7 +135,6 @@ def test_retrieval_latency(retriever, rag_qa):
         f"{len(slow)} queries exceeded {LATENCY_MAX_MS}ms latency: {slow[:3]}"
     )
 
-
 def test_out_of_scope_returns_empty(retriever):
     """Off-topic queries must return an empty list (cross-encoder score below threshold)."""
     for query in OUT_OF_SCOPE_QUERIES:
@@ -150,7 +144,6 @@ def test_out_of_scope_returns_empty(retriever):
             f"Raise out_of_scope_threshold in config.yaml or check cross-encoder."
         )
 
-
 def test_no_duplicate_chunks(retriever, rag_qa):
     """Returned chunks must have unique chunk_ids (dedup working correctly)."""
     for record in rag_qa[:20]:
@@ -159,7 +152,6 @@ def test_no_duplicate_chunks(retriever, rag_qa):
         assert len(ids) == len(set(ids)), (
             f"Duplicate chunk_ids in results for: '{record['question'][:60]}' → {ids}"
         )
-
 
 @pytest.mark.data_quality
 def test_result_count_in_range(retriever, rag_qa):

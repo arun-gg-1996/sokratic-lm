@@ -2,13 +2,12 @@
 tests/test_dean_v2.py
 ─────────────────────
 Tests for conversation/dean_v2.py — single-call Dean TurnPlan emitter
-per L46/L47/L51/L53 (Track 4.5).
+/L47/L51/L53 (Track 4.5).
 
 Coverage:
   * DeanV2.plan happy path → TurnPlan + diagnostics
   * Parse failure on attempt 1 → re-prompt → success on attempt 2
-  * Parse failure on both attempts → minimal_fallback per L46
-  * LLM exception → fallback with error string
+  * Parse failure on both attempts → minimal_fallback * LLM exception → fallback with error string
   * Prior-attempts/failures appended to user prompt (replan path)
   * plan_hint_bank returns up to N angles, [] on error
   * Sticky-snapshot fallback for state["locked_topic"]==None
@@ -24,7 +23,6 @@ import pytest
 from conversation.dean_v2 import DeanPlanResult, DeanV2
 from conversation.turn_plan import TurnPlan
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Mock client (similar shape to Anthropic SDK)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -33,19 +31,16 @@ from conversation.turn_plan import TurnPlan
 class _MockContent:
     text: str
 
-
 @dataclass
 class _MockUsage:
     input_tokens: int = 2000
     output_tokens: int = 200
     cache_read_input_tokens: int = 0
 
-
 @dataclass
 class _MockResponse:
     content: list
     usage: _MockUsage
-
 
 class MockClient:
     """Returns canned responses; tests cycle through `responses` per call."""
@@ -71,7 +66,6 @@ class MockClient:
             usage=_MockUsage(),
         )
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Fixtures
 # ─────────────────────────────────────────────────────────────────────────────
@@ -89,7 +83,6 @@ VALID_PLAN_JSON = json.dumps({
     "apply_redaction": False,
     "student_reached_answer": False,
 })
-
 
 def _state(**overrides):
     base = {
@@ -114,7 +107,6 @@ def _state(**overrides):
     base.update(overrides)
     return base
 
-
 def _chunks():
     return [
         {"text": "The SA node is the heart's primary pacemaker.",
@@ -123,11 +115,9 @@ def _chunks():
          "subsection_title": "Conduction System"},
     ]
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Happy path
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_plan_returns_validated_turn_plan():
     client = MockClient(responses=[VALID_PLAN_JSON])
@@ -142,7 +132,6 @@ def test_plan_returns_validated_turn_plan():
     assert result.used_fallback is False
     assert result.input_tokens == 2000
     assert result.error is None
-
 
 def test_plan_passes_state_into_prompt():
     client = MockClient(responses=[VALID_PLAN_JSON])
@@ -159,7 +148,6 @@ def test_plan_passes_state_into_prompt():
     # history
     assert "the heart muscle?" in user_msg
 
-
 def test_plan_uses_sticky_snapshot_when_locked_topic_blank():
     state = _state(
         locked_topic=None,
@@ -174,7 +162,6 @@ def test_plan_uses_sticky_snapshot_when_locked_topic_blank():
     user_msg = client.calls[0]["messages"][0]["content"]
     assert "Sarcomere Structure" in user_msg
 
-
 def test_plan_injects_carryover_notes():
     client = MockClient(responses=[VALID_PLAN_JSON])
     dean = DeanV2(client, model="sonnet")
@@ -183,11 +170,9 @@ def test_plan_injects_carryover_notes():
     user_msg = client.calls[0]["messages"][0]["content"]
     assert "depolarization" in user_msg
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Parse-failure recovery (L46)
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_plan_reprompts_once_on_parse_fail_then_succeeds():
     client = MockClient(responses=["this is not json", VALID_PLAN_JSON])
@@ -201,19 +186,16 @@ def test_plan_reprompts_once_on_parse_fail_then_succeeds():
     assert "RE-PROMPT" in client.calls[1]["messages"][0]["content"]
     assert "STRICT JSON" in client.calls[1]["messages"][0]["content"]
 
-
 def test_plan_falls_back_to_minimal_after_two_parse_failures():
     client = MockClient(responses=["garbage 1", "garbage 2"])
     dean = DeanV2(client, model="sonnet")
     result = dean.plan(_state(), _chunks())
     assert result.used_fallback is True
     assert result.parse_attempts == 3
-    # minimal_fallback shape per L46
-    assert result.turn_plan.mode == "socratic"
+    # minimal_fallback shape assert result.turn_plan.mode == "socratic"
     assert result.turn_plan.tone == "neutral"
     assert result.turn_plan.shape_spec == {"max_sentences": 3, "exactly_one_question": True}
     assert "dean_parse_failed" in result.turn_plan.scenario
-
 
 def test_plan_falls_back_on_llm_exception():
     client = MockClient(responses=[], raise_exc=ConnectionError("Bedrock 503"))
@@ -224,7 +206,6 @@ def test_plan_falls_back_on_llm_exception():
     assert "ConnectionError" in (result.error or "")
     # Still returns a usable TurnPlan
     assert result.turn_plan.mode == "socratic"
-
 
 def test_plan_validation_failure_falls_back():
     """LLM returns parseable JSON but with invalid mode → TurnPlan
@@ -239,11 +220,9 @@ def test_plan_validation_failure_falls_back():
     result = dean.plan(_state(), _chunks())
     assert result.used_fallback is True
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Replan (L50 path)
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_replan_appends_prior_attempts_and_failures_to_prompt():
     client = MockClient(responses=[VALID_PLAN_JSON])
@@ -264,11 +243,9 @@ def test_replan_appends_prior_attempts_and_failures_to_prompt():
     assert "leaked SA node" in user_msg
     assert "RE-PLANNING" in user_msg
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Hint bank (L47)
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_plan_hint_bank_returns_angles():
     client = MockClient(responses=[json.dumps({
@@ -285,7 +262,6 @@ def test_plan_hint_bank_returns_angles():
     assert len(angles) == 5
     assert all(isinstance(a, str) and a.strip() for a in angles)
 
-
 def test_plan_hint_bank_caps_at_n_angles():
     client = MockClient(responses=[json.dumps({
         "hint_angles": ["a", "b", "c", "d", "e", "f", "g"],
@@ -294,18 +270,15 @@ def test_plan_hint_bank_caps_at_n_angles():
     angles = dean.plan_hint_bank(_state(), _chunks(), n_angles=3)
     assert angles == ["a", "b", "c"]
 
-
 def test_plan_hint_bank_returns_empty_on_error():
     client = MockClient(responses=[], raise_exc=ConnectionError("network"))
     dean = DeanV2(client, model="sonnet")
     assert dean.plan_hint_bank(_state(), _chunks()) == []
 
-
 def test_plan_hint_bank_returns_empty_on_garbage_response():
     client = MockClient(responses=["completely not json"])
     dean = DeanV2(client, model="sonnet")
     assert dean.plan_hint_bank(_state(), _chunks()) == []
-
 
 def test_plan_hint_bank_filters_empty_angles():
     client = MockClient(responses=[json.dumps({

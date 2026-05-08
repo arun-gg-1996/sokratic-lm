@@ -1,17 +1,17 @@
 """
 scripts/verify_block3_cache.py
 ==============================
-BLOCK 3 verification — confirm Teacher and Dean cache hits actually
+verification — confirm Teacher and Dean cache hits actually
 fire after the multi-tier restructure.
 
 Runs 2 Teacher calls + 2 Dean calls back-to-back with similar context
 and checks cache_read_input_tokens on call 2 of each.
 
 Expected:
-  - Teacher call 2: cache_read > 0 (Tier 1 master+vocab + Tier 2 body
-    both should hit since we use identical inputs)
-  - Dean call 2: cache_read > 0 (master+vocab + Dean instructions
-    should hit on identical state)
+Teacher call 2: cache_read > 0 (Tier 1 master+vocab + Tier 2 body
+ both should hit since we use identical inputs)
+Dean call 2: cache_read > 0 (master+vocab + Dean instructions
+ should hit on identical state)
 """
 from __future__ import annotations
 
@@ -31,7 +31,6 @@ from conversation.teacher_v2 import TeacherV2, TeacherPromptInputs  # noqa: E402
 from conversation.dean_v2 import DeanV2  # noqa: E402
 from conversation.turn_plan import TurnPlan  # noqa: E402
 from config import cfg  # noqa: E402
-
 
 def make_inputs() -> TeacherPromptInputs:
     return TeacherPromptInputs(
@@ -55,7 +54,6 @@ def make_inputs() -> TeacherPromptInputs:
         student_descriptor="student",
     )
 
-
 def make_plan() -> TurnPlan:
     return TurnPlan(
         scenario="cache_test",
@@ -70,7 +68,6 @@ def make_plan() -> TurnPlan:
         clinical_target=None,
         apply_redaction=False,
     )
-
 
 def test_teacher_cache():
     print("\n=== Teacher cache verification ===")
@@ -99,7 +96,6 @@ def test_teacher_cache():
     else:
         print(f"  ✗ No cache hit on call 2")
     return r2.cache_read_tokens > 0
-
 
 def test_dean_cache():
     print("\n=== Dean cache verification ===")
@@ -158,7 +154,6 @@ def test_dean_cache():
     print(f"  Latency change: {speedup:+.0f}% (faster on call 2 = cache likely hit)")
     return e2 < e1
 
-
 def main():
     print("BLOCK 3 cache verification\n" + "=" * 50)
     teacher_ok = test_teacher_cache()
@@ -167,7 +162,6 @@ def main():
     print("\n" + "=" * 50)
     print(f"Teacher cache: {'✓ HIT' if teacher_ok else '✗ MISS'}")
     print(f"Dean cache:    {'✓ HIT (faster)' if dean_ok else '✗ NO SPEEDUP'}")
-
 
 if __name__ == "__main__":
     main()

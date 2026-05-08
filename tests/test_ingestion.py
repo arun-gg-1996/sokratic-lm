@@ -48,14 +48,12 @@ TABLE_CHUNK_MIN = 30
 REQUIRED_CHUNK_FIELDS = {"text", "chunk_id", "chapter_title", "section_title", "page", "element_type"}
 REQUIRED_PROP_FIELDS = {"text", "proposition_id", "parent_chunk_id", "chapter_title", "section_title"}
 
-
 @pytest.fixture(scope="module")
 def chunks():
     path = Path(cfg.paths.chunks_openstax_anatomy)
     assert path.exists(), f"chunks file not found: {path}"
     with open(path) as f:
         return [json.loads(line) for line in f]
-
 
 @pytest.fixture(scope="module")
 def propositions():
@@ -64,7 +62,6 @@ def propositions():
     with open(path) as f:
         return [json.loads(line) for line in f]
 
-
 def test_chunk_count_in_range(chunks):
     n = len(chunks)
     assert CHUNK_COUNT_MIN <= n <= CHUNK_COUNT_MAX, (
@@ -72,10 +69,9 @@ def test_chunk_count_in_range(chunks):
         f"Too low = extraction failed. Too high = check if overlap chunks are being double-counted."
     )
 
-
 @pytest.mark.data_quality
 def test_proposition_count_in_range(propositions):
-    """F8 (POST_DEMO_FIXES.md, 2026-05-06): marked `data_quality` —
+    """marked `data_quality` —
     expected counts shift with each fresh ingestion. Run with
     `pytest -m data_quality` after `make ingest` to update or verify
     bounds. Current corpus produces 65k+ propositions; the cap is
@@ -89,7 +85,6 @@ def test_proposition_count_in_range(propositions):
         f"[{PROPOSITION_COUNT_MIN}, {PROPOSITION_COUNT_MAX}]."
     )
 
-
 def test_chunk_metadata_fields(chunks):
     missing = []
     for i, chunk in enumerate(chunks):
@@ -98,7 +93,6 @@ def test_chunk_metadata_fields(chunks):
             missing.append((i, missing_fields))
     assert not missing, f"Chunks missing required fields: {missing[:5]}"
 
-
 def test_proposition_metadata_fields(propositions):
     missing = []
     for i, prop in enumerate(propositions):
@@ -106,7 +100,6 @@ def test_proposition_metadata_fields(propositions):
         if missing_fields:
             missing.append((i, missing_fields))
     assert not missing, f"Propositions missing required fields: {missing[:5]}"
-
 
 @pytest.mark.data_quality
 def test_no_empty_chunks(chunks):
@@ -126,7 +119,6 @@ def test_no_empty_chunks(chunks):
         f"First few: {short[:5]}"
     )
 
-
 def test_proposition_parent_chunk_ids_valid(chunks, propositions):
     """Every proposition's parent_chunk_id must exist in the chunks file."""
     valid_ids = {c["chunk_id"] for c in chunks}
@@ -135,7 +127,6 @@ def test_proposition_parent_chunk_ids_valid(chunks, propositions):
         f"{len(orphans)} propositions have invalid parent_chunk_id. "
         f"First: {orphans[0]}"
     )
-
 
 @pytest.mark.data_quality
 def test_table_chunks_detected(chunks):
@@ -172,7 +163,6 @@ def test_table_chunks_detected(chunks):
         f"Check extract.py table detection logic."
     )
 
-
 def test_figure_caption_chunks_detected(chunks):
     """
     INFORMATIONAL: prints figure caption count.
@@ -186,7 +176,6 @@ def test_figure_caption_chunks_detected(chunks):
     print(f"Total figure caption chunks: {total}")
     print(f"Note: parse_pdf.py absorbs captions into body text (expected)")
     print(f"-----------------------------")
-
 
 def test_element_type_distribution(chunks):
     """
@@ -212,7 +201,6 @@ def test_element_type_distribution(chunks):
         f"{unknown} chunks have no element_type set. "
         f"Every chunk must be tagged as paragraph, table, or figure_caption."
     )
-
 
 def test_textbook_structure_exists():
     path = Path(cfg.paths.textbook_structure)

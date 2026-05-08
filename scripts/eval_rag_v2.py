@@ -1,6 +1,5 @@
 """
 scripts/eval_rag_v2.py
------------------------
 A/B test: run the same eval set under v2 (cleaner: no alias dict, HyDE fires
 broadly) to compare against the v1.5 baseline.
 
@@ -9,7 +8,7 @@ with aliases on + HyDE gated (v1.5) — using the same pipeline but toggling
 config keys at runtime.
 
 Usage:
-  .venv/bin/python scripts/eval_rag_v2.py
+ .venv/bin/python scripts/eval_rag_v2.py
 """
 import json
 import time
@@ -31,10 +30,8 @@ ROOT = Path(__file__).parent.parent
 SRC = ROOT / "data/eval/rag_qa_expanded.jsonl"
 OUT_DIR = ROOT / "data/eval"
 
-
 def load_jsonl(path):
     return [json.loads(l) for l in open(path)]
-
 
 def score_row(chunks, row):
     q_type = row.get("question_type", "factual")
@@ -52,7 +49,6 @@ def score_row(chunks, row):
         if c.get("chunk_id") == target:
             return {"hit": True, "rank": i, "category": style, "style": style}
     return {"hit": False, "rank": -1, "category": style, "style": style}
-
 
 def run_one_config(label: str, rows: list, retriever: Retriever) -> dict:
     per_cat = defaultdict(list)
@@ -98,7 +94,6 @@ def run_one_config(label: str, rows: list, retriever: Retriever) -> dict:
         "latency_p50": sorted(latencies)[len(latencies) // 2],
         "latency_p95": sorted(latencies)[int(len(latencies) * 0.95)],
     }
-
 
 def main():
     rows = load_jsonl(SRC)
@@ -147,7 +142,6 @@ def main():
     with open(out, "w") as f:
         json.dump({"v1_5": v15, "v2": v2}, f, indent=2)
     print(f"\nSaved: {out}")
-
 
 if __name__ == "__main__":
     main()

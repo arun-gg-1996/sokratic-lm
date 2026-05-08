@@ -39,7 +39,6 @@ from ingestion.core.pipeline import (
     warmup_cache,
 )
 
-
 # ── Source loading ──────────────────────────────────────────────────────────
 
 class TestLoadSource:
@@ -53,7 +52,6 @@ class TestLoadSource:
     def test_unknown_source_raises(self):
         with pytest.raises(ImportError):
             load_source("nonexistent_textbook")
-
 
 # ── PipelineOptions.is_active ───────────────────────────────────────────────
 
@@ -93,7 +91,6 @@ class TestPipelineOptions:
         # In this construction, upsert is both included AND excluded -> excluded.
         assert not opts.is_active("upsert")
 
-
 # ── Artifact paths ──────────────────────────────────────────────────────────
 
 class TestArtifactPaths:
@@ -120,7 +117,6 @@ class TestArtifactPaths:
         assert p.exists()
         out = _read_jsonl(p)
         assert out == rows
-
 
 # ── stage_enrich (cheap stage, no API) ──────────────────────────────────────
 
@@ -168,7 +164,6 @@ class TestStageEnrich:
         result = stage_enrich(opts, chunks=[])
         assert result.skipped
 
-
 # ── warmup_cache (mocked client) ────────────────────────────────────────────
 
 def _mock_response(in_tok=120, cache_create=1813, cache_read=0, out_tok=10):
@@ -181,7 +176,6 @@ def _mock_response(in_tok=120, cache_create=1813, cache_read=0, out_tok=10):
             cache_read_input_tokens=cache_read,
         ),
     )
-
 
 class TestWarmupCache:
     @pytest.mark.asyncio
@@ -215,7 +209,6 @@ class TestWarmupCache:
             cached_system=[], tracker=None,
         )
         assert result is None
-
 
 # ── End-to-end dry run ──────────────────────────────────────────────────────
 

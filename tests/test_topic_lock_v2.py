@@ -7,7 +7,6 @@ from conversation.lifecycle_v2 import after_dean
 from retrieval.topic_mapper_llm import TopicMapperResult, TopicMatchCandidate
 from retrieval.topic_matcher import TopicMatch
 
-
 def _topic(label: str = "Conduction System of the Heart", idx: int = 1) -> TopicMatch:
     return TopicMatch(
         path=f"Chapter {idx}: The Cardiovascular System > Cardiac Muscle > {label}",
@@ -20,7 +19,6 @@ def _topic(label: str = "Conduction System of the Heart", idx: int = 1) -> Topic
         score=0.92,
         teachable=True,
     )
-
 
 def _state(**overrides):
     base = {
@@ -53,7 +51,6 @@ def _state(**overrides):
     base.update(overrides)
     return base
 
-
 class FakeMatcher:
     def __init__(self, topics):
         self._entries = topics
@@ -65,13 +62,12 @@ class FakeMatcher:
         return self._entries[:n]
 
     def match(self, query, k=3, **kw):
-        # F8/F13 (POST_DEMO_FIXES.md, 2026-05-06): topic_lock_v2 at the
+        # F8/topic_lock_v2 at the
         # prelock cap now calls matcher.match(query, k=...) and reads
         # `.matches`. Return a MatchResult-shaped object with the
         # cached entries.
         from retrieval.topic_matcher import MatchResult
         return MatchResult(query=query, tier="strong", matches=list(self._entries[:k]))
-
 
 class FakeDean:
     def __init__(self):
@@ -97,7 +93,6 @@ class FakeDean:
     def _prelock_refuse_call(self, *args, **kwargs):
         return {"tutor_reply": "Pick a covered topic:"}
 
-
 def _mapper_result(verdict: str, confidence: float, topic: TopicMatch | None = None):
     matches = []
     if topic is not None:
@@ -115,7 +110,6 @@ def _mapper_result(verdict: str, confidence: float, topic: TopicMatch | None = N
         top_matches=matches,
     )
 
-
 def test_l9_strong_locks_topic_and_resets_prelock_counter(monkeypatch):
     topic = _topic()
     monkeypatch.setattr(T, "get_topic_matcher", lambda: FakeMatcher([topic]))
@@ -130,7 +124,6 @@ def test_l9_strong_locks_topic_and_resets_prelock_counter(monkeypatch):
     assert result["locked_answer"] == "SA node"
     assert "What initiates the heartbeat?" in result["messages"][-1]["content"]
 
-
 def test_none_route_increments_prelock_and_surfaces_cards(monkeypatch):
     topics = [_topic("Aorta", 1), _topic("Pulmonary Circulation", 2), _topic("Cardiac Cycle", 3)]
     monkeypatch.setattr(T, "get_topic_matcher", lambda: FakeMatcher(topics))
@@ -144,7 +137,6 @@ def test_none_route_increments_prelock_and_surfaces_cards(monkeypatch):
     assert result["prelock_loop_count"] == 1
     assert result["pending_user_choice"]["kind"] == "topic"
     assert result["topic_options"] == ["Aorta", "Pulmonary Circulation", "Cardiac Cycle"]
-
 
 def test_borderline_high_confirm_yes_locks(monkeypatch):
     topic = _topic()
@@ -168,7 +160,6 @@ def test_borderline_high_confirm_yes_locks(monkeypatch):
     assert second["topic_confirmed"] is True
     assert second["prelock_loop_count"] == 0
 
-
 def test_borderline_high_confirm_no_reprompts_without_lock(monkeypatch):
     topic = _topic()
     monkeypatch.setattr(T, "get_topic_matcher", lambda: FakeMatcher([topic]))
@@ -190,9 +181,8 @@ def test_borderline_high_confirm_no_reprompts_without_lock(monkeypatch):
     assert second["pending_user_choice"] == {}
     assert "what topic" in second["messages"][-1]["content"].lower()
 
-
 def test_cap_renders_guided_pick_without_custom_escape(monkeypatch):
-    # F13 (POST_DEMO_FIXES.md, 2026-05-06): PRELOCK_CAP bumped 7 → 10.
+    # PRELOCK_CAP bumped 7 → 10.
     # Trigger the cap by entering the call with prelock_loop_count = CAP-1.
     topics = [_topic(f"Topic {i}", i) for i in range(1, 7)]
     monkeypatch.setattr(T, "get_topic_matcher", lambda: FakeMatcher(topics))
@@ -210,7 +200,6 @@ def test_cap_renders_guided_pick_without_custom_escape(monkeypatch):
     assert pending["allow_custom"] is False
     assert pending["end_session_label"] == "Give up / End session"
     assert len(result["topic_options"]) == 6
-
 
 def test_cap_7_still_honors_existing_card_pick(monkeypatch):
     topic = _topic()
@@ -232,7 +221,6 @@ def test_cap_7_still_honors_existing_card_pick(monkeypatch):
 
     assert result["topic_confirmed"] is True
     assert result["prelock_loop_count"] == 0
-
 
 def test_guided_pick_give_up_routes_to_memory_update(monkeypatch):
     topics = [_topic(f"Topic {i}", i) for i in range(1, 7)]
@@ -257,7 +245,6 @@ def test_guided_pick_give_up_routes_to_memory_update(monkeypatch):
     assert result["phase"] == "memory_update"
     assert result["pending_user_choice"] == {}
     assert result["messages"][-1]["metadata"]["is_closing"] is True
-
 
 def test_after_dean_routes_memory_update_phase():
     state = _state(phase="memory_update")

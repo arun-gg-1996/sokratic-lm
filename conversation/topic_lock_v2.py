@@ -1,17 +1,15 @@
 """
-conversation/topic_lock_v2.py
------------------------------
-Track 4.7d: v2 pre-lock topic flow.
+The pre-lock topic flow. Translates a free-text student message into
+a locked TOC subsection, with three possible outcomes:
 
-Owns L9/L10/L11/L22 while SOKRATIC_USE_V2_FLOW is enabled:
-  * L9  - Topic Mapper LLM route decisions
-  * L10 - confirm-and-lock for borderline-high matches
-  * L11 - prelock_loop_count, separate from tutoring turn_count
-  * L22 - cap-7 guided-pick cards plus explicit give-up/end
+  * High-confidence match → lock immediately.
+  * Borderline match     → confirm with the student before locking.
+  * No match             → offer guided-pick cards (capped at 7
+                            attempts) plus an explicit give-up path.
 
-This module deliberately reuses the legacy Dean's tested retrieval,
-coverage-gate, and anchor-lock helpers once a TOC node is chosen. The
-new behavior is the pre-lock routing, not a rewrite of anchor extraction.
+Once a TOC node is chosen, the legacy Dean's retrieval coverage-gate
+and anchor-lock helpers are reused as-is. The new behaviour here is
+the pre-lock routing, not the anchor extraction.
 """
 from __future__ import annotations
 
@@ -23,25 +21,23 @@ from conversation.llm_client import make_anthropic_client, resolve_model
 from retrieval.topic_mapper_llm import TopicMapperResult, map_topic
 from retrieval.topic_matcher import TopicMatch, get_topic_matcher
 
-
-# F13 (POST_DEMO_FIXES.md, 2026-05-06): bumped 7 → 10 so students have
+# so students have
 # more room to find their topic before guided-pick cards fire. Pairs
 # with the progressive nudge in _prelock_nudge_intro below.
 PRELOCK_CAP = 10
 GUIDED_PICK_COUNT = 6
-# F13 — nudge thresholds (relative to PRELOCK_CAP):
+# nudge thresholds (relative to PRELOCK_CAP):
 PRELOCK_WARN_AT = 7   # start adding "let's pick a topic soon" to copy
 PRELOCK_URGENT_AT = 9  # start adding "we'll need to wrap if no pick"
 
-
 def _prelock_nudge_intro(base: str, prelock_count: int) -> str:
-    """F13 — graduated nudge appended to pre-lock copy as count climbs.
+    """graduated nudge appended to pre-lock copy as count climbs.
 
-    Empty append for early turns (1-6) — let the student explore.
-    At PRELOCK_WARN_AT: gentle "we should land on something" hint.
-    At PRELOCK_URGENT_AT: explicit "next try or I'll show topic cards"
-    so the cap doesn't catch them by surprise.
-    """
+ Empty append for early turns (1-6) — let the student explore.
+ At PRELOCK_WARN_AT: gentle "we should land on something" hint.
+ At PRELOCK_URGENT_AT: explicit "next try or I'll show topic cards"
+ so the cap doesn't catch them by surprise.
+"""
     if prelock_count < PRELOCK_WARN_AT:
         return base
     if prelock_count < PRELOCK_URGENT_AT:
@@ -59,21 +55,17 @@ NORMAL_CARD_COUNT = 3
 GIVE_UP_VALUE = "__sokratic_give_up__"
 TOPIC_MAPPER_MODEL = "claude-haiku-4-5-20251001"
 
-
 # ─────────────────────────────────────────────────────────────────────
 # Inlined helpers (ported from V1 dean.py + nodes.py during D1).
-# Previously imported from `conversation.dean` and `conversation.nodes`;
 # now owned by this module so V1 files can be deleted. Behavior
 # preserved verbatim.
 # ─────────────────────────────────────────────────────────────────────
-
 
 def _latest_student_message(messages: list[dict]) -> str:
     for msg in reversed(messages):
         if msg.get("role") == "student":
             return str(msg.get("content", "")).strip()
     return ""
-
 
 def _format_topic_label(m: TopicMatch) -> str:
     """Card label for a TOC match — human-readable, with a limited-coverage tag."""
@@ -82,12 +74,11 @@ def _format_topic_label(m: TopicMatch) -> str:
         return f"{base} · limited coverage"
     return base
 
-
 def _replace_latest_student_message(messages: list[dict], new_content: str) -> list[dict]:
     """
-    Replace latest student message content so downstream retrieval/classification
-    runs on the selected topic text (instead of a numeric reply like '2').
-    """
+ Replace latest student message content so downstream retrieval/classification
+ runs on the selected topic text (instead of a numeric reply like '2').
+"""
     patched = list(messages or [])
     for i in range(len(patched) - 1, -1, -1):
         msg = patched[i]
@@ -98,28 +89,27 @@ def _replace_latest_student_message(messages: list[dict], new_content: str) -> l
             break
     return patched
 
-
 def _coverage_gate(state: dict, retriever=None) -> dict | None:
     """
-    Check whether retrieved_chunks actually cover the locked TOC node.
+ Check whether retrieved_chunks actually cover the locked TOC node.
 
-    Args:
-        state: tutor state.
-        retriever: optional retriever for picking SEMANTICALLY-RELATED
-            alternative cards via sample_related. Without it, falls back
-            to sample_diverse (random teachable picks).
+ Args:
+ state: tutor state.
+ retriever: optional retriever for picking SEMANTICALLY-RELATED
+ alternative cards via sample_related. Without it, falls back
+ to sample_diverse (random teachable picks).
 
-    Returns None on pass. On fail, returns metadata for the caller (run_turn)
-    to build a refuse turn with an LLM-authored intro + card list. Shape:
-      {reason, topic_label, options, pending_user_choice, rejected_path,
-       failure_count}
+ Returns None on pass. On fail, returns metadata for the caller (run_turn)
+ to build a refuse turn with an LLM-authored intro + card list. Shape:
+ {reason, topic_label, options, pending_user_choice, rejected_path
+ failure_count}
 
-    Rules:
-      1. Empty retrieval → fail hard.
-      2. Locked topic has a known section/subsection AND none of the top-5
-         chunks reference it → fail (retrieval drifted to another chapter).
-      3. Top chunk cosine below ood_cosine_threshold → fail.
-    """
+ Rules:
+ 1. Empty retrieval → fail hard.
+ 2. Locked topic has a known section/subsection AND none of the top-5
+ chunks reference it → fail (retrieval drifted to another chapter).
+ 3. Top chunk cosine below ood_cosine_threshold → fail.
+"""
     chunks = state.get("retrieved_chunks", []) or []
     locked = state.get("locked_topic") or {}
     topic_label = locked.get("subsection") or locked.get("section") or state.get("topic_selection", "this topic")
@@ -134,7 +124,6 @@ def _coverage_gate(state: dict, retriever=None) -> dict | None:
         min_chunks = 5 if failure_count < 2 else 8
         # Prefer SEMANTICALLY-RELATED alternatives via sample_related when
         # we have a retriever. Falls back to sample_diverse if retriever
-        # is unavailable or returns nothing related. Without this,
         # students typing "brain" got cards like "DNA Replication" —
         # technically teachable but unrelated to the query.
         query_for_related = (
@@ -186,8 +175,6 @@ def _coverage_gate(state: dict, retriever=None) -> dict | None:
     # them — so the gate uses a dedicated threshold (`dean_topic_gate_ce_threshold`)
     # that is much lower than the OOD cosine floor used by the retriever's
     # in-scope check. Default 0.05 — virtually any non-zero CE score passes.
-    #
-    # 2026-04-29: previously this gate read `ood_cosine_threshold` (0.45) and
     # refused valid topics like "what nerve innervates the deltoid?" on the
     # basis of CE score 0.20-0.40 — see e2e S6a where the deltoid topic was
     # refused and the conversation pivoted to "muscle tone".
@@ -198,7 +185,6 @@ def _coverage_gate(state: dict, retriever=None) -> dict | None:
 
     return None
 
-
 def run_topic_lock_v2(
     state: dict,
     *,
@@ -208,9 +194,9 @@ def run_topic_lock_v2(
 ) -> dict:
     """Run one unlocked-topic v2 pre-lock turn and return a partial state.
 
-    `nodes_v2.dean_node_v2` handles no-student and whitespace guards before
-    calling this function, so every call here is a real student round-trip.
-    """
+ `nodes_v2.dean_node_v2` handles no-student and whitespace guards before
+ calling this function, so every call here is a real student round-trip.
+"""
     state.setdefault("debug", {}).setdefault("turn_trace", [])
     trace = state["debug"]["turn_trace"]
     messages = list(state.get("messages", []) or [])
@@ -253,7 +239,7 @@ def run_topic_lock_v2(
                     prelock_count=prelock_count, source="confirm_topic",
                 )
         elif _is_no(latest_student):
-            # M3: record the rejected subsection so the next _map_topic call
+            # : record the rejected subsection so the next _map_topic call
             # excludes it. State field clears on new session — in-session only.
             rejected = list(state.get("rejected_topic_paths", []) or [])
             topic_meta = (pending.get("topic_meta") or {}).get("__candidate__") or {}
@@ -287,9 +273,9 @@ def run_topic_lock_v2(
                     selected_label=selected, messages=messages,
                     prelock_count=prelock_count, source="topic_card",
                 )
-        # Non-selection text falls through to the L9 mapper.
+        # Non-selection text falls through to the mapper.
 
-    # M4 — anchor_pick (My Mastery prelock UX). Student is choosing WHICH
+    # anchor_pick (My Mastery prelock UX). Student is choosing WHICH
     # anchor question variation to work on. Each variation already has its
     # own locked_question / locked_answer / aliases / full_answer in the
     # pending.anchor_meta dict — set them on state and route into tutoring.
@@ -331,7 +317,7 @@ def run_topic_lock_v2(
                 "locked_question_len": len(locked_q),
                 "locked_answer_len": len(locked_a),
             })
-            # BLOCK 5 (REAL-Q5) — log topic_locked event so LLM sees the
+            # log topic_locked event so LLM sees the
             # transition in history annotations. payload is non-sensitive
             # (subsection title only — never the answer).
             from conversation.snapshots import log_system_event
@@ -344,13 +330,11 @@ def run_topic_lock_v2(
             # CRITICAL — _base_update only puts a fixed set of keys into
             # the return dict (messages/phase/topic_confirmed/prelock_loop_count/debug).
             # Anything else MUST be passed via **extra or LangGraph's
-            # reducer drops the state mutation. Earlier version assigned
             # these to state but didn't pass them through, so the next
             # invocation read them as empty → empty Q/A → SAFE_PROBE loop.
             return _base_update(
                 state, messages, prelock_count,
-                # M4 — topic IS confirmed once the student picked an anchor.
-                # Without this, _base_update defaults to False and the
+                # topic IS confirmed once the student picked an anchor.
                 # sidebar derivePhase falls back to "rapport" + shows the
                 # pre-lock counter even though tutoring has started.
                 topic_confirmed=True,
@@ -364,10 +348,9 @@ def run_topic_lock_v2(
                 locked_answer_aliases=aliases,
                 topic_just_locked=True,
             )
-        # M4 — pivot path: student typed something instead of picking
+        # pivot path: student typed something instead of picking
         # one of the anchor cards. Treat as a NEW topic query: clear the
         # prelock state so the topic mapper can resolve from scratch.
-        # Without this, the student would be stuck on the prior subsection's
         # cards or fall through to tutoring with empty Q/A.
         trace.append({
             "wrapper": "topic_lock_v2.anchor_pick_pivot",
@@ -446,7 +429,6 @@ def run_topic_lock_v2(
         prelock_count=prelock_count,
     )
 
-
 def _map_topic(
     query: str,
     trace: list[dict],
@@ -475,7 +457,6 @@ def _map_topic(
             top_matches=[],
             raw_response=f"<caller_error: {type(e).__name__}>",
         )
-
 
 def _lock_topic(
     state: dict,
@@ -525,7 +506,7 @@ def _lock_topic(
         "label": selected_label,
         "prelock_loop_count": prelock_count,
     })
-    # BLOCK 5 (REAL-Q5) — log topic_locked event (text-typed lock path)
+    # log topic_locked event (text-typed lock path)
     from conversation.snapshots import log_system_event
     log_system_event(
         state, "topic_locked",
@@ -595,8 +576,8 @@ def _lock_topic(
         "locked_answer": state["locked_answer"],
     })
 
-    # L6 injection #1 — read mem0 once at lock-time and stash on state so
-    # the next dean.plan() call (Track 4.7e tutoring loop) can pass it as
+    # injection #1 — read mem0 once at lock-time and stash on state so
+    # the next dean.plan call ( tutoring loop) can pass it as
     # carryover_notes. Safe wrapper: never raises, returns "" on any
     # mem0/network/stub failure.
     try:
@@ -609,7 +590,7 @@ def _lock_topic(
                 "wrapper": "topic_lock_v2.mem0_carryover_seeded",
                 "carryover_chars": len(carryover),
             })
-            # A3 (POST_DEMO_FIXES.md, 2026-05-06): visible activity-log
+            # visible activity-log
             # signal that mem0 carryover was loaded for THIS subsection.
             # Only fires when carryover is non-empty (i.e. the student
             # actually has prior observations on this subsection). The
@@ -664,7 +645,6 @@ def _lock_topic(
         "debug": state["debug"],
     }
 
-
 def _coverage_refusal(
     state: dict,
     *,
@@ -710,7 +690,6 @@ def _coverage_refusal(
         rejected_topic_paths=rejected,
     )
 
-
 def _anchor_refusal(
     state: dict,
     *,
@@ -752,7 +731,6 @@ def _anchor_refusal(
     })
     return update
 
-
 def _render_confirm(
     state: dict,
     messages: list[dict],
@@ -777,7 +755,6 @@ def _render_confirm(
         student_state="question",
     )
 
-
 def _render_topic_cards(
     state: dict,
     messages: list[dict],
@@ -789,7 +766,6 @@ def _render_topic_cards(
         state, messages, topics, intro, prelock_count,
         allow_custom=True, mode="normal",
     )
-
 
 def _render_refuse_cards(
     state: dict,
@@ -804,7 +780,7 @@ def _render_refuse_cards(
     matcher = get_topic_matcher()
     rejected = set(state.get("rejected_topic_paths", []) or [])
     topics = matcher.sample_diverse(NORMAL_CARD_COUNT, min_chunk_count=5, exclude_paths=rejected)
-    # M3: when this fires AFTER one or more rejections, the message implies
+    # : when this fires AFTER one or more rejections, the message implies
     # "your prior tries were rejected" — pivot the wording so the student
     # doesn't think the system never understood them at all.
     if rejected:
@@ -814,7 +790,7 @@ def _render_refuse_cards(
         )
     else:
         intro = "I could not find a strong textbook match for that. Pick one of these or type a more specific topic:"
-    # F13 (POST_DEMO_FIXES.md, 2026-05-06): graduate the nudge as
+    # graduate the nudge as
     # prelock_count climbs toward the cap. Tutor pressure increases:
     # the closer to cap, the more directly we ask the student to pick.
     # Cap=10 today; warn at 7+, urgent at 9+.
@@ -834,7 +810,6 @@ def _render_refuse_cards(
         allow_custom=True, mode="normal",
     )
 
-
 def _render_guided_pick(
     state: dict,
     messages: list[dict],
@@ -844,7 +819,7 @@ def _render_guided_pick(
 ) -> dict:
     matcher = get_topic_matcher()
     rejected = set(state.get("rejected_topic_paths", []) or [])
-    # M3: rerank against the ORIGINAL query (BM25 via matcher.match) instead of
+    # : rerank against the ORIGINAL query (BM25 via matcher.match) instead of
     # random sample_diverse — picking unrelated chapters at cap-7 is bad UX.
     match_result = matcher.match(query, k=GUIDED_PICK_COUNT * 3)
     topics = [m for m in match_result.matches
@@ -862,7 +837,6 @@ def _render_guided_pick(
         end_session_label="Give up / End session",
         end_session_value=GIVE_UP_VALUE,
     )
-
 
 def _topic_card_update(
     state: dict,
@@ -897,7 +871,6 @@ def _topic_card_update(
         student_state="question",
     )
 
-
 def _give_up(state: dict, messages: list[dict], prelock_count: int) -> dict:
     messages.append({
         "role": "tutor",
@@ -926,7 +899,6 @@ def _give_up(state: dict, messages: list[dict], prelock_count: int) -> dict:
         student_state="question",
     )
 
-
 def _base_update(state: dict, messages: list[dict], prelock_count: int, **extra: Any) -> dict:
     update = {
         "messages": messages,
@@ -937,7 +909,6 @@ def _base_update(state: dict, messages: list[dict], prelock_count: int, **extra:
     }
     update.update(extra)
     return update
-
 
 def _topic_from_candidate(path: str) -> Optional[TopicMatch]:
     matcher = get_topic_matcher()
@@ -961,7 +932,6 @@ def _topic_from_candidate(path: str) -> Optional[TopicMatch]:
                 return e
     return None
 
-
 def _topic_from_pending(pending: dict, label: str) -> Optional[TopicMatch]:
     meta_by_label = pending.get("topic_meta") or {}
     meta = meta_by_label.get(label)
@@ -981,7 +951,6 @@ def _topic_from_pending(pending: dict, label: str) -> Optional[TopicMatch]:
         teachable=bool(meta.get("teachable", True)),
     )
 
-
 def _topic_meta(topic: TopicMatch, score: Optional[float] = None) -> dict:
     return {
         "path": topic.path,
@@ -994,7 +963,6 @@ def _topic_meta(topic: TopicMatch, score: Optional[float] = None) -> dict:
         "score": topic.score if score is None else score,
         "teachable": topic.teachable,
     }
-
 
 def _options_and_meta(topics: list[TopicMatch]) -> tuple[list[str], dict[str, dict]]:
     options: list[str] = []
@@ -1009,13 +977,11 @@ def _options_and_meta(topics: list[TopicMatch]) -> tuple[list[str], dict[str, di
         meta[label] = _topic_meta(topic)
     return options, meta
 
-
 def _with_numbered_options(intro: str, options: list[str]) -> str:
     if not options:
         return intro
     numbered = "\n".join(f"  {i + 1}. {opt}" for i, opt in enumerate(options))
     return f"{intro}\n\n{numbered}"
-
 
 def _match_choice(student_text: str, options: list[str]) -> str:
     txt = _norm(student_text)
@@ -1052,10 +1018,8 @@ def _match_choice(student_text: str, options: list[str]) -> str:
             hits.append(original)
     return hits[0] if len(set(hits)) == 1 else ""
 
-
 def _is_guided_pending(pending: Any) -> bool:
     return isinstance(pending, dict) and pending.get("kind") == "topic" and pending.get("mode") == "guided_pick"
-
 
 def _is_give_up(text: str, pending: dict) -> bool:
     val = str(pending.get("end_session_value") or GIVE_UP_VALUE)
@@ -1063,14 +1027,11 @@ def _is_give_up(text: str, pending: dict) -> bool:
     txt = _norm(text)
     return txt in {_norm(val), _norm(label), "give up", "end session", "stop", "quit"}
 
-
 def _is_yes(text: str) -> bool:
     return _norm(text) in {"yes", "y", "yeah", "yep", "correct", "right", "that is right", "sounds right"}
 
-
 def _is_no(text: str) -> bool:
     return _norm(text) in {"no", "n", "nope", "not really", "wrong", "something else"}
-
 
 def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9# ]+", " ", (text or "").lower())).strip()

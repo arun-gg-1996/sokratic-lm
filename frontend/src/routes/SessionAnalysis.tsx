@@ -162,8 +162,7 @@ export function SessionAnalysis() {
             <span>{subsectionLabel}</span>
           </div>
 
-          {/* Transcript panel — A6 (POST_DEMO_FIXES.md, 2026-05-06):
-              styled to mirror the live chat MessageBubble look. Read-only,
+          {/* Transcript panel — styled to mirror the live chat MessageBubble look. Read-only,
               no Listen / debug-click affordances. Tutor: icon + panel
               card. Student: right-aligned accent-soft pill. */}
           <section className="border border-border rounded-lg p-4 bg-panel">

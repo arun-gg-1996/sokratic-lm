@@ -1,8 +1,7 @@
 """
 scripts/probe_rag.py
----------------------
 Diverse-query empirical RAG probe. Measures hit-on-target across categories
-including canonical, conversational, misspellings, synonyms, cross-chapter,
+including canonical, conversational, misspellings, synonyms, cross-chapter
 OT-clinical, and irrelevant queries.
 
 Run: .venv/bin/python scripts/probe_rag.py
@@ -16,7 +15,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from retrieval.retriever import Retriever
 from tools.mcp_tools import search_textbook
-
 
 QUERIES = [
     ("canonical", "What nerve innervates the deltoid muscle?", "axillary"),
@@ -38,7 +36,6 @@ QUERIES = [
     ("irrelevant", "best pizza in buffalo", ""),
     ("irrelevant", "what is the capital of France?", ""),
 ]
-
 
 def main():
     r = Retriever()
@@ -87,7 +84,6 @@ def main():
             total_rel_hit += yes
     print(f"\n  RELEVANT-query Hit@top-k: {total_rel_hit}/{total_rel} = "
           f"{100*total_rel_hit/max(total_rel,1):.1f}%")
-
 
 if __name__ == "__main__":
     main()

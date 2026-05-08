@@ -1,15 +1,19 @@
 """
-retrieval/retriever.py
-----------------------
-Clean hybrid retrieval pipeline:
-1) Query embedding (text-embedding-3-large)
-2) Qdrant dense search (domain filter only) — original query
-3) BM25 sparse search — preprocessed query (normalized+stemmed+variants)
-4) RRF merge (k=60)
-5) Expand to unique parent chunks
-6) Cross-encoder reranking — original query (safety net)
-7) Out-of-scope check (max CE < -3.0 -> [])
-8) Return top-5 chunks
+Hybrid retrieval pipeline.
+
+  1. Embed the student query with text-embedding-3-large.
+  2. Dense search against Qdrant (filtered by domain).
+  3. Sparse search with BM25 against the preprocessed query
+     (normalized, stemmed, with variant expansion).
+  4. Merge dense + sparse results via Reciprocal Rank Fusion (k=60).
+  5. Expand merged props back up to unique parent chunks.
+  6. Cross-encoder rerank against the original query as a safety net.
+  7. Reject the query if the top cross-encoder score is below the
+     out-of-scope threshold (returns an empty list).
+  8. Return the top-K chunks.
+
+`ChunkRetriever` is the production subclass used by the running
+backend; it indexes whole chunks rather than propositions.
 """
 
 from __future__ import annotations
@@ -35,20 +39,18 @@ _HYDE_CACHE: dict[str, str] = {}  # process-local cache: query → hyde rewrite
 
 _STEMMER = PorterStemmer()
 
-
 def preprocess_for_bm25(query: str) -> list[str]:
     """
-    Query-side BM25 tokenization — symmetric with the corpus.
+ Query-side BM25 tokenization — symmetric with the corpus.
 
-    The BM25 corpus is tokenized with `ingestion.index.stem_tokenize`
-    (lowercase + alnum + Porter stem). Using a different tokenizer on
-    the query side causes the majority of query tokens to never match
-    anything (surface forms are not in the corpus; stop-word removal
-    and plural expansion were only applied query-side, creating
-    further asymmetry). We now use the exact same tokenizer.
-    """
+ The BM25 corpus is tokenized with `ingestion.index.stem_tokenize`
+ (lowercase + alnum + Porter stem). Using a different tokenizer on
+ the query side causes the majority of query tokens to never match
+ anything (surface forms are not in the corpus; stop-word removal
+ and plural expansion were only applied query-side, creating
+ further asymmetry). We now use the exact same tokenizer.
+"""
     return stem_tokenize(query)
-
 
 class Retriever:
     def __init__(self, index_dir: str | None = None):
@@ -90,21 +92,20 @@ class Retriever:
             cfg.models.cross_encoder, max_length=512, device=_ce_device
         )
         # PyTorch on Apple Silicon MPS is NOT thread-safe — concurrent
-        # .predict() calls on the same MPS-loaded model corrupt internal
-        # state and return NaN / zero scores silently. Without this lock,
+        # .predict calls on the same MPS-loaded model corrupt internal
         # 4 parallel sessions through the same retriever instance see all
         # CE scores collapse to ~0 → max_ce < ood_ce_threshold (-5.0) →
-        # _is_in_scope returns False → retrieve() returns []. Reproduced
-        # 2026-05-03 with 0/18 sessions failing in the eval harness with
+        # _is_in_scope returns False → retrieve returns . Reproduced
+        # with 0/18 sessions failing in the eval harness with
         # the same retrieval call that returns 9 chunks single-threaded.
         # CUDA + CPU don't have this issue, but lock unconditionally for
         # consistency. Inference is fast enough that serialization adds
         # ~50-200ms per concurrent retrieval which is acceptable.
         self._ce_lock = threading.Lock()
         # Domain ontology adapter (UMLS for anatomy/OT, Noop for physics etc.).
-        # Construct, then EAGERLY warm up so the first retrieve() call doesn't
+        # Construct, then EAGERLY warm up so the first retrieve call doesn't
         # pay the ~70-second scispacy + UMLS KB load cost. Warmup is a single
-        # link_entities() invocation; subsequent calls hit the cached pipeline.
+        # link_entities invocation; subsequent calls hit the cached pipeline.
         from retrieval.ontology import get_ontology_adapter
 
         self._ontology = get_ontology_adapter(self.default_domain)
@@ -276,14 +277,14 @@ class Retriever:
     @staticmethod
     def _expand_to_parent_chunks(merged_props: list[dict]) -> list[dict]:
         """
-        Aggregate proposition-level RRF scores up to their parent chunks by
-        SUMMING the scores of all propositions belonging to the same parent.
+ Aggregate proposition-level RRF scores up to their parent chunks by
+ SUMMING the scores of all propositions belonging to the same parent.
 
-        Rationale: a parent chunk with ten hitting propositions carries far more
-        evidence than a parent chunk with one. Prior implementation took the
-        `max`, which threw that signal away and was a primary cause of retrieval
-        misses on canonical queries.
-        """
+ Rationale: a parent chunk with ten hitting propositions carries far more
+ evidence than a parent chunk with one. Prior implementation took the
+ `max`, which threw that signal away and was a primary cause of retrieval
+ misses on canonical queries.
+"""
         by_parent: dict[str, dict] = {}
         score_sum: dict[str, float] = {}
         hit_count: dict[str, int] = {}
@@ -330,8 +331,7 @@ class Retriever:
             return []
         pairs = [(query, c.get("text", "")) for c in parent_chunks]
         # Serialize CE inference — see __init__ note on MPS thread-safety.
-        # Without this lock, concurrent retrieve() calls on the same
-        # ChunkRetriever instance silently return [] under load (all CE
+        # ChunkRetriever instance silently return under load (all CE
         # scores ≈ 0 → max_ce < threshold → _is_in_scope=False).
         with self._ce_lock:
             ce_scores = self.cross_encoder.predict(pairs)
@@ -350,26 +350,26 @@ class Retriever:
     @staticmethod
     def _is_weak_retrieval(qdrant_hits: list[dict], bm25_hits: list[dict], query: str = "") -> bool:
         """
-        Decide whether the original-query retrieval is weak enough that HyDE
-        rescue is worth the latency.
+ Decide whether the original-query retrieval is weak enough that HyDE
+ rescue is worth the latency.
 
-        Distributional cosine signal (P1.4): a single high-cosine hit surrounded
-        by weak hits (e.g. one lucky chunk + noise) is NOT a strong retrieval —
-        it often reflects a single literal-keyword match rather than broad
-        topical coverage. We fire HyDE in two complementary cases:
-          (a) `max_cosine < hyde_weak_cosine_threshold` — primary signal; the
-              whole retrieval is below threshold.
-          (b) `topk_mean_cosine < hyde_weak_topk_mean_threshold` — secondary
-              signal; even though one chunk is decent, the top-K as a whole is
-              weak, which usually means the query's register mismatches the
-              corpus. HyDE's hypothetical passage often fixes this.
+ Distributional cosine signal (P1.4): a single high-cosine hit surrounded
+ by weak hits (e.g. one lucky chunk + noise) is NOT a strong retrieval —
+ it often reflects a single literal-keyword match rather than broad
+ topical coverage. We fire HyDE in two complementary cases:
+ (a) `max_cosine < hyde_weak_cosine_threshold` — primary signal; the
+ whole retrieval is below threshold.
+ (b) `topk_mean_cosine < hyde_weak_topk_mean_threshold` — secondary
+ signal; even though one chunk is decent, the top-K as a whole is
+ weak, which usually means the query's register mismatches the
+ corpus. HyDE's hypothetical passage often fixes this.
 
-        We deliberately do NOT use BM25 here: function-word overlap inflates
-        BM25 on genuinely off-topic queries.
+ We deliberately do NOT use BM25 here: function-word overlap inflates
+ BM25 on genuinely off-topic queries.
 
-        We deliberately do NOT use CE here: running CE requires the full
-        candidate expansion, which defeats the purpose of a cheap pre-gate.
-        """
+ We deliberately do NOT use CE here: running CE requires the full
+ candidate expansion, which defeats the purpose of a cheap pre-gate.
+"""
         if not qdrant_hits:
             return True  # empty dense side → HyDE can't hurt
         cosines = [float(h.get("_qdrant_score", 0.0)) for h in qdrant_hits]
@@ -389,16 +389,16 @@ class Retriever:
 
     def _hyde_rewrite(self, query: str) -> str:
         """
-        Ask a small LLM to rewrite the student's question as a 2-3 sentence
-        hypothetical textbook passage. Cached two ways:
-          - process-local _HYDE_CACHE dict on identical query strings (deduplicates
-            anchor-lock + hint-plan calls within a session that hit the same query)
-          - Anthropic prompt cache on the static instructions (cache hits across
-            DIFFERENT queries that all share the same instruction prefix)
+ Ask a small LLM to rewrite the student's question as a 2-3 sentence
+ hypothetical textbook passage. Cached two ways:
+process-local _HYDE_CACHE dict on identical query strings (deduplicates
+ anchor-lock + hint-plan calls within a session that hit the same query)
+Anthropic prompt cache on the static instructions (cache hits across
+ DIFFERENT queries that all share the same instruction prefix)
 
-        Returns empty string on failure so callers can fall through to pure
-        original-query retrieval.
-        """
+ Returns empty string on failure so callers can fall through to pure
+ original-query retrieval.
+"""
         q_key = query.strip().lower()
         if q_key in _HYDE_CACHE:
             return _HYDE_CACHE[q_key]
@@ -406,7 +406,7 @@ class Retriever:
         try:
             from conversation.llm_client import make_anthropic_client, resolve_model
             client = make_anthropic_client()
-            model = getattr(getattr(cfg, "models", object()), "summarizer", None) \
+            model = getattr(getattr(cfg, "models", object()), "summarizer", None)\
                 or getattr(getattr(cfg, "models", object()), "teacher", "claude-haiku-4-5-20251001")
             model = resolve_model(model)
             prompt_tmpl = getattr(getattr(cfg, "prompts", object()), "hyde_reformulate", "")
@@ -414,13 +414,12 @@ class Retriever:
                 return ""
             domain_short = getattr(getattr(cfg, "domain", object()), "short", "the subject")
 
-            # D.6b-3: split the prompt at the {query} placeholder so the
+            # : split the prompt at the {query} placeholder so the
             # instruction prefix (rules, examples, domain context) goes in
             # a cache_control'd system block and only the per-query text
             # is in the user message. Cache hits across different queries
             # that share these instructions — exactly the cross-query
             # caching we couldn't get with prompt-as-user-message.
-            #
             # Below the Anthropic cache floor (~300 tokens here, floor is
             # 1024 for Sonnet / 2048 for Haiku) the API still passes the
             # block through uncached; the wiring is a no-op cost-wise
@@ -464,10 +463,10 @@ class Retriever:
     @staticmethod
     def _dedupe_hits_keep_best_rank(list_a: list[dict], list_b: list[dict]) -> list[dict]:
         """
-        Combine two Qdrant hit lists (from original + HyDE queries) keeping
-        the best rank for each proposition_id. Preserves ranks so downstream
-        RRF merge still sees rank-ordered hits from the dense side.
-        """
+ Combine two Qdrant hit lists (from original + HyDE queries) keeping
+ the best rank for each proposition_id. Preserves ranks so downstream
+ RRF merge still sees rank-ordered hits from the dense side.
+"""
         seen: dict[str, dict] = {}
         for src in (list_a, list_b):
             for h in src:
@@ -492,21 +491,21 @@ class Retriever:
     @staticmethod
     def _apply_query_aliases(query: str) -> str:
         """
-        Word-boundary substring expansion of configured query aliases.
+ Word-boundary substring expansion of configured query aliases.
 
-        Curated high-precision fallback: each alias dict entry is a hand-written
-        (alias → expansion) mapping. For each alias that appears as a word-
-        bounded substring in the query (case-insensitive), append the expansion.
-        We never REPLACE — the student's original phrasing is preserved so
-        BM25 / embedder can still match on it directly.
+ Curated high-precision fallback: each alias dict entry is a hand-written
+ (alias → expansion) mapping. For each alias that appears as a word-
+ bounded substring in the query (case-insensitive), append the expansion.
+ We never REPLACE — the student's original phrasing is preserved so
+ BM25 / embedder can still match on it directly.
 
-        Ontology expansion (via `_apply_ontology_expansion`) supersedes this for
-        the OT/anatomy domain when the UMLS pipeline is available. The alias
-        dict remains active as a safety net for cases UMLS misses and for
-        domains without an ontology adapter.
+ Ontology expansion (via `_apply_ontology_expansion`) supersedes this for
+ the OT/anatomy domain when the UMLS pipeline is available. The alias
+ dict remains active as a safety net for cases UMLS misses and for
+ domains without an ontology adapter.
 
-        Example: "CN VII palsy" → "CN VII palsy (facial nerve)"
-        """
+ Example: "CN VII palsy" → "CN VII palsy (facial nerve)"
+"""
         # Runtime kill-switch: config `retrieval.aliases_enabled=false` disables
         # this without editing the dictionary. Used in v2 ablation testing.
         if not bool(getattr(cfg.retrieval, "aliases_enabled", True)):
@@ -535,19 +534,19 @@ class Retriever:
 
     def _apply_ontology_expansion(self, query: str) -> str:
         """
-        Append UMLS canonical names (and, when available, a small number of
-        aliases) for entities detected in the query. Purely additive — the
-        original phrasing is preserved for BM25 / dense exact matches.
+ Append UMLS canonical names (and, when available, a small number of
+ aliases) for entities detected in the query. Purely additive — the
+ original phrasing is preserved for BM25 / dense exact matches.
 
-        The ontology adapter is a NoopAdapter for domains without an ontology
-        configured, in which case this is a zero-cost no-op. For anatomy/OT,
-        UMLS turns "deltoid" into "Deltoid muscle" (matches section titles)
-        and "cn vii" into "Facial nerve" (bridges abbreviation gap).
+ The ontology adapter is a NoopAdapter for domains without an ontology
+ configured, in which case this is a zero-cost no-op. For anatomy/OT
+ UMLS turns "deltoid" into "Deltoid muscle" (matches section titles)
+ and "cn vii" into "Facial nerve" (bridges abbreviation gap).
 
-        Toggle: `cfg.retrieval.ontology_expansion_enabled` (default True).
-        Keeping it configurable lets us A/B with the curated alias dict
-        during the v2 ablation window before fully retiring the dict.
-        """
+ Toggle: `cfg.retrieval.ontology_expansion_enabled` (default True).
+ Keeping it configurable lets us A/B with the curated alias dict
+ during the v2 ablation window before fully retiring the dict.
+"""
         if not query:
             return query
         if not bool(getattr(cfg.retrieval, "ontology_expansion_enabled", True)):
@@ -586,24 +585,24 @@ class Retriever:
     @staticmethod
     def _is_in_scope(qdrant_hits: list[dict], bm25_hits: list[dict], reranked: list[dict]) -> bool:
         """
-        Multi-signal in-scope check (domain-agnostic).
+ Multi-signal in-scope check (domain-agnostic).
 
-        Returns True if the query has at least one *semantic* signal indicating
-        the corpus contains relevant content. A query is OOD only when BOTH of
-        the semantic signals fail simultaneously:
-          - Dense cosine similarity (OpenAI text-embedding-3-large).
-          - Cross-encoder score after rerank.
+ Returns True if the query has at least one *semantic* signal indicating
+ the corpus contains relevant content. A query is OOD only when BOTH of
+ the semantic signals fail simultaneously:
+Dense cosine similarity (OpenAI text-embedding-3-large).
+Cross-encoder score after rerank.
 
-        Why not include BM25 in the scope decision:
-        Empirical calibration shows BM25 lets through OOD queries with high
-        scores (e.g. "best pizza in buffalo" → BM25=9.6) because common function
-        words ("best", "in", "is") overlap the corpus. BM25 is still useful for
-        *ranking* among candidates, but is not a reliable scope signal.
+ Why not include BM25 in the scope decision:
+ Empirical calibration shows BM25 lets through OOD queries with high
+ scores (e.g. "best pizza in buffalo" → BM25=9.6) because common function
+ words ("best", "in", "is") overlap the corpus. BM25 is still useful for
+ *ranking* among candidates, but is not a reliable scope signal.
 
-        Both semantic signals failing (low cosine AND low CE) is a robust OOD
-        indicator — a query that has neither semantic closeness to any chunk
-        nor reranker agreement is genuinely off-topic.
-        """
+ Both semantic signals failing (low cosine AND low CE) is a robust OOD
+ indicator — a query that has neither semantic closeness to any chunk
+ nor reranker agreement is genuinely off-topic.
+"""
         max_cosine = max((float(h.get("_qdrant_score", 0.0)) for h in qdrant_hits), default=0.0)
         max_ce = max((float(r.get("score", 0.0)) for r in reranked), default=float("-inf"))
 
@@ -616,14 +615,13 @@ class Retriever:
         # kept for compatibility with evaluation scripts
         return None
 
-    # ── D.0 — Window expansion at retrieval time ─────────────────────────
+    # ── — Window expansion at retrieval time ─────────────────────────
     # The new chunker produces fine-grained chunks (median ~89 tokens for
     # paragraph chunks, ~133 tokens for overlap chunks). At top_k=5 with no
     # window, the LLM sees only ~565 tokens of context — too thin for
     # tutoring. Window expansion fetches W chunks before and W chunks after
     # each retrieved primary chunk via the prev_chunk_id/next_chunk_id
     # links that B.4 wrote into every Qdrant payload + chunks JSONL row.
-    #
     # Implementation note: we lazy-load the chunks JSONL into an in-memory
     # dict on first use. This avoids extra Qdrant round-trips per retrieval
     # call (5 retrieved × 2 neighbors = 10 lookups each ~5-10ms otherwise).
@@ -633,7 +631,7 @@ class Retriever:
 
     def _load_chunks_index(self) -> dict[str, dict]:
         """Lazy-load chunks_<domain>.jsonl into a chunk_id -> chunk dict map.
-        Idempotent; cached on the instance."""
+ Idempotent; cached on the instance."""
         if self._chunks_index_cache is not None:
             return self._chunks_index_cache
 
@@ -676,17 +674,17 @@ class Retriever:
         max_total_tokens: int = 4000,
     ) -> list[dict]:
         """For each chunk in `primary_chunks`, prepend up to W neighbors via
-        prev_chunk_id and append up to W neighbors via next_chunk_id.
+ prev_chunk_id and append up to W neighbors via next_chunk_id.
 
-        Returns a flat list with `_window_role` markers:
-          "primary"   — the originally-retrieved chunk (kept first)
-          "neighbor_prev" — N-W..N-1 chunks
-          "neighbor_next" — N+1..N+W chunks
-        Each neighbor row has `_primary_chunk_id` pointing back to its primary.
+ Returns a flat list with `_window_role` markers:
+ "primary" — the originally-retrieved chunk (kept first)
+ "neighbor_prev" — N-W..N-1 chunks
+ "neighbor_next" — N+1..N+W chunks
+ Each neighbor row has `_primary_chunk_id` pointing back to its primary.
 
-        Token budget cap: stops adding neighbors once total cumulative chunk
-        text exceeds max_total_tokens (rough estimate: chars/4).
-        """
+ Token budget cap: stops adding neighbors once total cumulative chunk
+ text exceeds max_total_tokens (rough estimate: chars/4).
+"""
         if window_size <= 0 or not primary_chunks:
             return primary_chunks
 
@@ -786,8 +784,8 @@ class Retriever:
         window_size: int | None = None,
     ) -> list[dict]:
         # Per-call timing instrumentation. Each stage's elapsed wall-time
-        # is written to self.last_timings (in ms) so callers (eval scripts,
-        # observability) can read it after retrieve() returns. Cleared at
+        # is written to self.last_timings (in ms) so callers (eval scripts
+        # observability) can read it after retrieve returns. Cleared at
         # the top of every call so stale stats don't leak across queries.
         import time as _time
         t = _time.perf_counter
@@ -822,8 +820,8 @@ class Retriever:
             )
 
         # Expand query in two additive stages:
-        #   1) UMLS / domain ontology: canonical + abbreviated entity names.
-        #   2) Curated alias dict: high-precision fallback for misses.
+        # 1) UMLS / domain ontology: canonical + abbreviated entity names.
+        # 2) Curated alias dict: high-precision fallback for misses.
         # Both stages are additive — original phrasing is preserved so BM25
         # and dense exact matches are unaffected.
         t0 = t()
@@ -839,14 +837,13 @@ class Retriever:
         rrf_k = int(cfg.retrieval.rrf_k)
 
         # --- Stage 1: original query (fast path, no LLM) -------------------
-        # D.6c: speculatively fire HyDE rewrite in parallel with original
+        # : speculatively fire HyDE rewrite in parallel with original
         # retrieval. The rewrite is the expensive step (~500-1500ms LLM
         # call); when HyDE later turns out to be needed (weak-retrieval
         # gate), the rewrite has already completed and we save its
         # latency. When the original is strong, the rewrite is discarded
         # (~$0.001 Haiku cost wasted — negligible). Cache hit rate on
-        # the rewrite (D.6b-3) further reduces the worst-case waste.
-        #
+        # the rewrite further reduces the worst-case waste.
         # The rewrite must NOT depend on Qdrant/BM25 results, so it is
         # safe to start before they run. We pass it through a Future
         # and read the result lazily inside the HyDE branch below.
@@ -885,17 +882,16 @@ class Retriever:
         timings["bm25_ms"] = (t() - t0) * 1000.0
         timings["n_bm25"] = len(orig_bm25)
 
-        # --- D.1: Soft metadata fallback (post-lock tutoring only) ---------
+        # --- : Soft metadata fallback (post-lock tutoring only) ---------
         # If the student is in a locked-topic conversation and the strict
-        # section/subsection filter returned a thin pool (< softfallback_min),
+        # section/subsection filter returned a thin pool (< softfallback_min)
         # progressively widen scope:
-        #   Tier 0: locked subsection (default; what we just ran above)
-        #   Tier 1: drop subsection filter, keep section (penalty 0.05)
-        #   Tier 2: drop section filter entirely (penalty 0.15)
+        # Tier 0: locked subsection (default; what we just ran above)
+        # Tier 1: drop subsection filter, keep section (penalty 0.05)
+        # Tier 2: drop section filter entirely (penalty 0.15)
         # Penalties are applied to `_qdrant_score` so the strict-tier content
         # still ranks higher when both are in the candidate pool. CE rerank
         # downstream sees the full pool and picks based on text relevance.
-        #
         # Why only post-lock (not at topic-lock time): relaxing at lock-time
         # re-opens the card-loop bug — would lock topics that don't actually
         # have content. At tutoring time, the topic is already proven
@@ -979,7 +975,7 @@ class Retriever:
             use_hyde = bool(getattr(cfg.retrieval, "hyde_enabled", True))
 
         # --- Stage 2: HyDE rescue (only fires on moderately-weak IN-SCOPE queries) ---
-        # Design: original-first, HyDE as rescue. If the original is strong,
+        # Design: original-first, HyDE as rescue. If the original is strong
         # we never pay HyDE's latency. If it's weak BUT in-scope, we run HyDE
         # in addition (not replacing) and UNION the candidate pools before
         # rerank. BM25 always uses the original query — HyDE's hypothetical
@@ -987,7 +983,7 @@ class Retriever:
         hyde_qdrant: list[dict] = []
         if use_hyde and self._is_weak_retrieval(orig_qdrant, orig_bm25, query=expanded_query):
             timings["hyde_fired"] = True
-            # D.6c: collect the speculatively-launched rewrite. By now it
+            # : collect the speculatively-launched rewrite. By now it
             # has either completed (overlap savings realized) or is still
             # running, in which case we wait normally — net latency is
             # max(orig_retrieval, hyde_rewrite) instead of the previous
@@ -1076,7 +1072,7 @@ class Retriever:
                 }
             )
 
-        # D.0 — Window expansion. Default W=1 so 5 retrieved chunks become
+        # — Window expansion. Default W=1 so 5 retrieved chunks become
         # 15 chunks shown to LLM (~1700 tokens median context, vs ~565 tok
         # without expansion at the new chunker's median 113 tok/chunk).
         # Caller can pass window_size=0 to opt out, or larger for more context.
@@ -1091,41 +1087,38 @@ class Retriever:
         timings["total_ms"] = (t() - t_call_start) * 1000.0
         return payload
 
-
 class ChunkRetriever(Retriever):
     """
-    Chunk-level (non-proposition) retriever variant.
+ Chunk-level (non-proposition) retriever variant.
 
-    Why this class exists
-    ---------------------
-    The default `Retriever` indexes propositions and expands them back to
-    parent chunks at retrieval time (the Dense-X-Retrieval architecture).
-    End-to-end testing on canonical anatomy questions ("which nerve
-    innervates the deltoid?") showed atomic propositions destroy the
-    relational verb that should be the discriminative retrieval signal.
-    Literature follow-up (arXiv 2510.04757, Oct 2025) corroborates: the
-    2025 SOTA pattern for biomedical RAG indexes full chunks with bi-encoder
-    retrieval, not propositions.
+ Why this class exists
+The default `Retriever` indexes propositions and expands them back to
+ parent chunks at retrieval time (the Dense-X-Retrieval architecture).
+ End-to-end testing on canonical anatomy questions ("which nerve
+ innervates the deltoid?") showed atomic propositions destroy the
+ relational verb that should be the discriminative retrieval signal.
+ Literature follow-up (arXiv 2510.04757, Oct 2025) corroborates: the
+ 2025 SOTA pattern for biomedical RAG indexes full chunks with bi-encoder
+ retrieval, not propositions.
 
-    What this overrides
-    -------------------
-    Three points where the proposition pipeline differs from chunk-level:
-      1. `__init__`        — point at the chunks Qdrant collection +
-                              the chunks BM25 path produced by
-                              `scripts/reindex_chunks.py`.
-      2. `_qdrant_search`  — payload is already chunk-shaped; surface
-                              `chunk_id` directly, no parent-chunk indirection.
-      3. `_bm25_search`    — pickle file's "propositions" key now holds
-                              chunks (same structural type), but item-level
-                              fields are chunk fields.
-      4. `_rrf_merge`      — fuse by `chunk_id` instead of `proposition_id`.
-      5. `_expand_to_parent_chunks` — chunks ARE the parents; pass-through
-                              with normalised score / hit_count.
+ What this overrides
+Three points where the proposition pipeline differs from chunk-level:
+ 1. `__init__` — point at the chunks Qdrant collection +
+ the chunks BM25 path produced by
+ `scripts/reindex_chunks.py`.
+ 2. `_qdrant_search` — payload is already chunk-shaped; surface
+ `chunk_id` directly, no parent-chunk indirection.
+ 3. `_bm25_search` — pickle file's "propositions" key now holds
+ chunks (same structural type), but item-level
+ fields are chunk fields.
+ 4. `_rrf_merge` — fuse by `chunk_id` instead of `proposition_id`.
+ 5. `_expand_to_parent_chunks` — chunks ARE the parents; pass-through
+ with normalised score / hit_count.
 
-    Everything else (HyDE, ontology expansion, alias dictionary, CE rerank,
-    in-scope check, window expansion, OOD short-circuit) is inherited
-    unchanged.
-    """
+ Everything else (HyDE, ontology expansion, alias dictionary, CE rerank
+ in-scope check, window expansion, OOD short-circuit) is inherited
+ unchanged.
+"""
 
     def __init__(self, *, collection: str = "sokratic_kb_chunks",
                  bm25_path: str | None = None) -> None:
@@ -1295,13 +1288,12 @@ class ChunkRetriever(Retriever):
             )
         return hits
 
-
 class MockRetriever:
     """
-    Lightweight fallback retriever for local dev when Qdrant/BM25/embeddings
-    are unavailable. Keeps conversation flow functional but does not represent
-    real RAG behavior.
-    """
+ Lightweight fallback retriever for local dev when Qdrant/BM25/embeddings
+ are unavailable. Keeps conversation flow functional but does not represent
+ real RAG behavior.
+"""
 
     def __init__(self):
         domain = getattr(cfg, "domain", object())

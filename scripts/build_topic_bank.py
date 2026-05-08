@@ -1,6 +1,5 @@
 """
 scripts/build_topic_bank.py
----------------------------
 Build a topic bank for scaled e2e testing. Each topic in the bank is one
 (chapter, section, subsection) tuple known to have strong corpus coverage.
 For each topic, we generate 6 profile-specific student-style query
@@ -8,28 +7,28 @@ phrasings using Haiku — so the harness can run 3 seeds × 6 profiles per
 topic without all 18 conversations using the same query.
 
 The 6 profiles (matching simulation/profiles.py):
-  S1 Strong       — precise scientific phrasing, often multi-part
-  S2 Moderate     — clean, complete questions, neutral register
-  S3 Weak         — vague, layman, often runs words together
-  S4 Overconfident- leading assertions ("X is basically Y, right?")
-  S5 Disengaged   — terse, often 1-3 words, lowercase
-  S6 Anxious      — hesitant, hedging, multi-clause apology phrasing
+ Strong — precise scientific phrasing, often multi-part
+ Moderate — clean, complete questions, neutral register
+ Weak — vague, layman, often runs words together
+ Overconfident- leading assertions ("X is basically Y, right?")
+ Disengaged — terse, often 1-3 words, lowercase
+ Anxious — hesitant, hedging, multi-clause apology phrasing
 
 Output schema (per row in data/eval/topic_bank_v1.jsonl):
-  {
-    "topic_id": "ch11_lever_systems_exercise_and_stretching",
-    "chapter_num": 11,
-    "chapter_title": "...",
-    "section_title": "Lever Systems",
-    "subsection_title": "Exercise and Stretching",
-    "chunk_count": 24,
-    "queries": {
-      "S1": "...",  "S2": "...",  "S3": "...",
-      "S4": "...",  "S5": "...",  "S6": "..."
-    }
-  }
+ {
+ "topic_id": "ch11_lever_systems_exercise_and_stretching"
+ "chapter_num": 11
+ "chapter_title": "..."
+ "section_title": "Lever Systems"
+ "subsection_title": "Exercise and Stretching"
+ "chunk_count": 24
+ "queries": {
+ "": "...", "": "...", "": "..."
+ "": "...", "": "...", "": "..."
+ }
+ }
 
-Cost: 30 topics × 1 Haiku call (returns all 6 phrasings per call) = ~$0.30,
+Cost: 30 topics × 1 Haiku call (returns all 6 phrasings per call) = ~$0.30
 ~2 min wall.
 """
 from __future__ import annotations
@@ -53,7 +52,6 @@ SEED_PATH = Path("/tmp/topic_bank_seed.jsonl")
 OUT_PATH = ROOT / "data/eval/topic_bank_v1.jsonl"
 MODEL = "claude-haiku-4-5-20251001"
 SEMAPHORE = 6
-
 
 PROMPT_TEMPLATE = """You are generating realistic student questions for an
 anatomy tutoring system, varied across six student profiles. The student
@@ -91,16 +89,13 @@ Return STRICT JSON only, no preamble:
 }}
 """
 
-
 def _slugify(s: str) -> str:
     s = s.lower()
     s = re.sub(r"[^a-z0-9]+", "_", s).strip("_")
     return s[:60]
 
-
 def _topic_id(row: dict) -> str:
     return f"ch{row['chapter_num']}_{_slugify(row['section_title'])}__{_slugify(row['subsection_title'])}"
-
 
 async def _gen_one(sem, client, row):
     async with sem:
@@ -135,7 +130,6 @@ async def _gen_one(sem, client, row):
             return {**row, "topic_id": _topic_id(row), "queries": None,
                     "error": f"{type(e).__name__}: {e}"}
 
-
 async def main():
     rows = [json.loads(l) for l in open(SEED_PATH)]
     print(f"Loaded {len(rows)} topic seeds from {SEED_PATH}", flush=True)
@@ -166,7 +160,6 @@ async def main():
         for r in results:
             if not r.get("queries"):
                 print(f"  {r.get('topic_id')}: {r.get('error')}")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

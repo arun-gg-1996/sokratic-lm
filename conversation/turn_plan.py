@@ -1,26 +1,20 @@
 """
-conversation/turn_plan.py
-─────────────────────────
-TurnPlan — single-source contract from Dean to Teacher per L46.
+TurnPlan — the single contract between the Dean and the Teacher.
 
-Dean's per-turn LLM call EMITS a TurnPlan. Teacher's single entry point
-(L49) CONSUMES a TurnPlan. Every field is locked in
-docs/AUDIT_2026-05-02.md L46. The dataclass + Pydantic-style validation
-in this module is the only place that touches the schema; both sides of
-the Dean↔Teacher boundary stay in sync by construction.
+The Dean's per-turn call emits a TurnPlan; the Teacher's single
+entry point consumes it. Both sides stay in sync because this
+dataclass is the only place that defines the schema.
 
-Two important design rules:
-  * `mode` and `tone` are ORTHOGONAL (Codex round-2 fix #3).
-      mode = the SITUATION/PHASE the message addresses
-             (socratic, clinical, rapport, opt_in, redirect, nudge,
-              confirm_end, honest_close)
-      tone = the EMOTIONAL REGISTER of the message
-             (encouraging, firm, neutral, honest)
-    Teacher's prompt picker uses `mode`; Teacher's phrasing instruction
-    uses `tone`. They never get conflated.
-  * `apply_redaction` is ALWAYS False in Option C (per L43). The field
-    exists for forward-compat with Phase 6's optional Option B switch
-    but is never True today. Validation enforces this.
+Two design rules to keep in mind:
+
+  * `mode` and `tone` are orthogonal. `mode` selects WHICH prompt to
+    use (socratic, clinical, rapport, opt_in, redirect, nudge,
+    confirm_end, honest_close). `tone` shapes the emotional register
+    inside that mode (encouraging, firm, neutral, honest). They are
+    set and read independently.
+  * `apply_redaction` exists for future use and is always False
+    today. The schema validator rejects True so the change has to
+    be made explicitly when (if) the redaction strategy ships.
 """
 from __future__ import annotations
 
@@ -29,7 +23,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Any, Literal, Optional
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Locked enum values per L46 (Codex round-2 fix #3)
+# Locked enum values per ( round-2 fix #3)
 # ─────────────────────────────────────────────────────────────────────────────
 
 # `mode` selects which Teacher prompt path to render.
@@ -44,9 +38,9 @@ MODES = {
     "honest_close",            # legacy — kept for back-compat; new code uses "close"
     "reach_close",             # legacy — kept for back-compat; new code uses "close"
     "clinical_natural_close",  # legacy — kept for back-compat; new code uses "close"
-    "close",                   # M1 unified close mode — reason flag picks tone/text variant
-    "soft_reset",              # BLOCK 9 (S3) — student canceled exit modal; bridging "fresh angle" turn
-    "multichoice_rescue",      # BLOCK 11 (REAL-Q4) — 2-3 specific candidates after low_effort streak
+    "close",                   # unified close mode — reason flag picks tone/text variant
+    "soft_reset",              # — student canceled exit modal; bridging "fresh angle" turn
+    "multichoice_rescue",      # 2-3 specific candidates after low_effort streak
 }
 
 # `tone` shapes phrasing — orthogonal to mode.
@@ -54,7 +48,7 @@ TONES = {
     "encouraging",    # supportive, validating effort
     "firm",           # direct, refocusing, no soft-pedal
     "neutral",        # plain, neither warm nor stern
-    "honest",         # candid, used in honest-tone closes per L26
+    "honest",         # candid, used in honest-tone closes per
 }
 
 # Reach outcomes derivable from chunks/answer comparison
@@ -63,22 +57,21 @@ DEFAULT_SHAPE_SPEC = {
     "exactly_one_question": True,
 }
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # TurnPlan dataclass
 # ─────────────────────────────────────────────────────────────────────────────
 
 @dataclass
 class TurnPlan:
-    """Dean's per-turn instructions to Teacher. All fields per L46.
+    """Dean's per-turn instructions to Teacher. All fields per .
 
-    Construction options:
-      * `TurnPlan(...)` — direct, validated by `__post_init__`.
-      * `TurnPlan.from_llm_json(text)` — parse Dean's JSON response,
-         tolerant of markdown fences + missing optional fields.
-      * `TurnPlan.minimal_fallback(scenario, hint_text)` — emergency
-         fallback per L46 ("if 2nd parse fails, ship a minimal TurnPlan").
-    """
+ Construction options:
+ * `TurnPlan(...)` — direct, validated by `__post_init__`.
+ * `TurnPlan.from_llm_json(text)` — parse Dean's JSON response
+ tolerant of markdown fences + missing optional fields.
+ * `TurnPlan.minimal_fallback(scenario, hint_text)` — emergency
+ fallback per ("if 2nd parse fails, ship a minimal TurnPlan").
+"""
 
     # Required
     scenario: str
@@ -93,20 +86,20 @@ class TurnPlan:
     carryover_notes: str = ""
     hint_suggestions: list[str] = field(default_factory=list)
 
-    # Always False in Option C per L43 / L52
+    # Always False in Option C per /
     apply_redaction: bool = False
 
-    # Informational only — authority is the reach gate (L53)
+    # Informational only — authority is the reach gate
     student_reached_answer: bool = False
 
-    # VLM (per L77) — null for text-only sessions
+    # VLM (per ) — null for text-only sessions
     image_context: Optional[dict] = None
 
-    # Clinical phase fields (per L74) — null in tutoring phase
+    # Clinical phase fields (per ) — null in tutoring phase
     clinical_scenario: Optional[str] = None
     clinical_target: Optional[str] = None
 
-    # M6 — exploration retrieval signal. Default False = reuse lock-time
+    # — exploration retrieval signal. Default False = reuse lock-time
     # chunks (preserves prompt-cache contract). Set True when student asked
     # about an OT-related sub-aspect not in current chunks. exploration_query
     # is the focused query string Dean wants to retrieve for.
@@ -118,7 +111,7 @@ class TurnPlan:
     # call set it). Dean now signals true when the student attempted a
     # real answer that missed; nodes_v2 increments state.hint_level
     # (capped at max_hints+1, which trips the hint-exhaustion route to
-    # memory_update per M1's edges fix).
+    # memory_update per 's edges fix).
     advance_hint_level: bool = False
 
     # ── Validation ───────────────────────────────────────────────────────
@@ -136,7 +129,7 @@ class TurnPlan:
             raise ValueError(
                 f"TurnPlan.tone={self.tone!r} not in {sorted(TONES)}"
             )
-        # Option C invariant per L43 / L52
+        # Option C invariant per /
         if self.apply_redaction:
             raise ValueError(
                 "apply_redaction must be False under Option C "
@@ -167,10 +160,10 @@ class TurnPlan:
     def from_llm_json(cls, text: str) -> "TurnPlan":
         """Parse Dean's JSON response into a validated TurnPlan.
 
-        Strips markdown fences, then json.loads. Raises ValueError on
-        anything that fails validation — caller (Dean's _setup_call site)
-        catches and re-prompts with a stricter instruction per L46.
-        """
+ Strips markdown fences, then json.loads. Raises ValueError on
+ anything that fails validation — caller (Dean's _setup_call site)
+ catches and re-prompts with a stricter instruction per .
+"""
         s = (text or "").strip()
         if s.startswith("```"):
             lines = s.split("\n")
@@ -228,13 +221,13 @@ class TurnPlan:
         hint_text: str = "",
         tone: str = "neutral",
     ) -> "TurnPlan":
-        """Per L46: emergency fallback if Dean's TurnPlan parse fails twice.
+        """Per : emergency fallback if Dean's TurnPlan parse fails twice.
 
-        Ships with mode="socratic", tone="neutral", strict shape_spec
-        (max 3 sentences, exactly one question). No permitted/forbidden
-        terms (Teacher must rely on raw chunks + leak_check to avoid
-        regression).
-        """
+ Ships with mode="socratic", tone="neutral", strict shape_spec
+ (max 3 sentences, exactly one question). No permitted/forbidden
+ terms (Teacher must rely on raw chunks + leak_check to avoid
+ regression).
+"""
         return cls(
             scenario=scenario,
             hint_text=hint_text,

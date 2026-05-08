@@ -1,15 +1,14 @@
 """
 scripts/human_student_driver.py
---------------------------------
 Driver where a pre-authored list of student messages is fed to the graph turn by
 turn — no LLM student simulator. This lets a real reviewer (or the operator
 acting as the student) replay a deterministic conversation.
 
 Usage:
-    .venv/bin/python scripts/human_student_driver.py \
-        --profile S2 \
-        --script data/artifacts/human_scripts/S2_deltoid_v1.json \
-        --out data/artifacts/human_convos/
+ .venv/bin/python scripts/human_student_driver.py \
+profile \
+script \
+out data/artifacts/human_convos/
 """
 import argparse
 import asyncio
@@ -27,7 +26,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from config import cfg
 from conversation.state import initial_state
 
-
 def _rollover_turn_trace(state: dict) -> None:
     dbg = state.setdefault("debug", {})
     att = list(dbg.get("all_turn_traces", []))
@@ -41,13 +39,11 @@ def _rollover_turn_trace(state: dict) -> None:
         dbg["all_turn_traces"] = att
         dbg["turn_trace"] = []
 
-
 def _last_tutor(messages: list) -> str:
     for m in reversed(messages):
         if m.get("role") == "tutor":
             return str(m.get("content", ""))
     return ""
-
 
 async def run_conversation(script: list, profile_id: str, topic_hint: str, out_dir: Path) -> Path:
     from conversation.graph import build_graph
@@ -134,7 +130,6 @@ async def run_conversation(script: list, profile_id: str, topic_hint: str, out_d
           f"reached={export['final_state']['student_reached_answer']}")
     return out_path
 
-
 def _snap(state: dict) -> dict:
     return {
         "phase": state.get("phase"),
@@ -146,7 +141,6 @@ def _snap(state: dict) -> dict:
         "student_state": state.get("student_state"),
         "student_reached_answer": state.get("student_reached_answer"),
     }
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -163,7 +157,6 @@ def main():
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
     asyncio.run(run_conversation(script, args.profile, args.topic_hint, out_dir))
-
 
 if __name__ == "__main__":
     main()

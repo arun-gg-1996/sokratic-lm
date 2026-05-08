@@ -1,33 +1,31 @@
 """
 ingestion/core/cost_tracker.py
-------------------------------
 Per-call cost accumulator for live "$X.XX so far" readouts during long
 ingestion runs (B.6).
 
 Why this exists:
-  B.5's run_dual_task_batch emits usage dicts via a usage_callback. We need
-  to (a) accumulate those across thousands of calls, (b) translate token
-  counts into dollars at current model pricing, and (c) surface a running
-  total + extrapolated remaining cost so the operator can abort early if
-  costs trend higher than expected.
+ B.5's run_dual_task_batch emits usage dicts via a usage_callback. We need
+ to (a) accumulate those across thousands of calls, (b) translate token
+ counts into dollars at current model pricing, and (c) surface a running
+ total + extrapolated remaining cost so the operator can abort early if
+ costs trend higher than expected.
 
 Design:
-  - CostTracker is a plain object — no I/O, no global state.
-  - One tracker per model (Sonnet for propositions, Haiku for summaries
-    later, OpenAI embeddings for the dense index). They compose via
-    MultiTracker for an aggregate report.
-  - PRICING is a pure data table; updates are a one-line edit when
-    Anthropic / OpenAI publish new rates.
+CostTracker is a plain object — no I/O, no global state.
+One tracker per model (Sonnet for propositions, Haiku for summaries
+ later, OpenAI embeddings for the dense index). They compose via
+ MultiTracker for an aggregate report.
+PRICING is a pure data table; updates are a one-line edit when
+ Anthropic / OpenAI publish new rates.
 
 Pricing rates (USD per 1M tokens) verified against published rate cards
-on 2026-04-28. cache_creation is 1.25x base input; cache_read is 0.10x.
+on . cache_creation is 1.25x base input; cache_read is 0.10x.
 Update PRICING when models change.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Iterable
-
 
 # ── Pricing tables ──────────────────────────────────────────────────────────
 
@@ -65,12 +63,11 @@ PRICING_OPENAI_EMBED: dict[str, float] = {
     "text-embedding-3-small": 0.02,
 }
 
-
 def get_pricing(model: str) -> dict[str, float]:
     """Look up pricing for a model. Raises KeyError if unknown.
 
-    Caller should map model id to one of the keys in PRICING_ANTHROPIC.
-    """
+ Caller should map model id to one of the keys in PRICING_ANTHROPIC.
+"""
     if model not in PRICING_ANTHROPIC:
         raise KeyError(
             f"unknown model {model!r}; pricing table has: "
@@ -78,20 +75,19 @@ def get_pricing(model: str) -> dict[str, float]:
         )
     return PRICING_ANTHROPIC[model]
 
-
 # ── Anthropic message-call tracker ──────────────────────────────────────────
 
 @dataclass
 class CostTracker:
     """
-    Accumulates token usage and dollar cost for one Anthropic model.
+ Accumulates token usage and dollar cost for one Anthropic model.
 
-    Usage:
-        tracker = CostTracker(model="claude-sonnet-4-5")
-        await run_dual_task_batch(chunks, usage_callback=tracker.record)
-        print(tracker.summary())
-        print(f"projected total: ${tracker.estimated_total(2766):.2f}")
-    """
+ Usage:
+ tracker = CostTracker(model="claude-sonnet-4-5")
+ await run_dual_task_batch(chunks, usage_callback=tracker.record)
+ print(tracker.summary)
+ print(f"projected total: ${tracker.estimated_total(2766):.2f}")
+"""
     model: str = "claude-haiku-4-5"
     pricing: dict[str, float] = field(default_factory=dict)
 
@@ -110,10 +106,10 @@ class CostTracker:
     def record(self, usage: dict) -> float:
         """Add one call's usage. Returns the dollar cost of this single call.
 
-        Robust to missing fields; defaults to 0. Callable directly as a
-        usage_callback because the signature matches what extract_dual_task
-        passes (a dict with the four token fields).
-        """
+ Robust to missing fields; defaults to 0. Callable directly as a
+ usage_callback because the signature matches what extract_dual_task
+ passes (a dict with the four token fields).
+"""
         in_tok = int(usage.get("input_tokens", 0) or 0)
         out_tok = int(usage.get("output_tokens", 0) or 0)
         cw_tok = int(usage.get("cache_creation_input_tokens", 0) or 0)
@@ -155,8 +151,8 @@ class CostTracker:
     def cache_hit_rate(self) -> float:
         """Fraction of cacheable input that came from cache (0.0 - 1.0).
 
-        cache_read / (cache_read + cache_creation). Returns 0.0 if neither
-        field has any tokens (cache wasn't activated)."""
+ cache_read / (cache_read + cache_creation). Returns 0.0 if neither
+ field has any tokens (cache wasn't activated)."""
         denom = self.cache_read_input_tokens + self.cache_creation_input_tokens
         if denom == 0:
             return 0.0
@@ -165,9 +161,9 @@ class CostTracker:
     def estimated_total(self, total_calls: int) -> float:
         """Extrapolate total cost given the average cost per call so far.
 
-        Useful for "we're 200/2766 chunks in; projected total cost: $X".
-        Returns 0 if no calls recorded yet (can't extrapolate from zero).
-        """
+ Useful for "we're 200/2766 chunks in; projected total cost: $X".
+ Returns 0 if no calls recorded yet (can't extrapolate from zero).
+"""
         if self.call_count == 0:
             return 0.0
         return self.avg_cost_per_call * total_calls
@@ -199,15 +195,14 @@ class CostTracker:
         ]
         return "\n".join(lines)
 
-
 # ── OpenAI embedding tracker ────────────────────────────────────────────────
 
 @dataclass
 class EmbeddingCostTracker:
     """
-    Accumulates token usage and cost for an OpenAI embedding model.
-    Simpler than CostTracker because embedding has just one rate.
-    """
+ Accumulates token usage and cost for an OpenAI embedding model.
+ Simpler than CostTracker because embedding has just one rate.
+"""
     model: str = "text-embedding-3-large"
     rate_per_million: float = 0.0
     total_tokens: int = 0
@@ -239,13 +234,12 @@ class EmbeddingCostTracker:
             f"  total cost:   ${self.total_cost:.4f}"
         )
 
-
 # ── Aggregator across multiple trackers ─────────────────────────────────────
 
 @dataclass
 class MultiTracker:
     """Sum costs across several trackers (Sonnet propositions + maybe Haiku
-    summaries + OpenAI embeddings) for a single end-of-run total."""
+ summaries + OpenAI embeddings) for a single end-of-run total."""
     trackers: list = field(default_factory=list)
 
     def add(self, tracker) -> None:
@@ -260,7 +254,6 @@ class MultiTracker:
         sections.append(f"\nGRAND TOTAL: ${self.total_cost:.4f}")
         return "\n\n".join(sections)
 
-
 # ── Convenience helpers ─────────────────────────────────────────────────────
 
 def make_progress_printer(
@@ -268,18 +261,18 @@ def make_progress_printer(
     print_every: int = 10,
 ):
     """Return a (done, total) callback that prints `tracker.progress_line`
-    every `print_every` calls (and always at the very end).
+ every `print_every` calls (and always at the very end).
 
-    Wire as: progress_callback=make_progress_printer(tracker, print_every=20)
-    on run_dual_task_batch.
-    """
+ Wire as: progress_callback=make_progress_printer(tracker, print_every=20)
+ on run_dual_task_batch.
+"""
 
     def _cb(done: int, total: int) -> None:
         if done == total or done % print_every == 0:
             # flush=True so live cost ticks reach the operator's terminal /
             # log file immediately. Without it, Python block-buffers stdout
             # when piped through `tee`, hiding cost progression for minutes
-            # (the bug behind the B.9 invisible $13 runaway on 2026-04-28).
+            # (the bug behind the B.9 invisible $13 runaway on ).
             print(tracker.progress_line(done, total), flush=True)
 
     return _cb

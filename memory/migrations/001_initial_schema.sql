@@ -1,10 +1,7 @@
 -- ────────────────────────────────────────────────────────────────────────────
 -- 001_initial_schema.sql
 --
--- Initial SQLite schema for the post-paper data layer split (per
--- docs/AUDIT_2026-05-02.md L1, L2, L21).
---
--- Three tables:
+-- Initial SQLite schema. Three tables:
 --   students            — user identity (one row per student)
 --   sessions            — per-conversation metadata (one row per thread)
 --   subsection_mastery  — per-(student, subsection) EWMA mastery score
@@ -14,8 +11,8 @@
 --     native datetime; storing as ISO strings keeps queries portable and
 --     human-readable. Use datetime.utcnow().isoformat() at write time.
 --   * BOOLEAN is stored as INTEGER (0/1) per SQLite convention.
---   * subsection_path uses the canonical "Chapter N > Section > Subsection"
---     format documented in L4 (terminology fixed by Codex round-1 #4).
+--   * subsection_path uses the canonical
+--     "Chapter N > Section > Subsection" format.
 --   * Foreign keys are enforced; PRAGMA foreign_keys=ON is set on every
 --     connection by SQLiteStore.connect().
 -- ────────────────────────────────────────────────────────────────────────────
@@ -32,7 +29,7 @@ CREATE TABLE IF NOT EXISTS students (
 );
 
 -- ────────────────────────────────────────────────────────────────────────────
--- sessions — one row per chat thread. Inserted at rapport_node entry per L21
+-- sessions — one row per chat thread. Inserted at rapport_node entry
 -- with status='in_progress', updated at memory_update_node with the final
 -- status + outcomes.
 -- ────────────────────────────────────────────────────────────────────────────
@@ -47,7 +44,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     locked_answer            TEXT,
     full_answer              TEXT,
     reach_status             INTEGER,                         -- 0 / 1 / NULL
-    -- Mastery tier breakdown per L68/L69 (Codex round-1 fix #3)
+    -- Mastery tier breakdown
     mastery_tier             TEXT,                            -- proficient / developing / needs_review / not_assessed
     core_mastery_tier        TEXT,                            -- tutoring outcome (same enum)
     clinical_mastery_tier    TEXT,                            -- clinical outcome ("not_assessed" if opted out)
@@ -60,7 +57,7 @@ CREATE TABLE IF NOT EXISTS sessions (
                                      -- ended_by_student / ended_turn_limit / abandoned_no_lock
     key_takeaways            TEXT,                            -- JSON: {what_demonstrated, what_needs_work}
     message_log_path         TEXT,                            -- e.g. data/student_state/sessions/{thread_id}.json
-    image_path               TEXT,                            -- VLM input image path (per L77), NULL if none
+    image_path               TEXT,                            -- VLM input image path, NULL if none
     image_context            TEXT                             -- JSON: VLM output (identified_structures, etc.)
 );
 

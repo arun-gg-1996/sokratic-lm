@@ -4,7 +4,7 @@ tests/test_sqlite_session_paths.py
 M-T1 Tier 1 (SQL side) — Unit tests for SQLiteStore session-row
 lifecycle and subsection_mastery EWMA writes.
 
-Per POST_DEMO_FIXES.md M-T1, asserts:
+Per M-T1, asserts:
 
   Session lifecycle:
     - start_session creates row with status=in_progress, started_at set
@@ -33,9 +33,7 @@ import pytest
 
 from memory.sqlite_store import SQLiteStore, SESSION_STATUSES
 
-
 # ─── Fixtures ──────────────────────────────────────────────────
-
 
 @pytest.fixture
 def store(tmp_path):
@@ -47,13 +45,10 @@ def store(tmp_path):
     s.ensure_student("bob")
     return s
 
-
 SUBSECTION_A = "Chapter 21 > B-lymphocytes > B Cell Differentiation"
 SUBSECTION_B = "Chapter 22 > Respiratory > Respiratory Zone"
 
-
 # ─── Session lifecycle ────────────────────────────────────────
-
 
 def test_start_session_creates_in_progress_row(store):
     row = store.start_session("t1", "alice")
@@ -65,7 +60,6 @@ def test_start_session_creates_in_progress_row(store):
     assert row["ended_at"] is None
     assert row["locked_subsection_path"] is None  # not yet locked
 
-
 def test_end_session_terminates_with_status_and_timestamp(store):
     store.start_session("t1", "alice")
     out = store.end_session("t1", status="completed")
@@ -73,12 +67,10 @@ def test_end_session_terminates_with_status_and_timestamp(store):
     assert out["ended_at"] is not None
     assert out["thread_id"] == "t1"
 
-
 def test_end_session_rejects_invalid_status(store):
     store.start_session("t1", "alice")
     with pytest.raises(ValueError):
         store.end_session("t1", status="invented_status")
-
 
 def test_status_none_rejected(store):
     """status is NOT NULL in schema — passing None must raise."""
@@ -86,18 +78,15 @@ def test_status_none_rejected(store):
     with pytest.raises(ValueError):
         store.update_session("t1", status=None)
 
-
 def test_update_session_whitelist_rejects_unknown_columns(store):
     store.start_session("t1", "alice")
     with pytest.raises(ValueError):
         store.update_session("t1", invented_field="foo")
 
-
 # ─── F9 verification — locked_subsection_path on no-save closes ────
 
-
 def test_no_save_close_persists_locked_subsection_path(store):
-    """F9 (POST_DEMO_FIXES.md): a no-save close (e.g. exit_intent
+    """F9 (): a no-save close (e.g. exit_intent
     while a topic was locked) must still record the locked_subsection_path
     so the analysis page can find the session under the subsection.
 
@@ -123,9 +112,8 @@ def test_no_save_close_persists_locked_subsection_path(store):
     assert isinstance(row["key_takeaways"], dict)
     assert row["key_takeaways"]["close_reason"] == "exit_intent"
 
-
 def test_off_domain_strike_close_uses_correct_status(store):
-    """F1 (POST_DEMO_FIXES.md): off-topic 4-strike close should map
+    """F1 (): off-topic 4-strike close should map
     to status=ended_off_domain in SQLite."""
     store.start_session("t1", "alice")
     store.end_session(
@@ -138,9 +126,8 @@ def test_off_domain_strike_close_uses_correct_status(store):
     assert row["status"] == "ended_off_domain"
     assert row["locked_subsection_path"] == SUBSECTION_B
 
-
 def test_save_bucket_close_with_clinical_correct(store):
-    """F4 (POST_DEMO_FIXES.md): a clinical_completed + clinical_state=correct
+    """F4 (): a clinical_completed + clinical_state=correct
     session must persist clinical_mastery_tier!='not_assessed' and a
     non-null clinical_score. This is what the lifecycle_v2 caller
     populates after the F4 derivation fix."""
@@ -163,7 +150,6 @@ def test_save_bucket_close_with_clinical_correct(store):
     assert row["clinical_score"] == 0.85
     assert row["clinical_mastery_tier"] != "not_assessed"
 
-
 def test_save_bucket_close_with_clinical_skipped(store):
     """When student opts out of clinical (reach_skipped), clinical
     fields should still be not_assessed / None — only when clinical
@@ -183,7 +169,6 @@ def test_save_bucket_close_with_clinical_skipped(store):
     row = store.get_session("t1")
     assert row["clinical_mastery_tier"] == "not_assessed"
     assert row["clinical_score"] is None
-
 
 def test_save_bucket_close_persists_full_metadata(store):
     """Save-bucket close (reach_full): full mastery score + key_takeaways
@@ -219,9 +204,8 @@ def test_save_bucket_close_persists_full_metadata(store):
     assert row["clinical_mastery_tier"] == "developing"
     assert row["key_takeaways"]["demonstrated"] == "cross-bridge mechanics"
 
-
 def test_session_status_enum_complete(store):
-    """All valid status values per L21 schema."""
+    """All valid status values schema."""
     expected = {
         "in_progress",
         "completed",
@@ -232,9 +216,7 @@ def test_session_status_enum_complete(store):
     }
     assert SESSION_STATUSES == expected
 
-
 # ─── EWMA mastery (F14 verification) ───────────────────────────
-
 
 def test_ewma_first_touch_stores_fresh_score(store):
     """First attempt on a subsection: ewma_score = fresh_score
@@ -246,7 +228,6 @@ def test_ewma_first_touch_stores_fresh_score(store):
     assert out["ewma_score"] == 0.4
     assert out["attempt_count"] == 1
     assert out["last_outcome"] == "not_reached"
-
 
 def test_ewma_repeat_blend_uses_alpha_0_7(store):
     """F14: alpha=0.7 default. new = 0.7 * fresh + 0.3 * prior."""
@@ -261,7 +242,6 @@ def test_ewma_repeat_blend_uses_alpha_0_7(store):
     assert out["attempt_count"] == 2
     assert out["last_outcome"] == "reached"
 
-
 def test_ewma_explicit_alpha_overrides_default(store):
     """Caller can override alpha (e.g., test code or future tuning)."""
     store.upsert_subsection_mastery(
@@ -274,13 +254,11 @@ def test_ewma_explicit_alpha_overrides_default(store):
     expected = 0.5 * 0.9 + 0.5 * 0.4  # = 0.65
     assert math.isclose(out["ewma_score"], expected, abs_tol=1e-9)
 
-
 def test_ewma_invalid_outcome_rejected(store):
     with pytest.raises(ValueError):
         store.upsert_subsection_mastery(
             "alice", SUBSECTION_A, fresh_score=0.4, outcome="garbage",
         )
-
 
 def test_ewma_independent_per_student_subsection(store):
     """Two students × two subsections = four independent EWMA rows.
@@ -302,9 +280,7 @@ def test_ewma_independent_per_student_subsection(store):
     for row in (a_a, a_b, b_a, b_b):
         assert row["attempt_count"] == 1
 
-
 # ─── list_sessions filtering (M5 + F11 helpers) ────────────────
-
 
 def test_list_sessions_filter_by_subsection_path(store):
     """list_sessions(subsection_path=...) filters the M5 inline list +
@@ -329,7 +305,6 @@ def test_list_sessions_filter_by_subsection_path(store):
     b_sessions = store.list_sessions("alice", subsection_path=SUBSECTION_B)
     assert len(b_sessions) == 1
     assert b_sessions[0]["locked_question"] == "Q3"
-
 
 def test_list_sessions_completed_only(store):
     store.start_session("t1", "alice")  # in_progress

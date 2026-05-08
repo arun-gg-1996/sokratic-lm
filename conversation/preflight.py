@@ -1,40 +1,20 @@
 """
-conversation/preflight.py
-─────────────────────────
-Pre-flight Haiku layer per L44 + L45 + L55 + L56 + L58 (Track 4.3).
+Cheap Haiku classifiers that run before the Dean's Sonnet planner.
 
-Three cheap Haiku checks fire in parallel BEFORE Dean's Sonnet planner.
-If any catches the turn, Dean is SKIPPED and Teacher writes a redirect /
-nudge / confirm message via the standard TurnPlan contract.
+Three checks fire in parallel on each student message:
 
-  haiku_help_abuse   — L55: catches "just tell me", "idk" stalling
-  haiku_off_domain   — L56: full off-domain (#1 — chitchat / jailbreak)
-                       (REUSES existing classifiers.haiku_off_domain_check)
-  haiku_deflection   — L58: catches session-end requests
-                       ("let's stop", "I'm done", "can we wrap up?")
+  haiku_help_abuse   — "just tell me", "idk", repeated stalling
+  haiku_off_domain   — chit-chat / jailbreak attempts
+  haiku_deflection   — explicit session-end requests
 
-Cost: ~$0.0003 / turn (3× Haiku) vs ~$0.038 / turn for full Dean Sonnet
-when pre-flight skip applies. Median session has ~30% turns where one
-pre-flight fires (per Nidhi's eval), saving ~$0.012 / session.
+If any check fires the Dean is skipped and the Teacher writes a short
+redirect via the standard TurnPlan path, saving roughly $0.038 of
+Sonnet cost on that turn.
 
-Counters per L55 / L56 / L58:
-  * help_abuse_count    — strike-based; at strike 4 → force hint advance
-  * off_topic_count     — strike-based; at strike 4 → graceful end
-  * deflection         — NO counter; each detection independently confirmed
-
-Public entry point:
-  run_preflight(state, student_message, *, client) → PreflightResult
-
-PreflightResult.fired tells the caller whether to skip Dean. The
-result also carries (a) which check fired (b) the updated counters
-(c) a "should_force_hint_advance" flag (per L55 strike-4 logic) and
-(d) a "should_end_session" flag (per L56 strike-4 logic).
-
-This module is the WIRING. The actual Haiku calls live in
-classifiers.py (haiku_off_domain_check exists today; help_abuse and
-deflection are added below as dedicated functions but follow the same
-pattern as the existing classifiers — single-shot, cached system block,
-strict JSON, evidence-quote validation).
+Public entry point: `run_preflight(state, student_message, *, client)`
+returning a `PreflightResult` whose `.fired` tells the caller whether
+to skip the Dean. Counters (`help_abuse_count`, `off_topic_count`)
+trigger a forced hint advance or graceful end at strike 4.
 """
 from __future__ import annotations
 
@@ -46,13 +26,12 @@ from typing import Any, Literal, Optional
 from conversation import classifiers as C
 from conversation.preflight_classifier import haiku_intent_classify_unified
 
-# Strike thresholds per L55 / L56
+# Strike thresholds /
 HELP_ABUSE_HINT_ADVANCE_STRIKE = 4    # at strike 4 → force hint_level += 1
 OFF_TOPIC_END_SESSION_STRIKE = 4      # at strike 4 → graceful end
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# NEW classifier — haiku_help_abuse (L55)
+# NEW classifier — haiku_help_abuse
 # ─────────────────────────────────────────────────────────────────────────────
 
 _HELP_ABUSE_SYSTEM = """\
@@ -73,10 +52,40 @@ HELP-ABUSE patterns (verdict="help_abuse"):
 NOT help-abuse (verdict="legitimate_engagement"):
   * Partial answers: "is it the heart?", "maybe the SA node?", even
     if wrong
-  * Asking for clarification: "what do you mean by impulse?",
-    "rephrase the question?"
+  * Asking for clarification of a single term: "what do you mean by
+    impulse?", "rephrase the question?"
   * Hedging while reasoning: "i think it might be... not sure"
   * Asking about adjacent concepts: "what about the AV node?"
+  * Scaffolding requests — asking for background context the student
+    needs to engage with the question. The disambiguating signal is
+    forward-engagement: phrases like "so I can answer", "to help me
+    think", "then I'll try", "that will help me reason about it".
+    A genuine scaffolding request points TOWARD attempting the
+    question, not away from it.
+      Examples (all NOT help-abuse):
+        - "first tell me about the TMJ generally, that will help me answer"
+        - "can you give me a quick overview of cartilage? then I'll take
+           a shot"
+        - "what's the structure of the kidney before we get into
+           filtration? I think it'll click after that"
+        - "remind me what the SA node does, then I can compare it to
+           the AV node"
+      These are LEGITIMATE — the student is building the conceptual
+      scaffold needed to engage. Compare to the help-abuse shape of
+      the same surface request, which LACKS the forward-engagement
+      clause:
+        - "just explain the TMJ to me"           → help_abuse
+        - "give me an overview of cartilage"     → help_abuse (no follow-up)
+        - "I don't want to guess, just tell me   → help_abuse
+           about the kidney"
+
+  KEY HEURISTIC: when a "tell me about X" request appears, look for an
+  intent clause that connects the requested context to a future
+  attempt. If present → legitimate scaffolding. If absent and the
+  student has been stalling → help_abuse. When in doubt, lean toward
+  legitimate_engagement — false-firing on a real scaffolding request
+  trains the student to stop asking for context, which is worse than
+  occasionally answering a help-abuse turn with a redirect.
 
 Output STRICT JSON only — no markdown, no preamble:
 {
@@ -86,28 +95,26 @@ Output STRICT JSON only — no markdown, no preamble:
 }
 """
 
-
 _HELP_ABUSE_USER_TEMPLATE = """\
 STUDENT MESSAGE:
 {message}
 """
 
-
 def haiku_help_abuse_check(student_message: str) -> dict:
-    """L55 — single Haiku call detecting help-abuse patterns.
+    """single Haiku call detecting help-abuse patterns.
 
-    Returns dict (legacy verdict-string shape, normalize via
-    classifiers.to_universal_check_result if needed):
-      verdict:    "help_abuse" | "legitimate_engagement"
-      evidence:   verbatim substring (empty if legitimate)
-      rationale:  1-sentence explanation
-      _elapsed_s: wall time
-      _raw:       raw response (debug)
-      _error:     "parse_fail" | "evidence_invalid" | "" (empty on success)
+ Returns dict (legacy verdict-string shape, normalize via
+ classifiers.to_universal_check_result if needed):
+ verdict: "help_abuse" | "legitimate_engagement"
+ evidence: verbatim substring (empty if legitimate)
+ rationale: 1-sentence explanation
+ _elapsed_s: wall time
+ _raw: raw response (debug)
+ _error: "parse_fail" | "evidence_invalid" | "" (empty on success)
 
-    Safe defaults on error: verdict="legitimate_engagement" (don't
-    false-fire — would block legit engagement).
-    """
+ Safe defaults on error: verdict="legitimate_engagement" (don't
+ false-fire — would block legit engagement).
+"""
     t0 = time.time()
     if not student_message or not student_message.strip():
         return {
@@ -152,9 +159,8 @@ def haiku_help_abuse_check(student_message: str) -> dict:
         "_error": error,
     }
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# NEW classifier — haiku_deflection (L58)
+# NEW classifier — haiku_deflection
 # ─────────────────────────────────────────────────────────────────────────────
 
 _DEFLECTION_SYSTEM = """\
@@ -214,24 +220,22 @@ Output STRICT JSON only — no markdown, no preamble:
 }
 """
 
-
 _DEFLECTION_USER_TEMPLATE = """\
 STUDENT MESSAGE:
 {message}
 """
 
-
 def haiku_deflection_check(student_message: str) -> dict:
-    """L58 — single Haiku call detecting session-end signals.
+    """single Haiku call detecting session-end signals.
 
-    Returns dict (legacy verdict-string shape):
-      verdict:    "deflection" | "continuing"
-      evidence:   verbatim substring (empty if continuing)
-      rationale:  1-sentence explanation
-      _elapsed_s, _raw, _error: same diagnostics as other checks
+ Returns dict (legacy verdict-string shape):
+ verdict: "deflection" | "continuing"
+ evidence: verbatim substring (empty if continuing)
+ rationale: 1-sentence explanation
+ _elapsed_s, _raw, _error: same diagnostics as other checks
 
-    Safe defaults on error: verdict="continuing".
-    """
+ Safe defaults on error: verdict="continuing".
+"""
     t0 = time.time()
     if not student_message or not student_message.strip():
         return {
@@ -275,11 +279,9 @@ def haiku_deflection_check(student_message: str) -> dict:
         "_error": error,
     }
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# Pre-flight orchestrator (L44 + L55 + L56 + L58)
+# Pre-flight orchestrator ( + + + )
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 PreflightCategory = Literal[
     "none",                # all 3 checks passed → Dean runs
@@ -288,19 +290,18 @@ PreflightCategory = Literal[
     "deflection",          # → Teacher writes confirm message + UI button
 ]
 
-
 @dataclass
 class PreflightResult:
     """Outcome of running the 3 parallel checks + counter logic.
 
-    `fired` is the canonical signal — if True, caller skips Dean and
-    drives Teacher with the suggested mode/tone. If False, all 3 checks
-    passed and Dean runs normally.
+ `fired` is the canonical signal — if True, caller skips Dean and
+ drives Teacher with the suggested mode/tone. If False, all 3 checks
+ passed and Dean runs normally.
 
-    Counter updates are NOT applied to state by this class — caller
-    persists `new_help_abuse_count` / `new_off_topic_count` back into
-    state. Keeps this orchestrator pure / easy to test.
-    """
+ Counter updates are NOT applied to state by this class — caller
+ persists `new_help_abuse_count` / `new_off_topic_count` back into
+ state. Keeps this orchestrator pure / easy to test.
+"""
     fired: bool
     category: PreflightCategory
     evidence: str = ""
@@ -314,9 +315,9 @@ class PreflightResult:
     suggested_mode: str = ""           # "redirect" | "nudge" | "confirm_end"
     suggested_tone: str = "neutral"    # "neutral" → "firm" → "honest" with strikes
 
-    # Strike-driven actions per L55 / L56
-    should_force_hint_advance: bool = False  # L55: at help_abuse strike 4
-    should_end_session: bool = False         # L56: at off_topic strike 4
+    # Strike-driven actions /
+    should_force_hint_advance: bool = False  # : at help_abuse strike 4
+    should_end_session: bool = False         # : at off_topic strike 4
 
     # Per-check raw results for trace
     checks: dict = field(default_factory=dict)
@@ -324,11 +325,10 @@ class PreflightResult:
     # Wall-clock for the whole pre-flight
     elapsed_s: float = 0.0
 
-
 def _select_tone_for_strike(category: PreflightCategory, strike: int) -> str:
-    """Per L56 / L55: tone escalates with strike count.
-    strike 1 = neutral, strike 2 = firm, strike 3 = firm, strike 4 = honest (terminal).
-    Help-abuse uses neutral throughout (the hint advance does the work)."""
+    """Per: tone escalates with strike count.
+ strike 1 = neutral, strike 2 = firm, strike 3 = firm, strike 4 = honest (terminal).
+ Help-abuse uses neutral throughout (the hint advance does the work)."""
     if category == "deflection":
         return "neutral"
     if category == "help_abuse":
@@ -341,7 +341,6 @@ def _select_tone_for_strike(category: PreflightCategory, strike: int) -> str:
         return "neutral"
     return "neutral"
 
-
 def run_preflight(
     state: dict,
     student_message: str,
@@ -349,16 +348,16 @@ def run_preflight(
     locked_topic: Optional[dict] = None,
     parallel: bool = True,
 ) -> PreflightResult:
-    """M7 — single Haiku unified intent classifier (replaces 3 separate
-    Haiku calls). Sees locked_topic + last 2 turn pairs + phase so it
-    can disambiguate context-dependent words ("yes"/"no"/topic mentions).
+    """single Haiku unified intent classifier (replaces 3 separate
+ Haiku calls). Sees locked_topic + last 2 turn pairs + phase so it
+ can disambiguate context-dependent words ("yes"/"no"/topic mentions).
 
-    Strike counters decay on on_topic_engaged turns to prevent a single
-    misclassification 10 turns ago from killing a session at strike 4.
+ Strike counters decay on on_topic_engaged turns to prevent a single
+ misclassification 10 turns ago from killing a session at strike 4.
 
-    The `parallel` kwarg is kept for backward compat but ignored (single
-    call now).
-    """
+ The `parallel` kwarg is kept for backward compat but ignored (single
+ call now).
+"""
     _ = parallel  # kept for backwards compat
     t0 = time.time()
     help_count = int(state.get("help_abuse_count") or 0)
@@ -391,7 +390,7 @@ def run_preflight(
             cur_tutor = ""
     history_pairs = history_pairs[-2:]
 
-    # BLOCK 14 (S4) — deterministic rapport-decline shortcut.
+    # — deterministic rapport-decline shortcut.
     # When phase=rapport AND message clearly declines the session
     # (NOT just declining one topic), short-circuit directly to close.
     # No modal — student hasn't invested any progress to confirm-exit
@@ -445,12 +444,21 @@ def run_preflight(
                 elapsed_s=round(time.time() - t0, 3),
             )
 
+    # Pass the domain name so the classifier knows the subject boundary
+    # (e.g. "human anatomy"). Without it the off_domain category has no
+    # explicit reference point and Haiku has to infer it from the locked
+    # subsection alone — which fails on clearly off-topic prompts like
+    # "what's the weather like?" because there's no context for what
+    # IS the subject.
+    from config import cfg as _cfg
+    domain_name = str(getattr(_cfg.domain, "name", "") or "")
     result = haiku_intent_classify_unified(
         student_message,
         history_pairs=history_pairs,
         locked_subsection=locked_subsection,
         locked_question=str(state.get("locked_question") or ""),
         phase=str(state.get("phase") or "tutoring"),
+        domain_name=domain_name,
     )
     verdict = str(result.get("verdict", "on_topic_engaged"))
     elapsed = round(time.time() - t0, 3)
@@ -480,7 +488,7 @@ def run_preflight(
     if verdict == "off_domain":
         new_off = off_count + 1
         end_session = new_off >= OFF_TOPIC_END_SESSION_STRIKE
-        # F6 (POST_DEMO_FIXES.md, 2026-05-06): bump non-resetting
+        # bump non-resetting
         # diagnostic counter. Legacy dean.run_turn (v1) wrote this; v2
         # never invokes that path so the counter was dead. Wire it here
         # alongside the consecutive-strike counter so debug payloads +
@@ -503,12 +511,12 @@ def run_preflight(
     if verdict == "help_abuse":
         new_help = help_count + 1
         force_hint = new_help >= HELP_ABUSE_HINT_ADVANCE_STRIKE
-        # F6 (POST_DEMO_FIXES.md, 2026-05-06): bump non-resetting
+        # bump non-resetting
         # diagnostic counter so help_abuse activity stays visible in
         # the debug payload even after consecutive `help_abuse_count`
         # resets on engagement.
         state["total_help_abuse_turns"] = int(state.get("total_help_abuse_turns", 0) or 0) + 1
-        # 2026-05-05: when threshold fires, reset the counter so the student
+        # : when threshold fires, reset the counter so the student
         # gets a fresh warning chain before the NEXT hint-advance. Without
         # this, every strike past 4 immediately re-fires force_hint_advance
         # — burning the student's 3-hint allotment in 3 consecutive strikes
@@ -531,15 +539,15 @@ def run_preflight(
             elapsed_s=elapsed,
         )
 
-    # BLOCK 6 (S1) — low_effort: passive non-engagement ("idk", "i don't
-    # know"). Increment consecutive_low_effort_count so Dean (BLOCK 7)
+    # — low_effort: passive non-engagement ("idk", "i don't
+    # know"). Increment consecutive_low_effort_count so Dean
     # can escalate strategy after the 2nd-3rd in a row. NOT firing
     # preflight intervention itself — Dean still plans normally but with
     # awareness of the streak.
     if verdict == "low_effort":
         prev_streak = int(state.get("consecutive_low_effort_count", 0) or 0)
         state["consecutive_low_effort_count"] = prev_streak + 1
-        # F6 (POST_DEMO_FIXES.md, 2026-05-06): bump non-resetting
+        # bump non-resetting
         # diagnostic counter (see off_domain branch above for context).
         state["total_low_effort_turns"] = int(state.get("total_low_effort_turns", 0) or 0) + 1
         return PreflightResult(
@@ -553,17 +561,41 @@ def run_preflight(
             elapsed_s=elapsed,
         )
 
-    # on_topic_engaged or opt_in_* in preflight context — let Dean handle.
-    # M7 strike decay: on engagement, decrement off_topic_count (max 0)
+    # exploration: student is asking for context (in-topic scaffolding
+    # OR adjacent concept) to help engage with the locked question.
+    # Treated as engagement — preflight doesn't fire, doesn't increment
+    # abuse counters, doesn't force a hint advance. The Dean's
+    # planning step receives the verdict via category="exploration"
+    # and decides whether to (a) reuse existing chunks for in-topic
+    # scaffolding, or (b) set needs_exploration=true on the TurnPlan
+    # to fetch additional chunks for an adjacent concept. Either way,
+    # the Teacher gets the chance to lead the next reply with brief
+    # grounded context before its Socratic question.
+    if verdict == "exploration":
+        new_off = max(0, off_count - 1)  # decay off_topic on engagement
+        state["consecutive_low_effort_count"] = 0
+        return PreflightResult(
+            fired=False,
+            category="exploration",
+            evidence=result.get("evidence", ""),
+            rationale=result.get("rationale", ""),
+            new_help_abuse_count=0,        # reset on engagement
+            new_off_topic_count=new_off,
+            checks=checks,
+            elapsed_s=elapsed,
+        )
+
+    # on_topic_engaged or opt_in_* — let Dean handle normally.
+    # strike decay: on engagement, decrement off_topic_count (max 0)
     # so a single old misclassification doesn't accumulate to strike 4.
-    # BLOCK 6: also reset consecutive_low_effort_count on real engagement.
+    # also reset consecutive_low_effort_count on real engagement.
     new_off = max(0, off_count - 1)
     state["consecutive_low_effort_count"] = 0
     return PreflightResult(
         fired=False,
         category=verdict if verdict in {"on_topic_engaged", "opt_in_yes", "opt_in_no", "opt_in_ambiguous"} else "none",
-        new_help_abuse_count=0,        # reset (existing L55 behavior)
-        new_off_topic_count=new_off,   # M7 decay
+        new_help_abuse_count=0,        # reset (existing behavior)
+        new_off_topic_count=new_off,   # decay
         checks=checks,
         elapsed_s=elapsed,
     )

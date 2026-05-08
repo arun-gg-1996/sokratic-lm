@@ -15,7 +15,7 @@
  *     No auto-send. Hidden when SpeechRecognition isn't available.
  *
  * Send button shares the same disabled treatment so they read as one
- * unit. 100ms transition on background color per L80.e.
+ * unit. 100ms transition on background color .e.
  */
 import { FormEvent, KeyboardEvent, useRef, useState } from "react";
 import { useSessionStore } from "../../stores/sessionStore";
@@ -37,7 +37,18 @@ function helperFor(
   isWaiting: boolean,
   isStreaming: boolean,
   pendingKind: string | undefined,
+  connection: string,
+  hasTutorMessage: boolean,
 ): string | null {
+  // Connection takes priority — if the websocket isn't open the user
+  // can't send anything regardless of other state.
+  if (connection === "connecting") return "Connecting to tutor…";
+  if (connection === "reconnecting") return "Reconnecting…";
+  if (connection === "lost") return "Connection lost — refresh to retry.";
+  // Even after WS connects there's a brief gap before the rapport
+  // greeting lands. Block the input until at least one tutor message
+  // exists so the student can't type into a dead room.
+  if (!hasTutorMessage) return "Tutor is opening the session…";
   if (isWaiting || isStreaming) return "Tutor is responding…";
   switch (pendingKind) {
     case "opt_in":
@@ -67,12 +78,25 @@ export function Composer({ onSubmit, placeholder = "Reply..." }: ComposerProps) 
   // before the tutor finished landing.
   const isAnyTutorStreaming = messages.some((m) => m.role === "tutor" && m.shouldStream);
   const isStreamingNow = isAnyTutorStreaming || streamingTutorContent.length > 0;
+  const connection = useSessionStore((s) => s.connection);
+  const hasTutorMessage = messages.some((m) => m.role === "tutor");
   const stt = useSTT();
-  const helper = helperFor(isWaiting, isStreamingNow, pendingChoice?.kind);
+  const helper = helperFor(
+    isWaiting, isStreamingNow, pendingChoice?.kind,
+    connection, hasTutorMessage,
+  );
   // ChatView already hides the Composer entirely when pendingChoice is
   // set, so the most common disabled path is "tutor is streaming".
   // M1 — once session is ended, hard-disable input. Banner above explains why.
-  const disabled = isWaiting || sessionEnded || isAnyTutorStreaming || streamingTutorContent.length > 0;
+  // Also disable while the WS isn't connected and during the gap
+  // between WS-open and the first tutor message landing — the input
+  // shouldn't look interactive when the chat hasn't actually started.
+  const connectionBlocked = connection !== "connected";
+  const disabled = (
+    isWaiting || sessionEnded || isAnyTutorStreaming
+    || streamingTutorContent.length > 0
+    || connectionBlocked || !hasTutorMessage
+  );
   const showHelper = disabled && (helper || (sessionEnded ? "Session ended — visit My Mastery to review or start a new session." : null));
 
   // M1 — render a session-ended banner above the disabled input so the

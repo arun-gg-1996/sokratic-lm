@@ -1,23 +1,22 @@
 """
 evaluation/quality/runner.py
-----------------------------
 Pipeline orchestrator for the conversation quality scorer.
 
 Pipeline:
-  1. load_session(path) → SessionView (handles both input formats)
-  2. deterministic.compute_all(view) → flat dict of det_* sub-metrics
-  3. llm_judges.evaluate_* (4 batched calls) → dicts of semantic judgments
-  4. primary.assemble_euler / assemble_ragas → headline metrics
-  5. dimensions.assemble_dimensions → 10 secondary dims
-  6. penalties.compute_penalties → list of Critical/Major flags
-  7. penalties.compute_verdict → final verdict string
-  8. assemble report → return dict per docs/EVALUATION_FRAMEWORK.md §6
+ 1. load_session(path) → SessionView (handles both input formats)
+ 2. deterministic.compute_all(view) → flat dict of det_* sub-metrics
+ 3. llm_judges.evaluate_* (4 batched calls) → dicts of semantic judgments
+ 4. primary.assemble_euler / assemble_ragas → headline metrics
+ 5. dimensions.assemble_dimensions → 10 secondary dims
+ 6. penalties.compute_penalties → list of Critical/Major flags
+ 7. penalties.compute_verdict → final verdict string
+ 8. assemble report → return dict per docs/EVALUATION_FRAMEWORK.md §6
 
 Usage:
-    from evaluation.quality.runner import evaluate_session
-    report = evaluate_session("path/to/session.json")
-    # or with dict input:
-    report = evaluate_session(session_view, run_llm_calls=False)
+ from evaluation.quality.runner import evaluate_session
+ report = evaluate_session("path/to/session.json")
+ # or with dict input:
+ report = evaluate_session(session_view, run_llm_calls=False)
 """
 
 from __future__ import annotations
@@ -33,7 +32,6 @@ from . import primary
 from . import dimensions
 from . import penalties as penalties_mod
 
-
 def evaluate_session(
     source: Union[str, Path, SessionView, dict],
     *,
@@ -42,14 +40,14 @@ def evaluate_session(
 ) -> dict[str, Any]:
     """Evaluate a single session.
 
-    Args:
-      source: file path (str/Path) OR a pre-loaded SessionView OR a raw dict.
-      run_llm_calls: if False, skip all 4 LLM calls (deterministic-only mode,
-        useful for quick smoke checks during development).
-      skip_anchor_call: if True, skip the cheapest call (#4 anchor quality).
+ Args:
+ source: file path (str/Path) OR a pre-loaded SessionView OR a raw dict.
+ run_llm_calls: if False, skip all 4 LLM calls (deterministic-only mode
+ useful for quick smoke checks during development).
+ skip_anchor_call: if True, skip the cheapest call (#4 anchor quality).
 
-    Returns the structured report dict described in EVALUATION_FRAMEWORK.md §6.
-    """
+ Returns the structured report dict described in EVALUATION_FRAMEWORK.md §6.
+"""
     # ---- Step 1: load
     if isinstance(source, SessionView):
         view = source
@@ -108,7 +106,7 @@ def evaluate_session(
     # ---- Step 6: penalties
     pens = penalties_mod.compute_penalties(view, det, llm_per_turn, llm_synthesis)
 
-    # ---- Step 7: verdict — pass session status (L39) so abandoned_no_lock
+    # ---- Step 7: verdict — pass session status so abandoned_no_lock
     # / in_progress sessions return their distinct verdicts instead of
     # being false-failed by the dimension thresholds.
     verdict = penalties_mod.compute_verdict(
@@ -141,7 +139,7 @@ def evaluate_session(
             "api_calls": view.api_calls,
             "input_tokens": view.input_tokens,
             "output_tokens": view.output_tokens,
-            # L39 — surface lifecycle status so external batch summaries
+            # surface lifecycle status so external batch summaries
             # can group / filter by "completed vs no_lock vs in_progress".
             "status": view.status,
             "n_tutoring_turns": det.get("det_trq_n_tutoring_turns", 0),
@@ -170,7 +168,6 @@ def evaluate_session(
 
     return report
 
-
 def save_report(report: dict, out_path: Union[str, Path]) -> Path:
     """Write a report dict to disk as JSON, returning the path."""
     out_path = Path(out_path)
@@ -178,10 +175,9 @@ def save_report(report: dict, out_path: Union[str, Path]) -> Path:
     out_path.write_text(json.dumps(report, indent=2, default=str))
     return out_path
 
-
 def short_summary(report: dict) -> str:
     """Render a compact human-readable summary line for a report.
-    Used by the dashboard aggregator and the CLI."""
+ Used by the dashboard aggregator and the CLI."""
     primary_block = report.get("primary") or {}
     eu = primary_block.get("EULER") or {}
     ra = primary_block.get("RAGAS") or {}

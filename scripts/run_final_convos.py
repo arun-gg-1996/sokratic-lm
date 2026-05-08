@@ -1,17 +1,16 @@
 """
 scripts/run_final_convos.py
-----------------------------
-Run a small set of test conversations across 4 profiles using real RAG retriever,
+Run a small set of test conversations across 4 profiles using real RAG retriever
 save each conversation JSON to data/artifacts/final_convo/ for manual review.
 
 Usage (from sokratic/ root):
-    .venv/bin/python scripts/run_final_convos.py
+ .venv/bin/python scripts/run_final_convos.py
 
 Profiles tested:
-  S1 — Strong        (happy path, gets answer early)
-  S2 — Moderate      (needs 1-2 hints)
-  S4 — Overconfident (sycophancy guard test)
-  S5 — Disengaged    (help abuse counter test)
+ Strong (happy path, gets answer early)
+ Moderate (needs 1-2 hints)
+ Overconfident (sycophancy guard test)
+ Disengaged (help abuse counter test)
 
 Topics: one specific anatomy topic per profile to keep conversations focused.
 """
@@ -38,7 +37,7 @@ OUTPUT_DIR = Path(cfg.paths.artifacts) / "final_convo"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Curated topics — must be TEXTBOOK-ANSWERABLE in OpenStax A&P 2e.
-# 2026-04-29: previous topics (deltoid innervation, wrist drop / humeral fracture)
+# : previous topics (deltoid innervation, wrist drop / humeral fracture)
 # turned out to be NOT in the corpus (verified: 0 chunks mention 'axillary' +
 # 'deltoid' together; 'wrist drop' appears 0 times). The OLD pipeline's
 # "successes" on these were LLM parametric-knowledge hallucinations. Switching
@@ -52,7 +51,6 @@ PROFILE_TOPICS = {
     "S5a": ("S5", "elbow joint"),  # Ch9 Elbow Joint (8 chunks)
     "S6a": ("S6", "I'm not sure I really understand chemical digestion — could we go through it?"),  # Ch23 Chemical Digestion (58 chunks)
 }
-
 
 async def run_one(profile_id: str, topic: str, graph) -> dict:
     conv_id = str(uuid.uuid4())[:8]
@@ -170,7 +168,6 @@ async def run_one(profile_id: str, topic: str, graph) -> dict:
 
     return _build_result(profile_id, conv_id, topic, turns_log, state, bugs_noted)
 
-
 def _build_result(profile_id, conv_id, topic, turns_log, state, bugs_noted):
     return {
         "conv_id": conv_id,
@@ -197,7 +194,6 @@ def _build_result(profile_id, conv_id, topic, turns_log, state, bugs_noted):
         "bugs_noted": bugs_noted,
     }
 
-
 def save_result(result: dict):
     fname = f"{result['profile_id']}_{result['conv_id']}_{datetime.now().strftime('%H%M%S')}.json"
     out_path = OUTPUT_DIR / fname
@@ -206,13 +202,12 @@ def save_result(result: dict):
     print(f"  → Saved: {out_path}")
     return out_path
 
-
 async def main():
     from conversation.graph import build_graph
     # Allow swapping retriever implementations via env var so we can A/B
     # the chunk-level vs proposition-level architectures end-to-end.
-    #   SOKRATIC_RETRIEVER=chunks  → ChunkRetriever (chunk-level index)
-    #   anything else (default)    → Retriever (propositions)
+    # SOKRATIC_RETRIEVER=chunks → ChunkRetriever (chunk-level index)
+    # anything else (default) → Retriever (propositions)
     import os as _os
     _retriever_kind = _os.environ.get("SOKRATIC_RETRIEVER", "propositions").strip().lower()
     if _retriever_kind == "chunks":
@@ -258,7 +253,6 @@ async def main():
     for p in saved_paths:
         print(f"  {p.name}")
     print("\nReview these files for flow bugs before evaluation.")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,28 +1,20 @@
 """
-memory/mem0_safe.py
-───────────────────
-Safe read/write wrappers around PersistentMemory (mem0 + Qdrant)
-implementing L5 from docs/AUDIT_2026-05-02.md.
+Defensive read / write wrappers around mem0 + Qdrant.
 
-Per L5:
-  safe_mem0_read(student_id, query, filters, top_k) -> list   # never raises
-  safe_mem0_write(student_id, text, metadata) -> bool          # never raises
+  safe_mem0_read(student_id, query, filters, top_k)   -> list   # never raises
+  safe_mem0_write(student_id, text, metadata)         -> bool   # never raises
 
-Both wrappers emit trace entries to `state.debug.turn_trace` so every
-mem0 op is visible in session export. Empty results are distinguishable
-from infra failures (`hit_count=0, error=null` vs `error="..."`).
+Both wrappers append trace entries to `state["debug"]["turn_trace"]`
+so every mem0 operation is visible in the session export. An empty
+read is distinguishable from an infrastructure failure
+(`hit_count=0, error=null` vs `error="..."`).
 
-Per L4 (Codex round-1 fix #4): required metadata fields enforced at write time.
-  - category
-  - subsection_path  ("<chapter> > <section> > <subsection>")
-  - section_path     ("<chapter> > <section>")
-  - session_at       (ISO-8601 UTC string)
-  - thread_id
-
-`chapter_num` is OPTIONAL (derivable from subsection_path).
-
-Retrieval results are deduped by `thread_id` because mem0's atomization can
-split one input into multiple stored claims, all carrying the same metadata.
+Writes require these metadata fields and reject anything missing
+them: `category`, `subsection_path` (`Chapter > Section > Subsection`),
+`section_path`, `session_at` (ISO-8601 UTC), and `thread_id`.
+Retrieval results are deduped by `thread_id` because mem0's internal
+atomization can split one input into multiple stored claims with
+identical metadata.
 """
 from __future__ import annotations
 
@@ -37,25 +29,23 @@ REQUIRED_WRITE_METADATA = {
     "thread_id",
 }
 
-
 def _trace_append(state: Optional[dict], entry: dict) -> None:
     """Append to state.debug.turn_trace if state is wired; otherwise drop.
 
-    Tests pass state=None to skip tracing; production callers always pass
-    the live TutorState dict.
-    """
+ Tests pass state=None to skip tracing; production callers always pass
+ the live TutorState dict.
+"""
     if not state:
         return
     debug = state.setdefault("debug", {})
     trace = debug.setdefault("turn_trace", [])
     trace.append(entry)
 
-
 def _validate_metadata(metadata: dict) -> tuple[bool, str]:
     """Return (ok, missing_field_name_or_empty).
 
-    First missing field is reported. None-valued fields are also missing.
-    """
+ First missing field is reported. None-valued fields are also missing.
+"""
     if not isinstance(metadata, dict):
         return False, "metadata_not_dict"
     for k in REQUIRED_WRITE_METADATA:
@@ -63,7 +53,6 @@ def _validate_metadata(metadata: dict) -> tuple[bool, str]:
         if v is None or (isinstance(v, str) and not v.strip()):
             return False, k
     return True, ""
-
 
 def safe_mem0_read(
     persistent,
@@ -73,17 +62,25 @@ def safe_mem0_read(
     top_k: int = 5,
     *,
     state: Optional[dict] = None,
-    dedupe_by_thread_id: bool = True,
+    dedupe_by_thread_id: bool = False,
 ) -> list[dict]:
-    """Safe wrapper around PersistentMemory.get(). Never raises.
+    """Safe wrapper around PersistentMemory.get. Never raises.
 
-    Emits a trace entry with op / query / filters / hit_count / elapsed_ms /
-    error. If `dedupe_by_thread_id` is True (default per L5), results are
-    collapsed so one logical session contributes at most one item.
+  Emits a trace entry with op / query / filters / hit_count / elapsed_ms /
+  error. If `dedupe_by_thread_id` is True, results are collapsed so one
+  logical session contributes at most one item.
 
-    `persistent` is a PersistentMemory instance (or any object with .available
-    + .get methods) — passed in to keep this module unaware of construction.
-    """
+  History note: this dedup defaulted to True back when the store was
+  mem0/Qdrant — mem0 atomized one observation into multiple stored points
+  with identical metadata, so deduping by thread_id was the only way to
+  recover the "one observation per session" view. With the SQL-backed
+  store each row is one explicit observation, so the default is False
+  and all atoms surface. Callers that still want session-level
+  deduplication can opt in explicitly.
+
+  `persistent` is a PersistentMemory instance — passed in to keep this
+  module unaware of construction.
+  """
     op = "mem0_read"
     t0 = time.time()
     error: Optional[str] = None
@@ -132,7 +129,6 @@ def safe_mem0_read(
     })
     return out_hits
 
-
 def safe_mem0_write(
     persistent,
     student_id: str,
@@ -141,15 +137,15 @@ def safe_mem0_write(
     *,
     state: Optional[dict] = None,
 ) -> bool:
-    """Safe wrapper around PersistentMemory.add(). Never raises.
+    """Safe wrapper around PersistentMemory.add. Never raises.
 
-    Validates required metadata fields per L4. On missing fields, emits a
-    "writes_dropped_missing_fields" trace entry and returns False — does
-    NOT silently drop without surfacing.
+ Validates required metadata fields . On missing fields, emits a
+ "writes_dropped_missing_fields" trace entry and returns False — does
+ NOT silently drop without surfacing.
 
-    Emits a trace entry with op / text-prefix / metadata / elapsed_ms /
-    error / dropped_field.
-    """
+ Emits a trace entry with op / text-prefix / metadata / elapsed_ms /
+ error / dropped_field.
+"""
     op = "mem0_write"
     t0 = time.time()
 
@@ -188,7 +184,6 @@ def safe_mem0_write(
     })
     return success
 
-
 def emit_session_summary_trace(
     state: dict,
     *,
@@ -198,9 +193,9 @@ def emit_session_summary_trace(
     writes_failed: int,
     writes_dropped_missing_fields: int,
 ) -> None:
-    """Per L5: at session end, emit a single rollup trace summarizing all
-    mem0 ops for the session. Lives in turn_trace under wrapper key
-    'memory.session_summary'."""
+    """Per : at session end, emit a single rollup trace summarizing all
+ mem0 ops for the session. Lives in turn_trace under wrapper key
+ 'memory.session_summary'."""
     _trace_append(state, {
         "wrapper": "memory.session_summary",
         "reads_ok": reads_ok,

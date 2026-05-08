@@ -6,14 +6,14 @@ Unit + integration tests for memory/sqlite_store.py.
 Coverage:
   * Schema migration (idempotent, version table)
   * Student lifecycle (ensure / get)
-  * Session lifecycle per L21 (start → in_progress → end → completed/etc;
+  * Session lifecycle (start → in_progress → end → completed/etc;
                                browser-close stays in_progress)
-  * EWMA upsert per L3 (first touch, blend math, attempt counter)
+  * EWMA upsert (first touch, blend math, attempt counter)
   * Status enum validation
-  * student_stats counters per L21 (total / completed / unfinished /
+  * student_stats counters (total / completed / unfinished /
                                     abandoned-mid-session 1h grace / by_tier)
-  * mastery_tree rollup per L3 (mean of touched children, color thresholds)
-  * Pre-lock-terminated session row pattern (per L21 + L22)
+  * mastery_tree rollup (mean of touched children, color thresholds)
+  * Pre-lock-terminated session row pattern (+ L22)
   * JSON-encoded field roundtrip (key_takeaways, image_context)
 
 Runs with `pytest -xvs tests/test_sqlite_store.py` — uses tmp_path fixture
@@ -40,7 +40,6 @@ from memory.sqlite_store import (
     utc_now,
 )
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Fixtures
 # ─────────────────────────────────────────────────────────────────────────────
@@ -52,7 +51,6 @@ def store(tmp_path: Path) -> SQLiteStore:
     s = SQLiteStore(db_path=db)
     yield s
     s.close()
-
 
 @pytest.fixture
 def topic_index_min() -> list[dict]:
@@ -78,7 +76,6 @@ def topic_index_min() -> list[dict]:
          "display_label": "Glial Cells"},
     ]
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Schema + migrations
 # ─────────────────────────────────────────────────────────────────────────────
@@ -92,7 +89,6 @@ def test_migration_creates_three_tables(tmp_path):
     assert {"students", "sessions", "subsection_mastery", "schema_version"} <= tables
     s.close()
 
-
 def test_migration_idempotent(tmp_path):
     db = tmp_path / "x.sqlite3"
     SQLiteStore(db_path=db).close()
@@ -103,7 +99,6 @@ def test_migration_idempotent(tmp_path):
     versions = [r["version"] for r in cur.fetchall()]
     assert versions == [1]
     s.close()
-
 
 def test_two_dbs_in_same_process_both_get_migrations(tmp_path):
     """Regression: the migrations cache is per-DB-path; opening a second DB
@@ -118,7 +113,6 @@ def test_two_dbs_in_same_process_both_get_migrations(tmp_path):
         assert {r["version"] for r in cur.fetchall()} == {1}
     sa.close(); sb.close()
 
-
 def test_foreign_keys_enforced(store):
     """sessions.student_id → students.student_id must be enforced."""
     with pytest.raises(sqlite3.IntegrityError):
@@ -128,7 +122,6 @@ def test_foreign_keys_enforced(store):
             (utc_now(),),
         )
         store._conn().commit()
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Students
@@ -141,12 +134,10 @@ def test_ensure_student_idempotent(store):
     # created_at must not change on second call
     assert a["created_at"] == b["created_at"]
 
-
 def test_ensure_student_updates_display_name(store):
     store.ensure_student("alice")
     s = store.ensure_student("alice", display_name="Alice Z.")
     assert s["display_name"] == "Alice Z."
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Session lifecycle (L21)
@@ -160,11 +151,9 @@ def test_start_session_inserts_in_progress(store):
     assert row["thread_id"] == "t1"
     assert row["student_id"] == "alice"
 
-
 def test_start_session_creates_student_lazily(store):
     store.start_session("t1", "fresh_user")
     assert store.get_student("fresh_user") is not None
-
 
 def test_update_session_partial(store):
     store.start_session("t1", "alice")
@@ -181,18 +170,15 @@ def test_update_session_partial(store):
     # Status untouched
     assert updated["status"] == "in_progress"
 
-
 def test_update_session_rejects_unknown_column(store):
     store.start_session("t1", "alice")
     with pytest.raises(ValueError, match="Unknown session column"):
         store.update_session("t1", evil_column=42)
 
-
 def test_update_session_rejects_invalid_status(store):
     store.start_session("t1", "alice")
     with pytest.raises(ValueError, match="Invalid status"):
         store.update_session("t1", status="rocketship")
-
 
 def test_end_session_completes(store):
     store.start_session("t1", "alice")
@@ -201,7 +187,6 @@ def test_end_session_completes(store):
     assert ended["status"] == "completed"
     assert ended["ended_at"] is not None
     assert ended["mastery_tier"] == "proficient"
-
 
 def test_end_session_pre_lock_pattern(store):
     """Per L21: pre-lock terminated row uses 'abandoned_no_lock' + nulls."""
@@ -220,7 +205,6 @@ def test_end_session_pre_lock_pattern(store):
     assert ended["reach_status"] is None
     assert ended["mastery_tier"] == "not_assessed"
 
-
 def test_browser_close_stays_in_progress(store):
     """Per L21 + L35: no auto-cleanup; abandoned row stays in_progress
     forever, ended_at stays NULL. Stat queries derive the abandoned-mid-
@@ -231,7 +215,6 @@ def test_browser_close_stays_in_progress(store):
     assert row["status"] == "in_progress"
     assert row["ended_at"] is None
 
-
 def test_json_field_roundtrip(store):
     store.start_session("t1", "alice")
     take = {"what_demonstrated": "good Q", "what_needs_work": "blah"}
@@ -240,7 +223,6 @@ def test_json_field_roundtrip(store):
     row = store.get_session("t1")
     assert row["key_takeaways"] == take
     assert row["image_context"] == img_ctx
-
 
 def test_list_sessions_completed_only(store):
     store.start_session("a1", "alice")
@@ -251,9 +233,8 @@ def test_list_sessions_completed_only(store):
     all_ = store.list_sessions("alice")
     assert {s["thread_id"] for s in all_} == {"a1", "a2"}
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# Subsection mastery (EWMA per L3)
+# Subsection mastery (EWMA )
 # ─────────────────────────────────────────────────────────────────────────────
 
 def test_first_touch_inserts_with_fresh_score(store):
@@ -266,9 +247,8 @@ def test_first_touch_inserts_with_fresh_score(store):
     assert out["attempt_count"] == 1
     assert out["last_outcome"] == "reached"
 
-
 def test_ewma_blend_math(store):
-    """EWMA per L3 (F14, 2026-05-06): new = 0.7*fresh + 0.3*prior.
+    """EWMA (F14): new = 0.7*fresh + 0.3*prior.
 
     Bumped from 0.6 → 0.7 so the current session weighs more heavily,
     reducing mastery dilution from non-reach saved sessions.
@@ -282,7 +262,6 @@ def test_ewma_blend_math(store):
     assert out["attempt_count"] == 2
     assert out["last_outcome"] == "reached"
 
-
 def test_invalid_outcome_rejected(store):
     store.ensure_student("alice")
     with pytest.raises(ValueError, match="Invalid outcome"):
@@ -290,10 +269,8 @@ def test_invalid_outcome_rejected(store):
             "alice", "X > Y > Z", fresh_score=0.5, outcome="bogus"
         )
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# Stats counters per L21
-# ─────────────────────────────────────────────────────────────────────────────
+# Stats counters # ─────────────────────────────────────────────────────────────────────────────
 
 def test_stats_counts_total_completed_unfinished(store):
     # 2 completed (one proficient, one developing)
@@ -321,7 +298,6 @@ def test_stats_counts_total_completed_unfinished(store):
     assert stats["strong_count"] == 1
     assert stats["weak_count"] == 0  # no needs_review here
 
-
 def test_stats_abandoned_grace_window(store):
     """Sessions left in_progress for less than the grace window should NOT
     count as abandoned (could be the user's actively-running tab)."""
@@ -346,10 +322,8 @@ def test_stats_abandoned_grace_window(store):
     stats = store.student_stats("alice", abandoned_grace_hours=1)
     assert stats["abandoned_mid_session"] == 1  # only 'old' qualifies
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# Mastery tree rollup per L3
-# ─────────────────────────────────────────────────────────────────────────────
+# Mastery tree rollup # ─────────────────────────────────────────────────────────────────────────────
 
 def test_mastery_tree_excludes_untouched_from_mean(store, topic_index_min):
     """Per L3: mean of TOUCHED children only; untouched are excluded from
@@ -395,7 +369,6 @@ def test_mastery_tree_excludes_untouched_from_mean(store, topic_index_min):
     assert chapters["The Nervous System and Nervous Tissue"]["score"] is None
     assert chapters["The Nervous System and Nervous Tissue"]["color"] == "grey"
 
-
 def test_mastery_tree_color_thresholds(store, topic_index_min):
     student_id = "alice"
     store.ensure_student(student_id)
@@ -413,7 +386,6 @@ def test_mastery_tree_color_thresholds(store, topic_index_min):
     assert score_to_color(None) == "grey"
     assert score_to_tier(None) == "not_assessed"
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Status enum
 # ─────────────────────────────────────────────────────────────────────────────
@@ -428,14 +400,12 @@ def test_status_enum_matches_l21_spec():
         "abandoned_no_lock",
     }
 
-
 def test_color_threshold_constants():
     assert COLOR_GREEN_MIN == 0.75
     assert COLOR_YELLOW_MIN == 0.50
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# Cross-domain isolation (per L1 — separate DB file per domain)
+# Cross-domain isolation (— separate DB file per domain)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def test_default_db_path_is_per_domain():
@@ -444,7 +414,6 @@ def test_default_db_path_is_per_domain():
     assert default_db_path("physics").name == "sokratic_physics.sqlite3"
     # Different domains → different file paths (cross-contamination impossible)
     assert default_db_path("openstax_anatomy") != default_db_path("physics")
-
 
 def test_two_domain_dbs_isolated(tmp_path):
     """Same student_id, two domain DBs, no cross-read.
@@ -486,7 +455,6 @@ def test_two_domain_dbs_isolated(tmp_path):
     assert s_phys.student_stats("alice")["completed_sessions"] == 1
     s_anat.close(); s_phys.close()
 
-
 def test_no_domain_no_db_path_raises(monkeypatch):
     """Production safety: refusing to open a domain-blind store."""
     # Force cfg.domain.retrieval_domain to be empty/missing
@@ -494,7 +462,6 @@ def test_no_domain_no_db_path_raises(monkeypatch):
     monkeypatch.setattr(config.cfg.domain, "retrieval_domain", "", raising=False)
     with pytest.raises(ValueError, match="non-empty domain"):
         SQLiteStore()
-
 
 def test_explicit_domain_resolves_canonical_path(tmp_path, monkeypatch):
     """Passing domain= alone must land at the canonical per-domain file."""
@@ -506,7 +473,6 @@ def test_explicit_domain_resolves_canonical_path(tmp_path, monkeypatch):
     assert s.db_path == expected
     assert s.domain == "testdomain"
     s.close()
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # update_session — explicit-NULL semantics (Refinement R3)
@@ -523,13 +489,11 @@ def test_explicit_none_writes_null(store):
     # Other columns must not have been touched
     assert store.get_session("t1")["turn_count"] == 5
 
-
 def test_status_cannot_be_none(store):
     """status is NOT NULL — must reject explicit None."""
     store.start_session("t1", "alice")
     with pytest.raises(ValueError, match="status is NOT NULL"):
         store.update_session("t1", status=None)
-
 
 def test_omit_kwarg_skips_column(store):
     """If you don't pass a column at all, it stays unchanged (vs explicit None)."""
@@ -540,7 +504,6 @@ def test_omit_kwarg_skips_column(store):
     assert row["locked_topic_path"] == "X"  # still there
     assert row["turn_count"] == 11
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Path normalization (legacy "Ch20|Section|Subsection" → canonical L4 form)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -550,25 +513,21 @@ def test_normalize_subsection_path_canonical_passthrough():
     p = "The Cardiovascular System: Blood Vessels and Circulation > Sec > Sub"
     assert normalize_subsection_path(p) == p
 
-
 def test_normalize_subsection_path_legacy_to_canonical():
     from memory.sqlite_store import normalize_subsection_path
     lookup = {20: "The Cardiovascular System: Blood Vessels and Circulation"}
     out = normalize_subsection_path("Ch20|Capillary Exchange|Bulk Flow", lookup)
     assert out == "The Cardiovascular System: Blood Vessels and Circulation > Capillary Exchange > Bulk Flow"
 
-
 def test_normalize_subsection_path_unknown_chapter_passes_through():
     from memory.sqlite_store import normalize_subsection_path
     p = "Ch99|Section|Subsection"
     assert normalize_subsection_path(p, {}) == p
 
-
 def test_normalize_subsection_path_garbage_passes_through():
     from memory.sqlite_store import normalize_subsection_path
     assert normalize_subsection_path("not_a_path") == "not_a_path"
     assert normalize_subsection_path("") == ""
-
 
 def test_load_chapter_title_lookup_from_real_structure(tmp_path):
     """Smoke test against a tiny structure dict written to a temp file."""

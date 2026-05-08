@@ -1,6 +1,5 @@
 """
 scripts/rerun_failed_chunks.py
-------------------------------
 Targeted fix-up pass for chunks that errored during B.9.
 
 Loads chunks_<source>.jsonl + propositions_<source>.jsonl, identifies the
@@ -8,14 +7,14 @@ chunks with no propositions (errored or intentionally-empty), and re-runs
 the dual-task on just those chunks with the bumped max_output_tokens=4096.
 
 Outputs:
-  - APPENDS new propositions to data/processed/propositions_<source>.jsonl
-  - APPENDS cleaned_text back-fills to chunks (rewrites the chunks file
-    with cleaned text where dual-task succeeded this time)
-  - EMBEDS the new propositions and upserts them to the existing Qdrant
-    collection (no --fresh; existing 54k points stay).
+APPENDS new propositions to data/processed/propositions_<source>.jsonl
+APPENDS cleaned_text back-fills to chunks (rewrites the chunks file
+ with cleaned text where dual-task succeeded this time)
+EMBEDS the new propositions and upserts them to the existing Qdrant
+ collection (no --fresh; existing 54k points stay).
 
 Run:
-  python scripts/rerun_failed_chunks.py [--source openstax_anatomy]
+ python scripts/rerun_failed_chunks.py [--source openstax_anatomy]
 """
 from __future__ import annotations
 
@@ -51,12 +50,11 @@ from ingestion.core.qdrant import (  # noqa: E402
 )
 from ingestion.core.pipeline import warmup_cache  # noqa: E402
 
-
 def find_failed_chunks(chunks_path: Path, props_path: Path) -> tuple[list[dict], list[dict]]:
     """Return (failed_chunks, all_chunks_list).
-    A "failed" chunk is one with NO entry in propositions_<source>.jsonl.
-    Both real errors and intentional empties end up here — we re-run both,
-    accepting that intentional empties will return empty again cheaply."""
+ A "failed" chunk is one with NO entry in propositions_<source>.jsonl.
+ Both real errors and intentional empties end up here — we re-run both
+ accepting that intentional empties will return empty again cheaply."""
     chunks = [json.loads(l) for l in chunks_path.open()]
     parents = set()
     for line in props_path.open():
@@ -64,7 +62,6 @@ def find_failed_chunks(chunks_path: Path, props_path: Path) -> tuple[list[dict],
         parents.add(p.get("parent_chunk_id"))
     failed = [c for c in chunks if c["chunk_id"] not in parents]
     return failed, chunks
-
 
 async def main() -> int:
     ap = argparse.ArgumentParser()
@@ -233,7 +230,6 @@ async def main() -> int:
     print(f"\n  Upserted {upserted} new points → {collection}")
     print(f"  Total Qdrant points now: existing 54,045 + {upserted} = {54045 + upserted}")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(asyncio.run(main()))

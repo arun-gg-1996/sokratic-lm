@@ -1,25 +1,24 @@
 """
 evaluation/euler.py
---------------------
 Offline EULER evaluation. Run on saved conversation logs, NOT live.
 
 Supports two scoring modes:
-  - local (default): deterministic phase-aware heuristics, no API calls
-  - llm: Claude-as-judge
+local (default): deterministic phase-aware heuristics, no API calls
+llm: Claude-as-judge
 
 Scores each tutor response on 4 criteria (0.0 to 1.0 each):
-  1. question_present  — did the response contain at least one question?
-  2. relevance         — is it relevant to the student's last message?
-  3. helpful           — does it advance understanding without giving the answer?
-  4. no_reveal         — is the locked answer absent from the response?
+ 1. question_present — did the response contain at least one question?
+ 2. relevance — is it relevant to the student's last message?
+ 3. helpful — does it advance understanding without giving the answer?
+ 4. no_reveal — is the locked answer absent from the response?
 
 Target: average EULER score > 0.75 across a full conversation.
 
-Results saved to data/artifacts/euler_scores/{conv_id}.json.
+Results saved to
 
 Usage:
-    python -m evaluation.euler --conv_id <id>
-    python -m evaluation.euler --all      # score all saved conversations
+ python -m evaluation.euler --conv_id <id>
+ python -m evaluation.euler --all # score all saved conversations
 """
 
 import json
@@ -49,14 +48,12 @@ Context:
 Return ONLY valid JSON in this exact format (no markdown, no explanation):
 {{"question_present": 0.0, "relevance": 0.0, "helpful": 0.0, "no_reveal": 0.0}}"""
 
-
 def _safe_json_parse(text: str) -> dict:
     if text.startswith("```"):
         text = text.split("```")[1]
         if text.startswith("json"):
             text = text[4:].strip()
     return json.loads(text)
-
 
 def _phase_for_turn(messages: list[dict], idx: int) -> str:
     msg = messages[idx]
@@ -71,7 +68,6 @@ def _phase_for_turn(messages: list[dict], idx: int) -> str:
         return "assessment"
     return "tutoring"
 
-
 def _local_relevance(student_message: str, tutor_response: str) -> float:
     s_tokens = set(re.findall(r"[a-zA-Z]{4,}", (student_message or "").lower()))
     t_tokens = set(re.findall(r"[a-zA-Z]{4,}", (tutor_response or "").lower()))
@@ -80,7 +76,6 @@ def _local_relevance(student_message: str, tutor_response: str) -> float:
     overlap = len(s_tokens & t_tokens) / max(1, len(s_tokens))
     return max(0.0, min(1.0, overlap * 1.5))
 
-
 def score_turn_local(
     tutor_response: str,
     student_message: str,
@@ -88,9 +83,9 @@ def score_turn_local(
     phase: str = "tutoring",
 ) -> dict:
     """
-    Score one turn without LLM calls (deterministic local heuristics).
-    Phase-aware so non-tutoring turns are not unfairly penalized.
-    """
+ Score one turn without LLM calls (deterministic local heuristics).
+ Phase-aware so non-tutoring turns are not unfairly penalized.
+"""
     text = tutor_response or ""
     lower = text.lower()
     q_count = text.count("?")
@@ -125,7 +120,6 @@ def score_turn_local(
     scores["average"] = sum(scores.values()) / 4
     return scores
 
-
 def score_turn_llm(
     tutor_response: str,
     student_message: str,
@@ -133,22 +127,22 @@ def score_turn_llm(
     phase: str = "tutoring",
 ) -> dict:
     """
-    Score a single tutor response on all 4 EULER criteria using Claude as judge.
+ Score a single tutor response on all 4 EULER criteria using Claude as judge.
 
-    Args:
-        tutor_response:  The tutor's response text.
-        student_message: The student's preceding message.
-        locked_answer:   The correct answer for this topic (used for no_reveal check).
+ Args:
+ tutor_response: The tutor's response text.
+ student_message: The student's preceding message.
+ locked_answer: The correct answer for this topic (used for no_reveal check).
 
-    Returns:
-        {
-          "question_present": float,
-          "relevance": float,
-          "helpful": float,
-          "no_reveal": float,
-          "average": float
-        }
-    """
+ Returns:
+ {
+ "question_present": float
+ "relevance": float
+ "helpful": float
+ "no_reveal": float
+ "average": float
+ }
+"""
     client = anthropic.Anthropic()
 
     system = JUDGE_SYSTEM.format(
@@ -180,7 +174,6 @@ def score_turn_llm(
     scores["average"] = sum(scores[k] for k in criteria) / len(criteria)
     return scores
 
-
 def score_turn(
     tutor_response: str,
     student_message: str,
@@ -192,21 +185,20 @@ def score_turn(
         return score_turn_llm(tutor_response, student_message, locked_answer, phase=phase)
     return score_turn_local(tutor_response, student_message, locked_answer, phase=phase)
 
-
 def score_conversation(conv_path: str, mode: str = "local") -> dict:
     """
-    Load a saved conversation from data/artifacts/conversations/ and score every tutor turn.
+ Load a saved conversation from data/artifacts/conversations/ and score every tutor turn.
 
-    Args:
-        conv_path: Path to the conversation JSON file.
+ Args:
+ conv_path: Path to the conversation JSON file.
 
-    Returns:
-        {
-          "conv_id": str,
-          "per_turn_scores": list[dict],
-          "conversation_average": float
-        }
-    """
+ Returns:
+ {
+ "conv_id": str
+ "per_turn_scores": list[dict]
+ "conversation_average": float
+ }
+"""
     path = Path(conv_path)
     if not path.exists():
         raise FileNotFoundError(f"Conversation file not found: {conv_path}")
@@ -254,7 +246,6 @@ def score_conversation(conv_path: str, mode: str = "local") -> dict:
     print(f"Saved EULER scores to {out_path}")
 
     return result
-
 
 if __name__ == "__main__":
     import argparse

@@ -1,14 +1,13 @@
 """
 ingestion/index.py
-------------------
 Build vector + lexical indexes for OT propositions.
 
 Requirements implemented:
-- Index ONLY base-chunk propositions (no overlap chunk propositions)
-- Embed with OpenAI text-embedding-3-large (3072 dims)
-- Upsert into Qdrant collection cfg.memory.kb_collection
-- Build BM25Okapi and save to cfg.domain_path("bm25")
-- Preserve full PropositionSchema payload (including parent_chunk_text)
+Index ONLY base-chunk propositions (no overlap chunk propositions)
+Embed with OpenAI text-embedding-3-large (3072 dims)
+Upsert into Qdrant collection cfg.memory.kb_collection
+Build BM25Okapi and save to cfg.domain_path("bm25")
+Preserve full PropositionSchema payload (including parent_chunk_text)
 """
 
 from __future__ import annotations
@@ -43,14 +42,12 @@ EMBED_MODEL = "text-embedding-3-large"
 VECTOR_SIZE = 3072
 _STEMMER = PorterStemmer()
 
-
 def stem_tokenize(text: str) -> list[str]:
     """
-    Lowercase + alnum tokenization + Porter stemming.
-    """
+ Lowercase + alnum tokenization + Porter stemming.
+"""
     tokens = re.findall(r"[a-z0-9]+", (text or "").lower())
     return [_STEMMER.stem(t) for t in tokens if t]
-
 
 def _load_jsonl(path: str) -> list[dict]:
     out: list[dict] = []
@@ -61,7 +58,6 @@ def _load_jsonl(path: str) -> list[dict]:
                 out.append(json.loads(line))
     return out
 
-
 def _load_base_chunk_ids(chunks_path: str) -> set[str]:
     chunks = _load_jsonl(chunks_path)
     return {
@@ -70,7 +66,6 @@ def _load_base_chunk_ids(chunks_path: str) -> set[str]:
         if c.get("is_overlap") is False
         and c.get("element_type") != "paragraph_overlap"
     }
-
 
 def _filter_base_propositions(propositions: list[dict], base_chunk_ids: set[str]) -> list[dict]:
     filtered: list[dict] = []
@@ -85,14 +80,12 @@ def _filter_base_propositions(propositions: list[dict], base_chunk_ids: set[str]
         filtered.append(p2)
     return filtered
 
-
 def _collection_exists(client: QdrantClient, name: str) -> bool:
     try:
         return bool(client.collection_exists(name))
     except Exception:
         names = {c.name for c in client.get_collections().collections}
         return name in names
-
 
 def _create_fresh_collection(client: QdrantClient, name: str) -> None:
     if _collection_exists(client, name):
@@ -101,7 +94,6 @@ def _create_fresh_collection(client: QdrantClient, name: str) -> None:
         collection_name=name,
         vectors_config=VectorParams(size=VECTOR_SIZE, distance=Distance.COSINE),
     )
-
 
 def _embed_texts(client: OpenAI, texts: list[str]) -> list[list[float]]:
     vectors: list[list[float]] = []
@@ -112,11 +104,10 @@ def _embed_texts(client: OpenAI, texts: list[str]) -> list[list[float]]:
         vectors.extend([d.embedding for d in resp.data])
     return vectors
 
-
 def build_indexes(propositions: list[dict], domain: str = "ot") -> None:
     """
-    Embed propositions, upsert into Qdrant, and build local BM25 index.
-    """
+ Embed propositions, upsert into Qdrant, and build local BM25 index.
+"""
     from config import cfg
 
     openai_client = OpenAI()
@@ -172,11 +163,10 @@ def build_indexes(propositions: list[dict], domain: str = "ot") -> None:
 
     build_bm25_only(propositions, bm25_path=cfg.domain_path("bm25"))
 
-
 def build_bm25_only(propositions: list[dict], bm25_path: str) -> None:
     """
-    Build only BM25 index using stemmed tokens. No vector operations.
-    """
+ Build only BM25 index using stemmed tokens. No vector operations.
+"""
     texts = [p["text"] for p in propositions]
     tokenized = [stem_tokenize(t) for t in texts]
     bm25 = BM25Okapi(tokenized)
@@ -186,23 +176,20 @@ def build_bm25_only(propositions: list[dict], bm25_path: str) -> None:
         pickle.dump({"bm25": bm25, "propositions": propositions}, f)
     print(f"BM25 saved -> {out}")
 
-
 def index_diagrams(diagrams_dir: str = "data/diagrams") -> list[dict]:
     """
-    Optional diagram proposition conversion helper.
-    Not used in the current indexing run (textbook-only requirement).
-    """
+ Optional diagram proposition conversion helper.
+ Not used in the current indexing run (textbook-only requirement).
+"""
     diagram_path = Path(diagrams_dir)
     if not diagram_path.exists():
         return []
     return []
 
-
 def load_bm25(bm25_path: str) -> tuple:
     with open(bm25_path, "rb") as f:
         data = pickle.load(f)
     return data["bm25"], data["propositions"]
-
 
 def _get_qdrant_vector_count(client: QdrantClient, collection: str) -> int:
     info = client.get_collection(collection)
@@ -210,7 +197,6 @@ def _get_qdrant_vector_count(client: QdrantClient, collection: str) -> int:
     if count is None:
         count = getattr(info, "points_count", None)
     return int(count or 0)
-
 
 def _qdrant_top_k(
     client: QdrantClient,
@@ -220,8 +206,8 @@ def _qdrant_top_k(
     limit: int = 2,
 ):
     """
-    Compatibility wrapper across qdrant-client versions.
-    """
+ Compatibility wrapper across qdrant-client versions.
+"""
     query_filter = Filter(
         must=[FieldCondition(key="domain", match=MatchValue(value=domain))]
     )
@@ -241,7 +227,6 @@ def _qdrant_top_k(
         query_filter=query_filter,
         limit=limit,
     )
-
 
 def run_index_tests(expected_count: int, propositions: list[dict]) -> None:
     from config import cfg
@@ -317,7 +302,6 @@ def run_index_tests(expected_count: int, propositions: list[dict]) -> None:
         limit=2,
     )
     print(f"Physics-filtered results count: {len(physics_hits)}")
-
 
 if __name__ == "__main__":
     from config import cfg

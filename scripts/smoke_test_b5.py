@@ -1,23 +1,22 @@
 """
 scripts/smoke_test_b5.py
-------------------------
 Throwaway smoke test for the dual-task module (B.5) on 10 real chunks.
 Run before committing to the formal B.8 pilot to surface prompt-level issues.
 
-Picks 10 stratified chunks (mix of noise patterns + clean + short + long),
-runs run_dual_task_batch() against the live Sonnet 4.5 API, and prints:
-  - Side-by-side original vs cleaned text
-  - Propositions per chunk
-  - JSON parse rate
-  - Cache hit rate (read vs creation tokens) — verifies the cached system
-    block is actually being reused starting at call 2
-  - Total token usage and approximate cost
+Picks 10 stratified chunks (mix of noise patterns + clean + short + long)
+runs run_dual_task_batch against the live Sonnet 4.5 API, and prints:
+Side-by-side original vs cleaned text
+Propositions per chunk
+JSON parse rate
+Cache hit rate (read vs creation tokens) — verifies the cached system
+ block is actually being reused starting at call 2
+Total token usage and approximate cost
 
 No artifacts written to disk; pure smoke test.
 
 Run:
-  source .venv/bin/activate
-  python scripts/smoke_test_b5.py
+ source .venv/bin/activate
+ python scripts/smoke_test_b5.py
 """
 from __future__ import annotations
 
@@ -36,7 +35,6 @@ from ingestion.core.propositions_dual import (  # noqa: E402
     DEFAULT_MODEL, run_dual_task_batch,
 )
 
-
 CHUNKS_PATH = ROOT / "data/processed/chunks_openstax_anatomy.jsonl"
 
 # Sonnet 4.5 pricing (per 1M tokens, USD).
@@ -44,7 +42,6 @@ PRICE_INPUT = 3.00
 PRICE_OUTPUT = 15.00
 PRICE_CACHE_WRITE = 3.75   # 1.25× input
 PRICE_CACHE_READ = 0.30    # 0.10× input
-
 
 def pick_stratified_chunks() -> list[dict]:
     """Pick 10 chunks: 3 with known noise patterns, 4 mixed, 3 clean."""
@@ -97,7 +94,6 @@ def pick_stratified_chunks() -> list[dict]:
     take(medium, 2)           # 2 medium clean
     take(long_, 2)            # 2 long clean
     return picks
-
 
 async def main() -> int:
     import argparse
@@ -226,7 +222,6 @@ async def main() -> int:
         print(f"  - no cache activity. Possibly cache prefix below 1024-token threshold.")
 
     return 0 if n_err == 0 else 1
-
 
 if __name__ == "__main__":
     raise SystemExit(asyncio.run(main()))

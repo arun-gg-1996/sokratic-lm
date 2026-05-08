@@ -26,7 +26,6 @@ from ingestion.core.qdrant import (
     normalize_subsection_id,
 )
 
-
 # ── normalize_subsection_id ─────────────────────────────────────────────────
 
 class TestNormalizeSubsectionId:
@@ -62,7 +61,6 @@ class TestNormalizeSubsectionId:
         a = normalize_subsection_id("ot", "20.1", "Shared Structure")
         b = normalize_subsection_id("ot", "20.1", "shared structure")
         assert a == b
-
 
 # ── compute_window_nav_metadata ─────────────────────────────────────────────
 
@@ -158,7 +156,6 @@ class TestComputeWindowNavMetadata:
         chunks = self._make_chunks([("c1", "", "paragraph", 1)])
         nav = compute_window_nav_metadata(chunks)
         assert nav == {}
-
 
 # ── build_payload ───────────────────────────────────────────────────────────
 
@@ -286,7 +283,6 @@ class TestBuildPayload:
         )
         assert payload["prompt_version"] == "v2-experimental"
         assert payload["ingested_at"] == "2026-04-28T12:34:56+00:00"
-
 
 # ── enrich_chunks_with_* ────────────────────────────────────────────────────
 

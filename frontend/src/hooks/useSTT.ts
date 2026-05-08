@@ -98,7 +98,7 @@ export function useSTT(): STTApi {
           recognitionRef.current.abort();
         }
         const rec = new ctor();
-        rec.continuous = false; // single-utterance per L79 (click-to-record)
+        rec.continuous = false; // single-utterance (click-to-record)
         rec.interimResults = true;
         rec.lang = "en-US";
         rec.onresult = (e: SpeechRecognitionEvent) => {

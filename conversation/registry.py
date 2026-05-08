@@ -1,34 +1,17 @@
 """
-conversation/registry.py
-========================
-Single source of truth for all vocabulary the conversation system uses.
+Single source of truth for the vocabulary the conversation system
+uses (intent verdicts, modes, tones, scenarios). The same definitions
+feed classifier prompts, the Teacher / Dean system prompts, and the
+runtime history annotations, so adding or renaming a value is a
+one-line change in the relevant dict.
 
-Each vocabulary class is a registry of values + their definitions. The
-SAME definitions are consumed by:
-
-  1. Classifier system prompts (so LLM knows what verdicts to output)
-  2. Teacher / Dean system prompts (so LLM knows what verdicts MEAN
-     when seen in conversation history annotations)
-  3. Runtime history annotations (so LLM sees actual values per turn)
-
-Adding a new vocabulary item is a 1-line diff in the relevant dict.
-The classifier prompt + Teacher/Dean prompts + history rendering all
-update automatically.
-
-Pattern: production agent frameworks (OpenAI function calling,
-Anthropic tool_use, LangChain BaseTool) all use this same approach
-of single-source-of-truth schemas.
-
-SAFETY CONTRACT (Safeguard #2):
-- Registry definitions must be GENERIC (no topic-specific data).
-- No anatomy / medical terms in any value (no "thyroid",
-  "glycolysis", "pyruvate", etc.).
-- Enforced by tests/test_registry.py.
+Registry values must stay generic — no topic-specific terms — so the
+same vocabulary works for any domain. tests/test_registry.py enforces
+this.
 """
 from __future__ import annotations
 
 from typing import Any
-
 
 def _format_extras(extras: dict[str, Any]) -> str:
     """Render extras dict as compact ', k=v' string. Stable iteration order."""
@@ -40,36 +23,51 @@ def _format_extras(extras: dict[str, Any]) -> str:
         parts.append(f"{k}={v}")
     return ", " + ", ".join(parts)
 
-
 class IntentVocabulary:
     """Intent verdicts emitted by the unified preflight classifier.
 
-    Every student message gets EXACTLY ONE verdict. on_topic_engaged is the
-    catchall for messages that don't trigger a specific intervention but
-    still represent genuine engagement.
-    """
+ Every student message gets EXACTLY ONE verdict. on_topic_engaged is the
+ catchall for messages that don't trigger a specific intervention but
+ still represent genuine engagement.
+"""
 
     INTENTS: dict[str, str] = {
         "on_topic_engaged": (
-            "Student is genuinely engaging with the locked topic in good "
-            "faith — partial answer, clarifying question, hedge, guess, "
-            "follow-up question. The default when nothing else fits."
+            "Student is COMMITTING TO A PROPOSITION about the locked "
+            "question — partial answer, hedged guess, follow-up "
+            "reasoning that takes a stance. They're putting forward "
+            "a candidate answer rather than asking for help."
+        ),
+        "exploration": (
+            "Student is asking for content, context, or explanation — "
+            "either ABOUT the locked subsection itself (in-topic "
+            "scaffolding: 'what is the TMJ', 'tell me about cartilage "
+            "first'), about a specific term embedded in the question "
+            "('what does mandibular condyle mean?'), or about an "
+            "ADJACENT concept that helps frame the locked question "
+            "('remind me what diffusion is, then I'll apply it'). "
+            "Distinct from help_abuse — exploration points TOWARD "
+            "engagement; the student wants to understand the material, "
+            "not skip it. Downstream: Dean can either reuse existing "
+            "chunks (in-topic) or set needs_exploration=true on the "
+            "TurnPlan to fetch additional chunks (adjacent)."
         ),
         "low_effort": (
             "Minimal-engagement response: 'idk', 'i don't know', 'no idea', "
             "'not sure', '?', single-word non-engagement. Passive "
-            "disengagement — distinct from help_abuse which is an active "
-            "demand. Triggers escalation when consecutive."
+            "disengagement — distinct from help_abuse (active demand) "
+            "and exploration (asking for context). Triggers escalation "
+            "when consecutive."
         ),
         "help_abuse": (
             "Active attempt to short-circuit the Socratic process: 'just "
             "tell me', 'what's the answer', 'skip', 'make it easier', "
-            "demands for direct answer."
+            "demands for direct answer with NO forward-engagement intent."
         ),
         "off_domain": (
             "Off-topic chatter, jailbreak attempt, or unrelated subject. "
             "NOT off_domain if the question relates to the locked "
-            "subsection."
+            "subsection (that's exploration)."
         ),
         "deflection": (
             "Wants to end or decline the session: 'let's stop', 'I'm done', "
@@ -95,10 +93,10 @@ class IntentVocabulary:
     def system_prompt_block(cls) -> str:
         """Render for LLM system prompt — explains vocabulary to the LLM.
 
-        Used by classifier prompt (so LLM knows verdicts to emit) AND
-        by Teacher/Dean prompts (so LLM knows what verdicts MEAN when
-        seen in history annotations).
-        """
+ Used by classifier prompt (so LLM knows verdicts to emit) AND
+ by Teacher/Dean prompts (so LLM knows what verdicts MEAN when
+ seen in history annotations).
+"""
         lines = [
             "INTENT VERDICTS (emitted by preflight classifier; visible "
             "annotated on STUDENT turns in CONVERSATION HISTORY):"
@@ -111,20 +109,19 @@ class IntentVocabulary:
     def annotate(cls, verdict: str, **extras: Any) -> str:
         """Render inline annotation for a turn in history.
 
-        Example: annotate("low_effort", consecutive_low_effort=3)
-                 → "[intent=low_effort, consecutive_low_effort=3]"
-        """
+ Example: annotate("low_effort", consecutive_low_effort=3)
+ → "[intent=low_effort, consecutive_low_effort=3]"
+"""
         if verdict not in cls.INTENTS:
             verdict = "on_topic_engaged"
         return f"[intent={verdict}{_format_extras(extras)}]"
 
-
 class TeacherModeVocabulary:
     """Teacher-mode taxonomy — what KIND of message Teacher renders this turn.
 
-    Mode is selected by Dean (or by preflight bypass for redirect/nudge/
-    confirm_end) and passed to Teacher in TurnPlan.
-    """
+ Mode is selected by Dean (or by preflight bypass for redirect/nudge/
+ confirm_end) and passed to Teacher in TurnPlan.
+"""
 
     MODES: dict[str, str] = {
         "socratic": (
@@ -166,7 +163,7 @@ class TeacherModeVocabulary:
             "Acknowledge work without revealing target answer."
         ),
         "close": (
-            "Unified close mode (M1 redesign) — driven by close_reason "
+            "Unified close mode — driven by close_reason "
             "in CARRYOVER NOTES. Emits structured JSON with message + "
             "demonstrated + needs_work."
         ),
@@ -197,12 +194,11 @@ class TeacherModeVocabulary:
     @classmethod
     def annotate(cls, mode: str, **extras: Any) -> str:
         """Example: annotate("redirect", tone="firm", attempts=2)
-                    → "[mode=redirect, attempts=2, tone=firm]"
-        """
+ → "[mode=redirect, attempts=2, tone=firm]"
+"""
         if mode not in cls.MODES:
             mode = "socratic"
         return f"[mode={mode}{_format_extras(extras)}]"
-
 
 class ToneTierVocabulary:
     """Tone tiers — selected by Dean per turn, escalates with off-topic strikes."""
@@ -235,7 +231,6 @@ class ToneTierVocabulary:
         if tone not in cls.TONES:
             tone = "neutral"
         return f"tone={tone}"
-
 
 class PhaseVocabulary:
     """Conversation lifecycle phases."""
@@ -272,13 +267,12 @@ class PhaseVocabulary:
             phase = "tutoring"
         return f"phase={phase}"
 
-
 class ModalEventVocabulary:
     """System events that may appear inline in conversation history.
 
-    These give the LLM visibility into UI/state events the student took
-    or saw, beyond just text exchanges.
-    """
+ These give the LLM visibility into UI/state events the student took
+ or saw, beyond just text exchanges.
+"""
 
     EVENTS: dict[str, str] = {
         "anchor_pick_shown": (
@@ -332,13 +326,12 @@ class ModalEventVocabulary:
     def annotate(cls, event: str, **payload: Any) -> str:
         """Render a system event line for history.
 
-        Example: annotate("phase_change", from_phase="rapport", to_phase="tutoring")
-                 → "SYSTEM_EVENT: phase_change, from_phase=rapport, to_phase=tutoring"
-        """
+ Example: annotate("phase_change", from_phase="rapport", to_phase="tutoring")
+ → "SYSTEM_EVENT: phase_change, from_phase=rapport, to_phase=tutoring"
+"""
         if event not in cls.EVENTS:
             event = "phase_change"
         return f"SYSTEM_EVENT: {event}{_format_extras(payload)}"
-
 
 class HintTransitionVocabulary:
     """Hint-level transitions — what happened to hint_level on a turn."""
@@ -362,13 +355,12 @@ class HintTransitionVocabulary:
             lines.append(f"  {k}: {v}")
         return "\n".join(lines)
 
-
 def all_vocabulary_blocks() -> str:
     """Combined system-prompt block of ALL vocabularies.
 
-    Use this in master prompt assembly to give the LLM a complete
-    ontology of the system in one place.
-    """
+ Use this in master prompt assembly to give the LLM a complete
+ ontology of the system in one place.
+"""
     blocks = [
         IntentVocabulary.system_prompt_block(),
         TeacherModeVocabulary.system_prompt_block(),

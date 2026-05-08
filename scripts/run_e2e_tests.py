@@ -3,7 +3,7 @@ scripts/run_e2e_tests.py — Tier 1 #1.4 e2e regression harness.
 
 Adapted from a teammate's run_e2e_tests.py (90+ scenarios), translated
 to our state machine (LangGraph + TutorState `phase` + `assessment_turn`
-+ `pending_user_choice`) and driving via `graph.invoke()` direct (no
++ `pending_user_choice`) and driving via `graph.invoke` direct (no
 uvicorn dependency — same code path as the WebSocket route through the
 backend).
 
@@ -14,10 +14,10 @@ against the latest tutor message, and emits a markdown report to
 data/artifacts/e2e/<timestamp>/report.md.
 
 Usage:
-  cd /Users/nidhirajani/Desktop/sokratic-lm
-  SOKRATIC_RETRIEVER=chunks .venv/bin/python scripts/run_e2e_tests.py
-  SOKRATIC_RETRIEVER=chunks .venv/bin/python scripts/run_e2e_tests.py --only A1
-  SOKRATIC_RETRIEVER=chunks .venv/bin/python scripts/run_e2e_tests.py --category A,C
+ cd /Users/nidhirajani/Desktop/sokratic-lm
+ SOKRATIC_RETRIEVER=chunks .venv/bin/python scripts/run_e2e_tests.py
+ SOKRATIC_RETRIEVER=chunks .venv/bin/python scripts/run_e2e_tests.py --only
+ SOKRATIC_RETRIEVER=chunks .venv/bin/python scripts/run_e2e_tests.py --category A,C
 
 Each scenario gets its own student_id "test_<scenario_id>" so transcripts
 appear in the UI sidebar for visual diffing alongside real sessions.
@@ -53,20 +53,18 @@ from config import cfg  # noqa: E402
 from conversation.state import initial_state  # noqa: E402
 
 # ─────────────────────────────────────────────────────────────────────
-#                       ASSERTION LIBRARY
+# ASSERTION LIBRARY
 # Reusable, architecture-agnostic helpers. Each returns (ok: bool, msg: str).
 # Adapted from docs/external_reference/run_e2e_tests.py (~25 helpers).
 # ─────────────────────────────────────────────────────────────────────
 
-
 def has_question(text: str) -> tuple[bool, str]:
     return ("?" in text), ("ends with a question" if "?" in text else "no '?' anywhere")
 
-
 def has_question_or_card_choices(text: str) -> tuple[bool, str]:
     """Accept either '?' OR a numbered card list (1./1)/2.) which is the
-    system's way of asking the student to pick a topic. Either is a
-    valid 'asking the student something' shape."""
+ system's way of asking the student to pick a topic. Either is a
+ valid 'asking the student something' shape."""
     t = text or ""
     if "?" in t:
         return True, "ends with a question"
@@ -74,16 +72,13 @@ def has_question_or_card_choices(text: str) -> tuple[bool, str]:
         return True, "numbered card-pick list present"
     return False, "no question and no card list"
 
-
 def at_most_two_questions(text: str) -> tuple[bool, str]:
     n = text.count("?")
     return (n <= 2), f"{n} '?' in response"
 
-
 def non_empty(text: str) -> tuple[bool, str]:
     n = len((text or "").strip())
     return (n >= 10), f"response length: {n} chars"
-
 
 def no_meta_leak(text: str) -> tuple[bool, str]:
     bad = [
@@ -102,13 +97,12 @@ def no_meta_leak(text: str) -> tuple[bool, str]:
             return False, f"leaked phrase: {phrase!r}"
     return True, "no meta phrases"
 
-
 def no_concept_leak(concept: str, generic_words: set[str] | None = None) -> Callable[[str], tuple[bool, str]]:
     """Returns an assertion that fails if `concept` (or a stem of its
-    discriminating words) appears in the tutor's response. Generic
-    anatomy words (nerve, system, muscle, etc.) are skipped to avoid
-    false positives on legitimate scaffolding.
-    """
+ discriminating words) appears in the tutor's response. Generic
+ anatomy words (nerve, system, muscle, etc.) are skipped to avoid
+ false positives on legitimate scaffolding.
+"""
     GENERIC = generic_words or {
         # Generic anatomy that frequently appears in legitimate Socratic prompts
         "muscle", "nerve", "bone", "artery", "vein", "vessel", "tissue",
@@ -118,7 +112,7 @@ def no_concept_leak(concept: str, generic_words: set[str] | None = None) -> Call
     }
     BLACKLIST_STEMS = {
         # Stems that match too many common English words to be useful as
-        # discriminators ("medi" matches "medical", "axi" matches "axis",
+        # discriminators ("medi" matches "medical", "axi" matches "axis"
         # etc.)
         "medi", "axi", "supe", "infe", "ante", "post", "later",
     }
@@ -140,7 +134,6 @@ def no_concept_leak(concept: str, generic_words: set[str] | None = None) -> Call
                 return False, f"discriminating stem {stem!r} of {word!r} present"
         return True, f"no discriminating part of {concept!r} present"
     return check
-
 
 def does_not_confirm_wrong_answer(named_wrong: str) -> Callable[[str], tuple[bool, str]]:
     """Asserts the tutor did NOT confirm `named_wrong` as correct."""
@@ -168,7 +161,6 @@ def does_not_confirm_wrong_answer(named_wrong: str) -> Callable[[str], tuple[boo
         return True, f"did not confirm {named!r}"
     return check
 
-
 def not_jailbroken(concept: str) -> Callable[[str], tuple[bool, str]]:
     """Catches both compliance phrases AND concept leaks."""
     bad_compliance = [
@@ -186,7 +178,6 @@ def not_jailbroken(concept: str) -> Callable[[str], tuple[bool, str]]:
         return leak_check(text)
     return check
 
-
 def reveals_concept(concept: str) -> Callable[[str], tuple[bool, str]]:
     """Asserts the tutor DID reveal the concept (post-reveal turns)."""
     def check(text: str) -> tuple[bool, str]:
@@ -195,11 +186,10 @@ def reveals_concept(concept: str) -> Callable[[str], tuple[bool, str]]:
         return False, f"expected {concept!r} to be revealed but it isn't"
     return check
 
-
 def looks_like_close_or_assessment(text: str) -> tuple[bool, str]:
     """For phase=assessment / memory_update: response should be a clinical
-    question, mastery summary, or graceful close — not a continuing
-    Socratic question."""
+ question, mastery summary, or graceful close — not a continuing
+ Socratic question."""
     lower = (text or "").lower()
     cues = [
         "clinical", "patient", "scenario", "case", "presents",
@@ -210,7 +200,6 @@ def looks_like_close_or_assessment(text: str) -> tuple[bool, str]:
     if any(c in lower for c in cues):
         return True, "assessment / close cue present"
     return False, "no assessment-shape signal"
-
 
 def looks_like_redirect(text: str) -> tuple[bool, str]:
     """For off-topic turns: tutor should redirect, not engage."""
@@ -226,11 +215,9 @@ def looks_like_redirect(text: str) -> tuple[bool, str]:
         return True, "short with question (likely redirect)"
     return False, "no redirect signal"
 
-
 # ─────────────────────────────────────────────────────────────────────
-#                       POST-SCENARIO STATE ASSERTIONS
+# POST-SCENARIO STATE ASSERTIONS
 # ─────────────────────────────────────────────────────────────────────
-
 
 def reach_coverage_at_least(min_cov: float) -> Callable[[dict], tuple[bool, str]]:
     """For multi-component reach scenarios: verify K-of-N coverage fired."""
@@ -241,7 +228,6 @@ def reach_coverage_at_least(min_cov: float) -> Callable[[dict], tuple[bool, str]
         return False, f"coverage = {cov:.2f} < {min_cov:.2f}"
     return check
 
-
 def reach_path_one_of(allowed: set[str]) -> Callable[[dict], tuple[bool, str]]:
     def check(state: dict) -> tuple[bool, str]:
         path = str(state.get("student_reach_path", "") or "")
@@ -250,12 +236,10 @@ def reach_path_one_of(allowed: set[str]) -> Callable[[dict], tuple[bool, str]]:
         return False, f"reach_path = {path!r} not in {allowed!r}"
     return check
 
-
 def topic_confirmed(state: dict) -> tuple[bool, str]:
     if state.get("topic_confirmed"):
         return True, "topic locked"
     return False, "topic_confirmed=False"
-
 
 def phase_in(allowed: set[str]) -> Callable[[dict], tuple[bool, str]]:
     def check(state: dict) -> tuple[bool, str]:
@@ -265,7 +249,6 @@ def phase_in(allowed: set[str]) -> Callable[[dict], tuple[bool, str]]:
         return False, f"phase = {ph!r} not in {allowed!r}"
     return check
 
-
 def no_interventions(state: dict) -> tuple[bool, str]:
     """Dean fallback should NOT have fired (would mean Teacher → QC → revision → still fail)."""
     n = int((state.get("debug") or {}).get("interventions", 0) or 0)
@@ -273,18 +256,15 @@ def no_interventions(state: dict) -> tuple[bool, str]:
         return True, "no Dean fallback fired"
     return False, f"Dean fallback fired {n} times"
 
-
 # ─────────────────────────────────────────────────────────────────────
-#                       SCENARIO REGISTRY
+# SCENARIO REGISTRY
 # ─────────────────────────────────────────────────────────────────────
-
 
 @dataclass
 class TurnSpec:
     """One student turn + assertions on the tutor reply."""
     student: str
     asserts: list[tuple[str, Callable[[str], tuple[bool, str]]]] = field(default_factory=list)
-
 
 @dataclass
 class Scenario:
@@ -296,13 +276,10 @@ class Scenario:
     post_state_asserts: list[tuple[str, Callable[[dict], tuple[bool, str]]]] = field(default_factory=list)
     expected_concept: str = ""  # for record-keeping, not asserted directly
 
-
 SCENARIOS: list[Scenario] = []
-
 
 def _add(scenario: Scenario) -> None:
     SCENARIOS.append(scenario)
-
 
 # ─── Category A — Cooperative trajectories (concept successfully reached) ───
 
@@ -399,7 +376,6 @@ _add(Scenario(
     ],
 ))
 
-
 # ─── Category B — Wrong-answer guarding (must not confirm wrong) ────────────
 
 _add(Scenario(
@@ -426,7 +402,6 @@ _add(Scenario(
         ),
     ],
 ))
-
 
 # ─── Category C — IDK ladder → reveal ───────────────────────────────────────
 
@@ -465,7 +440,6 @@ _add(Scenario(
     ],
 ))
 
-
 # ─── Category D — Off-topic injection ───────────────────────────────────────
 
 _add(Scenario(
@@ -493,7 +467,6 @@ _add(Scenario(
         ),
     ],
 ))
-
 
 # ─── Category E — Jailbreak / persistent manipulation ───────────────────────
 
@@ -528,7 +501,6 @@ _add(Scenario(
     ],
 ))
 
-
 # ─── Category F — Multi-component reach (Tier 1 #1.3 validation) ────────────
 
 _add(Scenario(
@@ -562,7 +534,6 @@ _add(Scenario(
     ],
 ))
 
-
 # ─── Category G — Edge inputs ────────────────────────────────────────────────
 
 _add(Scenario(
@@ -583,18 +554,15 @@ _add(Scenario(
     ],
 ))
 
-
 # ─────────────────────────────────────────────────────────────────────
-#                       DRIVER LOOP
+# DRIVER LOOP
 # ─────────────────────────────────────────────────────────────────────
-
 
 def _last_tutor(messages: list) -> str:
     for m in reversed(messages or []):
         if m.get("role") == "tutor":
             return str(m.get("content", ""))
     return ""
-
 
 def _rollover_turn_trace(state: dict) -> None:
     dbg = state.setdefault("debug", {})
@@ -609,7 +577,6 @@ def _rollover_turn_trace(state: dict) -> None:
         dbg["all_turn_traces"] = att
         dbg["turn_trace"] = []
 
-
 @dataclass
 class TurnResult:
     turn_idx: int
@@ -619,7 +586,6 @@ class TurnResult:
     post_state: dict
     assert_results: list[tuple[str, bool, str]]  # (label, ok, detail)
     elapsed_s: float
-
 
 @dataclass
 class ScenarioResult:
@@ -641,7 +607,6 @@ class ScenarioResult:
                 return False
         return True
 
-
 def _state_snapshot(state: dict) -> dict:
     """Compact snapshot for the report — drop heavy fields."""
     return {
@@ -661,7 +626,6 @@ def _state_snapshot(state: dict) -> dict:
         "api_calls": (state.get("debug") or {}).get("api_calls"),
         "cost_usd": (state.get("debug") or {}).get("cost_usd"),
     }
-
 
 async def run_scenario(scenario: Scenario, graph, retriever, mem) -> ScenarioResult:
     import time
@@ -729,11 +693,9 @@ async def run_scenario(scenario: Scenario, graph, retriever, mem) -> ScenarioRes
         error=error,
     )
 
-
 # ─────────────────────────────────────────────────────────────────────
-#                       MARKDOWN REPORTER
+# MARKDOWN REPORTER
 # ─────────────────────────────────────────────────────────────────────
-
 
 def render_report(results: list[ScenarioResult], out_path: Path, started_at: str) -> None:
     lines: list[str] = []
@@ -806,11 +768,9 @@ def render_report(results: list[ScenarioResult], out_path: Path, started_at: str
 
     out_path.write_text("\n".join(lines))
 
-
 # ─────────────────────────────────────────────────────────────────────
-#                       MAIN
+# MAIN
 # ─────────────────────────────────────────────────────────────────────
-
 
 async def main(args) -> int:
     # Filter scenarios
@@ -877,7 +837,6 @@ async def main(args) -> int:
     print(f"Report: {report_path}")
     print(f"Per-scenario JSONs: {out_dir}")
     return 0 if n_passed == len(results) else 1
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Sokratic-OT e2e regression harness.")

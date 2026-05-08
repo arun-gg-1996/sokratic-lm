@@ -1,18 +1,17 @@
 """
 scripts/compare_proposition_models.py
--------------------------------------
 Run the current proposition-extraction prompt through 4 models on 10 diverse
 chunks and dump outputs side-by-side so a human (or a follow-up analysis
 script) can compare atomicity, faithfulness, redundancy, and formatting.
 
 Models:
-  - anthropic:claude-haiku-4-5
-  - anthropic:claude-sonnet-4-6
-  - openai:gpt-4o-mini
-  - openai:gpt-4o
+anthropic:claude-haiku-4-5
+anthropic:claude-sonnet-4-6
+openai:gpt-4o-mini
+openai:gpt-4o
 
 Output: data/artifacts/proposition_model_comparison.json
-        (one record per chunk, with per-model outputs + latency + token usage)
+ (one record per chunk, with per-model outputs + latency + token usage)
 """
 from __future__ import annotations
 
@@ -46,7 +45,6 @@ MODELS = [
     ("openai", "gpt-4o"),
 ]
 
-
 def pick_chunks(n: int = 10) -> list[dict]:
     random.seed(42)
     rows = []
@@ -72,7 +70,6 @@ def pick_chunks(n: int = 10) -> list[dict]:
                     break
     return picks
 
-
 def run_anthropic(client: anthropic.Anthropic, model: str, prompt: str) -> dict:
     t0 = time.time()
     resp = client.messages.create(
@@ -88,7 +85,6 @@ def run_anthropic(client: anthropic.Anthropic, model: str, prompt: str) -> dict:
         "output_tokens": resp.usage.output_tokens,
     }
 
-
 def run_openai(client: OpenAI, model: str, prompt: str) -> dict:
     t0 = time.time()
     resp = client.chat.completions.create(
@@ -103,7 +99,6 @@ def run_openai(client: OpenAI, model: str, prompt: str) -> dict:
         "input_tokens": resp.usage.prompt_tokens,
         "output_tokens": resp.usage.completion_tokens,
     }
-
 
 def main() -> int:
     picks = pick_chunks(10)
@@ -148,7 +143,6 @@ def main() -> int:
     OUT_PATH.write_text(json.dumps(records, indent=2))
     print(f"\nWrote {OUT_PATH}  ({len(records)} chunks × {len(MODELS)} models)")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

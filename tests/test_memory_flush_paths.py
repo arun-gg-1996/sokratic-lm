@@ -3,13 +3,13 @@ tests/test_memory_flush_paths.py
 ────────────────────────────────
 M-T1 Tier 1 — Unit tests for memory_manager.flush().
 
-Test matrix per POST_DEMO_FIXES.md M-T1:
+Test matrix per M-T1:
 
 | Fixture                        | close_reason       | Expect writes? |
 |--------------------------------|--------------------|----------------|
 | Reach + clinical complete      | reach_full         | yes            |
 | Reach, opt-in no               | reach_skipped      | yes            |
-| Tutoring cap, no reach         | tutoring_cap       | yes (per F14)  |
+| Tutoring cap, no reach         | tutoring_cap       | yes ()  |
 | Hints exhausted                | hints_exhausted    | yes            |
 | Exit intent (no-save)          | exit_intent        | NO             |
 | Off-domain strike (no-save)    | off_domain_strike  | NO             |
@@ -40,9 +40,7 @@ from unittest.mock import MagicMock
 from memory.memory_manager import MemoryManager
 from memory.observation_extractor import Observation
 
-
 # ─── Fixtures ──────────────────────────────────────────────────
-
 
 def _make_state(
     *,
@@ -73,14 +71,12 @@ def _make_state(
         "student_reached_answer": True,
     }
 
-
 def _fake_persistent(available: bool = True):
     """Mock for PersistentMemory. Captures add() calls."""
     p = MagicMock()
     p.available = available
     p.add = MagicMock(return_value=True)  # default: success
     return p
-
 
 def _fake_extract(observations: list[Observation]):
     """Patch extract_observations to return controlled output."""
@@ -89,7 +85,6 @@ def _fake_extract(observations: list[Observation]):
         return list(observations)
 
     return _impl
-
 
 @pytest.fixture
 def mgr_with_persistent(monkeypatch):
@@ -105,9 +100,7 @@ def mgr_with_persistent(monkeypatch):
     mgr = MemoryManager()
     return mgr, fake
 
-
 # ─── Test cases ────────────────────────────────────────────────
-
 
 def test_flush_writes_observations_when_available(mgr_with_persistent, monkeypatch):
     """Happy path: 2 observations → 2 mem0 writes, returns True."""
@@ -154,7 +147,6 @@ def test_flush_writes_observations_when_available(mgr_with_persistent, monkeypat
         assert "thread_id" in meta
         assert meta["category"] in {"misconception", "learning_style"}
 
-
 def test_flush_skipped_when_persistent_unavailable(monkeypatch):
     """When mem0 is down, flush returns False without calling Haiku."""
     fake = _fake_persistent(available=False)
@@ -180,7 +172,6 @@ def test_flush_skipped_when_persistent_unavailable(monkeypatch):
     assert not called  # no Haiku call when stub is unavailable
     assert fake.add.call_count == 0
 
-
 def test_flush_skipped_when_too_few_student_messages(mgr_with_persistent, monkeypatch):
     """Sessions with < 2 student messages skip Haiku to save cost."""
     mgr, persistent = mgr_with_persistent
@@ -198,7 +189,6 @@ def test_flush_skipped_when_too_few_student_messages(mgr_with_persistent, monkey
     assert mgr.last_flush_status == "skipped_too_short"
     assert not called
     assert persistent.add.call_count == 0
-
 
 def test_flush_returns_false_when_no_observations(mgr_with_persistent, monkeypatch):
     """Haiku returned []. flush returns False (no writes)."""
@@ -221,7 +211,6 @@ def test_flush_returns_false_when_no_observations(mgr_with_persistent, monkeypat
 
     assert result is False  # at least one write must succeed for True
     assert persistent.add.call_count == 0
-
 
 def test_flush_metadata_dropped_when_locked_topic_missing(mgr_with_persistent, monkeypatch):
     """If state has no locked_topic, the topic_metadata helper falls
@@ -256,7 +245,6 @@ def test_flush_metadata_dropped_when_locked_topic_missing(mgr_with_persistent, m
     # crash and that flush_status was set.
     assert mgr.last_flush_status is not None
 
-
 def test_flush_each_write_carries_thread_id(mgr_with_persistent, monkeypatch):
     """thread_id from state must be in every metadata dict for mem0
     queries to filter by session later (e.g., the analysis page chat)."""
@@ -286,7 +274,6 @@ def test_flush_each_write_carries_thread_id(mgr_with_persistent, monkeypatch):
         meta = call.kwargs["metadata"]
         assert meta["thread_id"] == "thread_xyz_777"
 
-
 def test_flush_categories_match_extractor_output(mgr_with_persistent, monkeypatch):
     """The category field in metadata must equal the Observation's
     category field — caller doesn't override it."""
@@ -313,7 +300,6 @@ def test_flush_categories_match_extractor_output(mgr_with_persistent, monkeypatc
 
     cats = [c.kwargs["metadata"]["category"] for c in persistent.add.call_args_list]
     assert cats == ["misconception", "learning_style"]
-
 
 def test_flush_emits_session_summary_trace(mgr_with_persistent, monkeypatch):
     """Every flush call must emit memory.session_summary trace with

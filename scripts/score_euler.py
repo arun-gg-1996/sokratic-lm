@@ -3,14 +3,14 @@
 EULER evaluation script — uses claude-sonnet to score each tutor turn.
 
 EULER criteria:
-  E — Engages with a question        (question_present:  0 or 1)
-  U — Understands student context    (relevance:         0–1)
-  L — Leads without leaking          (no_reveal:         0 or 1)
-  E — Elevates reasoning             (helpful:           0–1)
-  R — (implicit average)
+ E — Engages with a question (question_present: 0 or 1)
+ U — Understands student context (relevance: 0–1)
+ L — Leads without leaking (no_reveal: 0 or 1)
+ E — Elevates reasoning (helpful: 0–1)
+ R — (implicit average)
 
 Usage:
-    python scripts/score_euler.py [--min-turns N] [--outdir path]
+ python scripts/score_euler.py [--min-turns N] [--outdir path]
 """
 
 import argparse
@@ -71,12 +71,10 @@ PROFILE_LABELS = {
 }
 CRITERIA = ["question_present", "relevance", "helpful", "no_reveal"]
 
-
 # ── helpers ──────────────────────────────────────────────────────────────────
 def bar(val: float, width: int = 20) -> str:
     filled = int(round(val * width))
     return "█" * filled + "░" * (width - filled)
-
 
 def score_turn(
     client: anthropic.Anthropic,
@@ -113,7 +111,6 @@ def score_turn(
         tqdm.write(f"      [WARN] score_turn failed: {exc}")
         return dict(FALLBACK)
 
-
 def discover_conversations(base: Path, min_turns: int) -> list[Path]:
     files = sorted(base.glob("*.json"))
     usable = []
@@ -126,7 +123,6 @@ def discover_conversations(base: Path, min_turns: int) -> list[Path]:
             pass
     return usable
 
-
 def criterion_stats(turns_list: list, crit: str) -> tuple:
     vals = [t["scores"][crit] for t in turns_list]
     if not vals:
@@ -134,7 +130,6 @@ def criterion_stats(turns_list: list, crit: str) -> tuple:
     avg = mean(vals)
     passing = sum(1 for v in vals if v >= 0.75)
     return avg, passing, len(vals)
-
 
 # ── main ─────────────────────────────────────────────────────────────────────
 def main():
@@ -340,7 +335,6 @@ def main():
     print(f"  OVERALL EULER: {overall_euler:.3f}  —  [{overall_label}]")
     print("=" * W)
     print(f"\nFull report saved → {report_path}")
-
 
 if __name__ == "__main__":
     main()

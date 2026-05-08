@@ -1,24 +1,23 @@
 """
 scripts/build_topic_index.py
------------------------------
 Build a TOC-grounded topic index from textbook_structure.json + indexed chunks.
 
 Pipeline:
 1. Walk `data/textbook_structure.json` (nested: chapter > section > subsection).
 2. Drop nodes whose names match domain-specific junk patterns
-   (see `topic_index.junk_patterns` in config/domains/{domain}.yaml).
+ (see `topic_index.junk_patterns` in config/domains/{domain}.yaml).
 3. Count chunks per (chapter, section, subsection) by normalizing the chunk
-   fields against the structure keys — chunks carry a different naming
-   convention than the structure file, so we strip section-number prefixes
-   and split on the " — " separator that the ingestion pipeline uses to
-   join section + subsection.
+ fields against the structure keys — chunks carry a different naming
+ convention than the structure file, so we strip section-number prefixes
+ and split on the " — " separator that the ingestion pipeline uses to
+ join section + subsection.
 4. Keep nodes with chunk_count >= `topic_index.min_chunk_count` (default 1).
 5. Tag `limited: true` on nodes with chunk_count <= `limited_chunk_threshold`.
 6. Write `data/topic_index.json` as a flat list of leaf entries:
-   {chapter, section, subsection, difficulty, chunk_count, limited, path}
+ {chapter, section, subsection, difficulty, chunk_count, limited, path}
 
 Run:
-    .venv/bin/python -m scripts.build_topic_index
+ .venv/bin/python -m scripts.build_topic_index
 """
 from __future__ import annotations
 
@@ -40,21 +39,17 @@ CHAPTER_PREFIX_RE = re.compile(r"^Chapter\s+\d+\s*:\s*", re.IGNORECASE)
 CHAPTER_NUM_RE = re.compile(r"^Chapter\s+(\d+)\s*:", re.IGNORECASE)
 SECTION_NUM_PREFIX_RE = re.compile(r"^\d+(?:\.\d+)*\s+")
 
-
 def _strip_chapter_prefix(name: str) -> str:
     return CHAPTER_PREFIX_RE.sub("", name).strip()
 
-
 def _extract_chapter_num(chapter_key: str) -> int | None:
     """Pull the integer chapter number from a structure key like
-    'Chapter 20: The Cardiovascular System...'. Returns None if no match."""
+ 'Chapter 20: The Cardiovascular System...'. Returns None if no match."""
     m = CHAPTER_NUM_RE.match(chapter_key.strip())
     return int(m.group(1)) if m else None
 
-
 def _strip_section_num(name: str) -> str:
     return SECTION_NUM_PREFIX_RE.sub("", name).strip()
-
 
 def _is_junk(name: str, patterns: list[str], suffixes: list[str]) -> bool:
     lname = name.lower()
@@ -66,7 +61,6 @@ def _is_junk(name: str, patterns: list[str], suffixes: list[str]) -> bool:
             return True
     return False
 
-
 def _load_junk_config() -> tuple[list[str], list[str], int, int]:
     ti = cfg.topic_index
     patterns = list(getattr(ti, "junk_patterns", []) or [])
@@ -75,26 +69,25 @@ def _load_junk_config() -> tuple[list[str], list[str], int, int]:
     limited = int(getattr(ti, "limited_chunk_threshold", 2))
     return patterns, suffixes, min_count, limited
 
-
 def _count_chunks() -> dict[tuple[str, str, str], int]:
     """
-    Return counts keyed by (chapter_norm, section_norm, subsection_norm).
-    subsection_norm is "" when the chunk has no subsection.
+ Return counts keyed by (chapter_norm, section_norm, subsection_norm).
+ subsection_norm is "" when the chunk has no subsection.
 
-    Schema notes (post-2026-04-29 chunks_openstax_anatomy.jsonl):
-      Each chunk has SEPARATE fields:
-        - chapter_title:    e.g. "An Introduction to the Human Body"
-                            (NO "Chapter N:" prefix in chunks)
-        - section_title:    e.g. "Overview of Anatomy and Physiology"
-                            (no section-number prefix, no em-dash)
-        - subsection_title: e.g. "Body Cavities and Serous Membranes"
-                            (empty when chunk lives at section root)
+ Schema notes (post- chunks_openstax_anatomy.jsonl):
+ Each chunk has SEPARATE fields:
+chapter_title: e.g. "An Introduction to the Human Body"
+ (NO "Chapter N:" prefix in chunks)
+section_title: e.g. "Overview of Anatomy and Physiology"
+ (no section-number prefix, no em-dash)
+subsection_title: e.g. "Body Cavities and Serous Membranes"
+ (empty when chunk lives at section root)
 
-    Earlier chunks (chunks_ot.jsonl, propositions era) joined section
-    and subsection with " — " into a single section_title field. We
-    fall back to that legacy split if no separate subsection_title is
-    present, so the script works on both schemas.
-    """
+ Earlier chunks (chunks_ot.jsonl, propositions era) joined section
+ and subsection with " — " into a single section_title field. We
+ fall back to that legacy split if no separate subsection_title is
+ present, so the script works on both schemas.
+"""
     counts: dict[tuple[str, str, str], int] = {}
     with open(CHUNKS_PATH, "r") as f:
         for line in f:
@@ -124,7 +117,6 @@ def _count_chunks() -> dict[tuple[str, str, str], int]:
             counts[key] = counts.get(key, 0) + 1
     return counts
 
-
 def _aggregate_counts(
     chunk_counts: dict[tuple[str, str, str], int],
     chapter: str,
@@ -142,7 +134,6 @@ def _aggregate_counts(
             continue
         total += n
     return total
-
 
 def build_index() -> list[dict]:
     structure = json.loads(STRUCTURE_PATH.read_text())
@@ -233,7 +224,6 @@ def build_index() -> list[dict]:
     entries.sort(key=lambda e: (e["chapter"], e["section"], e["subsection"]))
     return entries, dropped_junk, dropped_empty
 
-
 def main() -> None:
     entries, dropped_junk, dropped_empty = build_index()
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -249,7 +239,6 @@ def main() -> None:
     print(f"  dropped (no chunks):     {dropped_empty}")
     print(f"  limited coverage (<= {cfg.topic_index.limited_chunk_threshold} chunks): {limited_n}")
     print(f"  by difficulty: {by_difficulty}")
-
 
 if __name__ == "__main__":
     main()

@@ -53,14 +53,17 @@ function formatDate(iso: string | null): string {
 // Pre-metadata legacy entries (no session_date) all bucket under one
 // "Older memories" group so they don't multiply.
 //
-// Categories within a session render in a stable order:
-//   session_summary → topics_covered → misconception →
-//   open_thread → learning_style_cue → (anything else)
+// Categories within a session render in a stable order. The current
+// backend (memory/observation_extractor.py) only emits two categories:
+//   misconception, learning_style
+// Older keys (session_summary / topics_covered / open_thread /
+// learning_style_cue) are kept here so legacy entries still sort sanely.
 const CATEGORY_ORDER: Record<string, number> = {
   session_summary: 0,
   topics_covered: 1,
   misconception: 2,
   open_thread: 3,
+  learning_style: 4,
   learning_style_cue: 4,
 };
 
@@ -77,9 +80,17 @@ function groupBySession(entries: MemoryEntry[]): SessionGroup[] {
   const buckets = new Map<string, SessionGroup>();
   for (const e of entries) {
     const meta = (e.metadata as Record<string, unknown>) || {};
-    const date = String(meta.session_date || "");
-    const path = String(meta.topic_path || "");
-    const key = `${date}::${path}`;
+    // Backend writes session_at + subsection_path + thread_id. Keep the
+    // legacy session_date / topic_path / subsection_title aliases so an
+    // old mem0 entry from before the schema change still groups correctly.
+    const date = String(meta.session_at || meta.session_date || "");
+    const subsectionPath = String(
+      meta.subsection_path || meta.topic_path || ""
+    );
+    const threadId = String(meta.thread_id || "");
+    // Group key: prefer thread_id (one logical session) and fall back to
+    // (date, path) so legacy entries still bucket sensibly.
+    const key = threadId || `${date}::${subsectionPath}`;
     let g = buckets.get(key);
     if (!g) {
       g = {
@@ -93,13 +104,28 @@ function groupBySession(entries: MemoryEntry[]): SessionGroup[] {
       buckets.set(key, g);
     }
     g.entries.push(e);
-    // Hydrate group-level fields from the FIRST entry that has them
-    // (some atoms drop subsection_title even when siblings have it).
-    if (!g.subsection && meta.subsection_title) {
-      g.subsection = String(meta.subsection_title);
+    // Hydrate group-level fields from the FIRST entry that has them.
+    // No separate subsection_title in the new schema — derive the leaf
+    // from subsection_path (last " > " segment) and fall back to the
+    // legacy subsection_title key for old entries.
+    if (!g.subsection) {
+      const legacyTitle = meta.subsection_title;
+      if (legacyTitle) {
+        g.subsection = String(legacyTitle);
+      } else if (subsectionPath) {
+        const segs = subsectionPath.split(" > ");
+        g.subsection = segs[segs.length - 1] || "";
+      }
     }
-    if (!g.chapterNum && typeof meta.chapter_num === "number") {
-      g.chapterNum = meta.chapter_num as number;
+    // chapter_num: prefer the explicit metadata field. If 0/missing, try
+    // to parse it out of the canonical "Chapter N: ..." subsection_path.
+    if (!g.chapterNum) {
+      if (typeof meta.chapter_num === "number" && meta.chapter_num > 0) {
+        g.chapterNum = meta.chapter_num as number;
+      } else if (subsectionPath) {
+        const m = subsectionPath.match(/^Chapter (\d+):/);
+        if (m) g.chapterNum = parseInt(m[1], 10);
+      }
     }
     if (!g.outcome && meta.outcome) g.outcome = String(meta.outcome);
   }
@@ -128,6 +154,7 @@ function categoryLabel(cat: string): string {
     case "topics_covered": return "Topic";
     case "misconception": return "Misconception";
     case "open_thread": return "Open thread";
+    case "learning_style": return "Learning style";
     case "learning_style_cue": return "Learning style";
     default: return cat || "Note";
   }

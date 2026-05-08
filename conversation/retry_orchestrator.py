@@ -1,49 +1,17 @@
 """
-conversation/retry_orchestrator.py
-──────────────────────────────────
-L50 + L62 implementation — bounded retry loop wrapping Teacher draft +
-4 parallel Haiku self-policing checks + Dean re-plan + safe-generic-probe
-fallback.
+Retry loop that wraps the Teacher draft and the four-Haiku verifier
+quartet. Up to three Teacher drafts run, each fed the prior attempt
+plus the failure reasons. If all three drafts fail, the Dean replans
+once and the Teacher gets one more attempt.
 
-Per L50:
+If the leak check still fails after every retry, the orchestrator
+ships a deterministic, template-only fallback message instead of
+the failing LLM draft. Leaks are the highest-stakes failure mode and
+must never reach the student.
 
-  attempt 1: teacher.draft(turn_plan, ...)
-    parallel haiku × 4 → if all pass, ship
-
-  attempt 2: teacher.draft(turn_plan, ..., prior_attempt=draft_1, ...)
-    parallel haiku × 4 → if all pass, ship
-
-  attempt 3: teacher.draft(turn_plan, ..., prior_attempts=[d1,d2], ...)
-    parallel haiku × 4 → if all pass, ship
-
-  all 3 fail → Dean re-plans ONCE:
-    new_turn_plan = dean.replan(...)
-    draft_4 = teacher.draft(new_turn_plan, ...)
-    parallel haiku × 4 →
-      if all pass → ship draft_4
-      if leak_check FAILS → DO NOT SHIP draft_4 — fall back to safe generic probe
-      if other check fails → ship draft_4 anyway (less critical than leak)
-
-CRITICAL SAFETY (Codex round-1 fix #5): never ship a draft that fails
-haiku_leak_check. Leaks are the highest-stakes failure mode.
-
-Safe generic probe: deterministic, templated, NO LLM call, GUARANTEED
-non-leak. Used only when leak_check still fails after the full retry
-chain. Logged to state.debug.turn_trace with leak_cap_fallback_fired=True.
-Hint level NOT incremented (the turn is "wasted" but no leak).
-
-Hard timeout per turn: 30 seconds wall-clock. If exceeded → safe-generic-
-probe (same fallback path).
-
-Per L62: each attempt's failure detail is fed BACK into the next
-attempt's prompt + into Dean's re-plan input.
-
-Cost / latency
---------------
-Worst case per turn: 4 Teacher drafts (~$0.018 ea Sonnet) + 16 Haiku
-checks (~$0.0002 ea) + 1 Dean re-plan (~$0.018) + maybe 1 fallback
-render = ~$0.10 / turn. Average case (turn passes attempt 1): 1
-Teacher draft + 4 Haiku = ~$0.020 / turn.
+The orchestrator also enforces a 30-second hard timeout per turn and
+logs each attempt to `state["debug"]["turn_trace"]` so a failing
+turn can be replayed.
 """
 from __future__ import annotations
 
@@ -61,19 +29,17 @@ from conversation.teacher_v2 import (
 )
 from conversation.turn_plan import TurnPlan
 
-
-# Bounded by L50
+# Bounded by
 MAX_TEACHER_ATTEMPTS = 3       # Then Dean re-plans + 1 more Teacher attempt
 TURN_HARD_TIMEOUT_S = 30.0     # Wall-clock cap
 
-# M-FB compliance: NO templated tutor-text fallback. When the retry
+# compliance: NO templated tutor-text fallback. When the retry
 # chain exhausts (Teacher attempts 1-3 + Dean replan + 1 more all fail
 # verifier checks OR produce empty drafts), nodes_v2 detects
 # used_safe_generic_probe=True and emits an ErrorCard system message
 # instead of fake tutor text. The empty string here is a sentinel —
 # never reaches the chat surface.
 SAFE_GENERIC_PROBE = ""
-
 
 @dataclass
 class TurnAttempt:
@@ -110,7 +76,6 @@ class TurnAttempt:
                 }
         return {}
 
-
 @dataclass
 class TurnRunResult:
     """Final outcome of run_turn — the message to ship + full audit trail."""
@@ -124,11 +89,9 @@ class TurnRunResult:
     attempts: list[TurnAttempt] = field(default_factory=list)
     final_turn_plan: Optional[TurnPlan] = None  # post-replan plan if used
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Parallel Haiku quartet
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def _run_haiku_quartet(
     draft: str,
@@ -145,14 +108,14 @@ def _run_haiku_quartet(
 ) -> list[dict]:
     """Run all 4 self-policing Haiku checks (parallel by default).
 
-    Returns list[dict] of universal-schema results in stable order:
-      [leak, sycophancy, shape, pedagogy]
+ Returns list[dict] of universal-schema results in stable order:
+ [leak, sycophancy, shape, pedagogy]
 
-    Per L48 these run concurrently — wall-clock for the quartet is
-    ~max(individual call times) ≈ 0.5-1.5s.
-    """
+ Per these run concurrently — wall-clock for the quartet is
+ ~max(individual call times) ≈ 0.5-1.5s.
+"""
     def _leak():
-        # F5c (POST_DEMO_FIXES.md, 2026-05-06): pass locked_question so
+        # F5c : pass locked_question so
         # the leak check can reason about classification / list /
         # enumeration questions where naming the categories IS the
         # answer (e.g. Q="classify connective tissues" + draft naming
@@ -166,7 +129,7 @@ def _run_haiku_quartet(
 
     def _sycophancy():
         # Existing sycophancy_check signature: (draft, student_state, reach_fired)
-        # Use neutral defaults (Track 4.7 graph wiring will pass real values)
+        # Use neutral defaults ( graph wiring will pass real values)
         raw = C.haiku_sycophancy_check(draft, "neutral", False)
         return C.to_universal_check_result(raw, check_name="haiku_sycophancy_check")
 
@@ -198,11 +161,9 @@ def _run_haiku_quartet(
     else:
         return [r() for r in runners]
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Main orchestrator — run_turn
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def run_turn(
     *,
@@ -218,23 +179,23 @@ def run_turn(
     parallel_quartet: bool = True,
     timeout_s: float = TURN_HARD_TIMEOUT_S,
 ) -> TurnRunResult:
-    """Drive the L50 retry loop end-to-end.
+    """Drive the retry loop end-to-end.
 
-    Args:
-      teacher: TeacherV2 instance for draft rendering
-      dean: DeanV2 instance for replan call
-      turn_plan: the plan from Dean's primary planning call
-      teacher_inputs: chunks/history/locked context for Teacher
-      dean_state: TutorState dict (for Dean.replan path)
-      dean_chunks: chunks for Dean.replan (usually same as teacher_inputs.chunks)
-      locked_answer: the canonical locked answer (for leak_check)
-      locked_answer_aliases: synonyms (for leak_check)
-      prior_tutor_questions: last 1-2 tutor questions (for shape no-repetition)
-      parallel_quartet: run the 4 Haiku checks concurrently (default True)
-      timeout_s: hard wall-clock cap; on exceed → safe-generic-probe
+ Args:
+ teacher: TeacherV2 instance for draft rendering
+ dean: DeanV2 instance for replan call
+ turn_plan: the plan from Dean's primary planning call
+ teacher_inputs: chunks/history/locked context for Teacher
+ dean_state: TutorState dict (for Dean.replan path)
+ dean_chunks: chunks for Dean.replan (usually same as teacher_inputs.chunks)
+ locked_answer: the canonical locked answer (for leak_check)
+ locked_answer_aliases: synonyms (for leak_check)
+ prior_tutor_questions: last 1-2 tutor questions (for shape no-repetition)
+ parallel_quartet: run the 4 Haiku checks concurrently (default True)
+ timeout_s: hard wall-clock cap; on exceed → safe-generic-probe
 
-    Returns TurnRunResult with the final text + full audit trail.
-    """
+ Returns TurnRunResult with the final text + full audit trail.
+"""
     started = time.time()
     attempts: list[TurnAttempt] = []
     aliases = locked_answer_aliases or []
@@ -252,7 +213,7 @@ def run_turn(
     prior_drafts: list[str] = []
     prior_failures: list[dict] = []
 
-    # 2026-05-05: per-attempt activity labels for demo visibility.
+    # : per-attempt activity labels for demo visibility.
     from conversation.streaming import fire_activity as _fa
     for n in range(1, MAX_TEACHER_ATTEMPTS + 1):
         if not _within_timeout():
@@ -455,7 +416,7 @@ def run_turn(
             final_turn_plan=final_plan,
         )
 
-    # ── Critical safety rule (Codex round-1 fix #5) ────────────────────
+    # ── Critical safety rule ( round-1 fix #5) ────────────────────
     # If leak_check still fails → DO NOT SHIP draft4. Fall back to
     # safe-generic-probe. If only other checks fail (sycophancy / shape /
     # pedagogy) → ship draft4 anyway (less critical than leak).
@@ -466,7 +427,7 @@ def run_turn(
             leak_cap_fired=True,
         )
 
-    # Non-leak failure on attempt 4 → ship anyway per L50
+    # Non-leak failure on attempt 4 → ship anyway per
     return TurnRunResult(
         final_text=draft4.text,
         final_attempt=4,
@@ -479,7 +440,6 @@ def run_turn(
         final_turn_plan=final_plan,
     )
 
-
 def _safe_probe_result(
     attempts: list[TurnAttempt],
     started: float,
@@ -489,8 +449,8 @@ def _safe_probe_result(
     timed_out: bool,
     leak_cap_fired: bool = False,
 ) -> TurnRunResult:
-    """Build the safe-generic-probe TurnRunResult per L50."""
-    # 2026-05-05: surface the fallback in the activity log so the demo
+    """Build the safe-generic-probe TurnRunResult per ."""
+    # : surface the fallback in the activity log so the demo
     # viewer can see WHY the system shipped a generic probe.
     from conversation.streaming import fire_activity as _fa
     if timed_out:

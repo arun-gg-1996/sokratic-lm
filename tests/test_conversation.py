@@ -24,7 +24,6 @@ from conversation.lifecycle_v2 import after_dean, after_assessment
 from conversation.state import initial_state
 from config import cfg
 
-
 # ============================================================
 # Level 1 — Edge/routing unit tests (no LLM, pure Python)
 # ============================================================
@@ -59,14 +58,13 @@ def _make_state(**overrides):
     base.update(overrides)
     return base
 
-
 class TestAfterDeanRouting:
     def test_routes_to_assessment_on_correct(self):
         state = _make_state(student_reached_answer=True)
         assert after_dean(state) == "assessment_node"
 
     def test_routes_to_memory_update_on_hints_exhausted(self):
-        """F8 (POST_DEMO_FIXES.md, 2026-05-06): post-M1, hints-exhausted
+        """post-M1, hints-exhausted
         routes STRAIGHT to memory_update (was assessment). The M1 change
         avoids offering an opt-in clinical bonus to a student who didn't
         reach the core answer. See lifecycle_v2.py:1149-1150.
@@ -83,7 +81,7 @@ class TestAfterDeanRouting:
         assert after_dean(state) == END
 
     def test_hint_at_max_routes_to_memory_update(self):
-        """F8 (POST_DEMO_FIXES.md, 2026-05-06): hint_level == max_hints + 1
+        """hint_level == max_hints + 1
         triggers the M1 hint-exhausted route → memory_update.
         """
         state = _make_state(student_reached_answer=False, hint_level=4, max_hints=3)
@@ -97,7 +95,6 @@ class TestAfterDeanRouting:
     def test_turn_count_one_below_limit_stays_in_tutoring(self):
         state = _make_state(student_reached_answer=False, hint_level=1, turn_count=24, max_turns=25)
         assert after_dean(state) == END
-
 
 class TestAfterAssessmentRouting:
     def test_routes_to_memory_update_when_done(self):
@@ -116,13 +113,12 @@ class TestAfterAssessmentRouting:
         state = _make_state(assessment_turn=0)
         assert after_assessment(state) == END
 
-
 class TestHelpAbuseLogic:
     """Test help abuse counter logic (pure Python, no LLM)."""
 
     def test_help_abuse_counter_increments_on_low_effort(self):
-        """F8 (POST_DEMO_FIXES.md, 2026-05-06): threshold bumped 3 → 4
-        per Change 4 (2026-04-30). Pure-Python loop test; drives N
+        """threshold bumped 3 → 4
+        per Change 4. Pure-Python loop test; drives N
         consecutive low_effort turns where N = current threshold.
         """
         help_abuse_threshold = cfg.dean.help_abuse_threshold  # currently 4
@@ -157,7 +153,6 @@ class TestHelpAbuseLogic:
                 count = 0
 
         assert count == 0, "Counter should be 0 after a real attempt"
-
 
 # ============================================================
 # Level 2 — Integration tests (real LLM, MockRetriever)
@@ -251,7 +246,6 @@ class TestGraphIntegration:
         assert debug["api_calls"] > 0
         assert debug["input_tokens"] > 0
         assert debug["output_tokens"] > 0
-
 
 # ============================================================
 # Level 3 — Named scenario tests

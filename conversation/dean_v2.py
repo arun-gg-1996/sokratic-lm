@@ -1,72 +1,26 @@
 """
-conversation/dean_v2.py
-───────────────────────
-Dean TurnPlan emitter per L46 + L47 + L51 + L53 (Track 4.5).
+Dean planner — emits a validated TurnPlan via a single Sonnet call.
 
-Replaces today's 9-method Dean planner stack with a SINGLE Sonnet call
-that emits a validated TurnPlan. Today's _setup_call + _quality_check_call
-+ _format_dean_critique etc. all collapse into ONE planning step:
+Public surface:
 
-  dean = DeanV2(client, model="claude-sonnet-4-6")
-  plan = dean.plan(state, retrieved_chunks, mem0_carryover) → TurnPlan
+  DeanV2(client, model="claude-sonnet-4-6")
+    .plan(state, chunks, carryover)            → TurnPlan
+    .plan_hint_bank(state, chunks)             → list[str]
+    .replan(state, chunks, prior_plan, ...)    → TurnPlan
 
-Why one call?
-  - Today's Sonnet QC (_quality_check_call ~$0.01-0.02/turn) is REMOVED
-    per L51. The 4 Haiku self-policing checks (Track 4.2) replace it.
-  - The TurnPlan IS the contract — Dean's job is to plan ONE message
-    well, not to plan + critique a draft.
-  - Cost saving: ~$0.04 today → ~$0.02/turn (single Sonnet planning call)
-    + ~$0.0008 (4 Haiku checks) = ~$0.021/turn for the planner+checker
-    layer. ~50% cheaper.
+`plan()` is the per-turn call: it reads the locked topic, retrieved
+chunks, recent conversation history, and any mem0 carryover, and
+returns a structured `TurnPlan` with mode, tone, hint text, and
+forbidden / permitted terms. JSON parse failures trigger one stricter
+re-prompt before falling back to `TurnPlan.minimal_fallback`.
 
-Per L46:
-  Output is a TurnPlan with all required fields filled.
-  If parse fails → re-prompt with stricter instruction.
-  If 2nd parse fails → minimal_fallback().
+`plan_hint_bank()` runs at topic-lock time and produces a small bank
+of hint angles the Dean may reuse on later turns. `replan()` runs
+when a draft has failed the Teacher's Haiku checks several times in
+a row, with the failure detail folded into the prompt.
 
-Per L47:
-  Hint suggestions are pre-baked at lock time as state.hint_suggestions
-  (~5 angles, $0.005). Dean's per-turn _setup_call decides whether to
-  reuse a bank suggestion or write fresh; bank entries are SOFT.
-  This module provides plan_hint_bank() for the lock-time call.
-
-Per L51:
-  Today's Sonnet quality check is GONE. dean_v2 has no _quality_check
-  function. Quality verification is the Track 4.2 quartet of Haiku checks.
-
-Per L53:
-  Reach checking lives separately (Step A + Step B per existing
-  reached_answer_gate). Dean's TurnPlan.student_reached_answer is
-  INFORMATIONAL only — authority is the dedicated reach gate.
-
-Per L9 + Track 2:
-  Topic-mapper-LLM is a SEPARATE module (retrieval/topic_mapper_llm.py).
-  Dean does NOT do topic mapping; it operates on an already-locked topic.
-  The L9 mapper fires once at topic-lock time (session.py / rapport_node).
-
-Architecture
-------------
-- DeanV2.plan(state, chunks, carryover) → TurnPlan
-    Single Sonnet call. Builds a structured prompt with:
-      * locked_topic + locked_question + locked_answer + aliases
-      * retrieved chunks (anchor + tangent)
-      * conversation history (last N turns)
-      * previous turn's failures (if any, for re-plan path per L50)
-      * carryover_notes from mem0
-      * shape_spec target
-    Asks for strict JSON matching the TurnPlan schema.
-    Parses via TurnPlan.from_llm_json — re-prompts once on parse fail
-    per L46, then minimal_fallback if still failing.
-
-- DeanV2.plan_hint_bank(state, chunks) → list[str]
-    Lock-time call. Generates ~5 hint angles for the locked subsection
-    as a SOFT bank Dean can reuse per-turn or ignore. Stored as
-    state.hint_suggestions.
-
-- DeanV2.replan(state, chunks, prior_plan, prior_attempts, prior_failures)
-    Per L50: after 3 Teacher attempts fail Haiku checks, Dean re-plans
-    ONCE with the failure detail before falling back to safe-generic-probe.
-    Same Sonnet call as plan(), with the failure feedback prepended.
+Quality verification has moved out of the Dean — the four Haiku
+checks in `verifier_quartet.py` handle it instead.
 """
 from __future__ import annotations
 
@@ -76,7 +30,6 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from conversation.turn_plan import TurnPlan, MODES, TONES
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Single planning prompt — Dean's only job is producing a TurnPlan
@@ -153,7 +106,7 @@ that missed (a substantive guess, even if wrong). Do NOT advance on:
 The shown hint_level is the CURRENT level; if you advance, the NEXT turn
 sees level+1 and your hint_text should escalate one tier deeper.
 
-LOCKED-QUESTION ECHO HANDLING (BLOCK 10 / REAL-Q3):
+LOCKED-QUESTION ECHO HANDLING:
 If the student's latest message is essentially the locked_question
 itself (verbatim or paraphrase — e.g. they clicked an anchor chip
 that contained the question), DO NOT punt with "what aspect would
@@ -168,7 +121,7 @@ The student showed they want to engage with this exact question.
 Honor that by giving them a real entry point, not a meta question
 back.
 
-CONSECUTIVE LOW-EFFORT ESCALATION (BLOCK 7 / S2):
+CONSECUTIVE LOW-EFFORT ESCALATION:
 The CONVERSATION HISTORY annotates each STUDENT turn with the intent
 verdict. When you see `[intent=low_effort, consecutive_low_effort=N]`,
 the student keeps responding with "idk"/"not sure"/etc. without trying.
@@ -184,7 +137,7 @@ the student keeps responding with "idk"/"not sure"/etc. without trying.
   N=3: PIVOT to multiple-choice rescue. Set scenario="multichoice_rescue"
        and hint_text to "[option A] / [option B] / [option C]" — three
        short concrete candidates. Teacher will format as inline choice.
-       Set advance_hint_level=false. (BLOCK 11 will format these.)
+       Set advance_hint_level=false.
 
   N>=4: HONEST CLOSE. The student isn't going to engage. Set
        mode="honest_close", tone="honest", and the system will route
@@ -194,23 +147,51 @@ These rules apply ONLY when the streak is purely passive low_effort.
 A help_abuse turn (active demand) resets the low_effort streak — handle
 help_abuse via the standard redirect mode instead.
 
-EXPLORATION RETRIEVAL (M6):
-Set needs_exploration=true ONLY when the student's question is tangential
-to the locked subsection AND the answer requires content not present in the
-chunks shown above. When true, also set exploration_query to a short
-focused search string (3-8 words) for the tangential concept.
+EXPLORATION RETRIEVAL:
+Set needs_exploration=true when the student's question would benefit
+from chunks NOT yet retrieved — typically a tangential concept they
+need to understand to engage with the locked question. When true, set
+exploration_query to a short focused search string (3-8 words) for
+the tangential concept. For in-topic scaffolding (student asks about
+a concept already covered by the existing retrieved chunks), keep
+needs_exploration=false and reuse those chunks.
 
-Default: needs_exploration=false, exploration_query="" — reuse the
-chunks already provided (they cover the locked subsection).
+Default: needs_exploration=false, exploration_query="".
 
-You will see exploration_count and turns_remaining in the user prompt.
-If needs_exploration=true:
-  - Always answer helpfully with the chunks (existing + exploration).
-  - If turns_remaining < 4 OR exploration_count >= 2, briefly remind the
-    student we have N turns left for the original question.
-  - Never refuse exploration. Genuine curiosity is welcome.
+URGENCY-AWARE PACING (replaces the old static "turns_remaining < 4"
+rule). The user prompt gives you `urgency_tier` derived from
+turn_count / max_turns — interpret it relative to the current
+session's pacing, not as an absolute turn count:
+
+  early           — student has the bulk of the session ahead. Be
+                    expansive. Welcome exploration freely. No urgency
+                    framing in your reply.
+
+  mid             — past the comfortable middle. Continue scaffolding
+                    but start orienting the student toward the locked
+                    question. If the student is exploring heavily,
+                    add a single short clause acknowledging where
+                    they are ("we've been digging into the setup; now
+                    let's see if you can land it").
+
+  late            — running short. Lean toward direct hints, less
+                    open-ended branching. If the student is still
+                    exploring, briefly note the remaining budget
+                    ("we've got a handful of turns left — want to
+                    take a stab?"). Still answer their question, but
+                    pair it with a redirect to the locked question.
+
+  final_stretch   — last few turns. Be direct. State plainly that
+                    we're near the end ("this is one of our last
+                    shots — what's your best guess?"). Hint level
+                    should escalate; consider closing the bonus
+                    exploration loop entirely and pushing for
+                    commitment to the locked answer.
+
+Always honor exploration as engagement — never refuse it outright.
+The urgency framing scales the redirect emphasis, not the willingness
+to explain.
 """
-
 
 _DEAN_USER_TEMPLATE = """\
 LOCKED TOPIC
@@ -221,8 +202,9 @@ LOCKED TOPIC
 
 CURRENT TURN CONTEXT
   Hint level: {hint_level}
-  Turn number: {turn_count}
+  Turn number: {turn_count} of {max_turns}
   Turns remaining: {turns_remaining}
+  Urgency tier: {urgency_tier}    (derived from turn_count / max_turns)
   Phase: {phase}
   Clinical scenario request: {clinical_scenario_request}
   Exploration count: {exploration_count}
@@ -239,13 +221,11 @@ CONVERSATION HISTORY (most recent last):
 Output the TurnPlan JSON object only.
 """
 
-
 _CLINICAL_STYLE_BLOCK = """\
 
 CLINICAL SCENARIO STYLE (when emitting mode="clinical"):
   {clinical_scenario_style}
 """
-
 
 _PRIOR_FAILURES_TEMPLATE = """\
 
@@ -256,7 +236,6 @@ You are now RE-PLANNING. Adjust hint_text or forbidden_terms to avoid
 the same failure mode. The 4 self-policing Haiku checks (leak,
 sycophancy, shape, pedagogy) will run again on Teacher's next draft.
 """
-
 
 def _format_chunks(chunks: list[dict], max_chunks: int = 7) -> str:
     out = []
@@ -269,7 +248,6 @@ def _format_chunks(chunks: list[dict], max_chunks: int = 7) -> str:
         out.append(prefix + text[:1200])
     return "\n\n".join(out) or "(no chunks)"
 
-
 def _format_history(
     history: list[dict],
     *,
@@ -277,13 +255,12 @@ def _format_history(
     events: list[dict] | None = None,
     max_turns: int = 50,
 ) -> str:
-    """BLOCK 4 (REAL-Q8): cap raised from 6→50.
-    BLOCK 5 (REAL-Q5): delegates to shared `history_render.render_history`
-    which weaves snapshots + events with messages.
-    """
+    """: cap raised from 6→50.
+ : delegates to shared `history_render.render_history`
+ which weaves snapshots + events with messages.
+"""
     from conversation.history_render import render_history
     return render_history(history, snapshots=snapshots, events=events, max_turns=max_turns)
-
 
 def _format_prior_failures(attempts: list[str], failures: list[dict]) -> str:
     if not attempts:
@@ -298,11 +275,9 @@ def _format_prior_failures(attempts: list[str], failures: list[dict]) -> str:
             )
     return _PRIOR_FAILURES_TEMPLATE.format(attempts="\n".join(lines))
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# Hint-bank prompt — fires once per session at lock time per L47
+# Hint-bank prompt — fires once per session at lock time per
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 _HINT_BANK_PROMPT = """\
 You are pre-generating a SOFT bank of hint angles for a Socratic tutor
@@ -327,11 +302,9 @@ Output STRICT JSON:
 {{"hint_angles": ["...", "...", "...", "...", "..."]}}
 """
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # DeanV2 — single-entry planner
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 @dataclass
 class DeanPlanResult:
@@ -346,15 +319,14 @@ class DeanPlanResult:
     used_fallback: bool = False
     error: Optional[str] = None
 
-
 class DeanV2:
-    """Single-entry Dean planner per L46.
+    """Single-entry Dean planner per .
 
-    Construction:
-      dean = DeanV2(client, model="claude-sonnet-4-6")
-      plan_result = dean.plan(state, chunks, carryover_notes)
-      print(plan_result.turn_plan.mode)
-    """
+ Construction:
+ dean = DeanV2(client, model="claude-sonnet-4-6")
+ plan_result = dean.plan(state, chunks, carryover_notes)
+ print(plan_result.turn_plan.mode)
+"""
 
     def __init__(
         self,
@@ -383,21 +355,21 @@ class DeanV2:
     ) -> DeanPlanResult:
         """Single Sonnet call → DeanPlanResult containing a validated TurnPlan.
 
-        On parse failure: re-prompt once with a stricter instruction.
-        On second parse failure: emit TurnPlan.minimal_fallback() per L46.
+ On parse failure: re-prompt once with a stricter instruction.
+ On second parse failure: emit TurnPlan.minimal_fallback per .
 
-        Per L78 the `domain_name` / `domain_short` defaults are
-        intentionally generic ("this subject" / "subject") so a missing
-        cfg.domain.* slot still yields a parseable prompt — but a real
-        production caller passes from cfg. `clinical_scenario_style`
-        comes from cfg.domain.clinical_scenario_style and is injected
-        into the user prompt only when non-empty so Dean's clinical-mode
-        scenarios stay domain-appropriate (patient case for medical /
-        anatomy, engineering problem for physics, etc.) per L74.
-        """
-        # BLOCK 2 (REAL-Q9) — master system prompt with full vocabulary
+ Per the `domain_name` / `domain_short` defaults are
+ intentionally generic ("this subject" / "subject") so a missing
+ cfg.domain.* slot still yields a parseable prompt — but a real
+ production caller passes from cfg. `clinical_scenario_style`
+ comes from cfg.domain.clinical_scenario_style and is injected
+ into the user prompt only when non-empty so Dean's clinical-mode
+ scenarios stay domain-appropriate (patient case for medical /
+ anatomy, engineering problem for physics, etc.) per .
+"""
+        # master system prompt with full vocabulary
         # registry so Dean has system-aware context.
-        # BLOCK 3 (REAL-Q7) — keep master + dean as SEPARATE strings so
+        # keep master + dean as SEPARATE strings so
         # _call_and_parse can put them in distinct cache blocks (Tier 1 +
         # Tier 2 cache markers).
         from conversation.master_prompt import build_master_prompt
@@ -416,7 +388,7 @@ class DeanV2:
         if result.turn_plan is not None and not result.used_fallback:
             return result
 
-        # Attempt 2 — re-prompt with stricter instruction per L46
+        # Attempt 2 — re-prompt with stricter instruction per
         stricter_user = (
             user_prompt
             + "\n\n--- RE-PROMPT ---\n"
@@ -429,7 +401,7 @@ class DeanV2:
         if result2.turn_plan is not None and not result2.used_fallback:
             return result2
 
-        # Both attempts failed — emit minimal fallback per L46
+        # Both attempts failed — emit minimal fallback per
         scenario = "dean_parse_failed_twice"
         if state.get("hint_level"):
             scenario += f"_hint_level_{state['hint_level']}"
@@ -460,9 +432,9 @@ class DeanV2:
         prior_failures: list[dict],
         carryover_notes: str = "",
     ) -> DeanPlanResult:
-        """Per L50: after 3 Teacher attempts fail Haiku checks, re-plan
-        ONCE with the failure detail. Just calls plan() with the failure
-        history prepended — same prompt path, different inputs."""
+        """Per : after 3 Teacher attempts fail Haiku checks, re-plan
+ ONCE with the failure detail. Just calls plan with the failure
+ history prepended — same prompt path, different inputs."""
         return self.plan(
             state, chunks,
             carryover_notes=carryover_notes,
@@ -477,13 +449,13 @@ class DeanV2:
         *,
         n_angles: int = 5,
     ) -> list[str]:
-        """Per L47 — pre-generate ~5 hint angles at lock time. Returns
-        list[str] (caller stores in state.hint_suggestions). Bank entries
-        are SOFT — Dean's per-turn plan() may reuse or ignore them.
+        """Per — pre-generate ~5 hint angles at lock time. Returns
+ list[str] (caller stores in state.hint_suggestions). Bank entries
+ are SOFT — Dean's per-turn plan may reuse or ignore them.
 
-        Returns [] on any LLM failure; caller falls back to fully
-        per-turn hint generation in plan().
-        """
+ Returns on any LLM failure; caller falls back to fully
+ per-turn hint generation in plan.
+"""
         locked = state.get("locked_topic") or {}
         prompt = _HINT_BANK_PROMPT.format(
             locked_subsection=locked.get("subsection") or "(unspecified)",
@@ -526,7 +498,7 @@ class DeanV2:
         if not locked:
             locked = (state.get("debug") or {}).get("locked_topic_snapshot") or {}
         aliases = state.get("locked_answer_aliases") or []
-        # L78 — surface the per-domain clinical scenario style only when
+        # — surface the per-domain clinical scenario style only when
         # the cfg slot is populated. Empty → block is empty (no wasted
         # prompt tokens for domains where clinical isn't applicable).
         clinical_block = ""
@@ -539,9 +511,33 @@ class DeanV2:
         )
         max_turns_val = int(state.get("max_turns", 0) or 0)
         turns_remaining = max(0, max_turns_val - turn_count_val) if max_turns_val else "n/a"
-        # BLOCK 5 (REAL-Q5) — pass snapshots + events so history is
+        # Ratio-based urgency tier — replaces the old static "<4 turns
+        # remaining" rule. Tier scales with WHERE in the session we
+        # are, not absolute turn count, so 25-turn and 50-turn caps
+        # both produce the same pacing pressure at the same relative
+        # point. Computed once per turn, surfaced into the user prompt
+        # (Dean reads it directly per the URGENCY-AWARE PACING block
+        # in the system prompt) and into debug_payload (Sidebar Debug
+        # panel renders it for the grader).
+        if max_turns_val:
+            ratio = turn_count_val / max_turns_val
+            if ratio < 0.50:
+                urgency_tier = "early"
+            elif ratio < 0.75:
+                urgency_tier = "mid"
+            elif ratio < 0.90:
+                urgency_tier = "late"
+            else:
+                urgency_tier = "final_stretch"
+        else:
+            urgency_tier = "early"  # safe default for sessions with no cap
+        # pass snapshots + events so history is
         # rendered with system-state annotations Dean can read
         debug_obj = state.get("debug") or {}
+        # Stash urgency_tier on state so debug_payload + UI can read it
+        # without recomputing.
+        state["urgency_tier"] = urgency_tier
+
         return _DEAN_USER_TEMPLATE.format(
             locked_subsection=locked.get("subsection") or "(unspecified)",
             locked_question=state.get("locked_question") or "(unspecified)",
@@ -549,7 +545,9 @@ class DeanV2:
             aliases=", ".join(aliases) if aliases else "(none)",
             hint_level=state.get("hint_level") or 0,
             turn_count=turn_count_val,
+            max_turns=max_turns_val or "n/a",
             turns_remaining=turns_remaining,
+            urgency_tier=urgency_tier,
             exploration_count=int(state.get("exploration_count", 0) or 0),
             phase=state.get("phase") or "tutoring",
             clinical_scenario_request="true" if state.get("_clinical_scenario_request") else "false",
@@ -574,13 +572,12 @@ class DeanV2:
         *,
         attempt: int,
     ) -> DeanPlanResult:
-        # BLOCK 3 (REAL-Q7) — multi-tier cache. Two cache_control markers:
-        #   Tier 1 (master + vocab): caches across SESSIONS (~2200 tokens)
-        #   Tier 2 (Dean instructions): caches across turns within session
-        #     (~2000 tokens of mostly-static planning rules)
+        # multi-tier cache. Two cache_control markers:
+        # Tier 1 (master + vocab): caches across SESSIONS (~2200 tokens)
+        # Tier 2 (Dean instructions): caches across turns within session
+        # (~2000 tokens of mostly-static planning rules)
         # The user_prompt (locked context, chunks, history) is uncached
         # because it varies per turn.
-        #
         # Bedrock minimum cache block size ~2048 tokens. Tier 1 alone meets
         # min; Tier 1 + Tier 2 cumulative (~4200 tokens) easily meets min
         # at the second marker.

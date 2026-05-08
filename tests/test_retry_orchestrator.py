@@ -1,15 +1,14 @@
 """
 tests/test_retry_orchestrator.py
 ────────────────────────────────
-Tests for conversation/retry_orchestrator.py — bounded retry loop per
-L50 + L62 (Track 4.6).
+Tests for conversation/retry_orchestrator.py — bounded retry loop + L62 (Track 4.6).
 
 Coverage:
   * Attempt 1 passes → ship immediately, no replan
   * Attempt 1-2 fail / Attempt 3 passes → ship draft 3 (no replan)
   * All 3 attempts fail → Dean re-plans → attempt 4 passes → ship draft 4
   * All 3 + replan still fails leak_check → safe-generic-probe (CRITICAL)
-  * All 3 + replan fails non-leak only → ship draft 4 anyway (per L50)
+  * All 3 + replan fails non-leak only → ship draft 4 anyway ()
   * Teacher empty draft → retry counts but feeds the failure forward
   * Hard timeout → safe-generic-probe (timed_out=True)
   * Retry feedback (prior_drafts + prior_failures) appended to Teacher
@@ -41,11 +40,9 @@ from conversation.teacher_v2 import (
 )
 from conversation.turn_plan import TurnPlan
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Test doubles for Teacher / Dean / Haiku quartet
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 class FakeTeacher:
     """Returns canned drafts from `drafts` list, one per call."""
@@ -72,7 +69,6 @@ class FakeTeacher:
             error="simulated_teacher_error" if is_error else None,
         )
 
-
 class FakeDean:
     """Returns canned replanned TurnPlan."""
     def __init__(self, replan_plan: TurnPlan):
@@ -91,7 +87,6 @@ class FakeDean:
             elapsed_ms=10, input_tokens=100, output_tokens=20,
             parse_attempts=1, used_fallback=False,
         )
-
 
 # Patch the 4 Haiku checks so the test controls pass/fail per call
 @pytest.fixture
@@ -122,11 +117,9 @@ def mock_quartet(monkeypatch):
     monkeypatch.setattr(RO, "_run_haiku_quartet", fake_run_quartet)
     return state
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def _plan(mode="socratic", tone="encouraging", forbidden_terms=None):
     return TurnPlan(
@@ -135,7 +128,6 @@ def _plan(mode="socratic", tone="encouraging", forbidden_terms=None):
         forbidden_terms=forbidden_terms or ["sinoatrial node", "SA node"],
     )
 
-
 def _inputs():
     return TeacherPromptInputs(
         chunks=[], history=[],
@@ -143,12 +135,10 @@ def _inputs():
         locked_question="What initiates the heartbeat?",
     )
 
-
 def _all_pass():
     return [{"_check_name": n, "pass": True, "reason": "", "evidence": ""}
             for n in ["haiku_leak_check", "haiku_sycophancy_check",
                       "haiku_shape_check", "haiku_pedagogy_check"]]
-
 
 def _leak_fail():
     return [
@@ -159,7 +149,6 @@ def _leak_fail():
         {"_check_name": "haiku_pedagogy_check", "pass": True, "reason": "", "evidence": ""},
     ]
 
-
 def _shape_fail():
     return [
         {"_check_name": "haiku_leak_check", "pass": True, "reason": "", "evidence": ""},
@@ -169,11 +158,9 @@ def _shape_fail():
         {"_check_name": "haiku_pedagogy_check", "pass": True, "reason": "", "evidence": ""},
     ]
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Happy path: attempt 1 passes
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_attempt_1_passes_ships_immediately(mock_quartet):
     teacher = FakeTeacher(drafts=["What kind of cells start the heartbeat?"])
@@ -193,11 +180,9 @@ def test_attempt_1_passes_ships_immediately(mock_quartet):
     assert len(out.attempts) == 1
     assert dean.replan_calls == []  # no replan
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Mid-retry success
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_attempt_3_passes_after_two_failures(mock_quartet):
     teacher = FakeTeacher(drafts=["draft1", "draft2", "draft3"])
@@ -213,7 +198,6 @@ def test_attempt_3_passes_after_two_failures(mock_quartet):
     assert out.final_text == "draft3"
     assert out.used_dean_replan is False
     assert len(out.attempts) == 3
-
 
 def test_retry_feedback_appended_per_attempt(mock_quartet):
     teacher = FakeTeacher(drafts=["draft1", "draft2", "draft3"])
@@ -234,11 +218,9 @@ def test_retry_feedback_appended_per_attempt(mock_quartet):
     assert teacher.calls[2]["prior_attempts"] == ["draft1", "draft2"]
     assert len(teacher.calls[2]["prior_failures"]) == 2
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Dean re-plan path (3 attempts fail → replan → attempt 4)
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_dean_replan_fires_after_three_failures(mock_quartet):
     teacher = FakeTeacher(drafts=["d1", "d2", "d3", "d4"])
@@ -261,11 +243,9 @@ def test_dean_replan_fires_after_three_failures(mock_quartet):
     # Attempt 4 used the new plan
     assert teacher.calls[3]["turn_plan"] is new_plan
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Critical safety: leak after replan → safe-generic-probe (Codex round-1 fix #5)
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_leak_after_replan_falls_back_to_safe_generic_probe(mock_quartet):
     teacher = FakeTeacher(drafts=["d1", "d2", "d3", "d4_with_leak"])
@@ -283,7 +263,6 @@ def test_leak_after_replan_falls_back_to_safe_generic_probe(mock_quartet):
     assert out.final_attempt == 5
     # Draft 4 was NOT shipped
     assert "d4_with_leak" not in out.final_text
-
 
 def test_non_leak_failure_after_replan_ships_draft_anyway(mock_quartet):
     """Per L50: if only sycophancy/shape/pedagogy fails on attempt 4,
@@ -303,11 +282,9 @@ def test_non_leak_failure_after_replan_ships_draft_anyway(mock_quartet):
     assert out.final_attempt == 4
     assert out.used_dean_replan is True
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Teacher errors during retry
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_teacher_empty_draft_counts_as_attempt_and_continues(mock_quartet):
     """If Teacher returns empty (LLM error), the attempt counts but the
@@ -330,11 +307,9 @@ def test_teacher_empty_draft_counts_as_attempt_and_continues(mock_quartet):
     assert out.final_attempt == 2
     assert out.attempts[0].draft == ""  # empty attempt recorded
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Timeout
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_hard_timeout_falls_back_to_safe_probe(mock_quartet, monkeypatch):
     """If wall-clock exceeds timeout_s before completion → safe probe."""
@@ -352,11 +327,9 @@ def test_hard_timeout_falls_back_to_safe_probe(mock_quartet, monkeypatch):
     assert out.used_safe_generic_probe is True
     assert out.final_text == SAFE_GENERIC_PROBE
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Helper sanity
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_attempt_all_passed_helper():
     att = TurnAttempt(attempt_num=1, draft="x", checks=_all_pass())
@@ -364,13 +337,11 @@ def test_attempt_all_passed_helper():
     assert att.leak_passed is True
     assert att.failed_check_names() == []
 
-
 def test_attempt_failed_helpers():
     att = TurnAttempt(attempt_num=2, draft="x", checks=_leak_fail())
     assert att.all_passed is False
     assert att.leak_passed is False
     assert att.failed_check_names() == ["haiku_leak_check"]
-
 
 def test_attempt_failure_summary():
     att = TurnAttempt(attempt_num=2, draft="x", checks=_leak_fail())
@@ -378,14 +349,12 @@ def test_attempt_failure_summary():
     assert summary["_check_name"] == "haiku_leak_check"
     assert "leaked" in summary["reason"]
 
-
 def test_max_attempts_constant_is_3():
     """L50: 3 Teacher attempts before Dean re-plans."""
     assert MAX_TEACHER_ATTEMPTS == 3
 
-
 def test_safe_generic_probe_is_empty_per_m_fb():
-    """M-FB (POST_DEMO_FIXES.md, 2026-05-06 ref): SAFE_GENERIC_PROBE is
+    """M-FB ( 2026-05-06 ref): SAFE_GENERIC_PROBE is
     INTENTIONALLY empty — when the retry chain exhausts, nodes_v2
     detects `used_safe_generic_probe=True` and emits an ErrorCard
     system message instead of fake tutor text. Asserting an empty

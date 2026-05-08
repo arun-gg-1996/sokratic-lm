@@ -21,11 +21,9 @@ import pytest
 
 from conversation import mem0_inject as M
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Fixtures
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def _state(student_id: str = "s1", **extras) -> dict:
     base = {
@@ -36,23 +34,19 @@ def _state(student_id: str = "s1", **extras) -> dict:
     base.update(extras)
     return base
 
-
 def _persistent(available: bool = True, hits=None) -> MagicMock:
     p = MagicMock()
     p.available = available
     p.get.return_value = hits or []
     return p
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Topic-lock injection (#1)
 # ─────────────────────────────────────────────────────────────────────────────
 
-
 def test_topic_lock_no_persistent_returns_empty():
     out = M.read_topic_lock_carryover(_state(), None, {"path": "Ch20|Heart|LAD"})
     assert out == ""
-
 
 def test_topic_lock_no_student_id_returns_empty():
     persistent = _persistent(hits=[{"text": "Past misconception about LAD."}])
@@ -64,12 +58,10 @@ def test_topic_lock_no_student_id_returns_empty():
     assert out == ""
     persistent.get.assert_not_called()
 
-
 def test_topic_lock_no_locked_path_returns_empty():
     persistent = _persistent(hits=[{"text": "Whatever."}])
     out = M.read_topic_lock_carryover(_state(), persistent, {})
     assert out == ""
-
 
 def test_topic_lock_empty_hits_returns_empty():
     persistent = _persistent(hits=[])
@@ -81,7 +73,6 @@ def test_topic_lock_empty_hits_returns_empty():
     assert out == ""
     # Even on empty hits, the get call should have been made
     persistent.get.assert_called_once()
-
 
 def test_topic_lock_formats_misconception_and_style_hits():
     hits = [
@@ -106,7 +97,6 @@ def test_topic_lock_formats_misconception_and_style_hits():
     assert "Confused LAD" in out
     assert "vasculature analogies" in out
 
-
 def test_topic_lock_filters_query_and_top_k():
     persistent = _persistent(hits=[])
     M.read_topic_lock_carryover(
@@ -126,16 +116,13 @@ def test_topic_lock_filters_query_and_top_k():
     assert "misconception" in filters["category"]
     assert "learning_style" in filters["category"]
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Hint-advance injection (#2)
 # ─────────────────────────────────────────────────────────────────────────────
 
-
 def test_hint_advance_no_persistent_returns_empty():
     out = M.read_hint_advance_carryover(_state(), None, {})
     assert out == ""
-
 
 def test_hint_advance_no_locked_question_returns_empty():
     persistent = _persistent(hits=[{"text": "Style cue."}])
@@ -147,7 +134,6 @@ def test_hint_advance_no_locked_question_returns_empty():
     assert out == ""
     persistent.get.assert_not_called()
 
-
 def test_hint_advance_query_includes_what_worked():
     persistent = _persistent(hits=[])
     M.read_hint_advance_carryover(_state(), persistent, {})
@@ -156,7 +142,6 @@ def test_hint_advance_query_includes_what_worked():
     assert "left ventricle" in query  # from locked_question
     filters = persistent.get.call_args[1]["filters"]
     assert filters == {"category": "learning_style"}
-
 
 def test_hint_advance_returns_formatted_style_cue():
     persistent = _persistent(hits=[
@@ -170,20 +155,16 @@ def test_hint_advance_returns_formatted_style_cue():
     assert "Style cue:" in out
     assert "Visual diagrams" in out
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # combine_carryover
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_combine_carryover_drops_empties():
     out = M.combine_carryover("", "block A", "", "block B", "")
     assert out == "block A\n\nblock B"
 
-
 def test_combine_carryover_returns_empty_for_all_empty():
     assert M.combine_carryover("", "", "") == ""
-
 
 def test_combine_carryover_clips_oversize():
     big = "x" * (M.MAX_CARRYOVER_CHARS * 2)
@@ -191,11 +172,9 @@ def test_combine_carryover_clips_oversize():
     assert len(out) == M.MAX_CARRYOVER_CHARS
     assert out.endswith("...")
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Trace integration — never raises, even on mem0.get explosion
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_topic_lock_traces_mem0_op_via_safe_wrapper():
     """safe_mem0_read appends a trace entry; verify it lands on state."""
@@ -209,7 +188,6 @@ def test_topic_lock_traces_mem0_op_via_safe_wrapper():
     )
     trace = state["debug"]["turn_trace"]
     assert any(e.get("wrapper") == "mem0_read" for e in trace)
-
 
 def test_topic_lock_does_not_raise_when_mem0_get_explodes():
     persistent = MagicMock()

@@ -7,9 +7,9 @@ answer in their most recent message.
 Ported from V1 conversation/dean.py during D1 (V1 → V2 consolidation).
 The gate had three steps in V1, all preserved here:
 
-  Step A.1 — deterministic full token-overlap (free, fast)
-  Step A.2 — K-of-N partial reach (multi-component answers)
-  Step B   — LLM paraphrase fallback (quote-or-reject)
+ Step A.1 — deterministic full token-overlap (free, fast)
+ Step A.2 — K-of-N partial reach (multi-component answers)
+ Step B — LLM paraphrase fallback (quote-or-reject)
 
 Diff vs V1: Step B uses a direct anthropic client.messages.create call
 rather than the V1 `_timed_create` telemetry wrapper (telemetry is
@@ -17,18 +17,18 @@ captured manually into state["debug"]["turn_trace"]). Verdict logic
 is identical — same prompts, same quote-or-reject post-validation.
 
 Public API:
-    reached_answer_gate(state, student_msg, client, model) -> dict
+ reached_answer_gate(state, student_msg, client, model) -> dict
 
 Returns dict with keys:
-    reached:    bool          (true on full or partial reach)
-    coverage:   float in [0,1] (1.0 on full, K/N on partial, 0.0 otherwise)
-    evidence:   str           (matched span or LLM quote)
-    path:       str           (overlap | partial_overlap | paraphrase |
-                              hedge_block | no_overlap_no_paraphrase |
-                              no_lock | llm_no_quote | llm_parse_fail |
-                              llm_error | prompt_missing)
-    n_matched:  int           (components matched, multi-component only)
-    n_total:    int           (total components, multi-component only)
+ reached: bool (true on full or partial reach)
+ coverage: float in [0,1] (1.0 on full, K/N on partial, 0.0 otherwise)
+ evidence: str (matched span or LLM quote)
+ path: str (overlap | partial_overlap | paraphrase |
+ hedge_block | no_overlap_no_paraphrase |
+ no_lock | llm_no_quote | llm_parse_fail |
+ llm_error | prompt_missing)
+ n_matched: int (components matched, multi-component only)
+ n_total: int (total components, multi-component only)
 """
 from __future__ import annotations
 
@@ -39,14 +39,13 @@ from typing import Any
 
 from config import cfg
 
-
 # ─────────────────────────────────────────────────────────────────────
 # Constants
 # ─────────────────────────────────────────────────────────────────────
 
 # Stop words dropped when computing content-token overlap. Conservative —
 # only true filler that doesn't carry meaning in answer phrases. We want
-# "the skeletal muscle pump" to match locked_answer="skeletal muscle pump",
+# "the skeletal muscle pump" to match locked_answer="skeletal muscle pump"
 # but NOT match locked_answer="muscle" alone.
 _OVERLAP_STOPWORDS = frozenset({
     "a", "an", "the", "of", "is", "are", "and", "or", "to",
@@ -63,11 +62,9 @@ _HEDGE_MARKERS = (
     "i can't remember", "i cant remember", "can't remember",
 )
 
-
 # ─────────────────────────────────────────────────────────────────────
 # Tokenization helpers
 # ─────────────────────────────────────────────────────────────────────
-
 
 def _normalize_text(text: str) -> str:
     text = (text or "").strip().lower()
@@ -75,48 +72,43 @@ def _normalize_text(text: str) -> str:
     text = re.sub(r"\s+", " ", text)
     return text
 
-
 def _content_tokens(s: str) -> list[str]:
     """Lowercased, punct-stripped tokens minus filler stopwords."""
     norm = _normalize_text(s)
     return [t for t in norm.split() if t and t not in _OVERLAP_STOPWORDS]
 
-
 def _has_hedge(msg_lower_raw: str) -> bool:
     return any(h in msg_lower_raw for h in _HEDGE_MARKERS)
 
-
 def _split_locked_answer(answer: str) -> list[str]:
     """Split a multi-component locked_answer into its top-level noun-phrase
-    components. Single-component answers return a 1-element list.
+ components. Single-component answers return a 1-element list.
 
-    Splits on " and " / " or " (with surrounding spaces — won't split
-    "android"), and on "," / ";" with optional whitespace.
+ Splits on " and " / " or " (with surrounding spaces — won't split
+ "android"), and on "," / ";" with optional whitespace.
 
-    Examples:
-      "skeletal muscle pump"
-        → ["skeletal muscle pump"]                            (single)
-      "left and right coronary arteries"
-        → ["left", "right coronary arteries"]                 (2-component)
-      "ingestion, propulsion, mechanical digestion, chemical digestion"
-        → ["ingestion", "propulsion", "mechanical digestion",
-           "chemical digestion"]                              (4-component)
-    """
+ Examples:
+ "skeletal muscle pump"
+ → ["skeletal muscle pump"] (single)
+ "left and right coronary arteries"
+ → ["left", "right coronary arteries"] (2-component)
+ "ingestion, propulsion, mechanical digestion, chemical digestion"
+ → ["ingestion", "propulsion", "mechanical digestion"
+ "chemical digestion"] (4-component)
+"""
     if not answer or not answer.strip():
         return []
     parts = re.split(r"\s+and\s+|\s+or\s+|[,;]\s*", answer.lower())
     parts = [p.strip() for p in parts if p.strip()]
     return parts
 
-
 # ─────────────────────────────────────────────────────────────────────
 # JSON parsing (ported verbatim from V1 dean._extract_json_object)
 # ─────────────────────────────────────────────────────────────────────
 
-
 def _extract_json_object(text: str) -> dict | None:
-    """Robustly extract a JSON object from model text. Handles raw JSON,
-    fenced blocks, leading/trailing prose, python-dict style fallbacks."""
+    """Robustly extract a JSON object from model text. Handles raw JSON
+ fenced blocks, leading/trailing prose, python-dict style fallbacks."""
     if not text:
         return None
 
@@ -200,18 +192,16 @@ def _extract_json_object(text: str) -> dict | None:
         return None
     return _try_parse_dict(candidate[start:end + 1])
 
-
 # ─────────────────────────────────────────────────────────────────────
 # History rendering (simple — V2 history_render is for richer flows)
 # ─────────────────────────────────────────────────────────────────────
 
-
 def _format_history_simple(messages: list[dict]) -> str:
     """Plain-text history rendering for the reach-check LLM context.
 
-    Last 8 messages = ~4 tutor/student exchanges. Enough context for the
-    LLM to see what was being asked without prompt bloat.
-    """
+ Last 8 messages = ~4 tutor/student exchanges. Enough context for the
+ LLM to see what was being asked without prompt bloat.
+"""
     lines = []
     for m in (messages or [])[-8:]:
         role = m.get("role", "")
@@ -220,16 +210,13 @@ def _format_history_simple(messages: list[dict]) -> str:
             lines.append(f"{role}: {content}")
     return "\n".join(lines)
 
-
 # ─────────────────────────────────────────────────────────────────────
 # LLM paraphrase fallback (Step B)
 # ─────────────────────────────────────────────────────────────────────
 
-
 def _trace(state: dict, entry: dict) -> None:
     """Append to state["debug"]["turn_trace"], creating dicts as needed."""
     state.setdefault("debug", {}).setdefault("turn_trace", []).append(entry)
-
 
 def _reached_check_llm(
     state: dict,
@@ -318,11 +305,9 @@ def _reached_check_llm(
         "path": path,
     }
 
-
 # ─────────────────────────────────────────────────────────────────────
 # Public API
 # ─────────────────────────────────────────────────────────────────────
-
 
 def reached_answer_gate(
     state: dict,
@@ -332,26 +317,26 @@ def reached_answer_gate(
 ) -> dict:
     """Strict gate: did the student STATE the locked answer in their msg?
 
-    Three-step strategy:
-      Step A.1 — deterministic full token-overlap (free, fast)
-      Step A.2 — K-of-N partial reach (multi-component answers)
-      Step B   — LLM paraphrase fallback (quote-or-reject)
+ Three-step strategy:
+ Step A.1 — deterministic full token-overlap (free, fast)
+ Step A.2 — K-of-N partial reach (multi-component answers)
+ Step B — LLM paraphrase fallback (quote-or-reject)
 
-    Bias: reached=False on any ambiguity. False positives fabricate
-    confirmations the student didn't earn — much worse than running
-    one extra hint turn.
+ Bias: reached=False on any ambiguity. False positives fabricate
+ confirmations the student didn't earn — much worse than running
+ one extra hint turn.
 
-    Args:
-        state:        TutorState dict (provides locked_answer,
-                      locked_answer_aliases, messages, debug).
-        student_msg:  Latest student message text.
-        client:       Anthropic client instance for the LLM fallback.
-        model:        Model id string.
+ Args:
+ state: TutorState dict (provides locked_answer
+ locked_answer_aliases, messages, debug).
+ student_msg: Latest student message text.
+ client: Anthropic client instance for the LLM fallback.
+ model: Model id string.
 
-    Returns:
-        dict with keys: reached, coverage, evidence, path, plus
-        n_matched / n_total for multi-component answers.
-    """
+ Returns:
+ dict with keys: reached, coverage, evidence, path, plus
+ n_matched / n_total for multi-component answers.
+"""
     locked_answer = (state.get("locked_answer") or "").strip()
     if not locked_answer:
         return {"reached": False, "coverage": 0.0, "evidence": "", "path": "no_lock"}
@@ -376,8 +361,8 @@ def reached_answer_gate(
                 "path": "overlap",
             }
 
-        # Aliases — single-component answers only. For multi-component,
-        # aliases are per-component identifiers (e.g. ["LCA",
+        # Aliases — single-component answers only. For multi-component
+        # aliases are per-component identifiers (e.g. ["LCA"
         # "left coronary artery", ...] for "left and right coronary
         # arteries"). A single alias match would cheat the K-of-N partial
         # reach below — student says "LCA" and it'd count as full reach.

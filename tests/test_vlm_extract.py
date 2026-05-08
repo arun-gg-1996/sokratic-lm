@@ -23,13 +23,11 @@ import pytest
 
 from vlm import extract as V
 
-
 def _png(tmp_path: Path, name: str = "img.png", size: int = 16) -> Path:
     """Tiny fake PNG (just bytes; Sonnet would parse but we mock the call)."""
     p = tmp_path / name
     p.write_bytes(b"\x89PNG\r\n\x1a\n" + (b"\x00" * size))
     return p
-
 
 def _client_returning(text: str) -> MagicMock:
     client = MagicMock()
@@ -38,7 +36,6 @@ def _client_returning(text: str) -> MagicMock:
         usage=SimpleNamespace(input_tokens=120, output_tokens=80),
     )
     return client
-
 
 def test_extract_missing_file_returns_empty(tmp_path: Path):
     out = V.extract_image_context(
@@ -49,14 +46,12 @@ def test_extract_missing_file_returns_empty(tmp_path: Path):
     assert out["identified_structures"] == []
     assert "file not found" in out.get("_error", "")
 
-
 def test_extract_oversize_rejected(tmp_path: Path):
     p = _png(tmp_path, size=V.MAX_IMAGE_BYTES + 1024)
     out = V.extract_image_context(
         p, client=MagicMock(), model="m", domain_prompt="p",
     )
     assert "too large" in out.get("_error", "")
-
 
 def test_extract_unsupported_extension(tmp_path: Path):
     p = tmp_path / "img.bmp"
@@ -65,7 +60,6 @@ def test_extract_unsupported_extension(tmp_path: Path):
         p, client=MagicMock(), model="m", domain_prompt="p",
     )
     assert "unsupported extension" in out.get("_error", "")
-
 
 def test_extract_happy_path(tmp_path: Path):
     p = _png(tmp_path)
@@ -90,7 +84,6 @@ def test_extract_happy_path(tmp_path: Path):
     assert out["best_topic_guess"] == "shoulder anatomy"
     assert "_error" not in out
 
-
 def test_extract_strips_markdown_fences(tmp_path: Path):
     p = _png(tmp_path)
     response = "```json\n{\"identified_structures\": [], \"image_type\": \"diagram\", \"description\": \"x\", \"best_topic_guess\": \"\", \"confidence\": 0.5}\n```"
@@ -101,7 +94,6 @@ def test_extract_strips_markdown_fences(tmp_path: Path):
     assert out["confidence"] == 0.5
     assert out["image_type"] == "diagram"
     assert "_error" not in out
-
 
 def test_extract_clamps_invalid_confidence(tmp_path: Path):
     p = _png(tmp_path)
@@ -131,7 +123,6 @@ def test_extract_clamps_invalid_confidence(tmp_path: Path):
     assert structs[1]["name"] == "negative"
     assert structs[1]["confidence"] == 0.0
 
-
 def test_extract_unknown_image_type_falls_back_to_other(tmp_path: Path):
     p = _png(tmp_path)
     response = """{
@@ -147,7 +138,6 @@ def test_extract_unknown_image_type_falls_back_to_other(tmp_path: Path):
     )
     assert out["image_type"] == "other"
 
-
 def test_extract_llm_exception_returns_empty(tmp_path: Path):
     p = _png(tmp_path)
     client = MagicMock()
@@ -157,7 +147,6 @@ def test_extract_llm_exception_returns_empty(tmp_path: Path):
     )
     assert out["confidence"] == 0.0
     assert "RuntimeError" in out.get("_error", "")
-
 
 def test_extract_unparseable_response_returns_empty_with_raw(tmp_path: Path):
     p = _png(tmp_path)

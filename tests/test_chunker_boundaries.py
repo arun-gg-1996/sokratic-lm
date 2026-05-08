@@ -3,7 +3,7 @@ tests/test_chunker_boundaries.py
 --------------------------------
 Unit tests for the sentence-boundary guarantees in core/chunker.py (B.3).
 
-Pre-B.3 audit (2026-04-28) found:
+Pre-B.3 audit found:
   - 9.4% of unique paragraph chunks ended mid-sentence
   - 64% of overlap chunks ended mid-sentence (token-cap, not sentence-cap)
 
@@ -26,7 +26,6 @@ from ingestion.core.chunker import (
     _token_len,
 )
 
-
 @pytest.fixture(scope="module")
 def encoder():
     enc = _get_token_encoder()
@@ -34,13 +33,11 @@ def encoder():
         pytest.skip("tiktoken not available; chunker fallback path not tested here")
     return enc
 
-
 def _ends_at_sentence_terminator(text: str) -> bool:
     """True if text's last non-whitespace char is `.`, `!`, or `?`."""
     if not text:
         return True
     return text.rstrip().endswith((".", "!", "?", '."', '!"', '?"'))
-
 
 # ── _back_off_to_sentence_end ───────────────────────────────────────────────
 
@@ -83,7 +80,6 @@ class TestBackOffToSentenceEnd:
 
     def test_empty_input_returns_empty(self, encoder):
         assert _back_off_to_sentence_end("", encoder, max_tokens=100) == ""
-
 
 # ── _trim_overlap_to_budget ─────────────────────────────────────────────────
 
@@ -151,7 +147,6 @@ class TestTrimOverlapToBudget:
                         f"FAIL prefix={p!r} body={b!r} budget={budget} "
                         f"out={out[-80:]!r}"
                     )
-
 
 # ── _split_to_token_budget ──────────────────────────────────────────────────
 

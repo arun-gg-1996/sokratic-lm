@@ -1,74 +1,66 @@
 """
 memory/persistent_memory.py
------------------------------
-Cross-session student memory using mem0 backed by Qdrant.
+SQL-backed cross-session student memory.
 
-What mem0 does:
-  You write a natural language memory string → mem0 embeds it and stores
-  it in the 'sokratic_memory' Qdrant collection.
-  You search with a query string → mem0 returns semantically relevant
-  past memories for that student.
+Replaces the previous mem0/Qdrant-backed implementation. Same public
+surface — `available`, `get(...)`, `add(...)`, `delete_user(...)` —
+so callers (`safe_mem0_read`, `safe_mem0_write`, `MemoryManager`) keep
+working without modification.
 
-This module wraps the mem0 client and exposes two simple methods:
-  - get(student_id, query)   → list of relevant memory dicts
-  - add(student_id, text)    → store a new memory
+What's stored:
+    Narrative observations about each student, in two categories:
+      * misconception   — factual errors observed in a session
+      * learning_style  — interaction patterns (hedging, hint-reliance, etc.)
+    Each row is one atomic sentence, written at session-end by
+    `memory.observation_extractor.extract_observations`. Persisted to the
+    `observations` table in the per-domain SQLite file.
 
-All methods are wrapped in try/except — if Qdrant is not running, the session
-continues normally with empty memory rather than crashing.
+Why SQL instead of mem0:
+    * Reads are filter-by-(student_id, category, subsection_path) — exact
+      match queries SQL serves natively. We weren't using mem0's semantic
+      ranking meaningfully at our scale (5–15 atoms per student).
+    * Writes don't need mem0's ADD/UPDATE/DELETE/NOOP arbitration. That
+      LLM-driven decision was opaque, occasionally clobbered distinct
+      misconceptions, and we never queried its outcome.
+    * Deduplication via UNIQUE(student_id, hash) constraint — same effect
+      as mem0's hash dedup, no second-LLM-call required.
+    * Clean foreign keys: thread_id → sessions, student_id → students.
+
+Response shape preserved: `get()` returns dicts with mem0-compatible keys
+(`memory`, `data`, `text`, `metadata`, `created_at`, `id`) so
+`MemoryDrawer.tsx` and `/api/memory/{student_id}` continue to render
+without frontend changes.
 """
+from __future__ import annotations
 
-from config import cfg
+import uuid
+from typing import Any
+
+from memory.sqlite_store import SQLiteStore
 
 
 class PersistentMemory:
-    def __init__(self):
-        """
-        Initialize mem0 client connected to local Qdrant.
-        Collection: cfg.memory.memory_collection
+    """SQL-backed observation store. Always available locally."""
 
-        If Qdrant is unavailable, self.client is set to None and all
-        operations silently return empty results.
-        """
-        try:
-            from mem0 import Memory
-            vector_size = int(getattr(getattr(cfg, "qdrant", object()), "vector_size", 3072))
-            self.namespace = getattr(getattr(cfg, "domain", object()), "mem0_namespace", "default")
-            mem_collection = getattr(getattr(cfg, "domain", object()), "memory_collection", cfg.memory.memory_collection)
-            # mem0 defaults to text-embedding-3-small (1536 dim). We use
-            # text-embedding-3-large (3072 dim) everywhere else and the
-            # sokratic_memory Qdrant collection is sized at 3072. Configure
-            # mem0's embedder explicitly so the dimensions match (otherwise
-            # Qdrant rejects every add() with: "Vector dimension error:
-            # expected dim: 3072, got 1536").
-            config = {
-                "vector_store": {
-                    "provider": "qdrant",
-                    "config": {
-                        "host": cfg.memory.qdrant_host,
-                        "port": cfg.memory.qdrant_port,
-                        "collection_name": mem_collection,
-                        "embedding_model_dims": vector_size,
-                    }
-                },
-                "embedder": {
-                    "provider": "openai",
-                    "config": {
-                        "model": cfg.models.embeddings,  # text-embedding-3-large
-                        "embedding_dims": vector_size,
-                    },
-                },
-            }
-            self.client = Memory.from_config(config)
-            self.available = True
-            self.unavailable_reason = ""
-        except Exception:
-            self.client = None
-            self.available = False
-            self.unavailable_reason = "qdrant_or_mem0_unavailable"
-            self.namespace = "default"
+    def __init__(self) -> None:
+        # Open the per-domain SQLite store. The store auto-applies migrations
+        # (including 002_observations.sql) on first use, so no separate setup.
+        self._store = SQLiteStore()
+        # Flagged True so callers' `if not persistent.available: return []`
+        # short-circuits don't hide our reads. SQL is local — there's no
+        # network failure mode to model. If the DB file is unreachable the
+        # underlying calls raise and `safe_mem0_*` catches them.
+        self.available = True
+        self.unavailable_reason = ""
+        # Kept for API compatibility — historically callers (clear_namespace)
+        # peeked at a `client` attribute. Nothing reads it beyond the legacy
+        # `MemoryManager.clear_namespace` path which we've simplified.
+        self.client = self._store
+        # Namespace kept for API compatibility (unused now — student_id is
+        # the only key we need; SQL doesn't need the "anatomy:" prefix).
+        self.namespace = "default"
 
-    def _namespaced_user_id(self, student_id: str) -> str:
-        return f"{self.namespace}:{student_id}"
+    # ── Reads ──────────────────────────────────────────────────────────────
 
     def get(
         self,
@@ -76,47 +68,59 @@ class PersistentMemory:
         query: str = "",
         filters: dict | None = None,
     ) -> list[dict]:
-        """
-        Fetch relevant past memories for a student.
+        """Fetch observations for a student.
 
-        Args:
-            student_id: Unique student identifier.
-            query:      Optional semantic search query (e.g. topic being studied).
-                        If empty, returns all memories for this student.
-            filters:    Optional metadata filter dict forwarded to mem0,
-                        which forwards to Qdrant payload-level filters.
-                        Examples:
-                          {"category": "session_summary"}
-                          {"category": "topics_covered", "outcome": "not_reached"}
-                          {"subsection_title": "Conduction System of the Heart"}
+  Args:
+      student_id: Unique student identifier (no namespace prefix needed).
+      query: Free-text query string. Ignored — SQL filtering is exact
+          on category + subsection_path. The `query` slot is kept for API
+          compatibility with mem0; semantic ranking is not implemented
+          because the scale (5–15 atoms/student) doesn't benefit from it.
+      filters: Optional dict with any of:
+          * "category": str or list[str] — restrict to those categories
+          * "subsection_path": str — exact match (with prefix tolerance)
 
-        Returns:
-            List of memory dicts from mem0 (may be empty).
-            On any error (Qdrant down, no history) returns [].
-        """
-        if self.client is None:
-            return []
+  Returns:
+      List of dicts shaped to match mem0's response so existing callers
+      and the frontend keep working unchanged. Empty list on error.
+  """
         try:
-            user_id = self._namespaced_user_id(student_id)
-            if query:
-                resp = self.client.search(
-                    query, user_id=user_id, filters=filters
-                )
-            else:
-                resp = self.client.get_all(
-                    user_id=user_id, filters=filters
-                )
-            # mem0's response shape varies: sometimes a list of dicts,
-            # sometimes {'results': [list of dicts]} on newer versions.
-            # Normalize to always return a flat list of memory dicts so
-            # callers don't need to introspect.
-            if isinstance(resp, dict) and "results" in resp:
-                return list(resp.get("results") or [])
-            if isinstance(resp, list):
-                return resp
-            return []
+            cat = (filters or {}).get("category")
+            sub = (filters or {}).get("subsection_path")
+            rows = self._store.list_observations(
+                student_id,
+                category=cat,
+                subsection_path=sub,
+                limit=50,
+            )
         except Exception:
             return []
+
+        out: list[dict] = []
+        for r in rows:
+            md = {
+                "category": r.get("category"),
+                "subsection_path": r.get("subsection_path"),
+                "section_path": r.get("section_path"),
+                "session_at": r.get("session_at"),
+                "thread_id": r.get("thread_id"),
+                "chapter_num": r.get("chapter_num"),
+            }
+            text = r.get("text") or ""
+            out.append({
+                "id": r.get("observation_id"),
+                # mem0's response used both "memory" and "data" depending
+                # on version — we expose both so legacy paths don't break.
+                "memory": text,
+                "data": text,
+                "text": text,
+                "score": None,
+                "created_at": r.get("created_at"),
+                "metadata": md,
+            })
+        return out
+
+    # ── Writes ─────────────────────────────────────────────────────────────
 
     def add(
         self,
@@ -124,67 +128,48 @@ class PersistentMemory:
         memory_text: str,
         metadata: dict | None = None,
     ) -> bool:
-        """
-        Store a new memory for a student.
+        """Insert one observation.
 
-        Args:
-            student_id:   Unique student identifier.
-            memory_text:  Natural language description of what happened.
-            metadata:     Optional structured payload (category, chapter_num,
-                          subsection_title, outcome, etc.). mem0 forwards
-                          this to Qdrant as the entry's payload, enabling
-                          filtered retrieval at search time. mem0 applies
-                          the same metadata to every fact it atomizes from
-                          memory_text, so the category/topic tags stay
-                          consistent across fragments.
+  Maps the mem0-style call into the typed `observations` table. The
+  metadata dict comes from `MemoryManager._topic_metadata` plus the
+  category appended by `MemoryManager.flush`.
 
-        Non-fatal: if Qdrant is down, this is silently skipped.
-        Session has already ended by this point — no user impact.
-        """
-        if self.client is None:
+  Returns True if the row landed; False on dedup-skip or error.
+  """
+        if not memory_text or not memory_text.strip():
             return False
-        try:
-            self.client.add(
-                memory_text,
-                user_id=self._namespaced_user_id(student_id),
-                metadata=metadata,
-            )
-            return True
-        except Exception:
-            return False
+        md = metadata or {}
+        # Post-migration 003: the observations table FKs to subsections by
+        # subsection_id; section_path / chapter_num are derivable via JOIN
+        # and no longer accepted by add_observation. We forward only the
+        # supported kwargs.
+        #
+        # Errors propagate up to safe_mem0_write where they're recorded in
+        # the turn_trace with the exception class + message. (Previous
+        # implementation caught Exception here and returned False, which is
+        # how a TypeError on a removed kwarg silently killed every narrative
+        # memory write for an entire backend session without surfacing in
+        # any log.)
+        return self._store.add_observation(
+            observation_id=str(uuid.uuid4()),
+            student_id=student_id,
+            thread_id=md.get("thread_id") or None,
+            category=str(md.get("category") or "uncategorized"),
+            subsection_path=md.get("subsection_path") or None,
+            text=memory_text.strip(),
+            evidence=md.get("evidence") or None,
+            session_at=md.get("session_at") or None,
+        )
+
+    # ── Per-user delete (forget-me) ────────────────────────────────────────
 
     def delete_user(self, student_id: str) -> int:
-        """
-        Delete all memories for a single student.
+        """Delete every observation for one student.
 
-        Args:
-            student_id: Unique student identifier.
-
-        Returns:
-            Number of memories deleted, or -1 if mem0/Qdrant is unavailable
-            or the operation failed. Returns 0 if the student had no memories.
-
-        Why per-user delete (not clear_namespace)
-        ----------------------------------------
-        clear_namespace() drops the entire 'sokratic_memory' Qdrant
-        collection — wiping every student's data. That's correct for
-        --clear-memory in eval scripts but catastrophic to expose to
-        end users via a UI.
-
-        This method only deletes the calling user's mem0 entries:
-          - Privacy / forget-me operations from the frontend
-          - Per-student reset for demos without affecting other users
-        """
-        if self.client is None:
-            return -1
+  Used by `MemoryManager.forget` for the privacy / forget-me flow.
+  Returns the count of rows deleted, -1 on error.
+  """
         try:
-            user_id = self._namespaced_user_id(student_id)
-            # Snapshot count before delete so we can report something useful
-            existing = self.get(student_id)
-            n_before = len(existing) if existing else 0
-            # mem0 exposes delete_all(user_id=...) which removes every memory
-            # filed under that namespaced user_id. Verified in mem0 0.1.x.
-            self.client.delete_all(user_id=user_id)
-            return n_before
+            return self._store.delete_observations(student_id)
         except Exception:
             return -1

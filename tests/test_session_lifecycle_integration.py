@@ -19,13 +19,11 @@ import pytest
 
 from memory.sqlite_store import SQLiteStore
 
-
 @pytest.fixture
 def store(tmp_path: Path):
     s = SQLiteStore(db_path=tmp_path / "test.sqlite3")
     yield s
     s.close()
-
 
 def test_full_lifecycle_completed_session(store, monkeypatch, tmp_path):
     """Reach=True session: insert at start, end with status='completed',
@@ -92,7 +90,6 @@ def test_full_lifecycle_completed_session(store, monkeypatch, tmp_path):
     assert mastery["last_outcome"] == "reached"
     assert mastery["attempt_count"] == 1
 
-
 def test_full_lifecycle_pre_lock_termination(store, monkeypatch, tmp_path):
     """No locked topic → status='abandoned_no_lock', no mastery row written."""
     from conversation import lifecycle_v2 as _nodes  # F8: moved in v2 consolidation
@@ -121,7 +118,6 @@ def test_full_lifecycle_pre_lock_termination(store, monkeypatch, tmp_path):
     assert row["locked_topic_path"] is None
     assert row["mastery_tier"] == "not_assessed"
     assert store.list_subsection_mastery("bob") == []
-
 
 def test_full_lifecycle_legacy_path_normalized(store, monkeypatch, tmp_path):
     """Legacy 'Ch20|Section|Subsection' path gets normalized to canonical
@@ -170,7 +166,6 @@ def test_full_lifecycle_legacy_path_normalized(store, monkeypatch, tmp_path):
     assert mastery is not None
     assert mastery["last_outcome"] == "not_reached"
 
-
 def test_helper_handles_missing_thread_id_gracefully(store, monkeypatch):
     """Defensive path: state with no thread_id should report a clear status,
     not raise."""
@@ -178,7 +173,6 @@ def test_helper_handles_missing_thread_id_gracefully(store, monkeypatch):
     state = {"student_id": "x", "messages": [], "debug": {}}
     status = _nodes._persist_session_end_to_sqlite(state, judgment=None)
     assert "skipped" in status
-
 
 def test_dual_write_does_not_corrupt_on_sqlite_error(monkeypatch):
     """If SQLite raises mid-write, helper returns an error string but the

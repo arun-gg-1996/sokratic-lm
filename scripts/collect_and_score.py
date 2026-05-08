@@ -1,17 +1,16 @@
 """
 scripts/collect_and_score.py
-------------------------------
-Generates 18 fresh conversations (3 topics × 6 profiles) using real RAG,
-saves each to data/artifacts/final_convo/, then scores every tutor turn
+Generates 18 fresh conversations (3 topics × 6 profiles) using real RAG
+saves each to data/artifacts/final_convo, then scores every tutor turn
 with LLM-based EULER and prints the full report.
 
 Usage (from sokratic/ root):
-    .venv/bin/python scripts/collect_and_score.py
+ .venv/bin/python scripts/collect_and_score.py
 
 Output:
-    data/artifacts/final_convo/  — individual conversation JSONs
-    data/artifacts/euler_scores/ — per-conversation EULER score JSONs
-    Printed report: per-criterion averages, pass rates, overall analysis.
+ data/artifacts/final_convo/ — individual conversation JSONs
+ data/artifacts/euler_scores/ — per-conversation EULER score JSONs
+ Printed report: per-criterion averages, pass rates, overall analysis.
 """
 
 import asyncio
@@ -47,7 +46,6 @@ TOPICS = [
 
 # All 6 profiles × 3 topics = 18 conversations
 RUNS = [(pid, topic) for pid in ["S1","S2","S3","S4","S5","S6"] for topic in TOPICS]
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Conversation runner
@@ -161,7 +159,6 @@ async def run_one(profile_id: str, topic: str, graph) -> dict:
 
     return _build(profile_id, conv_id, topic, turns_log, state, bugs)
 
-
 def _build(profile_id, conv_id, topic, turns_log, state, bugs):
     turn_count = state.get("turn_count") or len([t for t in turns_log if t.get("role") == "student"])
     return {
@@ -188,14 +185,12 @@ def _build(profile_id, conv_id, topic, turns_log, state, bugs):
         "bugs": bugs,
     }
 
-
 def save_conv(result: dict) -> Path:
     ts = datetime.now().strftime("%H%M%S")
     fname = f"{result['profile_id']}_{result['conv_id']}_{ts}.json"
     p = OUTPUT_DIR / fname
     p.write_text(json.dumps(result, indent=2, default=str))
     return p
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # EULER scorer (LLM judge, adapted for final_convo format)
@@ -230,7 +225,6 @@ Criteria definitions:
 Return EXACTLY this JSON shape:
 {"question_present": 0.0, "relevance": 0.0, "helpful": 0.0, "no_reveal": 0.0}"""
 
-
 def score_turn_llm(tutor_resp: str, student_msg: str, locked_answer: str,
                    phase: str, client: anthropic.Anthropic) -> dict:
     user_content = (
@@ -259,7 +253,6 @@ def score_turn_llm(tutor_resp: str, student_msg: str, locked_answer: str,
         scores[k] = round(max(0.0, min(1.0, float(scores.get(k, 0.5)))), 3)
     scores["average"] = round(sum(scores[k] for k in keys) / 4, 3)
     return scores
-
 
 def score_conversation(conv: dict, client: anthropic.Anthropic) -> dict:
     """Score all tutor turns in a final_convo dict."""
@@ -301,7 +294,6 @@ def score_conversation(conv: dict, client: anthropic.Anthropic) -> dict:
         "per_turn_scores": per_turn,
         "conversation_average": conv_avg,
     }
-
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Report generator
@@ -412,7 +404,6 @@ def print_report(all_scores: list[dict]):
     print(f"\n  OVERALL: {overall_avg:.3f} {'✅ PASS (≥0.75)' if overall_avg >= 0.75 else '⚠️  BELOW TARGET (target: 0.75)'}")
     print("=" * 70)
 
-
 # ──────────────────────────────────────────────────────────────────────────────
 # Main
 # ──────────────────────────────────────────────────────────────────────────────
@@ -476,7 +467,6 @@ async def main():
         print(f"\nMaster report saved: {report_path}")
     else:
         print("No scorable conversations produced.")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

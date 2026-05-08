@@ -1,11 +1,10 @@
 """
 evaluation/quality/primary.py
------------------------------
 Assemble PRIMARY (headline) metrics: EULER + RAGAS.
 
 Reads outputs from:
-  - llm_judges.evaluate_per_turn (per-turn EULER + RAGAS faithfulness/answer_relevancy)
-  - llm_judges.evaluate_retrieval (RAGAS context_precision, context_recall, context_relevancy)
+llm_judges.evaluate_per_turn (per-turn EULER + RAGAS faithfulness/answer_relevancy)
+llm_judges.evaluate_retrieval (RAGAS context_precision, context_recall, context_relevancy)
 
 Produces a structured dict per the schema in docs/EVALUATION_FRAMEWORK.md §6.
 """
@@ -28,11 +27,9 @@ RAGAS_THRESHOLDS = {
     "answer_relevancy": 0.75,
 }
 
-
 def _safe_mean(values: list[float]) -> Optional[float]:
     vs = [v for v in values if v is not None]
     return (sum(vs) / len(vs)) if vs else None
-
 
 def assemble_euler(per_turn_result: Optional[dict]) -> dict[str, Any]:
     """Mean each criterion across tutoring turns. Pass = all four ≥ threshold."""
@@ -58,22 +55,21 @@ def assemble_euler(per_turn_result: Optional[dict]) -> dict[str, Any]:
         )
     return out
 
-
 def assemble_ragas(
     per_turn_result: Optional[dict],
     retrieval_result: Optional[dict],
     final_reached: bool,
 ) -> dict[str, Any]:
     """RAGAS metrics:
-      - context_precision: from retrieval call
-      - context_recall: from retrieval call
-      - context_relevancy: mean of per-chunk relevance scores from retrieval call
-      - faithfulness: mean across tutoring turns from per_turn call
-      - answer_relevancy: mean across tutoring turns from per_turn call
-      - answer_correctness: 1.0 if final_reached AND gate said reached; else
-        we leave None (we'd need a separate LLM check on the final student
-        utterance to give a non-binary score; deferred).
-    """
+context_precision: from retrieval call
+context_recall: from retrieval call
+context_relevancy: mean of per-chunk relevance scores from retrieval call
+faithfulness: mean across tutoring turns from per_turn call
+answer_relevancy: mean across tutoring turns from per_turn call
+answer_correctness: 1.0 if final_reached AND gate said reached; else
+ we leave None (we'd need a separate LLM check on the final student
+ utterance to give a non-binary score; deferred).
+"""
     out = {
         "context_precision": None,
         "context_recall": None,

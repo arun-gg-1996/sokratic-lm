@@ -7,13 +7,13 @@ Hits every router branch, intent verdict, and lifecycle flag transition
 by pre-injecting state and driving 1-3 student turns per scenario.
 
 Run:
-    cd /Users/arun-ghontale/UB/NLP/sokratic
-    python scripts/stress_test_flows.py [--limit N] [--group GROUP] [--scenario ID]
+ cd /Users/arun-ghontale/UB/NLP/sokratic
+ python scripts/stress_test_flows.py [--limit N] [--group GROUP] [--scenario ID]
 
 Outputs:
-    data/artifacts/eval/stress_test/<timestamp>/<scenario_id>.json   per-scenario state+trace
-    data/artifacts/eval/stress_test/<timestamp>/report.json          summary
-    data/artifacts/eval/stress_test/<timestamp>/coverage.json        which conditionals fired
+ per-scenario state+trace
+ summary
+ which conditionals fired
 """
 
 from __future__ import annotations
@@ -38,7 +38,6 @@ load_dotenv(REPO / ".env", override=True)
 
 from config import cfg  # noqa: E402
 from conversation.state import initial_state  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # Coverage tracker — every distinct conditional we want to confirm fires
@@ -83,7 +82,6 @@ LIFECYCLE = [
     "close_reason=clinical_strike",
 ]
 
-
 @dataclass
 class CoverageTracker:
     routers_hit: set[str] = field(default_factory=set)
@@ -93,11 +91,11 @@ class CoverageTracker:
     def record_state(self, prev: dict, curr: dict, all_traces: list[dict] | None = None) -> None:
         """Inspect state delta + turn traces, mark hit routers/intents/lifecycle.
 
-        all_traces: the full list of turn_trace entries from each turn during
-        the scenario (concatenated). The coverage tracker reads
-        `category` from preflight wrapper entries (not `verdict`), and
-        looks for topic_lock/anchor_pick wrapper names to detect those routers.
-        """
+ all_traces: the full list of turn_trace entries from each turn during
+ the scenario (concatenated). The coverage tracker reads
+ `category` from preflight wrapper entries (not `verdict`), and
+ looks for topic_lock/anchor_pick wrapper names to detect those routers.
+"""
         prev_phase = prev.get("phase", "")
         curr_phase = curr.get("phase", "")
         if prev_phase != curr_phase:
@@ -108,7 +106,7 @@ class CoverageTracker:
                 self.routers_hit.add("tutoring->assessment(answer_reached)")
             if prev_phase == "rapport" and curr_phase == "tutoring":
                 self.routers_hit.add("rapport->prelock(opt_in_yes)")
-        # BLOCK 12 (S5) — close_reason detection regardless of phase
+        # — close_reason detection regardless of phase
         # transition. Some scenarios pre-inject phase=memory_update so
         # there's no transition; check final state directly.
         if curr_phase == "memory_update":
@@ -169,7 +167,7 @@ class CoverageTracker:
                 elif "ambiguous" in wrapper or "reprompt" in wrapper:
                     self.routers_hit.add("rapport->reprompt(opt_in_ambiguous)")
                     self.intents_hit.add("opt_in_ambiguous")
-            # BLOCK 12 (S5) — assessment_v2 opt-in handling has its own
+            # — assessment_v2 opt-in handling has its own
             # trace wrappers; map them to intent verdicts that don't go
             # through preflight.
             if "assessment_v2.opt_in" in wrapper:
@@ -199,11 +197,9 @@ class CoverageTracker:
             },
         }
 
-
 # ---------------------------------------------------------------------------
 # Scenario DSL
 # ---------------------------------------------------------------------------
-
 
 @dataclass
 class Step:
@@ -215,7 +211,6 @@ class Step:
     expect_close_reason: str | None = None
     note: str = ""
 
-
 @dataclass
 class Scenario:
     id: str
@@ -225,7 +220,6 @@ class Scenario:
     prelocked_topic: str | None = None
     memory_enabled: bool = False
     steps: list[Step] = field(default_factory=list)
-
 
 @dataclass
 class StepResult:
@@ -237,7 +231,6 @@ class StepResult:
     tutor_msg: str
     violations: list[str]
 
-
 @dataclass
 class ScenarioResult:
     scenario_id: str
@@ -248,7 +241,6 @@ class ScenarioResult:
     failed_at_step: int | None
     steps: list[StepResult]
     error: str | None = None
-
 
 # ---------------------------------------------------------------------------
 # Setup helpers — pre-inject state to skip slow flows
@@ -264,10 +256,9 @@ PRELOCKED_FALLBACKS = [
     "Chapter 2: Biochemistry > Enzymes > Enzyme kinetics",
 ]
 
-
 def _setup_prelocked_with_anchor(student_id: str, cfg_obj) -> dict:
-    """Build a state that's already past rapport + topic + anchor pick,
-    sitting in tutoring with locked_topic + locked_question + locked_answer."""
+    """Build a state that's already past rapport + topic + anchor pick
+ sitting in tutoring with locked_topic + locked_question + locked_answer."""
     from backend.api.session import _apply_prelock
     from backend.dependencies import get_dean
 
@@ -314,7 +305,6 @@ def _setup_prelocked_with_anchor(student_id: str, cfg_obj) -> dict:
     state["debug"]["turn_trace"] = []
     return state
 
-
 def _setup_rapport_only(student_id: str, cfg_obj) -> dict:
     """Plain initial state, ready for rapport."""
     from backend.dependencies import get_graph
@@ -329,7 +319,6 @@ def _setup_rapport_only(student_id: str, cfg_obj) -> dict:
     state = graph.invoke(state, config=config)
     state.setdefault("debug", {})["turn_trace"] = []
     return state
-
 
 def _setup_anchor_pick_pending(student_id: str, cfg_obj) -> dict:
     """State with anchor_pick cards still pending (haven't picked yet)."""
@@ -353,7 +342,6 @@ def _setup_anchor_pick_pending(student_id: str, cfg_obj) -> dict:
     state.setdefault("debug", {})["turn_trace"] = []
     return state
 
-
 def _setup_assessment_phase(student_id: str, cfg_obj) -> dict:
     """State at start of assessment phase, opt_in pending."""
     state = _setup_prelocked_with_anchor(student_id, cfg_obj)
@@ -366,7 +354,6 @@ def _setup_assessment_phase(student_id: str, cfg_obj) -> dict:
     }
     return state
 
-
 # Pre-injection helpers that mutate state right before the turn fires
 def _inject(**fields) -> Callable[[Any, dict], dict]:
     def _apply(_cfg, state: dict) -> dict:
@@ -375,14 +362,13 @@ def _inject(**fields) -> Callable[[Any, dict], dict]:
         return state
     return _apply
 
-
 # ---------------------------------------------------------------------------
 # Turn dispatcher — mirrors backend/api/chat.py per-turn loop (no WS)
 # ---------------------------------------------------------------------------
 
 def run_turn(state: dict, student_msg: str) -> dict:
-    """Mirror chat.py: handle __exit_session__ sentinel, append student msg,
-    invoke graph, return new state."""
+    """Mirror chat.py: handle __exit_session__ sentinel, append student msg
+ invoke graph, return new state."""
     from backend.dependencies import get_graph
 
     graph = get_graph()
@@ -395,7 +381,7 @@ def run_turn(state: dict, student_msg: str) -> dict:
         state["phase"] = "memory_update"
         state.setdefault("debug", {})["turn_trace"] = []
     elif student_msg == "__cancel_exit__":
-        # BLOCK 9 (S3) — mirror chat.py cancel sentinel handling
+        # — mirror chat.py cancel sentinel handling
         state["exit_intent_pending"] = False
         state["cancel_modal_pending"] = True
         state["recent_cancel_at_turn"] = int(state.get("turn_count", 0) or 0)
@@ -414,13 +400,11 @@ def run_turn(state: dict, student_msg: str) -> dict:
     new_state = graph.invoke(state, config=config)
     return new_state
 
-
 def latest_tutor_message(state: dict) -> str:
     for msg in reversed(state.get("messages", []) or []):
         if msg.get("role") == "tutor":
             return str(msg.get("content", "") or "")
     return ""
-
 
 # ---------------------------------------------------------------------------
 # Assertion engine
@@ -454,7 +438,6 @@ def check_step(state_after: dict, step: Step) -> list[str]:
             if needle.lower() not in tutor_msg:
                 violations.append(f"tutor_msg missing substring: {needle!r}")
     return violations
-
 
 # ---------------------------------------------------------------------------
 # Scenario definitions — Tier 1 coverage
@@ -507,7 +490,7 @@ def build_scenarios() -> list[Scenario]:
         description="deflection at greeting → direct close (BLOCK 14: no modal at rapport stage)",
         setup=lambda c, s: _setup_rapport_only("eval_a5", c),
         steps=[
-            # BLOCK 14: rapport-stage decline routes direct-to-memory_update
+            # : rapport-stage decline routes direct-to-memory_update
             # (no modal — student hasn't invested progress to confirm-exit over).
             Step(student_msg="I want to leave",
                  expect_phase="memory_update",
@@ -781,7 +764,7 @@ def build_scenarios() -> list[Scenario]:
         setup=lambda c, s: _setup_rapport_only("eval_b3_topic", c),
         steps=[
             Step(student_msg="yes"),
-            # BLOCK 14: still rapport-stage (no topic locked) so direct-to-close.
+            # : still rapport-stage (no topic locked) so direct-to-close.
             Step(student_msg="actually I want to leave",
                  expect_phase="memory_update",
                  expect_close_reason="exit_intent"),
@@ -908,7 +891,7 @@ def build_scenarios() -> list[Scenario]:
         ],
     ))
 
-    # --- M. Cancel-modal flow (BLOCK 9 / S3) ---
+    # --- M. Cancel-modal flow (/ ) ---
     scenarios.append(Scenario(
         id="M1_cancel_modal_soft_reset",
         group="M_cancel_modal",
@@ -939,7 +922,6 @@ def build_scenarios() -> list[Scenario]:
 
     return scenarios
 
-
 # ---------------------------------------------------------------------------
 # Driver
 # ---------------------------------------------------------------------------
@@ -955,7 +937,6 @@ def _resolve_special_msg(state: dict, student_msg: str) -> str:
     if student_msg == "__USE_LOCKED_ANSWER__":
         return str(state.get("full_answer") or state.get("locked_answer") or "I don't know")
     return student_msg
-
 
 def run_scenario(scenario: Scenario, out_dir: Path) -> ScenarioResult:
     t0 = time.monotonic()
@@ -1038,7 +1019,6 @@ def run_scenario(scenario: Scenario, out_dir: Path) -> ScenarioResult:
 
     return result
 
-
 def _summarize_state(state: dict) -> dict:
     """Trim state to essentials for logging."""
     keys = [
@@ -1052,7 +1032,6 @@ def _summarize_state(state: dict) -> dict:
         "pending_user_choice",
     ]
     return {k: state.get(k) for k in keys}
-
 
 def main():
     import argparse
@@ -1154,7 +1133,6 @@ def main():
     print(f"Intents:   {cov['intents']['coverage']} hit  | missed: {cov['intents']['missed']}")
     print(f"Lifecycle: {cov['lifecycle']['coverage']} hit | missed: {cov['lifecycle']['missed']}")
     print(f"\nReport: {out_dir / 'report.json'}")
-
 
 if __name__ == "__main__":
     main()

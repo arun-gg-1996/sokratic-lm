@@ -1,19 +1,18 @@
 """
 scripts/eval_rag_expanded.py
-------------------------------
 Run the full RAG eval on data/eval/rag_qa_expanded.jsonl (231 queries across 5
 categories) and report:
-  - Hit@K, MRR — per category + overall
-  - OOD precision (% of OOD queries that correctly return empty)
-  - Latency p50 / p95
+Hit@K, MRR — per category + overall
+OOD precision (% of OOD queries that correctly return empty)
+Latency p50 / p95
 
 Ground-truth types:
-  1. source_chunk_id present → exact chunk match
-  2. expected_keyword present → any retrieved chunk contains the keyword
-  3. question_type = "ood_negative" → correct iff no chunks returned
+ 1. source_chunk_id present → exact chunk match
+ 2. expected_keyword present → any retrieved chunk contains the keyword
+ 3. question_type = "ood_negative" → correct iff no chunks returned
 
 Usage:
-  .venv/bin/python scripts/eval_rag_expanded.py [--save]
+ .venv/bin/python scripts/eval_rag_expanded.py [--save]
 """
 import argparse
 import json
@@ -32,15 +31,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from retrieval.retriever import Retriever
 from tools.mcp_tools import search_textbook
 
-
 ROOT = Path(__file__).parent.parent
 SRC = ROOT / "data/eval/rag_qa_expanded.jsonl"
 OUT_DIR = ROOT / "data/eval"
 
-
 def load_jsonl(path):
     return [json.loads(l) for l in open(path)]
-
 
 def evaluate_row(chunks: list[dict], row: dict) -> dict:
     """Score one query. Returns dict with {hit, mrr_rank, category, ...}."""
@@ -74,7 +70,6 @@ def evaluate_row(chunks: list[dict], row: dict) -> dict:
         if c.get("chunk_id") == target:
             return {"hit": True, "rank": rank, "category": style, "style": style}
     return {"hit": False, "rank": -1, "category": style, "style": style}
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -179,7 +174,6 @@ def main():
         with open(out_path, "w") as f:
             json.dump(payload, f, indent=2)
         print(f"\nSaved: {out_path}")
-
 
 if __name__ == "__main__":
     main()

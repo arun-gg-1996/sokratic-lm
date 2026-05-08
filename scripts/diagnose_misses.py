@@ -1,24 +1,22 @@
 """
 scripts/diagnose_misses.py
---------------------------
-Qualitative audit: pick failed `original`-style queries from the legacy set,
+Qualitative audit: pick failed `original`-style queries from the legacy set
 look at what the v4 retriever returned, and look at where the answer text
 ACTUALLY lives in the corpus. Surfaces the failure mode per row:
-
-  - WRONG_AREA: retrieved chunks were in the wrong chapter/section, but the
-    answer's distinctive phrase exists somewhere in the corpus.
-  - SPLIT_ANSWER: retrieved the right area, but the answer text is split
-    across multiple new chunks, none of which clear the 60% threshold alone.
-  - NOT_IN_CORPUS: the expected_answer's distinctive phrase doesn't appear
-    in the new corpus at all (test-set/source artifact).
-  - CE_DEMOTION: the right chunk was in the candidate pool (qdrant or BM25
-    top-k) but cross-encoder ranked it below the cutoff.
-  - WINDOW_MISSED: right chunk would have been included via window expansion
-    but isn't because it's not adjacent to a primary.
+WRONG_AREA: retrieved chunks were in the wrong chapter/section, but the
+ answer's distinctive phrase exists somewhere in the corpus.
+SPLIT_ANSWER: retrieved the right area, but the answer text is split
+ across multiple new chunks, none of which clear the 60% threshold alone.
+NOT_IN_CORPUS: the expected_answer's distinctive phrase doesn't appear
+ in the new corpus at all (test-set/source artifact).
+CE_DEMOTION: the right chunk was in the candidate pool (qdrant or BM25
+ top-k) but cross-encoder ranked it below the cutoff.
+WINDOW_MISSED: right chunk would have been included via window expansion
+ but isn't because it's not adjacent to a primary.
 
 Usage:
-  cd /Users/arun-ghontale/UB/NLP/sokratic
-  .venv/bin/python scripts/diagnose_misses.py --n 12
+ cd /Users/arun-ghontale/UB/NLP/sokratic
+ .venv/bin/python scripts/diagnose_misses.py --n 12
 """
 from __future__ import annotations
 
@@ -39,13 +37,11 @@ from retrieval.retriever import Retriever  # noqa: E402
 LEGACY = ROOT / "data/eval/rag_qa_expanded.jsonl"
 CHUNKS = ROOT / "data/processed/chunks_openstax_anatomy.jsonl"
 
-
 def normalize(s: str) -> str:
     s = (s or "").lower()
     s = re.sub(r"[^a-z0-9 ]+", " ", s)
     s = re.sub(r"\s+", " ", s).strip()
     return s
-
 
 _STOP = set("""
 a an the of in on at by for to from with as is are was were be been being
@@ -57,10 +53,8 @@ them they we us our you your he she his her this can will would should could
 may might must i me my mine
 """.split())
 
-
 def content_tokens(s: str) -> list[str]:
     return [t for t in normalize(s).split() if t not in _STOP and len(t) > 2]
-
 
 def overlap(answer: str, text: str) -> float:
     ans = content_tokens(answer)
@@ -69,13 +63,11 @@ def overlap(answer: str, text: str) -> float:
     txt = set(content_tokens(text))
     return sum(1 for t in ans if t in txt) / len(ans)
 
-
 def parse_legacy_section(s: str) -> str:
     s = re.sub(r"^\d+\.\d+\s+", "", (s or "").strip())
     if " — " in s:
         return s.split(" — ", 1)[0].strip()
     return s
-
 
 def load_corpus():
     chunks = []
@@ -83,7 +75,6 @@ def load_corpus():
         for l in f:
             chunks.append(json.loads(l))
     return chunks
-
 
 def find_answer_chunks(corpus: list[dict], answer: str, top: int = 5) -> list[dict]:
     """Find chunks in the corpus whose text most overlaps the answer."""
@@ -94,7 +85,6 @@ def find_answer_chunks(corpus: list[dict], answer: str, top: int = 5) -> list[di
             scored.append((ov, c))
     scored.sort(key=lambda x: -x[0])
     return [c for _, c in scored[:top]]
-
 
 def classify(row: dict, retrieved: list[dict], answer_chunks: list[dict]) -> str:
     """Bucket the failure mode."""
@@ -126,7 +116,6 @@ def classify(row: dict, retrieved: list[dict], answer_chunks: list[dict]) -> str
         # Right answer EXISTS, retriever just landed in wrong chapter
         return "WRONG_CHAPTER"
     return "OTHER"
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -223,7 +212,6 @@ def main():
                       f"{c.get('subsection_title','')[:30]} "
                       f"(overlap={ov:.2f})")
             shown += 1
-
 
 if __name__ == "__main__":
     main()

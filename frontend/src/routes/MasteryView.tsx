@@ -8,12 +8,12 @@
  * nodes report score=null, color="grey" so the tree renders as a
  * visual heat map of student progress over the corpus.
  *
- * Layout per L29:
+ * Layout :
  *   - In-place accordion at chapter / section / subsection level
  *   - Multiple chapters can be open at once
  *   - Color rendering via node.color (green/yellow/red/grey dot)
  *
- * Subsection row per L30:
+ * Subsection row :
  *   - Color dot
  *   - display_label (LLM-rewritten friendly name from L19)
  *   - Numeric EWMA score
@@ -24,7 +24,7 @@
  *     locked subsection path as `prelocked_topic` (skipping the
  *     dean's free-text resolution).
  *
- * UI per L34:
+ * UI :
  *   - Single "Sort by mastery" toggle (lowest-mastery-first when on)
  *   - No search, no filter chips, no breadcrumbs — tree IS the nav
  *   - Empty state = full tree, all greys (informative + inviting)
@@ -148,7 +148,7 @@ function MasteryBar({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Subsection row (leaf — has the action button per L30)
+// Subsection row (leaf — has the action button )
 // ─────────────────────────────────────────────────────────────────────────────
 
 function SubsectionRow({

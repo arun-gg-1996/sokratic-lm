@@ -1,25 +1,11 @@
 """
-backend/api/mastery.py
------------------------
-Endpoints for the per-concept knowledge tracing dashboard.
+Endpoints for the per-concept knowledge-tracing dashboard.
 
-Wires MasteryStore (memory/mastery_store.py) to the frontend /mastery
-page. Three things the page needs:
-
-  1. Aggregate stats for the header  (touched / mastered / avg)
-  2. Per-session log                  (for the Sessions list section)
-  3. Full concepts grouped by chapter (for the Chapter tree section)
-
-Rather than three separate endpoints we return one bundled payload —
-the page renders all three from one fetch. Lightweight (~tens of KB
-even for a heavy user).
-
-The Sessions log piece is reconstructed from mem0 (filter by
-category=session_summary, get_all sorted by created_at) joined with
-the mastery score for each session's locked subsection. mem0 holds
-the per-session narrative; MasteryStore holds the score history. Both
-are filtered by the same student_id so isolation matches the rest of
-the system.
+Returns one bundled payload to the /mastery page containing aggregate
+stats (touched / mastered / average), the per-session log, and the
+full concept tree grouped by chapter. The session log is built by
+joining mem0 session-summary entries with MasteryStore scores for
+each locked subsection.
 """
 from __future__ import annotations
 
@@ -36,7 +22,6 @@ from memory.memory_manager import MemoryManager
 
 router = APIRouter(prefix="/mastery", tags=["mastery"])
 
-
 # --- response models ---
 
 class MasteryHeader(BaseModel):
@@ -44,7 +29,6 @@ class MasteryHeader(BaseModel):
     mastered: int           # mastery >= 0.80 AND confidence >= 0.60
     avg_mastery: float      # mean across touched, 0-1
     avg_confidence: float = 0.0   # mean confidence across touched
-
 
 class MasteryConcept(BaseModel):
     path: str
@@ -59,7 +43,6 @@ class MasteryConcept(BaseModel):
     last_outcome: str
     last_rationale: str = ""
 
-
 class MasteryChapterRow(BaseModel):
     """One row in the chapter-tree section: chapter + its subsections."""
     chapter_num: int
@@ -68,15 +51,14 @@ class MasteryChapterRow(BaseModel):
     n_subsections_touched: int
     concepts: list[MasteryConcept]
 
-
 class MasterySessionEntry(BaseModel):
     """One row in the sessions log: a past session with its outcome
-    and the subsection's CURRENT mastery (post-EWMA-blend).
+ and the subsection's CURRENT mastery (post-EWMA-blend).
 
-    A session can map to a subsection that no longer appears in
-    MasteryStore (corruption, deletion). In that case mastery=null
-    and the frontend just hides the bar.
-    """
+ A session can map to a subsection that no longer appears in
+ MasteryStore (corruption, deletion). In that case mastery=null
+ and the frontend just hides the bar.
+"""
     session_date: str
     chapter_num: int
     chapter_title: str
@@ -87,14 +69,12 @@ class MasterySessionEntry(BaseModel):
     mastery: Optional[float] = None
     summary_text: str
 
-
 class MasteryDashboardResponse(BaseModel):
     student_id: str
     available: bool          # mastery store + mem0 both readable
     header: MasteryHeader
     chapters: list[MasteryChapterRow]
     sessions: list[MasterySessionEntry]
-
 
 # --- helpers ---
 
@@ -152,7 +132,6 @@ def _build_chapter_rows(concepts: dict) -> list[MasteryChapterRow]:
         ))
     return rows
 
-
 def _build_session_log(
     student_id: str,
     mm: MemoryManager,
@@ -161,12 +140,12 @@ def _build_session_log(
 ) -> list[MasterySessionEntry]:
     """Pull session_summary entries from mem0, join with mastery scores.
 
-    mem0 stores one session_summary per session — we filter to those,
-    sort by created_at desc, and produce a Sessions-list-ready record
-    per entry. The mastery score is the CURRENT (post-blend) value, so
-    a row from 5 sessions ago shows what mastery looks like NOW for
-    that subsection — which is what the dashboard wants to display.
-    """
+ mem0 stores one session_summary per session — we filter to those
+ sort by created_at desc, and produce a Sessions-list-ready record
+ per entry. The mastery score is the CURRENT (post-blend) value, so
+ a row from 5 sessions ago shows what mastery looks like NOW for
+ that subsection — which is what the dashboard wants to display.
+"""
     if not mm.persistent.available:
         return []
     try:
@@ -192,7 +171,7 @@ def _build_session_log(
         meta = entry.get("metadata") or {}
         date = str(meta.get("session_date") or "")
         path = str(meta.get("topic_path") or "")
-        # If both date and path are empty (legacy entries pre-metadata),
+        # If both date and path are empty (legacy entries pre-metadata)
         # bucket them together under ("", "") so they don't multiply
         # into one row per atom — better one degraded-but-cohesive row
         # than spam.
@@ -202,8 +181,8 @@ def _build_session_log(
     rows: list[MasterySessionEntry] = []
     for (date, path), atoms in grouped.items():
         # Pick representative atom + summary text. Preference order:
-        #   1. category=session_summary, longest text
-        #   2. any category, longest text
+        # 1. category=session_summary, longest text
+        # 2. any category, longest text
         summary_atoms = [
             a for a in atoms
             if (a.get("metadata") or {}).get("category") == "session_summary"
@@ -249,7 +228,6 @@ def _build_session_log(
     rows.sort(key=lambda r: r.session_date, reverse=True)
     return rows[:limit]
 
-
 # --- endpoint ---
 
 @router.get("/{student_id}", response_model=MasteryDashboardResponse)
@@ -259,10 +237,10 @@ async def get_mastery(
 ) -> MasteryDashboardResponse:
     """Bundled dashboard payload (header + chapters + sessions).
 
-    Returns 200 with empty containers when the student has no data
-    yet — the frontend treats that as "fresh student" and shows
-    appropriate empty-state copy.
-    """
+ Returns 200 with empty containers when the student has no data
+ yet — the frontend treats that as "fresh student" and shows
+ appropriate empty-state copy.
+"""
     sid = (student_id or "").strip()
     if not sid:
         raise HTTPException(status_code=400, detail="student_id required")
@@ -287,12 +265,10 @@ async def get_mastery(
         sessions=sessions,
     )
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# L29-L34 SQLite-backed endpoints (track 1.9 — additive, coexists with the
+# SQLite-backed endpoints ( — additive, coexists with the
 # legacy /mastery/{student_id} JSON-backed endpoint above)
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 class MasterySubsectionNode(BaseModel):
     subsection: str
@@ -305,7 +281,6 @@ class MasterySubsectionNode(BaseModel):
     last_session_at: Optional[str] = None
     attempt_count: int = 0
 
-
 class MasterySectionNode(BaseModel):
     section: str
     score: Optional[float] = None
@@ -314,7 +289,6 @@ class MasterySectionNode(BaseModel):
     touched: int = 0
     total: int = 0
     subsections: list[MasterySubsectionNode] = []
-
 
 class MasteryChapterNode(BaseModel):
     chapter: str
@@ -326,21 +300,19 @@ class MasteryChapterNode(BaseModel):
     total: int = 0
     sections: list[MasterySectionNode] = []
 
-
 class MasteryTreeResponse(BaseModel):
     student_id: str
     chapters: list[MasteryChapterNode] = []
 
-
 class MasterySessionRow(BaseModel):
-    """One row in the My Mastery sessions list (per L29-L34)."""
+    """One row in the My Mastery sessions list (-)."""
     thread_id: str
     student_id: str
     started_at: Optional[str] = None
     ended_at: Optional[str] = None
     locked_topic_path: Optional[str] = None
     locked_subsection_path: Optional[str] = None
-    # M5 — surface locked Q/A so the analysis view doesn't need a second fetch.
+    # surface locked Q/A so the analysis view doesn't need a second fetch.
     locked_question: Optional[str] = None
     locked_answer: Optional[str] = None
     full_answer: Optional[str] = None
@@ -354,34 +326,13 @@ class MasterySessionRow(BaseModel):
     reach_status: Optional[bool] = None
     key_takeaways: Optional[dict] = None
 
-
 class MasterySessionsResponse(BaseModel):
     student_id: str
     sessions: list[MasterySessionRow] = []
 
-
-def _load_topic_index_for_tree() -> list[dict]:
-    """Read the active domain's topic_index for tree rollup.
-
-    Per L78, every domain config has its own `cfg.paths.topic_index_{domain}`
-    slot (added in track 0 / 65d5111). Falls back to the legacy
-    `data/topic_index.json` only if the per-domain slot is absent — which
-    shouldn't happen in production since the slot is mandatory per L78.
-    """
-    import json
-    from pathlib import Path
-    from config import cfg as _cfg
-    domain = _cfg.domain.retrieval_domain
-    slot = f"topic_index_{domain}"
-    path_str = getattr(_cfg.paths, slot, None) or "data/topic_index.json"
-    p = Path(path_str)
-    if not p.is_absolute():
-        # Resolve relative to repo root (parent of backend/)
-        p = Path(__file__).resolve().parent.parent.parent / path_str
-    if not p.exists():
-        return []
-    raw = json.loads(p.read_text())
-    return raw if isinstance(raw, list) else list(raw.values())
+# Note: _load_topic_index_for_tree() was removed — mastery_tree() now
+# reads the curriculum directly from SQL chapters/sections/subsections,
+# so no flat-file load is needed at request time.
 
 
 def _row_to_session_model(row: dict) -> MasterySessionRow:
@@ -408,16 +359,15 @@ def _row_to_session_model(row: dict) -> MasterySessionRow:
         key_takeaways=row.get("key_takeaways") if isinstance(row.get("key_takeaways"), dict) else None,
     )
 
-
 @router.get("/v2/{student_id}/tree", response_model=MasteryTreeResponse)
 async def get_mastery_tree(student_id: str) -> MasteryTreeResponse:
-    """Per L29-L34 — full mastery tree rolled up from the per-domain SQLite store.
+    """Per - — full mastery tree rolled up from the per-domain SQLite store.
 
-    Returns nested chapters → sections → subsections with score / color /
-    tier / coverage at every level. Untouched nodes report score=None,
-    color="grey" so the frontend can render greyed-out cards without
-    extra branching.
-    """
+ Returns nested chapters → sections → subsections with score / color /
+ tier / coverage at every level. Untouched nodes report score=None
+ color="grey" so the frontend can render greyed-out cards without
+ extra branching.
+"""
     sid = (student_id or "").strip()
     if not sid:
         raise HTTPException(status_code=400, detail="student_id required")
@@ -426,11 +376,11 @@ async def get_mastery_tree(student_id: str) -> MasteryTreeResponse:
 
     from memory.sqlite_store import SQLiteStore
     store = SQLiteStore()  # picks active domain from cfg
-    topic_index = _load_topic_index_for_tree()
-    tree = store.mastery_tree(sid, topic_index)
-    # MasteryChapterNode mirrors mastery_tree's output exactly — pass through.
+    # mastery_tree now derives the curriculum from the SQL chapters/sections/
+    # subsections tables (seeded once via scripts/seed_curriculum.py); no
+    # topic_index.json read at request time.
+    tree = store.mastery_tree(sid)
     return MasteryTreeResponse(student_id=sid, chapters=tree["chapters"])
-
 
 @router.get("/v2/{student_id}/sessions", response_model=MasterySessionsResponse)
 async def get_mastery_sessions(
@@ -439,12 +389,12 @@ async def get_mastery_sessions(
     completed_only: bool = False,
     subsection_path: Optional[str] = None,
 ) -> MasterySessionsResponse:
-    """Per L29-L34 — list of sessions newest-first, with key fields needed
-    by the My Mastery sessions panel.
+    """Per - — list of sessions newest-first, with key fields needed
+ by the My Mastery sessions panel.
 
-    M5: optional `subsection_path` query param filters to sessions for one
-    subsection (used by the inline session list under each row).
-    """
+ : optional `subsection_path` query param filters to sessions for one
+ subsection (used by the inline session list under each row).
+"""
     sid = (student_id or "").strip()
     if not sid:
         raise HTTPException(status_code=400, detail="student_id required")
@@ -464,10 +414,9 @@ async def get_mastery_sessions(
         sessions=[_row_to_session_model(r) for r in rows],
     )
 
-
 @router.get("/v2/session/{thread_id}", response_model=MasterySessionRow)
 async def get_mastery_session(thread_id: str) -> MasterySessionRow:
-    """Per L29-L34 — single session detail (used by the Revisit / Analyze view)."""
+    """Per - — single session detail (used by the Revisit / Analyze view)."""
     tid = (thread_id or "").strip()
     if not tid:
         raise HTTPException(status_code=400, detail="thread_id required")

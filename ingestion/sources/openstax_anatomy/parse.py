@@ -2,52 +2,52 @@
 ingest/parse_pdf.py — extract sections from an OpenStax PDF using PyMuPDF.
 
 Font-size thresholds calibrated against OpenStax Anatomy & Physiology 2e
-(1317 pages).  Same thresholds work for OpenStax University Physics V1
+(1317 pages). Same thresholds work for OpenStax University Physics V1
 because both books share the OpenStax house style.
 
 Heading hierarchy (measured from actual PDF spans):
-  22.4 pt            →  chapter title   ("Bone Tissue and the Skeletal System")
-  15.6 pt  CAPS      →  chapter label   ("CHAPTER 4")
-  13.0 pt  bold      →  L1 section      ("6.7 Calcium Homeostasis …")   ← Level 1
-  10.8 pt  bold      →  L2 subsection   ("Negative Feedback", "Motor Innervation")  ← Level 2 NEW
-   9.0 pt            →  body text
-   7.5 pt            →  captions / footers  (skipped)
+ 22.4 pt → chapter title ("Bone Tissue and the Skeletal System")
+ 15.6 pt CAPS → chapter label ("CHAPTER 4")
+ 13.0 pt bold → section ("6.7 Calcium Homeostasis …") ← Level 1
+ 10.8 pt bold → subsection ("Negative Feedback", "Motor Innervation") ← Level 2 NEW
+ 9.0 pt → body text
+ 7.5 pt → captions / footers (skipped)
 
 LEVEL 1 detection (unchanged):
-  font size >= 12.5 pt AND all spans on the line are bold.
-  Catches the 13.0pt bold numbered section headings.
+ font size >= 12.5 pt AND all spans on the line are bold.
+ Catches the 13.0pt bold numbered section headings.
 
 LEVEL 2 detection (NEW):
-  All spans on the line are 10.5–11.2 pt AND all bold
-  AND the line text is >= 2 words
-  AND does not match callout / boilerplate patterns
-  AND does not look like a TOC entry (starts with "N.M ")
-  AND the resulting body text would be >= L2_MIN_WORDS words.
+ All spans on the line are 10.5–11.2 pt AND all bold
+ AND the line text is >= 2 words
+ AND does not match callout / boilerplate patterns
+ AND does not look like a TOC entry (starts with "N.M ")
+ AND the resulting body text would be >= L2_MIN_WORDS words.
 
-  The section_title for Level 2 is stored as:
-    "<parent L1 title> — <subsection heading>"
-  e.g.  "6.7 Calcium Homeostasis — Negative Feedback"
+ The section_title for Level 2 is stored as:
+ "<parent title> — <subsection heading>"
+ e.g. "6.7 Calcium Homeostasis — Negative Feedback"
 
-  L2_MIN_WORDS is set to 200 by default.
-  Note: the A&P 2e textbook contains ~640 qualifying Level 2 subsections
-  (200-word minimum).  The user's target was 350-500; the difference is that
-  the textbook has more subsection headings than estimated.  To reduce the
-  section count, raise L2_MIN_WORDS (e.g. 400 → ~490 total sections).
+ L2_MIN_WORDS is set to 200 by default.
+ Note: the A&P 2e textbook contains ~640 qualifying Level 2 subsections
+ (200-word minimum). The user's target was 350-500; the difference is that
+ the textbook has more subsection headings than estimated. To reduce the
+ section count, raise L2_MIN_WORDS (e.g. 400 → ~490 total sections).
 
 Output per section (list[dict]):
-  {
-    "id":                  str,   # "<domain>_ch<N>_sec<M>"
-    "section_title":       str,   # L1: numbered title | L2: "L1 title — subsection"
-    "parent_section":      str,   # L1: same as section_title | L2: the parent L1 title
-    "level":               int,   # 1 or 2
-    "chapter":             str,   # full chapter title
-    "chapter_num":         int,
-    "section_num":         str,   # "6.7", "4.2", …  ("" for non-numbered)
-    "page_start":          int,
-    "page_end":            int,
-    "text":                str,   # full concatenated section text
-    "source_pdf":          str,   # filename only
-  }
+ {
+ "id": str, # "<domain>_ch<N>_sec<M>"
+ "section_title": str, # : numbered title | : " title — subsection"
+ "parent_section": str, # : same as section_title | : the parent title
+ "level": int, # 1 or 2
+ "chapter": str, # full chapter title
+ "chapter_num": int
+ "section_num": str, # "6.7", "4.2", … ("" for non-numbered)
+ "page_start": int
+ "page_end": int
+ "text": str, # full concatenated section text
+ "source_pdf": str, # filename only
+ }
 """
 
 import re
@@ -66,12 +66,12 @@ from ingestion.sources.openstax_anatomy.filters import (
 
 # ── Font-size thresholds ───────────────────────────────────────────────────────
 
-CHAPTER_TITLE_MIN  = 20.0    # ≥ this          → chapter title
-CHAPTER_LABEL_MIN  = 14.5    # ≥ this          → "CHAPTER N" label
-L1_HEADING_MIN     = 12.5    # ≥ this, bold    → Level 1 section heading
-L2_HEADING_MIN     = 10.5    # ≥ this          → Level 2 candidate (bold required)
-L2_HEADING_MAX     = 11.2    # ≤ this          → Level 2 candidate upper bound
-CAPTION_MAX        =  8.0    # ≤ this          → footer/caption, skip
+CHAPTER_TITLE_MIN  = 20.0    # ≥ this → chapter title
+CHAPTER_LABEL_MIN  = 14.5    # ≥ this → "CHAPTER N" label
+L1_HEADING_MIN     = 12.5    # ≥ this, bold → Level 1 section heading
+L2_HEADING_MIN     = 10.5    # ≥ this → Level 2 candidate (bold required)
+L2_HEADING_MAX     = 11.2    # ≤ this → Level 2 candidate upper bound
+CAPTION_MAX        =  8.0    # ≤ this → footer/caption, skip
 
 # Minimum body-word counts before a section is kept
 L1_MIN_WORDS = 50    # Level 1 sections
@@ -85,7 +85,7 @@ CHAPTER_LABEL_RE = re.compile(r'^CHAPTER\s+(\d+)$', re.IGNORECASE)
 # Numbered section at start of heading: "6.7 ", "4.2 ", "12.3 "
 SECTION_NUM_RE = re.compile(r'^(\d+\.\d+)\s+')
 
-# TOC entry: starts with a number-dot-number (avoid mis-classifying L2 headings)
+# TOC entry: starts with a number-dot-number (avoid mis-classifying headings)
 TOC_RE = re.compile(r'^\d+\.\d+')
 
 # Callout / career spotlight / boilerplate sub-headings to NOT split on.
@@ -107,23 +107,22 @@ BOILERPLATE_TITLES = {
     "chapter summary",
 } | set(BACK_MATTER_HEADINGS)
 
-
 # ── Line-level span aggregator ────────────────────────────────────────────────
 
 def _classify_line(line: dict) -> dict:
     """
-    Aggregate all spans in a PDF line into a single line-level record.
+ Aggregate all spans in a PDF line into a single line-level record.
 
-    Returns a dict with:
-      text        full joined text of the line
-      size        minimum font size across spans (conservative)
-      size_max    maximum font size across spans
-      all_bold    True if every non-empty span is bold
-      any_bold    True if any span is bold
-      role        "chapter_title" | "chapter_label" | "l1_heading" |
-                  "l2_heading" | "body" | "skip"
-      page        page number (int)
-    """
+ Returns a dict with:
+ text full joined text of the line
+ size minimum font size across spans (conservative)
+ size_max maximum font size across spans
+ all_bold True if every non-empty span is bold
+ any_bold True if any span is bold
+ role "chapter_title" | "chapter_label" | "l1_heading" |
+ "l2_heading" | "body" | "skip"
+ page page number (int)
+"""
     spans = [s for s in line["spans"] if s["text"].strip()]
     if not spans:
         return {}
@@ -156,7 +155,7 @@ def _classify_line(line: dict) -> dict:
         return {"text": full, "size": sz_min, "size_max": sz_max,
                 "all_bold": True, "role": "l1_heading"}
 
-    # Level 2 heading: 10.5–11.2 pt, ALL spans bold, >= 2 words,
+    # Level 2 heading: 10.5–11.2 pt, ALL spans bold, >= 2 words
     # not a callout label, not a TOC entry
     if (L2_HEADING_MIN <= sz_min and sz_max <= L2_HEADING_MAX
             and all_bold
@@ -170,7 +169,6 @@ def _classify_line(line: dict) -> dict:
     return {"text": full, "size": sz_min, "size_max": sz_max,
             "all_bold": all_bold, "role": "body"}
 
-
 def _iter_lines(doc: fitz.Document) -> Generator[dict, None, None]:
     """Yield one classified line-dict per non-empty text line in the PDF."""
     for page_num, page in enumerate(doc, start=1):
@@ -183,31 +181,30 @@ def _iter_lines(doc: fitz.Document) -> Generator[dict, None, None]:
                     rec["page"] = page_num
                     yield rec
 
-
 # ── Section builder ───────────────────────────────────────────────────────────
 
 def _build_sections(lines: list[dict], source_pdf: str, domain: str) -> list[dict]:
     """
-    Walk the line stream and emit one section dict per L1 or L2 heading.
+ Walk the line stream and emit one section dict or heading.
 
-    State machine:
-      chapter_title  → resets chapter context
-      chapter_label  → updates chapter_num
-      l1_heading     → flush prev section; start new L1 section
-      l2_heading     → flush prev section (if >= L2_MIN_WORDS); start L2 sub-section
-      body           → accumulate text
-    """
+ State machine:
+ chapter_title → resets chapter context
+ chapter_label → updates chapter_num
+ l1_heading → flush prev section; start new section
+ l2_heading → flush prev section (if >= L2_MIN_WORDS); start sub-section
+ body → accumulate text
+"""
     sections: list[dict] = []
 
     # Current context
     current_chapter_title    = ""
     current_chapter_num      = 0
     # Clean section title (no section_num prefix, no em-dash mash). Set when an
-    # L1 heading is detected. L2 sections INHERIT this from the enclosing L1.
+    # heading is detected. sections INHERIT this from the enclosing .
     current_section_title    = ""
-    # L2 heading text (e.g. "Narrow Range of Temperature"). Empty for L1 sections.
+    # heading text (e.g. "Narrow Range of Temperature"). Empty for sections.
     current_subsection_title = ""
-    # The L1 title text (kept for boilerplate-detection book-keeping; NOT used
+    # The title text (kept for boilerplate-detection book-keeping; NOT used
     # as subsection_title anymore — that was the original mashing bug).
     current_parent_section   = ""
     current_section_num      = ""
@@ -223,9 +220,9 @@ def _build_sections(lines: list[dict], source_pdf: str, domain: str) -> list[dic
 
         # B.2: drop sections whose body text looks like end-of-book back-matter
         # (alphabetical index, glossary listing, references). These bypass
-        # heading detection because their fonts don't match L1/L2 thresholds,
+        # heading detection because their fonts don't match / thresholds
         # so they get accumulated into the most recently open section
-        # (typically the last section of Ch 28). Audit 2026-04-28 found
+        # (typically the last section of Ch 28). Audit found
         # ~50-100 polluting chunks from this path.
         if is_back_matter_text(text):
             return
@@ -274,7 +271,7 @@ def _build_sections(lines: list[dict], source_pdf: str, domain: str) -> list[dic
             _flush(L2_MIN_WORDS if current_level == 2 else L1_MIN_WORDS)
             body_parts               = []
             current_chapter_title    = text
-            current_section_title    = text   # placeholder; replaced when first L1 hits
+            current_section_title    = text   # placeholder; replaced when first hits
             current_subsection_title = ""
             current_parent_section   = text
             current_section_num      = ""
@@ -310,7 +307,7 @@ def _build_sections(lines: list[dict], source_pdf: str, domain: str) -> list[dic
             clean_title = text[m.end():].strip() if m else text.strip()
             current_section_title    = clean_title
             current_subsection_title = ""
-            current_parent_section   = clean_title   # L2 sections inherit clean L1 title
+            current_parent_section   = clean_title   # sections inherit clean title
             current_level            = 1
             current_page_start       = page
             continue
@@ -322,16 +319,16 @@ def _build_sections(lines: list[dict], source_pdf: str, domain: str) -> list[dic
         if role == "l2_heading":
             _flush(L2_MIN_WORDS)
             body_parts = []
-            # section_title stays as the inherited L1 clean title; subsection_title
-            # becomes the L2 heading text. This matches the v1 Qdrant payload schema:
-            #   section_title    = "The Ulnar Nerve"
-            #   subsection_title = "Motor Innervation"
+            # section_title stays as the inherited clean title; subsection_title
+            # becomes the heading text. This matches the v1 Qdrant payload schema:
+            # section_title = "The Ulnar Nerve"
+            # subsection_title = "Motor Innervation"
             # so the retrieval-time hard filter can match TOC sections directly.
             current_subsection_title = text.strip()
             current_level            = 2
             current_page_start       = page
-            # Keep current_section_title (= parent L1 clean title) and
-            # current_section_num unchanged — L2 inherits both from the L1.
+            # Keep current_section_title (= parent clean title) and
+            # current_section_num unchanged — inherits both from the .
             continue
 
         # ── Body text ──────────────────────────────────────────────────────────
@@ -357,7 +354,6 @@ def _build_sections(lines: list[dict], source_pdf: str, domain: str) -> list[dic
 
     return sections
 
-
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def parse_pdf(
@@ -367,17 +363,17 @@ def parse_pdf(
     save:     bool = True,
 ) -> list[dict]:
     """
-    Parse an OpenStax PDF into sections (Level 1 + Level 2).
+ Parse an OpenStax PDF into sections (Level 1 + Level 2).
 
-    Args:
-        pdf_path: path to the PDF file
-        domain:   prefix used in section IDs ("OT_anatomy" or "physics")
-        out_dir:  directory where raw sections JSON is saved
-        save:     if True, write per-chapter + combined JSON files
+ Args:
+ pdf_path: path to the PDF file
+ domain: prefix used in section IDs ("OT_anatomy" or "physics")
+ out_dir: directory where raw sections JSON is saved
+ save: if True, write per-chapter + combined JSON files
 
-    Returns:
-        list of section dicts (see module docstring for schema)
-    """
+ Returns:
+ list of section dicts (see module docstring for schema)
+"""
     pdf_path = str(pdf_path)
     if not os.path.exists(pdf_path):
         raise FileNotFoundError(
@@ -424,7 +420,6 @@ def parse_pdf(
 
     return sections
 
-
 # ── Reporting helpers ─────────────────────────────────────────────────────────
 
 def print_toc(sections: list[dict], max_rows: int = 50) -> None:
@@ -448,7 +443,6 @@ def print_toc(sections: list[dict], max_rows: int = 50) -> None:
             f"  {indent}{sec['section_title'][:60]}"
         )
         shown += 1
-
 
 # ── CLI entry point ───────────────────────────────────────────────────────────
 

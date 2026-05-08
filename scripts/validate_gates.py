@@ -1,8 +1,7 @@
 """
 scripts/validate_gates.py
---------------------------
 Minimal 4-6 turn validation for Gate A/B/C/D.
-Dumps state debug to data/artifacts/validate_gates/<ts>.json.
+Dumps state debug to
 Run: .venv/bin/python scripts/validate_gates.py
 """
 import asyncio
@@ -20,7 +19,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from config import cfg
 from conversation.state import initial_state
 
-
 OUT = Path(cfg.paths.artifacts) / "validate_gates"
 OUT.mkdir(parents=True, exist_ok=True)
 
@@ -31,7 +29,6 @@ REPLIES = [
     "Maybe the musculocutaneous nerve?",
     "Oh right, the axillary nerve.",
 ]
-
 
 async def main():
     from conversation.graph import build_graph
@@ -134,7 +131,6 @@ async def main():
           f"cost=${state.get('debug',{}).get('cost_usd'):.4f} "
           f"retrieval_calls={state.get('debug',{}).get('retrieval_calls')}")
     return out_path
-
 
 if __name__ == "__main__":
     asyncio.run(main())

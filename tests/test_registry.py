@@ -21,7 +21,6 @@ from conversation.registry import (
     all_vocabulary_blocks,
 )
 
-
 # ---------------------------------------------------------------------------
 # Structure tests
 # ---------------------------------------------------------------------------
@@ -34,7 +33,6 @@ ALL_REGISTRIES = [
     ModalEventVocabulary,
     HintTransitionVocabulary,
 ]
-
 
 def test_each_registry_has_dict_and_prompt_block():
     """Every registry class exposes a dict + system_prompt_block() method."""
@@ -55,7 +53,6 @@ def test_each_registry_has_dict_and_prompt_block():
         block = reg.system_prompt_block()
         assert isinstance(block, str) and block.strip(), f"{reg.__name__}.system_prompt_block() empty"
 
-
 def test_intent_vocabulary_has_required_verdicts():
     """The 8 intent verdicts that the system depends on must be present."""
     required = {
@@ -65,7 +62,6 @@ def test_intent_vocabulary_has_required_verdicts():
     actual = set(IntentVocabulary.INTENTS.keys())
     missing = required - actual
     assert not missing, f"IntentVocabulary missing required verdicts: {missing}"
-
 
 def test_teacher_mode_vocabulary_has_required_modes():
     """The Teacher modes that node code dispatches on must all be present."""
@@ -78,18 +74,15 @@ def test_teacher_mode_vocabulary_has_required_modes():
     missing = required - actual
     assert not missing, f"TeacherModeVocabulary missing required modes: {missing}"
 
-
 def test_phase_vocabulary_has_4_phases():
     required = {"rapport", "tutoring", "assessment", "memory_update"}
     actual = set(PhaseVocabulary.PHASES.keys())
     assert actual == required, f"PhaseVocabulary mismatch: expected {required}, got {actual}"
 
-
 def test_tone_vocabulary_has_4_tones():
     required = {"encouraging", "neutral", "firm", "honest"}
     actual = set(ToneTierVocabulary.TONES.keys())
     assert actual == required, f"ToneTierVocabulary mismatch: expected {required}, got {actual}"
-
 
 # ---------------------------------------------------------------------------
 # Purity tests (Safeguard #2)
@@ -103,7 +96,6 @@ FORBIDDEN_TOPIC_TERMS = [
     "cushion and reduce friction", "endomembrane",
     "patient", "diagnosis",
 ]
-
 
 def test_registry_purity_no_topic_terms():
     """No registry value should contain anatomy/medical/topic-specific text."""
@@ -124,7 +116,6 @@ def test_registry_purity_no_topic_terms():
         + "\n".join(f"  {r}.{k} contains '{t}'" for r, k, t in violations)
     )
 
-
 def test_system_prompt_blocks_have_no_topic_terms():
     violations: list[tuple[str, str]] = []
     for reg in ALL_REGISTRIES:
@@ -137,14 +128,12 @@ def test_system_prompt_blocks_have_no_topic_terms():
         + "\n".join(f"  {r} contains '{t}'" for r, t in violations)
     )
 
-
 def test_combined_blocks_purity():
     combined = all_vocabulary_blocks().lower()
     violations = [t for t in FORBIDDEN_TOPIC_TERMS if t.lower() in combined]
     assert not violations, (
         f"all_vocabulary_blocks() contains forbidden topic terms: {violations}"
     )
-
 
 # ---------------------------------------------------------------------------
 # Determinism tests (cache safety)
@@ -159,12 +148,10 @@ def test_system_prompt_blocks_deterministic():
                 f"{reg.__name__}.system_prompt_block() not deterministic"
             )
 
-
 def test_all_vocabulary_blocks_deterministic():
     first = all_vocabulary_blocks()
     for _ in range(5):
         assert all_vocabulary_blocks() == first
-
 
 # ---------------------------------------------------------------------------
 # Annotation tests
@@ -173,7 +160,6 @@ def test_all_vocabulary_blocks_deterministic():
 def test_intent_annotate_basic():
     assert IntentVocabulary.annotate("low_effort") == "[intent=low_effort]"
 
-
 def test_intent_annotate_with_extras():
     out = IntentVocabulary.annotate("low_effort", consecutive_low_effort=3, evidence="idk")
     assert "intent=low_effort" in out
@@ -181,11 +167,9 @@ def test_intent_annotate_with_extras():
     assert "evidence=idk" in out
     assert IntentVocabulary.annotate("low_effort", consecutive_low_effort=3, evidence="idk") == out
 
-
 def test_intent_annotate_unknown_falls_back():
     out = IntentVocabulary.annotate("not_a_real_verdict")
     assert "intent=on_topic_engaged" in out
-
 
 def test_teacher_mode_annotate():
     out = TeacherModeVocabulary.annotate("redirect", tone="firm", attempts=2)
@@ -193,14 +177,12 @@ def test_teacher_mode_annotate():
     assert "tone=firm" in out
     assert "attempts=2" in out
 
-
 def test_modal_event_annotate():
     assert ModalEventVocabulary.annotate("exit_modal_canceled") == "SYSTEM_EVENT: exit_modal_canceled"
     out2 = ModalEventVocabulary.annotate("phase_change", from_phase="rapport", to_phase="tutoring")
     assert "SYSTEM_EVENT: phase_change" in out2
     assert "from_phase=rapport" in out2
     assert "to_phase=tutoring" in out2
-
 
 def test_phase_annotate():
     assert PhaseVocabulary.annotate("tutoring") == "phase=tutoring"

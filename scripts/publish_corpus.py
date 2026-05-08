@@ -1,23 +1,22 @@
 """
 scripts/publish_corpus.py
--------------------------
 Publish expensive-to-regenerate artifacts (processed JSONL, BM25 index, topic
 index, textbook structure, optionally a Qdrant snapshot) to a HuggingFace
 dataset repo, so teammates can bootstrap from a single command.
 
 Safe by default:
-  - Skips copyrighted source PDFs (data/raw/*.pdf).
-  - Skips ephemeral artifacts (data/artifacts/).
-  - Idempotent: only uploads files whose sha256 differs from the remote manifest.
+Skips copyrighted source PDFs (data/raw/*.pdf).
+Skips ephemeral artifacts (data/artifacts/).
+Idempotent: only uploads files whose sha256 differs from the remote manifest.
 
 Usage:
-  python scripts/publish_corpus.py --manifest-only           # plumbing test
-  python scripts/publish_corpus.py --dry-run                 # preview what would be uploaded
-  python scripts/publish_corpus.py --tag v0-messy-metadata   # real publish with a tag
+ python scripts/publish_corpus.py --manifest-only # plumbing test
+ python scripts/publish_corpus.py --dry-run # preview what would be uploaded
+ python scripts/publish_corpus.py --tag v0-messy-metadata # real publish with a tag
 
 Env vars (from .env):
-  HF_TOKEN     — HuggingFace write token
-  HF_USERNAME  — HF account name (default repo owner)
+ HF_TOKEN — HuggingFace write token
+ HF_USERNAME — HF account name (default repo owner)
 """
 from __future__ import annotations
 
@@ -40,11 +39,10 @@ DEFAULT_REPO_NAME = "sokratic-anatomy-corpus"
 
 # Files that are expensive to regenerate and safe to publish.
 # Paths are relative to repo root. Files in OPTIONAL_INCLUDE_FILES are
-# uploaded only if they exist locally — useful for the Qdrant snapshot,
+# uploaded only if they exist locally — useful for the Qdrant snapshot
 # which isn't always present on dev machines.
-#
-# 2026-04-30: switched to the chunks-only architecture. The previous
-# propositions-based artifacts (chunks_ot.jsonl, propositions_ot.jsonl,
+# : switched to the chunks-only architecture. The previous
+# propositions-based artifacts (chunks_ot.jsonl, propositions_ot.jsonl
 # raw_*_ot.jsonl, bm25_ot.pkl) are deprecated — see reindex_chunks.py for
 # the rationale (propositions atomize the relational verbs that should be
 # the discriminative retrieval signal on biomedical/textbook corpora).
@@ -60,10 +58,10 @@ INCLUDE_FILES: list[str] = [
 # Optional — uploaded if present locally. The Qdrant snapshot saves teammates
 # ~$0.10 in OpenAI embedding cost + ~10 min on a clean clone. Generate one
 # with:
-#   NAME=$(curl -s -X POST http://localhost:6333/collections/sokratic_kb_chunks/snapshots \
-#          | jq -r '.result.name')
-#   curl -o data/indexes/qdrant_sokratic_kb_chunks.snapshot \
-#     "http://localhost:6333/collections/sokratic_kb_chunks/snapshots/$NAME"
+# NAME=$(curl -s -X POST http://localhost:6333/collections/sokratic_kb_chunks/snapshots \
+# | jq -r '.result.name')
+# curl -o data/indexes/qdrant_sokratic_kb_chunks.snapshot \
+# "http://localhost:6333/collections/sokratic_kb_chunks/snapshots/$NAME"
 OPTIONAL_INCLUDE_FILES: list[str] = [
     "data/indexes/qdrant_sokratic_kb_chunks.snapshot",
 ]
@@ -77,14 +75,12 @@ EXCLUDE_PATTERNS: tuple[str, ...] = (
     ".claude/",
 )
 
-
 def _sha256(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as f:
         for block in iter(lambda: f.read(1 << 20), b""):
             h.update(block)
     return h.hexdigest()
-
 
 def _git_commit() -> str:
     try:
@@ -94,7 +90,6 @@ def _git_commit() -> str:
         return out.decode().strip()
     except Exception:
         return "unknown"
-
 
 def _build_manifest(files: list[Path]) -> dict:
     entries = []
@@ -111,7 +106,6 @@ def _build_manifest(files: list[Path]) -> dict:
         "files": entries,
     }
 
-
 def _fetch_remote_manifest(api: HfApi, repo_id: str) -> dict | None:
     try:
         path = api.hf_hub_download(
@@ -120,7 +114,6 @@ def _fetch_remote_manifest(api: HfApi, repo_id: str) -> dict | None:
         return json.loads(Path(path).read_text())
     except Exception:
         return None
-
 
 def _readme_body(repo_id: str, manifest: dict, tag: str | None) -> str:
     lines = [
@@ -164,7 +157,6 @@ def _readme_body(repo_id: str, manifest: dict, tag: str | None) -> str:
             f"| `{f['path']}` | {size_mb:.1f} MB | `{f['sha256'][:12]}` |"
         )
     return "\n".join(lines) + "\n"
-
 
 def main() -> int:
     ap = argparse.ArgumentParser()
@@ -297,7 +289,7 @@ def main() -> int:
 
     # --prune: delete remote files that are no longer in the local INCLUDE list.
     # This is what cleans up deprecated artifacts (e.g. *_ot.* propositions-era
-    # files) when the schema changes. MANIFEST.json/README.md/.gitattributes
+    # files) when the schema changes. MANIFEST.json/README.md.gitattributes
     # are intentionally preserved — they're metadata, not corpus content.
     if args.prune:
         published_paths = {str(p.relative_to(ROOT)) for p in present}
@@ -334,7 +326,6 @@ def main() -> int:
 
     print(f"Done. https://huggingface.co/datasets/{repo_id}")
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

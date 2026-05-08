@@ -1,73 +1,63 @@
 """
 retrieval/topic_suggester.py
------------------------------
-TopicSuggester loads textbook_structure.json and returns a list of topic paths
-suitable for presenting to a new student who has no memory history.
+TopicSuggester returns a list of topic paths for new-student onboarding.
+
+Source of truth: SQLite chapters/sections/subsections (post-migration 003).
+Reads once at construction and caches in-memory; the curriculum is static
+for the lifetime of the process.
 
 Topics are returned as human-readable strings of the form:
-  "Chapter 11: The Muscular System > Muscles of the Shoulder > Deltoid"
+    "Chapter 11: The Muscular System > Muscles of the Shoulder > Deltoid"
 
 Usage:
     suggester = TopicSuggester()
-    topics = suggester.suggest(n=6)              # random sample
+    topics = suggester.suggest(n=6)
     topics = suggester.suggest(n=6, difficulty="moderate")
     all_leaves = suggester.all_leaf_topics()
 """
 
-import json
 import random
-from pathlib import Path
-
-from config import cfg
 
 
 class TopicSuggester:
     def __init__(self):
-        structure_path = Path(getattr(cfg.paths, "textbook_structure", "data/textbook_structure.json"))
-        if not structure_path.is_absolute():
-            structure_path = Path(__file__).parent.parent / structure_path
-        try:
-            with open(structure_path, "r") as f:
-                self._structure = json.load(f)
-        except FileNotFoundError:
-            self._structure = {}
-        self._leaves: list[dict] = self._build_leaves()
+        self._leaves: list[dict] = self._build_leaves_from_sql()
 
-    def _build_leaves(self) -> list[dict]:
-        """
-        Walk the nested structure and collect all leaf nodes with their path and difficulty.
-        A leaf is the deepest node available (subsection if present, else section, else chapter).
-        """
+    def _build_leaves_from_sql(self) -> list[dict]:
+        """Pull every subsection from SQL with its full path string. Each row
+  becomes one leaf candidate for suggestion.
+
+  The `difficulty` field used to live in textbook_structure.json's
+  per-subsection metadata, but it isn't carried in our chapters/
+  sections/subsections schema. Default to "moderate" — the difficulty
+  filter is rarely exercised in production and was only used by older
+  rapport-phase A/B tests.
+  """
+        from memory.sqlite_store import SQLiteStore
+        try:
+            cur = SQLiteStore()._conn().execute(
+                """
+                SELECT
+                    c.chapter_num, c.title AS chapter,
+                    s.title AS section,
+                    sub.title AS subsection
+                FROM subsections sub
+                JOIN sections s ON s.section_id = sub.section_id
+                JOIN chapters c ON c.chapter_id = s.chapter_id
+                ORDER BY c.chapter_num, s.section_order, sub.subsection_order
+                """
+            )
+            rows = cur.fetchall()
+        except Exception:
+            return []
+
         leaves: list[dict] = []
-        for chapter_name, chapter in (self._structure or {}).items():
-            if not isinstance(chapter, dict):
-                continue
-            sections = chapter.get("sections", {})
-            if not isinstance(sections, dict) or not sections:
-                # Chapter is the leaf
-                leaves.append({
-                    "path": chapter_name,
-                    "difficulty": str(chapter.get("difficulty", "moderate")),
-                })
-                continue
-            for section_name, section in sections.items():
-                if not isinstance(section, dict):
-                    continue
-                subsections = section.get("subsections", {})
-                if not isinstance(subsections, dict) or not subsections:
-                    # Section is the leaf
-                    leaves.append({
-                        "path": f"{chapter_name} > {section_name}",
-                        "difficulty": str(section.get("difficulty", "moderate")),
-                    })
-                    continue
-                for sub_name, sub in subsections.items():
-                    if not isinstance(sub, dict):
-                        continue
-                    leaves.append({
-                        "path": f"{chapter_name} > {section_name} > {sub_name}",
-                        "difficulty": str(sub.get("difficulty", "moderate")),
-                    })
+        for r in rows:
+            path = (
+                f"Chapter {r['chapter_num']}: {r['chapter']} > "
+                f"{r['section']} > {r['subsection']}"
+            )
+            leaves.append({"path": path, "difficulty": "moderate"})
         return leaves
 
     def all_leaf_topics(self) -> list[dict]:
@@ -81,16 +71,16 @@ class TopicSuggester:
         seed: int | None = None,
     ) -> list[str]:
         """
-        Return up to n topic path strings, optionally filtered by difficulty.
+ Return up to n topic path strings, optionally filtered by difficulty.
 
-        Args:
-            n:          Number of topics to return.
-            difficulty: "easy" | "moderate" | "hard" | None (all).
-            seed:       Optional random seed for reproducibility.
+ Args:
+ n: Number of topics to return.
+ difficulty: "easy" | "moderate" | "hard" | None (all).
+ seed: Optional random seed for reproducibility.
 
-        Returns:
-            List of topic path strings (e.g. "Chapter 11 > Shoulder > Deltoid").
-        """
+ Returns:
+ List of topic path strings (e.g. "Chapter 11 > Shoulder > Deltoid").
+"""
         pool = self._leaves
         if difficulty:
             pool = [t for t in pool if t["difficulty"] == difficulty]
@@ -110,23 +100,23 @@ class TopicSuggester:
     ) -> list[str]:
         """Mastery-aware topic suggestions for a returning student.
 
-        Returns up to `n` topic strings, half of them "revisit" picks
-        from the student's weakest subsections (mastery < threshold)
-        and the rest "explore" picks from the textbook structure.
+ Returns up to `n` topic strings, half of them "revisit" picks
+ from the student's weakest subsections (mastery < threshold)
+ and the rest "explore" picks from the textbook structure.
 
-        For a fresh student (no mastery data yet), falls back to
-        suggest() — same behavior as before D.3.
+ For a fresh student (no mastery data yet), falls back to
+ suggest — same behavior as before .
 
-        Args:
-            mastery_store: a memory.mastery_store.MasteryStore instance
-            student_id:    validated student id
-            n:             total cards to return
-            weak_threshold: subsections under this mastery are "weak"
+ Args:
+ mastery_store: a memory.mastery_store.MasteryStore instance
+ student_id: validated student id
+ n: total cards to return
+ weak_threshold: subsections under this mastery are "weak"
 
-        Returns:
-            list[str] — same shape as suggest() so callers don't need
-            to branch on returning vs fresh.
-        """
+ Returns:
+ list[str] — same shape as suggest so callers don't need
+ to branch on returning vs fresh.
+"""
         try:
             n_weak_target = max(0, n // 2)
             weak = mastery_store.weak_subsections(

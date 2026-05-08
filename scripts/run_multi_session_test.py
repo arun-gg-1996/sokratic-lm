@@ -1,46 +1,40 @@
 """
 scripts/run_multi_session_test.py
----------------------------------
 Targeted-change regression for the cross-session memory cycle.
 
 Design
-------
 3 students, each runs N sessions back-to-back with the SAME student_id:
-  - Student A: 2 sessions (1st return)
-  - Student B: 3 sessions (2 reads, growing memory)
-  - Student C: 4 sessions (long-tail; tests mem0 recall under accumulation)
+Student A: 2 sessions (1st return)
+Student B: 3 sessions (2 reads, growing memory)
+Student C: 4 sessions (long-tail; tests mem0 recall under accumulation)
 
 Total: 9 sessions vs 18 in the full scaled harness. ~$1.50 / run.
 
 What this catches that 18×1 misses
------------------------------------
-  - Returning-student rapport behavior at small scale
-  - Memory-write → memory-read cycle actually closing
-  - Whether the LLM follows the "may reference ONE prior topic, no recap, no
-    learning-style summary, no answer leak" rules from base.yaml
-  - Memory growth pathology: does session 4 still produce a coherent rapport
-    when ~20 mem0 facts are visible?
+Returning-student rapport behavior at small scale
+Memory-write → memory-read cycle actually closing
+Whether the LLM follows the "may reference ONE prior topic, no recap, no
+ learning-style summary, no answer leak" rules from base.yaml
+Memory growth pathology: does session 4 still produce a coherent rapport
+ when ~20 mem0 facts are visible?
 
 What this does NOT catch
-------------------------
-  - Statistical patterns across the 6-profile / 18-convo grid (use the full
-    harness for that, before shipping a checkpoint)
+Statistical patterns across the 6-profile / 18-convo grid (use the full
+ harness for that, before shipping a checkpoint)
 
 Usage
------
-  cd /Users/arun-ghontale/UB/NLP/sokratic
-  .venv/bin/python scripts/run_multi_session_test.py
-  .venv/bin/python scripts/run_multi_session_test.py --no-clear      # accumulate on existing memory
-  .venv/bin/python scripts/run_multi_session_test.py --label rapport_v2
+cd /Users/arun-ghontale/UB/NLP/sokratic
+ .venv/bin/python scripts/run_multi_session_test.py
+ .venv/bin/python scripts/run_multi_session_test.py --no-clear # accumulate on existing memory
+ .venv/bin/python scripts/run_multi_session_test.py --label rapport_v2
 
 Output
-------
-  data/artifacts/multi_session/<timestamp>_<label>/
-    student_A/session_1.json  (rapport greeting + full convo + outcomes)
-    student_A/session_2.json
-    student_B/session_1..3.json
-    student_C/session_1..4.json
-    summary.txt   — per-student + per-session table with memory-use audit flags
+
+ student_A/session_1.json (rapport greeting + full convo + outcomes)
+ student_A/session_2.json
+ student_B/session_1..3.json
+ student_C/session_1..4.json
+ summary.txt — per-student + per-session table with memory-use audit flags
 """
 from __future__ import annotations
 
@@ -70,7 +64,6 @@ _current_session: contextvars.ContextVar[str] = contextvars.ContextVar(
     "multi_session_current_id", default=""
 )
 
-
 def _patched_messages_create(self, *args, **kwargs):
     resp = self._original_messages_create(*args, **kwargs)
     usage = getattr(resp, "usage", None)
@@ -86,7 +79,6 @@ def _patched_messages_create(self, *args, **kwargs):
         ),
     })
     return resp
-
 
 anthropic.resources.messages.messages.Messages._original_messages_create = (
     anthropic.resources.messages.messages.Messages.create
@@ -127,7 +119,6 @@ STUDENTS: list[dict] = [
     },
 ]
 
-
 def load_topic_bank() -> dict[int, dict]:
     """Map chapter_num → topic_row (assumes one topic per chapter in v2 bank)."""
     bank_path = ROOT / "data/eval/topic_bank_v2.jsonl"
@@ -136,7 +127,6 @@ def load_topic_bank() -> dict[int, dict]:
         t = json.loads(line)
         by_ch[t["chapter_num"]] = t
     return by_ch
-
 
 # ----------------------------------------------------------------------
 # Audit heuristics
@@ -163,7 +153,6 @@ _LIST_MARKERS = [
     "topics covered",
     "you have studied",
 ]
-
 
 def _audit_rapport(
     rapport_text: str,
@@ -207,7 +196,6 @@ def _audit_rapport(
         "rapport_length": len(rapport_text or ""),
     }
 
-
 # ----------------------------------------------------------------------
 # Run a single session for a given student_id (no fresh student_id per call)
 # ----------------------------------------------------------------------
@@ -249,25 +237,20 @@ async def run_one_session(
         bugs.append(f"rapport_error: {type(e).__name__}: {e}")
 
     # Phase 2: student gives topic
-    #
     # Two harness-only adjustments to keep the topic-resolution honest:
-    #
-    #  (a) Clear pending_user_choice. rapport_node seeds initial_suggestions
-    #      (topic cards) which become a pending opt_in/topic choice in the
-    #      state. In a real UI the user would either click a card or type
-    #      free text; in the harness we always type, so we wipe the choice
-    #      first so the dean doesn't try to match our query against the
-    #      cards and substitute a card label as the student's "real" intent.
-    #
-    #  (b) Prefix the assigned query with an explicit topic commitment for
-    #      returning sessions. The rapport message (especially when memory
-    #      is rich) often invites "continue X or pivot?". Without this
-    #      preface, the simulated student's terse query can be interpreted
-    #      by the dean as agreeing to continue the prior topic. The user-
-    #      requested fix: the simulator must commit to its assigned topic
-    #      regardless of what the rapport suggested. Production users
-    #      drive this themselves; the harness has to fake the commitment.
-    #
+    # (a) Clear pending_user_choice. rapport_node seeds initial_suggestions
+    # (topic cards) which become a pending opt_in/topic choice in the
+    # state. In a real UI the user would either click a card or type
+    # free text; in the harness we always type, so we wipe the choice
+    # first so the dean doesn't try to match our query against the
+    # cards and substitute a card label as the student's "real" intent.
+    # (b) Prefix the assigned query with an explicit topic commitment for
+    # returning sessions. The rapport message (especially when memory
+    # preface, the simulated student's terse query can be interpreted
+    # by the dean as agreeing to continue the prior topic. The user-
+    # requested fix: the simulator must commit to its assigned topic
+    # regardless of what the rapport suggested. Production users
+    # drive this themselves; the harness has to fake the commitment.
     # Both fixes are HARNESS-ONLY. Production code paths are unchanged.
     state["pending_user_choice"] = {}
     explicit_query = query
@@ -357,7 +340,6 @@ async def run_one_session(
     }
     _current_session.reset(_tok)
     return record
-
 
 # ----------------------------------------------------------------------
 # Main: run each student's sessions sequentially (within a student;
@@ -474,7 +456,6 @@ async def main_async(args: argparse.Namespace) -> None:
     write_summary(all_records, out_dir)
     print(f"\nDone. Report: {out_dir}/summary.txt", flush=True)
 
-
 def write_summary(records: list[dict], out_dir: Path) -> None:
     lines: list[str] = []
     lines.append("=" * 90)
@@ -538,7 +519,6 @@ def write_summary(records: list[dict], out_dir: Path) -> None:
         json.dumps({"records": records}, indent=2, default=str)
     )
 
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--label", default="multi_session", help="Run label")
@@ -551,7 +531,6 @@ def main():
     ap.set_defaults(clear=True)
     args = ap.parse_args()
     asyncio.run(main_async(args))
-
 
 if __name__ == "__main__":
     main()

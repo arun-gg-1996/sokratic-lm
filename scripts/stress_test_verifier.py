@@ -4,18 +4,18 @@ scripts/stress_test_verifier.py
 Tier 2 stress test — verifier quartet + retry orchestrator coverage.
 
 Tests scenarios that require crafted Teacher drafts:
-  V1-V4: Each of the 4 verifier checks fires individually
-  V5:    Multi-check failure on same draft
-  V6:    Attempts 1-3 fail same check → Dean replan triggered
-  V7:    Attempt 4 also leaks → SAFE_GENERIC_PROBE fired
-  V8:    Hard timeout → SAFE_GENERIC_PROBE fired
-  V9:    Leak passes but pedagogy fails on attempt 4 → ship anyway
-  V10:   Sycophantic but otherwise clean → caught by sycophancy_check
-  V11:   Empty draft from Teacher → handled gracefully
+ V1-V4: Each of the 4 verifier checks fires individually
+ V5: Multi-check failure on same draft
+ V6: Attempts 1-3 fail same check → Dean replan triggered
+ V7: Attempt 4 also leaks → SAFE_GENERIC_PROBE fired
+ V8: Hard timeout → SAFE_GENERIC_PROBE fired
+ V9: Leak passes but pedagogy fails on attempt 4 → ship anyway
+ V10: Sycophantic but otherwise clean → caught by sycophancy_check
+ V11: Empty draft from Teacher → handled gracefully
 
 Run:
-    cd /Users/arun-ghontale/UB/NLP/sokratic
-    python scripts/stress_test_verifier.py [--scenario VN]
+ cd /Users/arun-ghontale/UB/NLP/sokratic
+ python scripts/stress_test_verifier.py [--scenario VN]
 """
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ from dotenv import load_dotenv  # noqa: E402
 
 load_dotenv(REPO / ".env", override=True)
 
-from conversation import verifier_quartet as C  # noqa: E402  (post-D3: verifier funcs live here)
+from conversation import verifier_quartet as C  # noqa: E402 (post-D3: verifier funcs live here)
 from conversation.retry_orchestrator import (  # noqa: E402
     SAFE_GENERIC_PROBE,
     run_turn as run_turn_with_retry,
@@ -45,7 +45,6 @@ from conversation.teacher_v2 import (  # noqa: E402
     TeacherPromptInputs,
 )
 from conversation.turn_plan import TurnPlan  # noqa: E402
-
 
 # ---------------------------------------------------------------------------
 # Scenario shapes
@@ -58,7 +57,6 @@ class DirectCheckScenario:
     description: str
     check_fn: Callable[[], dict]
     expect_verdict_in: list[str]  # one of these verdict values is acceptable
-
 
 @dataclass
 class OrchestratorScenario:
@@ -73,13 +71,11 @@ class OrchestratorScenario:
     expect_final_attempt_at_or_above: int | None = None
     expect_leak_cap: bool | None = None
 
-
 @dataclass
 class StepResult:
     duration_s: float
     pass_: bool
     detail: str
-
 
 @dataclass
 class ScenarioResult:
@@ -88,7 +84,6 @@ class ScenarioResult:
     duration_s: float
     passed: bool
     detail: str
-
 
 # ---------------------------------------------------------------------------
 # Mock Teacher for orchestrator scenarios
@@ -112,7 +107,6 @@ class _MockTeacher:
             elapsed_ms=10,
         )
 
-
 class _MockDean:
     """Test double for Dean.replan — returns a fresh TurnPlan with same shape."""
 
@@ -130,7 +124,6 @@ class _MockDean:
         r.turn_plan = new_plan
         return r
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -146,7 +139,6 @@ def _build_inputs() -> TeacherPromptInputs:
         student_descriptor="student",
     )
 
-
 def _build_plan() -> TurnPlan:
     return TurnPlan(
         scenario="test",
@@ -159,7 +151,6 @@ def _build_plan() -> TurnPlan:
         carryover_notes="",
     )
 
-
 # ---------------------------------------------------------------------------
 # Scenario definitions
 # ---------------------------------------------------------------------------
@@ -167,7 +158,7 @@ def _build_plan() -> TurnPlan:
 def build_direct_scenarios() -> list[DirectCheckScenario]:
     scenarios: list[DirectCheckScenario] = []
 
-    # V1 — leak check fires when answer letter is given
+    # leak check fires when answer letter is given
     scenarios.append(DirectCheckScenario(
         id="V1_leak_first_letter",
         description="Draft reveals 'starts with the letter P' → leak_check fires",
@@ -178,7 +169,7 @@ def build_direct_scenarios() -> list[DirectCheckScenario]:
         expect_verdict_in=["leak"],
     ))
 
-    # V2 — sycophancy check fires
+    # sycophancy check fires
     scenarios.append(DirectCheckScenario(
         id="V2_sycophancy_overpraise",
         description="Draft starts with 'Great job!' even though student answered wrong → sycophancy fires",
@@ -189,7 +180,7 @@ def build_direct_scenarios() -> list[DirectCheckScenario]:
         expect_verdict_in=["sycophantic"],
     ))
 
-    # V3 — shape check: no question mark
+    # shape check: no question mark
     scenarios.append(DirectCheckScenario(
         id="V3_shape_no_question",
         description="Draft has no question → shape_check fires",
@@ -203,7 +194,7 @@ def build_direct_scenarios() -> list[DirectCheckScenario]:
         expect_verdict_in=["fail"],
     ))
 
-    # V4 — pedagogy check: irrelevant draft
+    # pedagogy check: irrelevant draft
     scenarios.append(DirectCheckScenario(
         id="V4_pedagogy_irrelevant",
         description="Draft talks about an unrelated topic → pedagogy_check fires",
@@ -215,7 +206,7 @@ def build_direct_scenarios() -> list[DirectCheckScenario]:
         expect_verdict_in=["fail"],
     ))
 
-    # V5 — clean draft passes all checks
+    # clean draft passes all checks
     scenarios.append(DirectCheckScenario(
         id="V5_clean_draft_passes",
         description="A genuinely good Socratic draft → no checks fire",
@@ -234,7 +225,6 @@ def build_direct_scenarios() -> list[DirectCheckScenario]:
 
     return scenarios
 
-
 def build_orchestrator_scenarios() -> list[OrchestratorScenario]:
     scenarios: list[OrchestratorScenario] = []
 
@@ -244,7 +234,7 @@ def build_orchestrator_scenarios() -> list[OrchestratorScenario]:
     irrelevant_draft = "What's your favorite color and why?"
     clean_draft = "What molecule do you think glucose gets broken into during glycolysis?"
 
-    # V6 — All 3 attempts leak → Dean replan triggered
+    # All 3 attempts leak → Dean replan triggered
     scenarios.append(OrchestratorScenario(
         id="V6_replan_after_3_leaks",
         description="3 leak drafts in a row → Dean replan fires for attempt 4",
@@ -253,7 +243,7 @@ def build_orchestrator_scenarios() -> list[OrchestratorScenario]:
         expect_final_attempt_at_or_above=4,
     ))
 
-    # V7 — All 4 attempts leak → SAFE_GENERIC_PROBE
+    # All 4 attempts leak → SAFE_GENERIC_PROBE
     scenarios.append(OrchestratorScenario(
         id="V7_safe_probe_on_persistent_leak",
         description="All 4 attempts leak → SAFE_GENERIC_PROBE fired",
@@ -262,7 +252,7 @@ def build_orchestrator_scenarios() -> list[OrchestratorScenario]:
         expect_leak_cap=True,
     ))
 
-    # V8 — Empty Teacher response repeatedly → SAFE_GENERIC_PROBE
+    # Empty Teacher response repeatedly → SAFE_GENERIC_PROBE
     scenarios.append(OrchestratorScenario(
         id="V8_safe_probe_on_empty_drafts",
         description="Teacher returns empty text on all attempts → SAFE_GENERIC_PROBE",
@@ -270,7 +260,7 @@ def build_orchestrator_scenarios() -> list[OrchestratorScenario]:
         expect_used_safe_probe=True,
     ))
 
-    # V9 — Attempt 4 has non-leak failure (e.g. pedagogy/shape) → ship anyway
+    # Attempt 4 has non-leak failure (e.g. pedagogy/shape) → ship anyway
     scenarios.append(OrchestratorScenario(
         id="V9_ship_attempt4_on_nonleak_fail",
         description="Attempts 1-3 leak; attempt 4 is irrelevant (pedagogy fails, leak passes) → ship attempt 4",
@@ -280,7 +270,7 @@ def build_orchestrator_scenarios() -> list[OrchestratorScenario]:
         expect_final_attempt_at_or_above=4,
     ))
 
-    # V10 — Sycophancy detected on attempts 1-3, clean on 4 (after replan)
+    # Sycophancy detected on attempts 1-3, clean on 4 (after replan)
     scenarios.append(OrchestratorScenario(
         id="V10_sycophancy_then_clean",
         description="3 sycophant drafts → replan → clean draft on 4",
@@ -289,7 +279,7 @@ def build_orchestrator_scenarios() -> list[OrchestratorScenario]:
         expect_final_attempt_at_or_above=4,
     ))
 
-    # V11 — First attempt clean passes immediately
+    # First attempt clean passes immediately
     scenarios.append(OrchestratorScenario(
         id="V11_clean_passes_first_attempt",
         description="A clean draft passes on attempt 1 → no replan, no probe",
@@ -299,7 +289,6 @@ def build_orchestrator_scenarios() -> list[OrchestratorScenario]:
     ))
 
     return scenarios
-
 
 # ---------------------------------------------------------------------------
 # Runners
@@ -320,9 +309,9 @@ def run_direct(scenario: DirectCheckScenario) -> ScenarioResult:
 
     duration = time.monotonic() - t0
     # Support 3 check return shapes:
-    #   1. {'verdict': 'leak'|'clean'|'sycophantic', ...}  (leak, sycophancy)
-    #   2. {'pass': True|False, ...}                      (shape, pedagogy)
-    #   3. {'leak': 'clean', 'sycophancy': 'clean', ...}  (V5 multi-check dict)
+    # 1. {'verdict': 'leak'|'clean'|'sycophantic', ...} (leak, sycophancy)
+    # 2. {'pass': True|False, ...} (shape, pedagogy)
+    # 3. {'leak': 'clean', 'sycophancy': 'clean', ...} (V5 multi-check dict)
     verdicts: list[str] = []
     if isinstance(raw, dict):
         if "verdict" in raw:
@@ -341,7 +330,6 @@ def run_direct(scenario: DirectCheckScenario) -> ScenarioResult:
         passed=matched,
         detail=f"verdicts={verdicts} | expected one of {scenario.expect_verdict_in} | raw_keys={list(raw.keys()) if isinstance(raw, dict) else type(raw).__name__}",
     )
-
 
 def run_orchestrator(scenario: OrchestratorScenario) -> ScenarioResult:
     t0 = time.monotonic()
@@ -408,7 +396,6 @@ def run_orchestrator(scenario: OrchestratorScenario) -> ScenarioResult:
         detail=detail,
     )
 
-
 def main():
     import argparse
     parser = argparse.ArgumentParser()
@@ -474,7 +461,6 @@ def main():
     print("\n" + "=" * 70)
     print(f"DONE in {duration_total/60:.1f} min — {pass_count} pass / {fail_count} fail")
     print(f"Report: {out_dir / 'report.json'}")
-
 
 if __name__ == "__main__":
     main()

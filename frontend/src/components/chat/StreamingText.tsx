@@ -7,7 +7,7 @@ interface StreamingTextProps {
   enabled?: boolean;
   onComplete?: () => void;
   /**
-   * N5 (POST_DEMO_FIXES.md, 2026-05-06): optional formatter for the
+   * optional formatter for the
    * FINAL text. While streaming we render plain text + cursor (so a
    * half-typed `**bo` doesn't flash unformatted asterisks). On
    * completion (or when streaming is disabled), the renderer is

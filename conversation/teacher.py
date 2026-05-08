@@ -1,32 +1,23 @@
 """
-conversation/teacher.py
-------------------------
-Teacher agent — generates Socratic responses for the student.
+The Teacher — generates the actual Socratic reply the student sees.
 
-Teacher has NO tools and NEVER sees locked_answer (except in draft_clinical during assessment).
-Teacher's only job: given retrieved_chunks + hint_level + student_state, ask one
-focused question that guides the student toward the concepts in the chunks.
+The Teacher receives retrieved chunks, the current hint level, and
+the Dean's classification of the student's last message; it asks one
+focused question that nudges the student toward the answer. The
+Teacher never sees the locked answer (except in `draft_clinical`,
+where the answer is needed to construct the clinical scenario).
 
-Teacher's prompt wrappers:
-  draft_rapport()   — teacher_rapport prompt, called once by rapport_node
-  draft_socratic()  — teacher_socratic prompt, called every tutoring turn by dean_node
-  draft_clinical()  — teacher_clinical prompt, called by assessment_node when student reached answer
+Three entry points:
 
-Hint level guidance (Teacher follows, doesn't invent):
-  1 = broad question — activate prior knowledge
-  2 = narrower question — point toward key concept
-  3 = direct push — one final specific question, still no answer given
+  draft_rapport()             — opening greeting at session start
+  draft_socratic()            — every tutoring turn after the topic locks
+  draft_clinical_opt_in()     — the "want to try a clinical case?" prompt
+  draft_clinical()            — clinical-application question generator
 
-student_state drives tone (via behavior table in teacher_socratic prompt):
-  correct         → affirm briefly, ask next guiding question
-  partial_correct → affirm correct part explicitly, probe the gap
-  incorrect       → do NOT say they're wrong, ask "how did you arrive at that?"
-  question        → answer the clarifying question briefly, redirect to problem
-  irrelevant      → redirect back to topic without giving content away
-  low_effort      → ask firmly "what part of this are you stuck on?" — do NOT advance
-
-All Anthropic calls update state["debug"]: api_calls, token counts, turn_trace entries.
-Uses Anthropic SDK (anthropic.Anthropic()), NOT OpenAI.
+Hint level (driven by the Dean, not the Teacher):
+  1 = broad question
+  2 = narrower question
+  3 = direct push toward the key concept (still no answer given)
 """
 
 import time
@@ -42,15 +33,13 @@ from conversation.rendering import render_history
 from conversation.llm_client import beta_headers
 from config import cfg
 
-
-# D.6a: streaming hook. When set (typically by the WS handler before
+# : streaming hook. When set (typically by the WS handler before
 # graph.invoke), draft_socratic streams tokens via Anthropic's
 # streaming API and invokes this callback for each text delta. The
 # callback is responsible for forwarding deltas to whatever sink the
 # caller wants (WebSocket, event log, stdout). When None (the default
 # for non-WS callers like the eval harness), draft_socratic uses the
 # non-streaming API exactly as before — full backward compat.
-#
 # A contextvar (not a thread/module global) so concurrent sessions
 # under asyncio.gather don't bleed callbacks across each other. The
 # WS handler sets it on its own task; other tasks see None.
@@ -63,7 +52,6 @@ _stream_callback: contextvars.ContextVar[Optional[Callable[[str], None]]] = (
 # draft. The WS handler uses it to send a stream_reset event so the
 # frontend can clear the (now-stale) streaming buffer before the
 # final message_complete event arrives with the revised content.
-# Without this, the user sees content X stream in, then abruptly get
 # replaced by content Y in the final bubble — confusing and looks
 # like a UI bug.
 _stream_invalidate_callback: contextvars.ContextVar[Optional[Callable[[], None]]] = (
@@ -71,55 +59,50 @@ _stream_invalidate_callback: contextvars.ContextVar[Optional[Callable[[], None]]
 )
 
 # UX hook for surfacing what the system is doing during a turn. Each
-# step in dean.run_turn (setup, retrieval, classification, draft, QC,
+# step in dean.run_turn (setup, retrieval, classification, draft, QC
 # memory write) fires a short user-facing label via this callback.
-# The WS handler forwards these to the frontend as "activity" events,
+# The WS handler forwards these to the frontend as "activity" events
 # which renders a Claude-Code-style live log so the user sees
-#   "Reading your message → Searching textbook → Drafting response..."
+# "Reading your message → Searching textbook → Drafting response..."
 # instead of an opaque "thinking..." spinner. No-op if no callback
 # installed (eval harness, batch scripts).
 _activity_callback: contextvars.ContextVar[Optional[Callable[[str], None]]] = (
     contextvars.ContextVar("teacher_activity_callback", default=None)
 )
 
-
 def set_stream_callback(cb: Optional[Callable[[str], None]]) -> contextvars.Token:
     """Install a per-task streaming callback for draft_socratic. Returns
-    a token; pass it to reset_stream_callback() to remove the callback.
+ a token; pass it to reset_stream_callback to remove the callback.
 
-    The callback is invoked from inside draft_socratic with each text
-    delta as the LLM streams. After the stream completes draft_socratic
-    returns the full aggregated text exactly as the non-streaming path
-    would; the callback is purely additive — no behavior changes for
-    callers that don't read tokens via the callback.
-    """
+ The callback is invoked from inside draft_socratic with each text
+ delta as the LLM streams. After the stream completes draft_socratic
+ returns the full aggregated text exactly as the non-streaming path
+ would; the callback is purely additive — no behavior changes for
+ callers that don't read tokens via the callback.
+"""
     return _stream_callback.set(cb)
-
 
 def reset_stream_callback(token: contextvars.Token) -> None:
     _stream_callback.reset(token)
-
 
 def set_stream_invalidate_callback(
     cb: Optional[Callable[[], None]]
 ) -> contextvars.Token:
     """Companion to set_stream_callback. The dean calls the resulting
-    callback when it discards a streamed draft in favor of a revised
-    one — the frontend can then clear its streaming buffer cleanly
-    instead of showing an abrupt content swap.
-    """
+ callback when it discards a streamed draft in favor of a revised
+ one — the frontend can then clear its streaming buffer cleanly
+ instead of showing an abrupt content swap.
+"""
     return _stream_invalidate_callback.set(cb)
-
 
 def reset_stream_invalidate_callback(token: contextvars.Token) -> None:
     _stream_invalidate_callback.reset(token)
 
-
 def fire_stream_invalidate() -> None:
     """Public hook for non-teacher modules (specifically dean.py). Fires
-    the contextvar callback if one is installed; no-op otherwise. Safe
-    to call from any thread — the underlying callback uses
-    loop.call_soon_threadsafe to enqueue."""
+ the contextvar callback if one is installed; no-op otherwise. Safe
+ to call from any thread — the underlying callback uses
+ loop.call_soon_threadsafe to enqueue."""
     cb = _stream_invalidate_callback.get()
     if cb is None:
         return
@@ -130,25 +113,22 @@ def fire_stream_invalidate() -> None:
         # failure must not break the LLM call.
         pass
 
-
 def set_activity_callback(
     cb: Optional[Callable[[str], None]]
 ) -> contextvars.Token:
     """Install a callback that receives short user-facing activity
-    labels (e.g. "Searching textbook", "Reviewing draft for accuracy").
-    The WS handler uses this to drive a live activity log in the UI."""
+ labels (e.g. "Searching textbook", "Reviewing draft for accuracy").
+ The WS handler uses this to drive a live activity log in the UI."""
     return _activity_callback.set(cb)
-
 
 def reset_activity_callback(token: contextvars.Token) -> None:
     _activity_callback.reset(token)
 
-
 def fire_activity(label: str) -> None:
     """Emit a user-facing activity label. No-op when no callback
-    installed (eval harness, batch scripts) so call sites can sprinkle
-    these freely without conditional checks. Errors swallowed so a
-    bad callback never breaks the actual work."""
+ installed (eval harness, batch scripts) so call sites can sprinkle
+ these freely without conditional checks. Errors swallowed so a
+ bad callback never breaks the actual work."""
     cb = _activity_callback.get()
     if cb is None:
         return
@@ -156,7 +136,6 @@ def fire_activity(label: str) -> None:
         cb(label)
     except Exception:
         pass
-
 
 def _domain_prompt_vars() -> dict:
     domain = getattr(cfg, "domain", object())
@@ -171,24 +150,22 @@ def _domain_prompt_vars() -> dict:
         "assessment_dimension_examples": getattr(domain, "assessment_dimension_examples", "examples, problems, or context"),
     }
 
-
 def _apply_domain_vars(text: str) -> str:
     rendered = text or ""
     for key, val in _domain_prompt_vars().items():
         rendered = rendered.replace(f"{{{key}}}", str(val))
     return rendered
 
-
 def _build_forbidden_tokens(state: dict) -> str:
     """
-    Build a comma-separated list of forbidden tokens for the teacher.
+ Build a comma-separated list of forbidden tokens for the teacher.
 
-    Combines locked_answer + aliases + distinctive content tokens from
-    full_answer. The teacher's prompt warns against using any of these —
-    Cluster 2 fix to drop the 90% dean override rate by giving the
-    teacher upstream awareness of what NOT to say (rather than relying
-    on the dean's post-hoc QC to scrub leaks).
-    """
+ Combines locked_answer + aliases + distinctive content tokens from
+ full_answer. The teacher's prompt warns against using any of these —
+ Cluster 2 fix to drop the 90% dean override rate by giving the
+ teacher upstream awareness of what NOT to say (rather than relying
+ on the dean's post-hoc QC to scrub leaks).
+"""
     import re as _re
 
     items: list[str] = []
@@ -230,7 +207,6 @@ def _build_forbidden_tokens(state: dict) -> str:
         return "(none — no lock established)"
     return ", ".join(items)
 
-
 def _cached_system(
     role_base: str,
     wrapper_delta: str,
@@ -239,21 +215,21 @@ def _cached_system(
     turn_deltas: str,
 ) -> list:
     """
-    Multi-block cache layout — see conversation/dean.py:_cached_system for
-    the full rationale. Mirror of that function so teacher and dean share
-    identical caching semantics.
+ Multi-block cache layout — see conversation/dean.py:_cached_system for
+ the full rationale. Mirror of that function so teacher and dean share
+ identical caching semantics.
 
-    Layout:
-      Block 1 [CACHED-if-≥4000-tokens]: role_base + wrapper_delta + chunks  (stable)
-      Block 2 [CACHED-if-≥4000-tokens]: history                              (append-only)
-      Block 3 UNCACHED:                turn_deltas                          (per-turn)
+ Layout:
+ Block 1 [CACHED-if-≥4000-tokens]: role_base + wrapper_delta + chunks (stable)
+ Block 2 [CACHED-if-≥4000-tokens]: history (append-only)
+ Block 3 UNCACHED: turn_deltas (per-turn)
 
-    Pre-fix behavior (until 2026-04-29): role+wrapper+chunks+history were
-    joined into one cached block, and history grew turn-over-turn → cache
-    prefix changed every turn → 0% cache hit rate. Fix splits history out
-    of the stable block so Block 1's prefix bytes stay constant across the
-    session.
-    """
+ Pre-fix behavior (until ): role+wrapper+chunks+history were
+ joined into one cached block, and history grew turn-over-turn → cache
+ prefix changed every turn → 0% cache hit rate. Fix splits history out
+ of the stable block so Block 1's prefix bytes stay constant across the
+ session.
+"""
     blocks: list[dict] = []
     # See dean.py:_cached_system for rationale on the 1500 threshold.
     cache_min_tokens = 1500
@@ -276,18 +252,15 @@ def _cached_system(
         blocks.append({"type": "text", "text": turn_deltas})
     return blocks
 
-
 def _estimate_tokens(text: str) -> int:
     """Cheap token estimate for debug visibility (~4 chars/token)."""
     if not text:
         return 0
     return max(1, int(len(text) / 4))
 
-
 def _trace_input_hash(system_text: str, messages: list[dict]) -> str:
     payload = system_text + "\n\n" + json.dumps(messages, sort_keys=True, ensure_ascii=False)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
-
 
 class TeacherAgent:
     def __init__(self):
@@ -303,33 +276,33 @@ class TeacherAgent:
         client_hour: int | None = None,
     ) -> str:
         """
-        Generate a personalized greeting for session start. Uses cfg.prompts.teacher_rapport.
-        Called once by rapport_node. No student message yet — this is the opening.
+ Generate a personalized greeting for session start. Uses cfg.prompts.teacher_rapport.
+ Called once by rapport_node. No student message yet — this is the opening.
 
-        Args:
-            weak_topics: legacy field kept for backward compat with existing
-                         callers. Empty list = new student. Currently unused
-                         in the rapport prompt; superseded by
-                         `past_session_memories` (mem0-driven).
-            past_session_memories: list of mem0 result dicts (each with a
-                         'memory' or 'data' field carrying the natural-
-                         language fact). When non-empty, the rapport
-                         prompt may reference one prior topic. Empty / None
-                         → fresh-session behavior.
-            client_hour: 0-23 hour from the user's local clock, sent by the
-                         frontend on session start (D.6b-5). Used to pick
-                         the morning/afternoon/evening greeting. Falls back
-                         to server-side datetime.now().hour if not provided
-                         (preserves backward compat for callers that don't
-                         pass it). Server-time fallback is wrong for
-                         deployments where the server isn't in the user's
-                         tz, hence the explicit client_hour parameter.
+ Args:
+ weak_topics: legacy field kept for backward compat with existing
+ callers. Empty list = new student. Currently unused
+ in the rapport prompt; superseded by
+ `past_session_memories` (mem0-driven).
+ past_session_memories: list of mem0 result dicts (each with a
+ 'memory' or 'data' field carrying the natural-
+ language fact). When non-empty, the rapport
+ prompt may reference one prior topic. Empty / None
+ → fresh-session behavior.
+ client_hour: 0-23 hour from the user's local clock, sent by the
+ frontend on session start . Used to pick
+ the morning/afternoon/evening greeting. Falls back
+ to server-side datetime.now.hour if not provided
+ (preserves backward compat for callers that don't
+ pass it). Server-time fallback is wrong for
+ deployments where the server isn't in the user's
+ tz, hence the explicit client_hour parameter.
 
-        Returns:
-            str: Greeting message. If past_session_memories non-empty:
-                 may reference one specific past topic. If empty: warm
-                 welcome + invite student to type a topic.
-        """
+ Returns:
+ str: Greeting message. If past_session_memories non-empty:
+ may reference one specific past topic. If empty: warm
+ welcome + invite student to type a topic.
+"""
         # Format past session memories for the prompt. mem0 atomizes our
         # structured strings into individual facts, so the most natural
         # representation is a bulleted list of those facts. Cap at 8
@@ -353,7 +326,7 @@ class TeacherAgent:
             if bullets:
                 past_str = "\n".join(bullets)
 
-        # Use client_hour when present (D.6b-5). Server fallback only fires
+        # Use client_hour when present . Server fallback only fires
         # when the call site forgot to pass it — the frontend's startSession
         # always supplies it now.
         hour = (
@@ -369,7 +342,7 @@ class TeacherAgent:
             tod = "evening"
 
         # Resolve delta template — DOES NOT receive time_of_day. The TOD
-        # has been moved to the uncached turn_deltas block (D.6b-5) so the
+        # has been moved to the uncached turn_deltas block so the
         # cached prefix stays stable across hour rollovers; otherwise every
         # 60-minute boundary would invalidate the rapport cache. The
         # wrapper_delta now references "{time_of_day}" as a literal label
@@ -401,22 +374,22 @@ class TeacherAgent:
 
     def draft_socratic(self, state: TutorState) -> str:
         """
-        Generate one Socratic question for the current tutoring turn.
-        Uses cfg.prompts.teacher_socratic.
+ Generate one Socratic question for the current tutoring turn.
+ Uses cfg.prompts.teacher_socratic.
 
-        Receives (via state):
-          - retrieved_chunks: textbook passages (answer is somewhere in them)
-          - hint_level: 1/2/3 — controls specificity of question
-          - student_state: drives tone/behavior (see docstring above)
-          - messages: conversation history
-          - dean_critique: Dean guidance string (preflight on first attempt, feedback on retry)
+ Receives (via state):
+retrieved_chunks: textbook passages (answer is somewhere in them)
+hint_level: 1/2/3 — controls specificity of question
+student_state: drives tone/behavior (see docstring above)
+messages: conversation history
+dean_critique: Dean guidance string (preflight on first attempt, feedback on retry)
 
-        Does NOT receive: locked_answer.
+ Does NOT receive: locked_answer.
 
-        Returns:
-            str: Draft response ending with exactly one question.
-                 Not yet approved by Dean — may be rejected and retried.
-        """
+ Returns:
+ str: Draft response ending with exactly one question.
+ Not yet approved by Dean — may be rejected and retried.
+"""
         chunks = state.get("retrieved_chunks", [])
         chunks_str = _format_chunks(chunks)
 
@@ -472,15 +445,15 @@ class TeacherAgent:
 
     def draft_clinical_opt_in(self, state: TutorState) -> str:
         """
-        Ask whether the student wants to do an optional clinical application question.
+ Ask whether the student wants to do an optional clinical application question.
 
-        R7 (POST_DEMO_FIXES.md, 2026-05-06): now also passes retrieved
-        chunks so the opt-in message can carry a one-sentence textbook-
-        grounded enrichment before offering the challenge. Without
-        chunks the prompt's "textbook-grounded" requirement has nothing
-        to draw from, and the LLM falls back to either generic ack or
-        parametric knowledge.
-        """
+ now also passes retrieved
+ chunks so the opt-in message can carry a one-sentence textbook-
+ grounded enrichment before offering the challenge. Without
+ chunks the prompt's "textbook-grounded" requirement has nothing
+ to draw from, and the LLM falls back to either generic ack or
+ parametric knowledge.
+"""
         chunks_str = _format_chunks(state.get("retrieved_chunks", []))
         return self._call(
             role_base=getattr(cfg.prompts, "teacher_base", ""),
@@ -499,9 +472,9 @@ class TeacherAgent:
 
     def draft_clinical(self, state: TutorState, dean_critique: str = "") -> str:
         """
-        Generate a clinical application question for the assessment phase.
-        Only called when student_reached_answer = True.
-        """
+ Generate a clinical application question for the assessment phase.
+ Only called when student_reached_answer = True.
+"""
         chunks_str = _format_chunks(state.get("retrieved_chunks", []))
         return self._call(
             role_base=getattr(cfg.prompts, "teacher_base", ""),
@@ -530,14 +503,14 @@ class TeacherAgent:
         turn_deltas: str = "",
     ) -> str:
         """
-        Shared Anthropic API call for all Teacher wrappers.
-        Updates state["debug"] if state is provided.
+ Shared Anthropic API call for all Teacher wrappers.
+ Updates state["debug"] if state is provided.
 
-        Args:
-            user_msg:     The user-role message (last student message or fixed prompt)
-            state:        TutorState (for debug tracking). None during rapport (state not yet set).
-            wrapper_name: Name of calling wrapper (for turn_trace logging)
-        """
+ Args:
+ user_msg: The user-role message (last student message or fixed prompt)
+ state: TutorState (for debug tracking). None during rapport (state not yet set).
+ wrapper_name: Name of calling wrapper (for turn_trace logging)
+"""
         system_blocks = _cached_system(
             _apply_domain_vars(role_base),
             _apply_domain_vars(wrapper_delta),
@@ -563,7 +536,7 @@ class TeacherAgent:
         input_hash = _trace_input_hash(system_text, messages)
 
         t0 = time.time()
-        # D.6a: stream when a callback is installed AND this is the
+        # : stream when a callback is installed AND this is the
         # tutoring-loop draft (the perceived-latency hot path). Other
         # wrappers (rapport, clinical) skip streaming because they're
         # called once at session boundaries — non-streaming + the cache
@@ -677,7 +650,6 @@ def _format_chunks(chunks: list[dict]) -> str:
         parts.append(f"[{i}] {location}\n{chunk.get('text', '')}")
     return "\n\n".join(parts)
 
-
 def _extract_json_object(text: str) -> dict | None:
     txt = (text or "").strip()
     if not txt:
@@ -728,7 +700,6 @@ def _extract_json_object(text: str) -> dict | None:
                 except Exception:
                     return None
     return None
-
 
 def _normalize_text(s: str) -> str:
     return " ".join((s or "").strip().lower().split())

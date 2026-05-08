@@ -1,17 +1,16 @@
 """
 evaluation/quality/schema.py
-----------------------------
 Input adapter + output dataclasses for the quality scorer.
 
 Two input formats are supported:
 
-  1. **Test harness export** — produced by scripts/test_reached_gate_e2e.py.
-     Has `log` (step-by-step), `outcomes`, `gate_traces`, `expectations`,
-     `result`, `debug_summary`. Includes a `final_state` field once we
-     extend the harness (Phase 1a-6).
+ 1. **Test harness export** — produced by scripts/test_reached_gate_e2e.py.
+ Has `log` (step-by-step), `outcomes`, `gate_traces`, `expectations`
+ `result`, `debug_summary`. Includes a `final_state` field once we
+ extend the harness (Phase 1a-6).
 
-  2. **Production export** — produced by `/api/session/{thread_id}/export`
-     in backend/api/session.py. Returns the full TutorState dict.
+ 2. **Production export** — produced by `/api/session/{thread_id}/export`
+ in backend/api/session.py. Returns the full TutorState dict.
 
 `load_session(path)` returns a normalized `SessionView` regardless of source.
 The scorer reads from SessionView only; it doesn't care which source format.
@@ -24,7 +23,6 @@ import json
 import re
 from pathlib import Path
 
-
 # =============================================================================
 # Normalized input view — what the scorer reads from
 # =============================================================================
@@ -32,7 +30,7 @@ from pathlib import Path
 @dataclass
 class TutorTurn:
     """One tutor message exchange. Pairs the student msg that triggered it
-    with the tutor's reply, plus per-turn signals from the dean's traces."""
+ with the tutor's reply, plus per-turn signals from the dean's traces."""
     turn_id: int                          # 1-indexed turn count (post-rapport)
     phase: str                            # rapport | tutoring | assessment | memory_update
     student_msg: str                      # the student message that triggered this turn
@@ -49,7 +47,7 @@ class TutorTurn:
     revised_draft_applied: bool = False   # teacher draft was rewritten
     fabrication_keyword_match: list[str] = field(default_factory=list)
 
-    # L39 — v2 stack signals (populated when SOKRATIC_USE_V2_FLOW=1).
+    # v2 stack signals (populated when SOKRATIC_USE_V2_FLOW=1).
     # Empty / default values for legacy sessions so existing scorers
     # keep working without code changes downstream.
     preflight_fired: bool = False
@@ -62,24 +60,23 @@ class TutorTurn:
     retry_used_dean_replan: bool = False
     retry_n_attempts: int = 0
 
-    # L39 #7 — full TurnPlan dict from trace (canonical Dean→Teacher
-    # contract). When the trace contains the JSON dump of TurnPlan,
-    # the scorer can introspect forbidden_terms, permitted_terms,
+    # #7 — full TurnPlan dict from trace (canonical Dean→Teacher
+    # contract). When the trace contains the JSON dump of TurnPlan
+    # the scorer can introspect forbidden_terms, permitted_terms
     # shape_spec, hint_text, etc. without inferring from separate
     # dean._setup_call traces. Empty dict = legacy session.
     turn_plan_full: dict = field(default_factory=dict)
-    # L39 #8 — retry feedback loop telemetry. prior_attempts holds
+    # #8 — retry feedback loop telemetry. prior_attempts holds
     # rejected drafts; prior_failures holds {check_name, reason} per
     # rejection. Lets the scorer compute "retries per turn" + most
     # common failure category over the session.
     prior_attempts: list[str] = field(default_factory=list)
     prior_failures: list[dict] = field(default_factory=list)
 
-
 @dataclass
 class SessionView:
     """Everything the scorer needs from one saved session.
-    Populated by `load_session` from either input format."""
+ Populated by `load_session` from either input format."""
     # Identity
     session_id: str = ""
     test_id: Optional[str] = None         # e.g. "T1_wrong_answer" (test harness only)
@@ -93,15 +90,15 @@ class SessionView:
 
     # Retrieval
     retrieved_chunks: list[dict] = field(default_factory=list)  # each: {text, score, subsection_title, ...}
-    # L39 #5 — RAGAS context_precision/recall counts grounding sources
+    # #5 — RAGAS context_precision/recall counts grounding sources
     # separately. Anchor chunks come from the locked subsection; tangent
-    # chunks come from optional exploration retrieval (per L27). Both
+    # chunks come from optional exploration retrieval . Both
     # contribute to context_precision differently. When the session
     # exporter doesn't differentiate (legacy state shape), tangent is
     # left empty and `retrieved_chunks` covers everything as before.
     anchor_chunks: list[dict] = field(default_factory=list)
     tangent_chunks: list[dict] = field(default_factory=list)
-    # L39 #10 — image_context (per L77) counts as a grounding source on
+    # #10 — image_context counts as a grounding source on
     # image-initiated sessions. RAGAS context_precision treats
     # image_context.description + identified_structures as additional
     # ground truth that Teacher could legitimately reference.
@@ -119,20 +116,20 @@ class SessionView:
     final_turn_count: int = 0
     max_turns: int = 25
 
-    # L21 + L39 — session lifecycle status from the SQL row. Drives
+    # + — session lifecycle status from the SQL row. Drives
     # scorer behavior: in_progress → skip; abandoned_no_lock → no-lock
     # verdict (don't critical-penalize); ended_off_domain / ended_turn_limit
     # → don't apply LEAK_DETECTED on the close turn (no answer reveal by
     # design).
     status: str = ""                      # in_progress | completed | ended_off_domain | ended_by_student | ended_turn_limit | abandoned_no_lock
 
-    # L39 #9 — key_takeaways cached at session-end per L63 (Haiku
+    # #9 — key_takeaways cached at session-end (Haiku
     # extracted-once, stored in sessions.key_takeaways JSON column).
     # Scorer reads this directly instead of regenerating; populated by
     # the production loader when the session row carries it.
     key_takeaways: Optional[dict] = None    # {what_demonstrated, what_needs_work}
 
-    # L39 #11 — VLM trace entry (per L77). Surfaces the upload that
+    # #11 — VLM trace entry . Surfaces the upload that
     # initiated the session so eval reports can group by image-driven
     # vs free-text sessions and inspect the VLM JSON when scoring goes
     # sideways.
@@ -171,7 +168,6 @@ class SessionView:
     expected_no_fabrication_keywords: list[str] = field(default_factory=list)
     description: str = ""
 
-
 # =============================================================================
 # Loader — handles both input formats
 # =============================================================================
@@ -195,7 +191,6 @@ def load_session(path: str | Path) -> SessionView:
             f"Top-level keys: {sorted(raw.keys())[:10]}"
         )
 
-
 def _load_from_test_harness(raw: dict) -> SessionView:
     """Test harness export with `final_state` field (post-Phase-1a-6)."""
     state = raw.get("final_state") or {}
@@ -210,10 +205,9 @@ def _load_from_test_harness(raw: dict) -> SessionView:
     view.expected_no_fabrication_keywords = list(exp.get("no_fabrication_keywords") or [])
     return view
 
-
 def _load_from_test_harness_partial(raw: dict) -> SessionView:
     """Older test harness JSONs (no final_state). Best-effort reconstruction
-    from `log`, `outcomes`, `gate_traces`."""
+ from `log`, `outcomes`, `gate_traces`."""
     view = SessionView()
     view.session_id = str(raw.get("conv_id") or "")
     view.test_id = raw.get("name")
@@ -277,16 +271,14 @@ def _load_from_test_harness_partial(raw: dict) -> SessionView:
 
     return view
 
-
 def _load_from_production(state: dict) -> SessionView:
     """Production-format session export — full TutorState."""
     return _view_from_state(state)
 
-
 def _view_from_state(state: dict) -> SessionView:
     """Build a SessionView from a full TutorState dict.
-    Used by both the test-harness-with-final-state path and the production
-    path."""
+ Used by both the test-harness-with-final-state path and the production
+ path."""
     view = SessionView()
     view.session_id = str(state.get("student_id") or "")
     view.locked_topic = dict(state.get("locked_topic") or {})
@@ -294,7 +286,7 @@ def _view_from_state(state: dict) -> SessionView:
     view.locked_answer = str(state.get("locked_answer") or "")
     view.locked_answer_aliases = list(state.get("locked_answer_aliases") or [])
     view.retrieved_chunks = list(state.get("retrieved_chunks") or [])
-    # L39 #5 — split anchor vs tangent chunks when the state exposes
+    # #5 — split anchor vs tangent chunks when the state exposes
     # them separately. Production state always carries `retrieved_chunks`
     # as the merged list; the v2 flow may stash separate keys under
     # debug["anchor_chunks"] / debug["tangent_chunks"]. When those exist
@@ -317,10 +309,10 @@ def _view_from_state(state: dict) -> SessionView:
                 anchors.append(c)
         view.anchor_chunks = anchors
         view.tangent_chunks = tangents
-    # L39 #10 — image_context from L77 image-initiated sessions
+    # #10 — image_context from image-initiated sessions
     raw_ic = state.get("image_context")
     view.image_context = raw_ic if isinstance(raw_ic, dict) else None
-    # L39 #11 — session-level VLM trace lifted from debug.all_turn_traces
+    # #11 — session-level VLM trace lifted from debug.all_turn_traces
     # if a `backend.vlm_call` entry exists. Gives the scorer the upload
     # JSON for forensics on image-driven sessions.
     for tr in (debug_chunks.get("all_turn_traces") or []):
@@ -372,11 +364,11 @@ def _view_from_state(state: dict) -> SessionView:
     view.max_hints = int(state.get("max_hints") or 3)
     view.final_turn_count = int(state.get("turn_count") or 0)
     view.max_turns = int(state.get("max_turns") or 25)
-    # L39 — session lifecycle status. Production exports may carry this
+    # session lifecycle status. Production exports may carry this
     # at the top level of `state` (set by memory_update_node) or under
     # debug. Default empty so legacy sessions don't break.
     view.status = str(state.get("status") or (state.get("debug") or {}).get("status") or "")
-    # L39 #9 — key_takeaways cached at session-end per L63. Populated
+    # #9 — key_takeaways cached at session-end . Populated
     # by memory_update_node; legacy sessions leave it None.
     raw_kt = state.get("key_takeaways") or (state.get("debug") or {}).get("key_takeaways")
     view.key_takeaways = raw_kt if isinstance(raw_kt, dict) else None
@@ -403,10 +395,9 @@ def _view_from_state(state: dict) -> SessionView:
 
     return view
 
-
 def _enrich_turns_from_traces(view: SessionView, debug: dict) -> None:
     """Walk all_turn_traces and the current turn_trace, tag per-turn fields
-    on the matching TutorTurn entries (gate_path, qc_pass, intervention, etc.)."""
+ on the matching TutorTurn entries (gate_path, qc_pass, intervention, etc.)."""
     # Combine historical + current trace lists, tagged by which turn each ran on
     historical = debug.get("all_turn_traces") or []
     current = debug.get("turn_trace") or []
@@ -452,7 +443,7 @@ def _enrich_turns_from_traces(view: SessionView, debug: dict) -> None:
                     except ValueError:
                         pass
             elif wrap == "dean.reached_answer_gate":
-                # L39 + Track 4.7g — v2 dean_node_v2 stamps reach gate
+                # + — v2 dean_node_v2 stamps reach gate
                 # results under this wrapper name (replaces the legacy
                 # `dean.confidence_score` "reached=..." string parsing).
                 t.gate_path = entry.get("path")
@@ -460,7 +451,7 @@ def _enrich_turns_from_traces(view: SessionView, debug: dict) -> None:
                 if "reached" in entry:
                     t.student_reached_answer = bool(entry.get("reached"))
             elif wrap == "preflight":
-                # L39 — v2 pre-flight Haiku trio. category in {help_abuse,
+                # v2 pre-flight Haiku trio. category in {help_abuse
                 # off_domain, deflection, none}. When fired, the v2 path
                 # short-circuits Dean and Teacher renders a redirect; the
                 # scorer should not penalize "no chunk grounding" on these
@@ -468,22 +459,22 @@ def _enrich_turns_from_traces(view: SessionView, debug: dict) -> None:
                 t.preflight_fired = bool(entry.get("fired", False))
                 t.preflight_category = str(entry.get("category") or "")
             elif wrap == "dean_v2.plan":
-                # L39 — v2 Dean planning result. Captures mode + tone so
+                # v2 Dean planning result. Captures mode + tone so
                 # downstream dimension scorers can adjust expectations
                 # (clinical-mode turns aren't graded as Socratic).
                 t.turn_plan_mode = str(entry.get("mode") or "")
                 t.turn_plan_tone = str(entry.get("tone") or "")
                 t.dean_v2_used_fallback = bool(entry.get("used_fallback", False))
             elif wrap == "retry_orchestrator.run_turn":
-                # L39 — v2 retry loop telemetry. Records how many
+                # v2 retry loop telemetry. Records how many
                 # Teacher attempts + checks ran before final text shipped.
                 t.retry_final_attempt = int(entry.get("final_attempt") or 0)
                 t.retry_used_safe_probe = bool(entry.get("used_safe_generic_probe", False))
                 t.retry_used_dean_replan = bool(entry.get("used_dean_replan", False))
                 t.retry_n_attempts = int(entry.get("n_attempts") or 0)
-                # L39 #8 — extract retry feedback loop telemetry from the
+                # #8 — extract retry feedback loop telemetry from the
                 # attempt_summaries the orchestrator emits. Each summary
-                # is {attempt: int, draft_preview: str, all_passed: bool,
+                # is {attempt: int, draft_preview: str, all_passed: bool
                 # failed_checks: [str]}. We collect drafts + failure
                 # check-names so the scorer can compute retries-per-turn
                 # + failure-category histograms over the session.
@@ -501,14 +492,14 @@ def _enrich_turns_from_traces(view: SessionView, debug: dict) -> None:
                                 "attempt": int(s.get("attempt") or 0),
                             })
             elif wrap == "dean_v2.turn_plan_full":
-                # L39 #7 — full TurnPlan dump (when the v2 trace exporter
+                # #7 — full TurnPlan dump (when the v2 trace exporter
                 # serializes the plan beyond just mode/tone). Lets the
                 # scorer introspect forbidden_terms / shape_spec / etc.
                 tp = entry.get("turn_plan")
                 if isinstance(tp, dict):
                     t.turn_plan_full = tp
             elif wrap == "backend.vlm_call":
-                # L39 #11 — VLM trace from /api/vlm/upload. Surfaced at
+                # #11 — VLM trace from /api/vlm/upload. Surfaced at
                 # session-level (not per-turn) so attach to the first
                 # turn's snapshot for traversal convenience. The
                 # SessionView-level vlm_trace is the canonical store;

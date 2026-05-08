@@ -1,13 +1,12 @@
 """
 scripts/expand_eval_set.py
----------------------------
 Expand the RAG eval set from 100 → ~300 queries by adding four missing
 categories that are underrepresented in rag_qa.jsonl:
 
-  1. Conversational paraphrases of existing queries (50)
-  2. Misspelled variants of existing queries (30, deterministic typos)
-  3. Abbreviations / informal clinical shorthand (30, LLM-generated with ground truth)
-  4. OOD negatives (50, no ground truth — expected empty retrieval)
+ 1. Conversational paraphrases of existing queries (50)
+ 2. Misspelled variants of existing queries (30, deterministic typos)
+ 3. Abbreviations / informal clinical shorthand (30, LLM-generated with ground truth)
+ 4. OOD negatives (50, no ground truth — expected empty retrieval)
 
 Output: data/eval/rag_qa_expanded.jsonl (contains original 100 + new ~160)
 """
@@ -23,16 +22,13 @@ ROOT = Path(__file__).parent.parent
 SRC = ROOT / "data/eval/rag_qa.jsonl"
 OUT = ROOT / "data/eval/rag_qa_expanded.jsonl"
 
-
 def load_jsonl(path):
     return [json.loads(l) for l in open(path)]
-
 
 def write_jsonl(path, rows):
     with open(path, "w") as f:
         for r in rows:
             f.write(json.dumps(r) + "\n")
-
 
 # --- (2) Deterministic misspellings ------------------------------------------
 _TYPO_RULES = [
@@ -53,7 +49,6 @@ _TYPO_RULES = [
     ("cerebellum",   "cerebellem"),
 ]
 
-
 def add_typo(text: str) -> str | None:
     """Return a typo'd version of text if one of the rules applies, else None."""
     for correct, wrong in _TYPO_RULES:
@@ -64,13 +59,12 @@ def add_typo(text: str) -> str | None:
             return pat.sub(wrong, text, count=1)
     return None
 
-
 # --- (1) Conversational paraphrases (LLM-generated) --------------------------
 def conversational_paraphrase(queries_batch: list[dict], client) -> list[dict]:
     """
-    For each query, ask Claude Haiku to rewrite it as a conversational student
-    question. Preserves ground truth (same source_chunk_id + expected_answer).
-    """
+ For each query, ask Claude Haiku to rewrite it as a conversational student
+ question. Preserves ground truth (same source_chunk_id + expected_answer).
+"""
     new_rows = []
     for q in queries_batch:
         prompt = (
@@ -97,7 +91,6 @@ def conversational_paraphrase(queries_batch: list[dict], client) -> list[dict]:
         except Exception as e:
             print(f"  skip conversational paraphrase: {e}")
     return new_rows
-
 
 # --- (3) Abbreviations / informal shorthand with ground truth ---------------
 # These are hand-curated because ground-truth mapping requires domain knowledge.
@@ -140,14 +133,13 @@ ABBREV_QUERIES = [
     ("face drooping one side", "facial", "conversational_clinical"),
 ]
 
-
 def build_abbrev_rows():
     """
-    For abbreviation/informal queries we don't need a specific chunk_id —
-    we check ground truth by whether the expected KEYWORD appears in any
-    retrieved chunk. This is weaker than chunk-level ground truth but
-    appropriate for these intentionally-ambiguous queries.
-    """
+ For abbreviation/informal queries we don't need a specific chunk_id —
+ we check ground truth by whether the expected KEYWORD appears in any
+ retrieved chunk. This is weaker than chunk-level ground truth but
+ appropriate for these intentionally-ambiguous queries.
+"""
     rows = []
     for q, kw, style in ABBREV_QUERIES:
         rows.append({
@@ -158,7 +150,6 @@ def build_abbrev_rows():
             "source_chunk_id": None,  # keyword-match ground truth
         })
     return rows
-
 
 # --- (4) OOD negatives -------------------------------------------------------
 OOD_QUERIES = [
@@ -214,7 +205,6 @@ OOD_QUERIES = [
     "meaning of phrase break a leg",
 ]
 
-
 def build_ood_rows():
     return [
         {
@@ -227,7 +217,6 @@ def build_ood_rows():
         }
         for q in OOD_QUERIES
     ]
-
 
 def main():
     import anthropic
@@ -280,7 +269,6 @@ def main():
 
     write_jsonl(OUT, all_rows)
     print(f"\nWrote: {OUT}")
-
 
 if __name__ == "__main__":
     main()

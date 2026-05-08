@@ -1,6 +1,5 @@
 """
 retrieval/topic_matcher.py
----------------------------
 TOC-grounded topic matcher.
 
 Loads `data/topic_index.json` (built by `scripts/build_topic_index.py`) and
@@ -9,11 +8,11 @@ replaces the previous LLM-brainstormed topic-options flow: every acceptable
 topic must correspond to a real, chunk-backed node in the textbook structure.
 
 Matcher tiers:
-  strong      — single unambiguous match; caller can lock directly
-  borderline  — 2-5 plausible candidates; caller should show "Did you mean…?" cards
-  none        — nothing plausible; caller should refuse with alternatives
+ strong — single unambiguous match; caller can lock directly
+ borderline — 2-5 plausible candidates; caller should show "Did you mean…?" cards
+ none — nothing plausible; caller should refuse with alternatives
 
-Scoring uses RapidFuzz token_set_ratio across each entry's subsection,
+Scoring uses RapidFuzz token_set_ratio across each entry's subsection
 section, chapter, and full path, taking the max. The subsection label gets a
 small preference because it's usually the most discriminative surface form.
 """
@@ -30,10 +29,8 @@ from rapidfuzz import fuzz
 from config import cfg
 from retrieval.ontology import DomainOntologyAdapter, NoopAdapter
 
-
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_INDEX_PATH = ROOT / "data" / "topic_index.json"
-
 
 @dataclass
 class TopicMatch:
@@ -55,7 +52,6 @@ class TopicMatch:
         """Short, card-friendly label — prefers the most specific level."""
         return self.subsection or self.section or self.chapter
 
-
 @dataclass
 class MatchResult:
     query: str
@@ -66,15 +62,12 @@ class MatchResult:
     def top(self) -> TopicMatch | None:
         return self.matches[0] if self.matches else None
 
-
 # Score thresholds. Tuned for OT corpus — student free-text is usually short
 # (1-4 words), while TOC labels are 1-10 words; token_set_ratio is the right
 # primitive because it's invariant to extra/missing tokens.
-#
-# 2026-04-29: lowered STRONG_MIN 90 → 65 after end-to-end testing showed
+# : lowered STRONG_MIN 90 → 65 after end-to-end testing showed
 # the previous threshold was rejecting valid in-corpus topics.
-#
-# 2026-04-30 (post-18-convo qualitative review): bumped STRONG_MIN 65 → 78
+# (post-18-convo qualitative review): bumped STRONG_MIN 65 → 78
 # and STRONG_GAP 5 → 10. The 18-convo batch surfaced ~5 cases where a
 # fuzzy match in the 65-78 range was conceptually WRONG (long bone →
 # muscle types; cardiac cycle → muscle twitch). The fuzzy matcher's
@@ -88,40 +81,89 @@ STRONG_GAP = 10           # top must lead second by this much to auto-lock
 BORDERLINE_MIN = 50       # below this, treat as no-match and refuse with alternatives
 MAX_CANDIDATES = 5
 
-
 class TopicMatcher:
     def __init__(
         self,
         index_path: Path | None = None,
         ontology: DomainOntologyAdapter | None = None,
     ):
-        path = Path(index_path) if index_path else DEFAULT_INDEX_PATH
-        try:
-            raw = json.loads(path.read_text())
-        except FileNotFoundError:
-            raw = []
-        self._entries: list[TopicMatch] = [
-            TopicMatch(
-                path=e["path"],
-                chapter=e.get("chapter", ""),
-                section=e.get("section", ""),
-                subsection=e.get("subsection", ""),
-                difficulty=e.get("difficulty", "moderate"),
-                chunk_count=int(e.get("chunk_count", 0)),
-                limited=bool(e.get("limited", False)),
-                teachable=bool(e.get("teachable", True)),
-            )
-            for e in raw
-        ]
+        # Source of truth post-migration 003: SQLite curriculum tables.
+        # Falls back to data/topic_index.json only when an explicit index_path
+        # is passed (test rigs / non-migrated domains). Production callers
+        # use the SQL-backed default.
+        if index_path is None:
+            self._entries = self._load_from_sql()
+        else:
+            try:
+                raw = json.loads(Path(index_path).read_text())
+            except FileNotFoundError:
+                raw = []
+            self._entries = [
+                TopicMatch(
+                    path=e["path"],
+                    chapter=e.get("chapter", ""),
+                    section=e.get("section", ""),
+                    subsection=e.get("subsection", ""),
+                    difficulty=e.get("difficulty", "moderate"),
+                    chunk_count=int(e.get("chunk_count", 0)),
+                    limited=bool(e.get("limited", False)),
+                    teachable=bool(e.get("teachable", True)),
+                )
+                for e in raw
+            ]
         self._ontology: DomainOntologyAdapter = ontology or NoopAdapter()
+
+    @staticmethod
+    def _load_from_sql() -> list["TopicMatch"]:
+        """Pull every subsection from SQL into TopicMatch objects.
+
+  `chunk_count`, `limited`, `teachable` aren't carried in the SQL
+  schema (they were ingestion-pipeline metadata); default to safe
+  values that don't filter anything out.
+  """
+        try:
+            from memory.sqlite_store import SQLiteStore
+            cur = SQLiteStore()._conn().execute(
+                """
+                SELECT
+                    c.chapter_num, c.title AS chapter_title,
+                    s.title AS section,
+                    sub.title AS subsection
+                FROM subsections sub
+                JOIN sections s ON s.section_id = sub.section_id
+                JOIN chapters c ON c.chapter_id = s.chapter_id
+                ORDER BY c.chapter_num, s.section_order, sub.subsection_order
+                """
+            )
+            rows = cur.fetchall()
+        except Exception:
+            return []
+
+        out: list[TopicMatch] = []
+        for r in rows:
+            full_path = (
+                f"Chapter {r['chapter_num']}: {r['chapter_title']} > "
+                f"{r['section']} > {r['subsection']}"
+            )
+            out.append(TopicMatch(
+                path=full_path,
+                chapter=r["chapter_title"],
+                section=r["section"],
+                subsection=r["subsection"],
+                difficulty="moderate",
+                chunk_count=0,
+                limited=False,
+                teachable=True,
+            ))
+        return out
 
     def __len__(self) -> int:
         return len(self._entries)
 
     # UMLS canonicals often wrap the useful term in generic scaffolding:
-    #   "Structure of deltoid muscle"  (we want "deltoid muscle")
-    #   "Left deltoid"                  (we want "deltoid")
-    #   "Entire brachial plexus"        (we want "brachial plexus")
+    # "Structure of deltoid muscle" (we want "deltoid muscle")
+    # "Left deltoid" (we want "deltoid")
+    # "Entire brachial plexus" (we want "brachial plexus")
     # These wrappers inflate token_set_ratio against any TOC section that
     # mentions "Structure", "Muscle", or body parts of the same laterality.
     # We strip them before feeding the canonical into the fuzz query.
@@ -155,18 +197,18 @@ class TopicMatcher:
 
     def _expand_query(self, query: str) -> str:
         """
-        Add canonical entity names from the ontology adapter to the raw query.
+ Add canonical entity names from the ontology adapter to the raw query.
 
-        Why: student free-text ("deltoid", "cn vii") rarely matches TOC section
-        labels literally. UMLS entity linking bridges the gap by recognising
-        "deltoid" and emitting "Deltoid muscle", which then token-matches
-        "Axial Muscles of the … Deltoid" etc. RapidFuzz `token_set_ratio`
-        handles the union cleanly — adding canonical names never hurts recall.
-        Noop adapters return [] so this is a zero-cost no-op off-domain.
+ Why: student free-text ("deltoid", "cn vii") rarely matches TOC section
+ labels literally. UMLS entity linking bridges the gap by recognising
+ "deltoid" and emitting "Deltoid muscle", which then token-matches
+ "Axial Muscles of the … Deltoid" etc. RapidFuzz `token_set_ratio`
+ handles the union cleanly — adding canonical names never hurts recall.
+ Noop adapters return so this is a zero-cost no-op off-domain.
 
-        UMLS wrappers ("Structure of …", "Left …") are stripped before the
-        canonical joins the query — see `_clean_canonical` for rationale.
-        """
+ UMLS wrappers ("Structure of …", "Left …") are stripped before the
+ canonical joins the query — see `_clean_canonical` for rationale.
+"""
         if not query:
             return query
         try:
@@ -235,24 +277,24 @@ class TopicMatcher:
         exclude_paths: set[str] | None = None,
     ) -> list[TopicMatch]:
         """
-        Random-but-diverse sample across chapters, used when no match is found.
+ Random-but-diverse sample across chapters, used when no match is found.
 
-        Cards surfaced here are a promise we can teach the topic. We therefore
-        enforce these filters, strongest first:
-          - `teachable=False` entries are excluded outright — they failed the
-            build-time retrieval validation in
-            `scripts/validate_topic_index.py`, so the coverage gate will
-            reject them at lock time. Showing them is a guaranteed card-loop.
-          - `limited=True` entries are excluded (weak ingestion coverage).
-          - `chunk_count >= min_chunk_count` — low-chunk topics have a high
-            probability of failing the coverage gate at lock time.
-          - `exclude_paths` is the set of TOC paths that already failed the
-            coverage gate this session, so we never re-suggest them.
+ Cards surfaced here are a promise we can teach the topic. We therefore
+ enforce these filters, strongest first:
+`teachable=False` entries are excluded outright — they failed the
+ build-time retrieval validation in
+ `scripts/validate_topic_index.py`, so the coverage gate will
+ reject them at lock time. Showing them is a guaranteed card-loop.
+`limited=True` entries are excluded (weak ingestion coverage).
+`chunk_count >= min_chunk_count` — low-chunk topics have a high
+ probability of failing the coverage gate at lock time.
+`exclude_paths` is the set of TOC paths that already failed the
+ coverage gate this session, so we never re-suggest them.
 
-        Falls back through relaxed thresholds (→ min_chunk_count=3 → any) only
-        if the strict pass produces nothing. `teachable=False` is never
-        relaxed — better an empty card list than a guaranteed dead-end.
-        """
+ Falls back through relaxed thresholds (→ min_chunk_count=3 → any) only
+ if the strict pass produces nothing. `teachable=False` is never
+ relaxed — better an empty card list than a guaranteed dead-end.
+"""
         if not self._entries:
             return []
         exclude_paths = exclude_paths or set()
@@ -295,7 +337,6 @@ class TopicMatcher:
         rng.shuffle(pool)
         return pool[:n]
 
-
     def sample_related(
         self,
         retriever,
@@ -305,20 +346,20 @@ class TopicMatcher:
         exclude_paths: set[str] | None = None,
     ) -> list[TopicMatch]:
         """
-        Pick `n` teachable topics SEMANTICALLY RELATED to `query` rather
-        than random. Uses the existing retriever to find chunks for the
-        query, votes the top results onto (chapter, section, subsection),
-        and returns the top-N teachable subsections that match.
+ Pick `n` teachable topics SEMANTICALLY RELATED to `query` rather
+ than random. Uses the existing retriever to find chunks for the
+ query, votes the top results onto (chapter, section, subsection)
+ and returns the top-N teachable subsections that match.
 
-        Falls back to `sample_diverse(n)` only when retrieval surfaces
-        nothing related (true out-of-corpus query).
+ Falls back to `sample_diverse(n)` only when retrieval surfaces
+ nothing related (true out-of-corpus query).
 
-        Why: previously `sample_diverse(3)` picked 3 random teachable
-        topics with no relation to what the student typed. Typing "brain"
-        returned cards like "DNA Replication" and "Compensation
-        Mechanisms" — useless. Now `sample_related` returns the topics
-        the corpus actually covers around the query.
-        """
+ Why: previously `sample_diverse(3)` picked 3 random teachable
+ topics with no relation to what the student typed. Typing "brain"
+ returned cards like "DNA Replication" and "Compensation
+ Mechanisms" — useless. Now `sample_related` returns the topics
+ the corpus actually covers around the query.
+"""
         if not self._entries or not retriever or not (query or "").strip():
             return self.sample_diverse(n, exclude_paths=exclude_paths)
 
@@ -378,15 +419,13 @@ class TopicMatcher:
 
         return related[:n]
 
-
 _matcher_singleton: TopicMatcher | None = None
-
 
 def get_topic_matcher() -> TopicMatcher:
     """
-    Lazy singleton — index is small (~360 entries) and immutable per process.
-    Uses the domain-configured ontology adapter (UMLS for OT, Noop otherwise).
-    """
+ Lazy singleton — index is small (~360 entries) and immutable per process.
+ Uses the domain-configured ontology adapter (UMLS for OT, Noop otherwise).
+"""
     global _matcher_singleton
     if _matcher_singleton is None:
         from retrieval.ontology import get_ontology_adapter

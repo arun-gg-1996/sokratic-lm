@@ -1,30 +1,17 @@
 """
-conversation/assessment_v2.py
-─────────────────────────────
-Track 4.7e: v2 assessment phase.
+Post-tutoring assessment phase (the optional clinical loop).
 
-Owns the post-tutoring assessment phase under SOKRATIC_USE_V2_FLOW:
-  * L65 — opt-in "No" path: brief reach-confirmation + textbook-answer
-          confirmation, then graceful close
-  * L67 — clinical_turn_count caps at 7 (separate from tutoring's 25 and
-          pre-lock's 7)
-  * L70 — pre-flight Haiku DURING clinical: counters tick, but escalation
-          is suppressed (no hint advance, no terminate) — natural turn cap
-          is the only termination trigger
-  * L71 — clinical retrieval = anchor chunks only (state.retrieved_chunks
-          set at lock time; no exploration retrieval here)
-  * L72 — clinical reuses the tutor pipeline (run_turn from
-          retry_orchestrator) with TurnPlan.mode = "clinical"
-  * L73 — opt-in UX: TurnPlan(mode="opt_in", tone="neutral"), Yes/No
-          buttons + free-text fallback handled in this node
-  * L74 — clinical scenario lazy-generated via DeanV2 on opt-in Yes
-  * L75 — Dean plans (TurnPlan minting), Teacher renders (one Sonnet
-          model serving both via different prompts)
+Behaviour after the student reaches the textbook answer:
 
-Reveal path (student did NOT reach answer):
-  Reveal the locked answer + close. clinical_mastery_tier = not_assessed.
-  Re-uses TeacherV2 honest_close mode with the answer surfaced via
-  hint_text so the student sees what they missed.
+  - Show an opt-in: do they want a clinical-application question?
+  - On "Yes", the Dean generates a clinical scenario, then we run
+    a turn-by-turn application loop (capped at CLINICAL_TURN_CAP).
+  - On "No", confirm the textbook answer briefly and close cleanly.
+
+If the student never reached the answer, we reveal it and close
+without running the clinical loop. Counter telemetry continues to
+tick during the clinical phase but does not trigger early
+termination — only the natural turn cap ends the loop.
 """
 from __future__ import annotations
 
@@ -36,13 +23,12 @@ from conversation.retry_orchestrator import run_turn
 from conversation.teacher_v2 import TeacherPromptInputs, TeacherV2
 from conversation.turn_plan import TurnPlan
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Constants
 # ─────────────────────────────────────────────────────────────────────────────
 
-# L67 — clinical phase has its own turn budget, separate from tutoring.
-# N3 (POST_DEMO_FIXES.md, 2026-05-06): bumped 7 → 15 per user request —
+# clinical phase has its own turn budget, separate from tutoring.
+# per user request —
 # clinical loop needs more room for back-and-forth on application reasoning.
 CLINICAL_TURN_CAP = 15
 
@@ -50,15 +36,13 @@ CLINICAL_TURN_CAP = 15
 OPT_IN_OPTIONS = ["Yes", "No"]
 
 # Max re-ask attempts when opt-in classifier returns "ambiguous". Beyond
-# this we close the session (per L65) instead of looping. Surfaced as a
+# this we close the session instead of looping. Surfaced as a
 # constant so tests + the audit doc can reference it.
 OPT_IN_REASK_CAP = 2
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Public entry point
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def assessment_node_v2(
     state: dict,
@@ -71,18 +55,18 @@ def assessment_node_v2(
 ) -> dict:
     """v2 assessment phase orchestrator.
 
-    Dispatch by (student_reached_answer, assessment_turn):
-      reached=False                        → reveal-and-close
-      reached=True,  assessment_turn=0     → render opt-in question
-      reached=True,  assessment_turn=1     → handle Yes/No/typed-text response
-      reached=True,  assessment_turn=2     → run one clinical loop turn
-                                             via run_turn() with mode=clinical
+ Dispatch by (student_reached_answer, assessment_turn):
+ reached=False → reveal-and-close
+ reached=True, assessment_turn=0 → render opt-in question
+ reached=True, assessment_turn=1 → handle Yes/No/typed-text response
+ reached=True, assessment_turn=2 → run one clinical loop turn
+ via run_turn with mode=clinical
 
-    `dean` and `teacher` are the LEGACY agents — passed through for
-    compatibility with helpers that still need them (e.g. _coverage_gate,
-    _replace_latest_student_message). All NEW behavior runs through
-    `dean_v2` (DeanV2) + `teacher_v2` (TeacherV2).
-    """
+ `dean` and `teacher` are the LEGACY agents — passed through for
+ compatibility with helpers that still need them (e.g. _coverage_gate
+ _replace_latest_student_message). All NEW behavior runs through
+ `dean_v2` (DeanV2) + `teacher_v2` (TeacherV2).
+"""
     state.setdefault("debug", {}).setdefault("turn_trace", [])
     state["debug"]["current_node"] = "assessment_node_v2"
     trace = state["debug"]["turn_trace"]
@@ -121,17 +105,15 @@ def assessment_node_v2(
         retriever=retriever,
     )
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# L73 — render opt-in question (TurnPlan mode="opt_in", neutral tone)
+# render opt-in question (TurnPlan mode="opt_in", neutral tone)
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def _render_opt_in(state: dict, teacher_v2: TeacherV2) -> dict:
     """First entry into assessment with reached=True. Construct an opt-in
-    TurnPlan manually (no Dean ceremony needed — opt-in is short and
-    deterministic), render via Teacher, present Yes/No pending choice.
-    """
+ TurnPlan manually (no Dean ceremony needed — opt-in is short and
+ deterministic), render via Teacher, present Yes/No pending choice.
+"""
     locked = state.get("locked_topic") or {}
     plan = TurnPlan.minimal_fallback(
         scenario="clinical_opt_in_offer",
@@ -187,11 +169,9 @@ def _render_opt_in(state: dict, teacher_v2: TeacherV2) -> dict:
         "debug": state["debug"],
     }
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# Handle opt-in response (Yes / No / typed-text fallback per L73)
+# Handle opt-in response (Yes / No / typed-text fallback )
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def _handle_opt_in_response(
     state: dict,
@@ -220,14 +200,14 @@ def _handle_opt_in_response(
         )
 
     if intent == "no":
-        # L65 — answer-confirmation graceful close
+        # answer-confirmation graceful close
         return _render_reach_close(state, teacher_v2, messages=messages)
 
     # Ambiguous: re-ask, but cap re-asks to prevent infinite loops
-    # (sanity-check observation 2026-05-03 — the simulator typing
+    # (sanity-check observation — the simulator typing
     # substantive responses kept landing in ambiguous and looping).
     # After OPT_IN_REASK_CAP attempts, treat as "no" and close
-    # gracefully via L65.
+    # gracefully via .
     reask_count = int(state.get("opt_in_reask_count", 0) or 0)
     if reask_count >= OPT_IN_REASK_CAP:
         state["debug"]["turn_trace"].append({
@@ -237,7 +217,6 @@ def _handle_opt_in_response(
         return _render_reach_close(state, teacher_v2, messages=messages)
     state["opt_in_reask_count"] = reask_count + 1
     return _render_opt_in_clarify(state, teacher_v2, messages=messages)
-
 
 def _render_opt_in_clarify(
     state: dict,
@@ -286,11 +265,9 @@ def _render_opt_in_clarify(
         "debug": state["debug"],
     }
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# L74 — enter clinical phase: lazy-generate scenario via DeanV2
+# enter clinical phase: lazy-generate scenario via DeanV2
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def _enter_clinical_phase(
     state: dict,
@@ -300,18 +277,18 @@ def _enter_clinical_phase(
     teacher_v2: TeacherV2,
     retriever: Any,
 ) -> dict:
-    """L74 — student opted IN. Generate clinical scenario via DeanV2,
-    render the first clinical question via TeacherV2, set up state for
-    the multi-turn clinical loop.
+    """student opted IN. Generate clinical scenario via DeanV2
+ render the first clinical question via TeacherV2, set up state for
+ the multi-turn clinical loop.
 
-    Per L71, clinical retrieval = anchor chunks only — we re-use
-    state["retrieved_chunks"] from lock time without firing additional
-    retrieval.
-    """
+ Per , clinical retrieval = anchor chunks only — we re-use
+ state["retrieved_chunks"] from lock time without firing additional
+ retrieval.
+"""
     locked = state.get("locked_topic") or {}
     chunks = list(state.get("retrieved_chunks", []) or [])
 
-    # Mint clinical TurnPlan via DeanV2.plan() — Dean reads state context
+    # Mint clinical TurnPlan via DeanV2.plan — Dean reads state context
     # (assessment_turn=1, locked anchors, history showing the reach event)
     # and is expected to emit mode="clinical" + clinical_scenario + target.
     state["debug"]["turn_trace"].append({
@@ -332,7 +309,7 @@ def _enter_clinical_phase(
             ),
         )
         # Mark state so Dean's prompt context indicates we're entering clinical.
-        # DeanV2.plan() infers mode from context; the marker steers it.
+        # DeanV2.plan infers mode from context; the marker steers it.
         state["_clinical_scenario_request"] = True
         plan_result = dean_v2.plan(
             state, chunks,
@@ -361,7 +338,7 @@ def _enter_clinical_phase(
         return _render_reach_close(state, teacher_v2, messages=messages)
 
     # Render the first clinical question via TeacherV2.
-    # N4 (POST_DEMO_FIXES.md, 2026-05-06): mark as first clinical turn
+    # mark as first clinical turn
     # so Teacher's prompt opens with a brief bridging phrase before
     # presenting the scenario.
     inputs = _teacher_inputs(state, locked, chunks=chunks, is_first_clinical_turn=True)
@@ -415,7 +392,6 @@ def _enter_clinical_phase(
         "debug": state["debug"],
     }
 
-
 def _render_dean_clinical_scenario(plan: TurnPlan) -> str:
     scenario = (plan.clinical_scenario or "").strip()
     target = (plan.clinical_target or "").strip()
@@ -425,31 +401,29 @@ def _render_dean_clinical_scenario(plan: TurnPlan) -> str:
         return f"{scenario}\n\nClinical question: how would you apply the concept here?"
     return ""
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# N3 — clinical preflight (telemetry-only counters)
+# clinical preflight (telemetry-only counters)
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def _run_clinical_preflight(state: dict, student_message: str, locked: dict) -> None:
-    """N3 (POST_DEMO_FIXES.md, 2026-05-06): Option 1 — run the unified
-    intent classifier on every clinical turn so clinical-phase counters
-    mirror tutoring exactly.
+    """Option 1 — run the unified
+ intent classifier on every clinical turn so clinical-phase counters
+ mirror tutoring exactly.
 
-    UNLIKE tutoring's `run_preflight`:
-      * counter increments go to `clinical_*_count` and `total_clinical_*_turns`,
-        NOT the regular tutoring counters
-      * NO termination effects — verdicts are read for telemetry only;
-        the natural CLINICAL_TURN_CAP is still the only loop terminator
-      * NO escalation effects — `should_force_hint_advance` /
-        `should_end_session` are ignored
+ UNLIKE tutoring's `run_preflight`:
+ * counter increments go to `clinical_*_count` and `total_clinical_*_turns`
+ NOT the regular tutoring counters
+ * NO termination effects — verdicts are read for telemetry only;
+ the natural CLINICAL_TURN_CAP is still the only loop terminator
+ * NO escalation effects — `should_force_hint_advance` /
+ `should_end_session` are ignored
 
-    Cost: one Haiku call per clinical turn (~1.5s). Per the user
-    decision logged in POST_DEMO_FIXES.md "Resume state".
+ Cost: one Haiku call per clinical turn (~1.5s). Per the user
+ decision logged in "Resume state".
 
-    Mutates state in place; returns None. Fails open on any error
-    (no counter movement on classifier failure).
-    """
+ Mutates state in place; returns None. Fails open on any error
+ (no counter movement on classifier failure).
+"""
     if not student_message or not student_message.strip():
         return
     try:
@@ -472,12 +446,14 @@ def _run_clinical_preflight(state: dict, student_message: str, locked: dict) -> 
             locked_subsection = (
                 locked.get("subsection") or locked.get("section") or ""
             )
+        from config import cfg as _cfg_clin
         result = _PC.haiku_intent_classify_unified(
             student_message,
             history_pairs=history_pairs,
             locked_subsection=locked_subsection,
             locked_question=str(state.get("locked_question") or ""),
             phase="assessment",  # signal clinical context to the classifier
+            domain_name=str(getattr(_cfg_clin.domain, "name", "") or ""),
         )
     except Exception as e:
         state["debug"]["turn_trace"].append({
@@ -498,11 +474,11 @@ def _run_clinical_preflight(state: dict, student_message: str, locked: dict) -> 
         state["total_clinical_low_effort_turns"] = int(state.get("total_clinical_low_effort_turns", 0) or 0) + 1
     else:
         # on_topic_engaged or opt_in_* → reset consecutive counters
-        # (mirrors tutoring's M7 decay semantics, but we only reset the
+        # (mirrors tutoring's decay semantics, but we only reset the
         # clinical_* fields).
         state["clinical_help_abuse_count"] = 0
         state["clinical_low_effort_count"] = 0
-        # Off-topic uses M7 decay (decrement by 1, min 0) so a single
+        # Off-topic uses decay (decrement by 1, min 0) so a single
         # old misclassification doesn't accumulate.
         state["clinical_off_topic_count"] = max(
             0, int(state.get("clinical_off_topic_count", 0) or 0) - 1,
@@ -516,11 +492,9 @@ def _run_clinical_preflight(state: dict, student_message: str, locked: dict) -> 
         "clinical_low_effort_count": state.get("clinical_low_effort_count", 0),
     })
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# L72 — clinical loop turn (reuses run_turn from retry_orchestrator)
+# clinical loop turn (reuses run_turn from retry_orchestrator)
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def _run_clinical_turn(
     state: dict,
@@ -531,15 +505,15 @@ def _run_clinical_turn(
     teacher_v2: TeacherV2,
     retriever: Any,
 ) -> dict:
-    """Run one clinical loop turn via the same pipeline as tutoring (L72).
+    """Run one clinical loop turn via the same pipeline as tutoring .
 
-    L70: pre-flight Haiku trio runs (counters increment for telemetry) but
-    cannot escalate (no hint advance, no terminate) — natural cap (L67) is
-    the only termination trigger.
+ : pre-flight Haiku trio runs (counters increment for telemetry) but
+ cannot escalate (no hint advance, no terminate) — natural cap is
+ the only termination trigger.
 
-    L67: cap at CLINICAL_TURN_CAP = 7. After cap, render close + route to
-    memory_update.
-    """
+ : cap at CLINICAL_TURN_CAP = 7. After cap, render close + route to
+ memory_update.
+"""
     messages = list(state.get("messages", []) or [])
     locked = state.get("locked_topic") or {}
     chunks = list(state.get("retrieved_chunks", []) or [])
@@ -583,7 +557,7 @@ def _run_clinical_turn(
             "debug": state["debug"],
         }
 
-    # L67 — cap check BEFORE running the turn so we don't burn an extra LLM
+    # cap check BEFORE running the turn so we don't burn an extra LLM
     # call on a turn that would just close anyway.
     if clinical_turn_count > CLINICAL_TURN_CAP:
         state["clinical_turn_count"] = CLINICAL_TURN_CAP
@@ -597,22 +571,21 @@ def _run_clinical_turn(
         # — the mastery scorer at memory_update derives it from history.
         return _render_clinical_close(state, teacher_v2, messages=messages)
 
-    # N3 (POST_DEMO_FIXES.md, 2026-05-06): Option 1 — clinical phase
+    # Option 1 — clinical phase
     # now runs the unified intent classifier on every clinical turn so
-    # `clinical_help_abuse_count`, `clinical_low_effort_count`,
+    # `clinical_help_abuse_count`, `clinical_low_effort_count`
     # `clinical_off_topic_count` (plus `total_clinical_*_turns`) tick
     # in lockstep with tutoring's counters. This OVERRIDES the original
-    # L70 design (telemetry-only, no LLM cost in clinical) per the user
-    # decision logged in POST_DEMO_FIXES.md "Resume state" block. We
-    # still HONOR the L70 termination semantics: clinical does NOT
+    # design (telemetry-only, no LLM cost in clinical) per the user
+    # decision logged in "Resume state" block. We
+    # still HONOR the termination semantics: clinical does NOT
     # terminate on help_abuse strike 4 — only the natural CLINICAL_TURN_CAP
     # ends the loop. Counter increments here are PURELY for visibility
     # in the debug payload + Sidebar mirror.
     _run_clinical_preflight(state, latest_student_msg, locked)
 
-    # R8 (2026-05-06 demo-feedback): record per-turn snapshot during
+    # : record per-turn snapshot during
     # clinical phase so the JSON export captures clinical counter
-    # ticks. Without this the snapshots stop at the tutoring→assessment
     # transition and clinical_off_topic_count never appears in the
     # exported per_turn_snapshots list.
     try:
@@ -627,10 +600,10 @@ def _run_clinical_turn(
         # flow on a snapshot failure.
         pass
 
-    # L72 — call the same retry orchestrator used for tutoring. Dean
-    # plans first (mints a fresh clinical TurnPlan continuing the scenario),
+    # call the same retry orchestrator used for tutoring. Dean
+    # plans first (mints a fresh clinical TurnPlan continuing the scenario)
     # then run_turn drives Teacher draft + 4 Haiku checks + 1 Dean replan
-    # + safe-generic-probe fallback (L50/L62).
+    # + safe-generic-probe fallback (/).
     state["debug"]["turn_trace"].append({
         "wrapper": "assessment_v2.run_turn_start",
         "clinical_turn": clinical_turn_count,
@@ -645,7 +618,7 @@ def _run_clinical_turn(
     )
     try:
         # Continuation plan — Dean sees the existing clinical scenario
-        # in conversation history + state, evaluates student's response,
+        # in conversation history + state, evaluates student's response
         # and emits next clinical TurnPlan.
         state["_clinical_continuation"] = True
         plan_result = dean_v2.plan(
@@ -696,8 +669,8 @@ def _run_clinical_turn(
         # Hard fallback — close gracefully.
         return _render_clinical_close(state, teacher_v2, messages=messages)
 
-    # L70 — counters from preflight already ticked inside dean_node_v2 (we
-    # don't run preflight here per L72's clarification). We explicitly DO
+    # counters from preflight already ticked inside dean_node_v2 (we
+    # don't run preflight here clarification). We explicitly DO
     # NOT honor should_force_hint_advance / should_end_session in clinical
     # context — natural cap is the only termination.
     text = (getattr(turn_result, "final_text", "") or "").strip()
@@ -742,11 +715,9 @@ def _run_clinical_turn(
         "debug": state["debug"],
     }
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# L65 — opt-in No path: brief reach-confirmation + answer reveal
+# opt-in No path: brief reach-confirmation + answer reveal
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def _render_reach_close(
     state: dict,
@@ -754,16 +725,16 @@ def _render_reach_close(
     *,
     messages: Optional[list[dict]] = None,
 ) -> dict:
-    """L65 — student declined clinical bonus. Confirm what they reached
-    and what the textbook answer is, then close.
-    """
+    """student declined clinical bonus. Confirm what they reached
+ and what the textbook answer is, then close.
+"""
     if messages is None:
         messages = list(state.get("messages", []) or [])
     locked = state.get("locked_topic") or {}
     locked_q = (state.get("locked_question") or "").strip()
     locked_a = (state.get("locked_answer") or state.get("full_answer") or "").strip()
 
-    # B2 fix: use the dedicated reach_close mode (was honest_close which
+    # fix: use the dedicated reach_close mode (was honest_close which
     # is hardcoded for the failure path and produced "we didn't get to
     # cover X" even when reached=True). hint_text carries the textbook
     # answer for warm confirmation.
@@ -785,7 +756,7 @@ def _render_reach_close(
         clinical_target=None,
         apply_redaction=False,
     )
-    # M1/B4 — close LLM is owned by memory_update_node. Don't draft a
+    # / — close LLM is owned by memory_update_node. Don't draft a
     # duplicate close message here; just route with reach_skipped reason.
     state["close_reason"] = "reach_skipped"
     state["debug"]["turn_trace"].append({
@@ -804,7 +775,6 @@ def _render_reach_close(
         "debug": state["debug"],
     }
 
-
 def _build_reach_close_fallback(
     locked: dict, locked_q: str, locked_a: str,
 ) -> str:
@@ -820,16 +790,14 @@ def _build_reach_close_fallback(
         bits.append("Great work — see you next session.")
     return " ".join(bits)
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Reveal-and-close path (student did not reach answer)
 # ─────────────────────────────────────────────────────────────────────────────
 
-
 def _render_reveal_close(state: dict, teacher_v2: TeacherV2) -> dict:
     """Student didn't reach the answer (hints exhausted or turn cap).
-    Reveal the answer + close. clinical_mastery_tier = not_assessed.
-    """
+ Reveal the answer + close. clinical_mastery_tier = not_assessed.
+"""
     messages = list(state.get("messages", []) or [])
     locked = state.get("locked_topic") or {}
     locked_q = (state.get("locked_question") or "").strip()
@@ -853,7 +821,7 @@ def _render_reveal_close(state: dict, teacher_v2: TeacherV2) -> dict:
         clinical_target=None,
         apply_redaction=False,
     )
-    # M1/B4 — close LLM is owned by memory_update_node. Route with the
+    # / — close LLM is owned by memory_update_node. Route with the
     # ACTUAL reason we ended up here (don't hardcode "hints_exhausted"):
     # turn-cap and hint-cap arrive at the same no-reach close path but the
     # close_reason should differ so the close message + save_bucket choose
@@ -889,7 +857,6 @@ def _render_reveal_close(state: dict, teacher_v2: TeacherV2) -> dict:
         "debug": state["debug"],
     }
 
-
 def _build_reveal_close_fallback(
     locked: dict, locked_q: str, locked_a: str,
 ) -> str:
@@ -905,11 +872,9 @@ def _build_reveal_close_fallback(
         bits.append("Tough one — revisit this topic from My Mastery when you're ready.")
     return " ".join(bits)
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# Clinical close — natural cap (L67) reached
+# Clinical close — natural cap reached
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def _render_clinical_close(
     state: dict,
@@ -917,10 +882,10 @@ def _render_clinical_close(
     *,
     messages: list[dict],
 ) -> dict:
-    """Clinical phase ended via L67 turn cap. Brief acknowledgment +
-    route to memory_update so mastery scorer derives clinical_mastery_tier
-    from clinical_history.
-    """
+    """Clinical phase ended via turn cap. Brief acknowledgment +
+ route to memory_update so mastery scorer derives clinical_mastery_tier
+ from clinical_history.
+"""
     locked = state.get("locked_topic") or {}
     plan = TurnPlan(
         scenario="clinical_phase_natural_close",
@@ -928,7 +893,7 @@ def _render_clinical_close(
             "Clinical phase wrap: acknowledge the work done, no answer reveal, "
             "brief and warm. Route is memory_update next."
         ),
-        # B2 fix: clinical_natural_close mode (was honest_close, which
+        # fix: clinical_natural_close mode (was honest_close, which
         # produced "didn't engage" prose despite the student engaging).
         mode="clinical_natural_close",
         tone="neutral",
@@ -940,7 +905,7 @@ def _render_clinical_close(
         clinical_target=None,
         apply_redaction=False,
     )
-    # M1/B4 — close LLM is owned by memory_update_node. Don't draft a
+    # / — close LLM is owned by memory_update_node. Don't draft a
     # duplicate clinical-natural close; route with clinical_cap reason.
     state["close_reason"] = "clinical_cap"
     state["debug"]["turn_trace"].append({
@@ -957,11 +922,9 @@ def _render_clinical_close(
         "debug": state["debug"],
     }
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def _teacher_inputs(
     state: dict,
@@ -971,15 +934,15 @@ def _teacher_inputs(
     is_first_clinical_turn: bool = False,
 ) -> TeacherPromptInputs:
     """Build TeacherPromptInputs from state. Defaults sourced from
-    state where possible; safe fallbacks otherwise.
+ state where possible; safe fallbacks otherwise.
 
-    N4 (POST_DEMO_FIXES.md, 2026-05-06): callers pass
-    `is_first_clinical_turn=True` from `_enter_clinical_phase` so the
-    Teacher's first clinical-mode turn opens with a brief bridging
-    phrase before presenting the scenario. Subsequent clinical turns
-    leave the flag at its False default.
-    """
-    # L78 — generic fallbacks so a missing cfg.domain.* slot still yields
+ callers pass
+ `is_first_clinical_turn=True` from `_enter_clinical_phase` so the
+ Teacher's first clinical-mode turn opens with a brief bridging
+ phrase before presenting the scenario. Subsequent clinical turns
+ leave the flag at its False default.
+"""
+    # generic fallbacks so a missing cfg.domain.* slot still yields
     # a parseable prompt; production callers always override via cfg.
     domain_name = "this subject"
     domain_short = "subject"
@@ -990,7 +953,7 @@ def _teacher_inputs(
     except Exception:
         pass
 
-    # BLOCK 5 (REAL-Q5) — pass snapshots + events from state.debug
+    # pass snapshots + events from state.debug
     _debug_obj = state.get("debug") or {}
     return TeacherPromptInputs(
         chunks=chunks if chunks is not None else list(state.get("retrieved_chunks", []) or []),
@@ -1006,7 +969,6 @@ def _teacher_inputs(
         is_first_clinical_turn=is_first_clinical_turn,
     )
 
-
 def _time_of_day(state: dict) -> str:
     hour = state.get("client_hour")
     try:
@@ -1021,7 +983,6 @@ def _time_of_day(state: dict) -> str:
         return "afternoon"
     return "evening"
 
-
 def _safe_teacher_draft(
     teacher_v2: TeacherV2,
     plan: TurnPlan,
@@ -1030,13 +991,13 @@ def _safe_teacher_draft(
     fallback_text: str = "",
     trace: list[dict],
 ) -> str:
-    """Call teacher_v2.draft(). M-FB: NO templated tutor-text fallback.
+    """Call teacher_v2.draft. : NO templated tutor-text fallback.
 
-    On LLM failure / empty draft, returns "" so caller emits an error
-    card (not a fake tutor reply). The `fallback_text` param is kept for
-    backwards compat and IGNORED — explicit empty-string return is the
-    new contract.
-    """
+ On LLM failure / empty draft, returns "" so caller emits an error
+ card (not a fake tutor reply). The `fallback_text` param is kept for
+ backwards compat and IGNORED — explicit empty-string return is the
+ new contract.
+"""
     _ = fallback_text  # kept for backwards-compat; no longer used
     from conversation.streaming import fire_activity
     _MODE_DRAFTING_LABEL = {
@@ -1104,19 +1065,17 @@ def _safe_teacher_draft(
         })
         return ""
 
-
 def _latest_student(messages: list[dict]) -> str:
     for m in reversed(messages or []):
         if (m or {}).get("role") == "student":
             return str((m or {}).get("content", "") or "")
     return ""
 
-
 def _dean_domain_kwargs() -> dict:
-    """Per L78 — pull domain-aware kwargs (name, short, clinical_scenario_style)
-    from the active cfg so Dean's prompt is rendered in domain-appropriate
-    framing. Returns generic fallbacks if cfg is missing so unit tests
-    that bypass cfg keep working."""
+    """Per — pull domain-aware kwargs (name, short, clinical_scenario_style)
+ from the active cfg so Dean's prompt is rendered in domain-appropriate
+ framing. Returns generic fallbacks if cfg is missing so unit tests
+ that bypass cfg keep working."""
     try:
         from config import cfg as _cfg
         return {
@@ -1129,24 +1088,22 @@ def _dean_domain_kwargs() -> dict:
     except Exception:
         return {"domain_name": "this subject", "domain_short": "subject"}
 
-
 def _last_scenario_from_history(state: dict) -> str:
     """Walk clinical_history backwards to find the most recent
-    `scenario` field set by _enter_clinical_phase. Empty if none."""
+ `scenario` field set by _enter_clinical_phase. Empty if none."""
     history = state.get("clinical_history") or []
     for entry in reversed(history):
         if isinstance(entry, dict) and entry.get("scenario"):
             return str(entry["scenario"])
     return ""
 
-
 def _clinical_response_hits_locked_target(state: dict, student_msg: str) -> bool:
     """Fast completion gate for the first clinical application answer.
 
-    The clinical scenario is generated from the same locked concept. If the
-    student explicitly uses the locked answer or an alias in their clinical
-    explanation, the bonus objective is satisfied and the phase can close.
-    """
+ The clinical scenario is generated from the same locked concept. If the
+ student explicitly uses the locked answer or an alias in their clinical
+ explanation, the bonus objective is satisfied and the phase can close.
+"""
     txt = re.sub(r"\s+", " ", (student_msg or "").strip().lower())
     if not txt:
         return False
@@ -1154,7 +1111,6 @@ def _clinical_response_hits_locked_target(state: dict, student_msg: str) -> bool
     terms.extend(str(a).strip().lower() for a in state.get("locked_answer_aliases", []) or [])
     terms = [t for t in terms if t]
     return any(term in txt for term in terms)
-
 
 _YES_TOKENS = {
     "yes", "y", "yeah", "yep", "yup", "sure", "ok", "okay",
@@ -1169,15 +1125,14 @@ _NO_TOKENS = {
 }
 _NEGATION_TOKENS = {"not", "no", "n't", "nope", "nah"}
 
-
 def _classify_opt_in(student_msg: str, state: Optional[dict] = None) -> str:
     """Return 'yes', 'no', or 'ambiguous'.
 
-    M7: replaces the legacy regex with the unified Haiku intent classifier.
-    Fast-path for canonical strings (no Haiku call) avoids ~$0.0003 on the
-    common case. State context (locked subsection, recent turns) lets the
-    classifier disambiguate substantive replies that the regex over-rejected.
-    """
+ : replaces the legacy regex with the unified Haiku intent classifier.
+ Fast-path for canonical strings (no Haiku call) avoids ~$0.0003 on the
+ common case. State context (locked subsection, recent turns) lets the
+ classifier disambiguate substantive replies that the regex over-rejected.
+"""
     txt = re.sub(r"\s+", " ", (student_msg or "").strip().lower())
     if not txt:
         return "ambiguous"
@@ -1208,12 +1163,14 @@ def _classify_opt_in(student_msg: str, state: Optional[dict] = None) -> str:
                 history_pairs.append((cur_tutor, content))
                 cur_tutor = ""
         history_pairs = history_pairs[-2:]
+    from config import cfg as _cfg_optin
     result = _C.haiku_intent_classify_unified(
         student_msg,
         history_pairs=history_pairs,
         locked_subsection=locked_sub,
         locked_question=locked_q,
         phase="assessment",
+        domain_name=str(getattr(_cfg_optin.domain, "name", "") or ""),
     )
     verdict = result.get("verdict", "opt_in_ambiguous")
     if verdict == "opt_in_yes":

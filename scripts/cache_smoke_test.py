@@ -1,33 +1,29 @@
 """
 scripts/cache_smoke_test.py
----------------------------
 Verify whether Anthropic prompt caching is actually firing in the current
 production pipeline.
 
 Why this exists
----------------
-The forward plan (2026-04-22) flagged "cache hit rate is 0% in
+The forward plan flagged "cache hit rate is 0% in
 production due to a history-in-cached-block bug." Code inspection
 (conversation/dean.py:111) confirms history is folded into the cached
 prefix, so the prefix bytes change every turn. But telemetry on the
-current pipeline was last captured 2026-04-20 (pre-rebuild) and tonight's
+current pipeline was last captured (pre-rebuild) and tonight's
 saved JSONs strip per-call cache fields. Need fresh evidence before
 committing to a 1.5-hour cache-restructure fix.
 
 What this does
---------------
-Runs a single S2-Moderate conversation for ~3 turns end-to-end via the
+Runs a single -Moderate conversation for ~3 turns end-to-end via the
 real graph. Patches the Anthropic client to log `cache_read_input_tokens`
-and `cache_creation_input_tokens` from EVERY messages.create() response
+and `cache_creation_input_tokens` from EVERY messages.create response
 to stdout, tagged with the wrapper that made the call.
 
 Output: per-turn / per-call cache_read and cache_write, plus a final
 summary. If cache_read is 0 across all turns, the bug is confirmed.
 
 Usage
------
-  cd /Users/arun-ghontale/UB/NLP/sokratic
-  SOKRATIC_RETRIEVER=chunks .venv/bin/python scripts/cache_smoke_test.py
+cd /Users/arun-ghontale/UB/NLP/sokratic
+ SOKRATIC_RETRIEVER=chunks .venv/bin/python scripts/cache_smoke_test.py
 """
 from __future__ import annotations
 
@@ -51,7 +47,6 @@ import anthropic  # noqa: E402
 
 _CACHE_LOG: list[dict] = []
 _CALL_INDEX = {"n": 0}
-
 
 def _patched_messages_create(self, *args, **kwargs):
     # The dean/teacher pass cache_control via system blocks; any Anthropic
@@ -79,7 +74,6 @@ def _patched_messages_create(self, *args, **kwargs):
     )
     return resp
 
-
 # Patch the Messages.create class methods directly. The Anthropic SDK
 # attaches `messages` as a cached_property on the client, so we have to
 # patch the underlying Messages class, not client.messages.
@@ -88,7 +82,6 @@ def _install_patch():
     if not hasattr(Messages, "_original_messages_create"):
         Messages._original_messages_create = Messages.create
         Messages.create = _patched_messages_create
-
 
 _install_patch()
 
@@ -99,7 +92,6 @@ from memory.memory_manager import MemoryManager  # noqa: E402
 from evaluation.simulation.profiles import PROFILES  # noqa: E402
 from evaluation.simulation.student_simulator import StudentSimulator  # noqa: E402
 from config import cfg  # noqa: E402
-
 
 async def main():
     # Default to chunks-mode retriever (matches the production target).
@@ -123,7 +115,7 @@ async def main():
     graph = build_graph(retriever, memory_manager)
     print("Graph built. Starting 3-turn conversation...\n", flush=True)
 
-    # 3-turn S2 (Moderate) conversation. We pick a topic that is in-corpus
+    # 3-turn (Moderate) conversation. We pick a topic that is in-corpus
     # so the conversation stays on rails — what we're measuring is cache
     # behavior, not retrieval behavior.
     topic = "How does the body regulate blood pressure through neural mechanisms?"
@@ -213,7 +205,6 @@ async def main():
         ratio = total_cr / max(total_cr + total_in, 1)
         print(f"✅ cache_read > 0 ({total_cr} tokens, {ratio*100:.1f}% of input).")
     print("=" * 70)
-
 
 if __name__ == "__main__":
     asyncio.run(main())

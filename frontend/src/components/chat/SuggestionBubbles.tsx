@@ -1,5 +1,5 @@
 /**
- * SuggestionBubbles — N8 (POST_DEMO_FIXES.md, 2026-05-06)
+ * SuggestionBubbles — N8
  *
  * Renders 4 student-reply suggestion bubbles below a tutor message
  * when the "Suggest answers" toggle is on. Click → submits the bubble
@@ -27,7 +27,7 @@ interface Props {
 }
 
 // Color token → tailwind classes. Mirrors backend _color_for_kind.
-// 2026-05-06 demo-feedback: bubble TEXT colour was matching the
+// bubble TEXT colour was matching the
 // background tint (e.g. emerald text on emerald-tinted bg), which made
 // it nearly unreadable. Border keeps the kind cue; text now uses
 // high-contrast neutral (`text-foreground`) so the suggestion is easy

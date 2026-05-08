@@ -1,27 +1,17 @@
 """
-conversation/verifier_quartet.py
-─────────────────────────────────
-4 post-draft Haiku safety checks (verifier quartet) + result adapter.
+Four Haiku safety checks that run on every Teacher draft before it
+ships to the student:
 
-Lifecycle: AFTER Teacher draft, BEFORE delivering to student. If any
-check flags the draft, the retry orchestrator either rewrites or falls
-back to SAFE_GENERIC_PROBE.
+  haiku_hint_leak_check    — does the draft leak the locked answer,
+                             aliases, or chunk content?
+  haiku_sycophancy_check   — does it confirm a wrong claim or over-praise?
+  haiku_shape_check        — does it match the TurnPlan's shape spec?
+  haiku_pedagogy_check     — does it preserve Socratic stance?
 
-Checks:
-  haiku_hint_leak_check    — does draft leak locked_answer / aliases / chunk content?
-  haiku_sycophancy_check   — does draft confirm a wrong claim or over-praise?
-  haiku_shape_check        — does draft conform to plan.shape_spec?
-  haiku_pedagogy_check     — does draft preserve Socratic stance?
-
-Plus to_universal_check_result — adapter to the universal
-{pass, reason, evidence} shape consumed by the retry orchestrator.
-
-Shared infrastructure (_haiku_call, _extract_json, _validate_evidence,
-_cached_system_block, model constants) lives in conversation/classifiers.py
-and is imported below.
-
-Ported during D3 (architectural split). Behavior unchanged — pure
-namespace move from a colocated 1120-line classifiers.py.
+If any check fails the retry orchestrator rewrites the draft or
+falls back to a deterministic safe template. The shared client,
+JSON extractor, and evidence validator live in
+`conversation/classifiers.py`.
 """
 from __future__ import annotations
 
@@ -36,7 +26,6 @@ from conversation.classifiers import (
     _validate_evidence,
     _cached_system_block,
 )
-
 
 _HINT_LEAK_SYSTEM = """\
 You are a teaching-quality reviewer for a Socratic anatomy tutor.
@@ -153,7 +142,6 @@ cannot quote a specific phrase, return verdict="clean" with empty
 evidence.
 """
 
-
 _HINT_LEAK_USER_TEMPLATE = """\
 LOCKED QUESTION (what the student is being asked to produce):
 {locked_question}
@@ -181,7 +169,6 @@ CONTEXT-AWARE LEAK CHECK:
 
 Return only the JSON object."""
 
-
 def haiku_hint_leak_check(
     draft: str,
     locked_answer: str,
@@ -189,26 +176,26 @@ def haiku_hint_leak_check(
     locked_question: str = "",
 ) -> dict:
     """Detect verbatim mention / hint-3 / morphology / etymology / blank /
-    MCQ / synonym / acronym leaks. Asymmetric retry-on-clean for safety.
+ MCQ / synonym / acronym leaks. Asymmetric retry-on-clean for safety.
 
-    Wraps `_haiku_hint_leak_check_once` with a confirmation pass:
-      - Call once. If verdict='leak' → trust it (fast path).
-      - If verdict='clean' → call ONCE more to confirm (slow path).
-      - If second call says 'leak' → return leak (per the prompt's stated
-        asymmetric-stakes rule: "When genuinely ambiguous, prefer leak.").
-      - If both 'clean' → confidently clean.
+ Wraps `_haiku_hint_leak_check_once` with a confirmation pass:
+Call once. If verdict='leak' → trust it (fast path).
+If verdict='clean' → call ONCE more to confirm (slow path).
+If second call says 'leak' → return leak (per the prompt's stated
+ asymmetric-stakes rule: "When genuinely ambiguous, prefer leak.").
+If both 'clean' → confidently clean.
 
-    Why: Bedrock Haiku at temp=0 is non-deterministic (~30% miss rate
-    observed on the V1 baseline draft "starts with letter P" across 10
-    serial calls). The double-check on `clean` drops miss rate to ~9%.
-    Cost is asymmetric: leaks remain 1 call, cleans cost 2 calls. The
-    L1 leak guard is the highest-stakes verifier — favour latency over
-    silent false negatives.
+ Why: Bedrock Haiku at temp=0 is non-deterministic (~30% miss rate
+ observed on the V1 baseline draft "starts with letter P" across 10
+ serial calls). The double-check on `clean` drops miss rate to ~9%.
+ Cost is asymmetric: leaks remain 1 call, cleans cost 2 calls. The
+ leak guard is the highest-stakes verifier — favour latency over
+ silent false negatives.
 
-    Returns same dict shape as `_haiku_hint_leak_check_once` plus a
-    `_consensus` field: "first_leak" | "split_first_clean_second_leak"
-    | "both_clean".
-    """
+ Returns same dict shape as `_haiku_hint_leak_check_once` plus a
+ `_consensus` field: "first_leak" | "split_first_clean_second_leak"
+ | "both_clean".
+"""
     first = _haiku_hint_leak_check_once(draft, locked_answer, aliases, locked_question)
     if first.get("verdict") == "leak":
         first["_consensus"] = "first_leak"
@@ -231,7 +218,6 @@ def haiku_hint_leak_check(
     )
     return first
 
-
 def _haiku_hint_leak_check_once(
     draft: str,
     locked_answer: str,
@@ -239,23 +225,23 @@ def _haiku_hint_leak_check_once(
     locked_question: str = "",
 ) -> dict:
     """Single-shot leak check (no retry). The public wrapper above adds
-    a confirmation pass on `clean` verdicts. Use this directly only when
-    you specifically need the raw single-call behavior (e.g. from a
-    panel test that's measuring single-call accuracy).
+ a confirmation pass on `clean` verdicts. Use this directly only when
+ you specifically need the raw single-call behavior (e.g. from a
+ panel test that's measuring single-call accuracy).
 
-    Returns dict:
-      verdict:    "leak" | "clean"
-      leak_type:  "letter" | "blank" | "etymology" | "mcq" | "synonym" |
-                  "acronym" | ""
-      evidence:   verbatim substring of the draft, or "" if clean
-      rationale:  1-sentence explanation
-      _elapsed_s: wall time of the LLM call
-      _raw:       raw response text (for debug)
-      _error:     "parse_fail" | "evidence_invalid" | "" (empty on success)
+ Returns dict:
+ verdict: "leak" | "clean"
+ leak_type: "letter" | "blank" | "etymology" | "mcq" | "synonym" |
+ "acronym" | ""
+ evidence: verbatim substring of the draft, or "" if clean
+ rationale: 1-sentence explanation
+ _elapsed_s: wall time of the LLM call
+ _raw: raw response text (for debug)
+ _error: "parse_fail" | "evidence_invalid" | "" (empty on success)
 
-    Safe defaults on error: verdict="clean" (don't false-fire on
-    parser issues; Dean QC will re-examine).
-    """
+ Safe defaults on error: verdict="clean" (don't false-fire on
+ parser issues; Dean QC will re-examine).
+"""
     t0 = time.time()
     if not draft or not (locked_answer or "").strip():
         return {
@@ -310,9 +296,8 @@ def _haiku_hint_leak_check_once(
         "_error": error,
     }
 
-
 # ─────────────────────────────────────────────────────────────────────
-#                     CLASSIFIER 2 — SYCOPHANCY
+# CLASSIFIER 2 — SYCOPHANCY
 # ─────────────────────────────────────────────────────────────────────
 
 _SYCOPHANCY_SYSTEM = """\
@@ -405,7 +390,6 @@ The "evidence" field MUST be a verbatim substring of the draft. If you
 cannot quote a specific phrase, return verdict="clean".
 """
 
-
 _SYCOPHANCY_USER_TEMPLATE = """\
 Student state on this turn: {student_state}
 Reach gate fired this turn: {reach_fired}
@@ -415,16 +399,15 @@ DRAFT TUTOR RESPONSE TO REVIEW:
 
 Return only the JSON object."""
 
-
 def haiku_sycophancy_check(draft: str, student_state: str, reach_fired: bool = False) -> dict:
     """Detect sycophantic affirmation. Asymmetric retry-on-clean wrapper.
 
-    Bedrock Haiku at temp=0 has ~30% non-determinism on borderline cases.
-    A single 'clean' verdict may be a false negative that ships sycophantic
-    text to a student. This wrapper retries on `clean` to cut miss rate
-    from ~30% to ~9% (9% = chance both calls miss). On `sycophantic`,
-    trusts the first call (fast path).
-    """
+ Bedrock Haiku at temp=0 has ~30% non-determinism on borderline cases.
+ A single 'clean' verdict may be a false negative that ships sycophantic
+ text to a student. This wrapper retries on `clean` to cut miss rate
+ from ~30% to ~9% (9% = chance both calls miss). On `sycophantic`
+ trusts the first call (fast path).
+"""
     first = _haiku_sycophancy_check_once(draft, student_state, reach_fired)
     if first.get("verdict") == "sycophantic":
         first["_consensus"] = "first_sycophantic"
@@ -442,21 +425,20 @@ def haiku_sycophancy_check(draft: str, student_state: str, reach_fired: bool = F
     )
     return first
 
-
 def _haiku_sycophancy_check_once(draft: str, student_state: str, reach_fired: bool = False) -> dict:
     """Single-shot sycophancy check (no retry). Public wrapper above adds
-    a confirmation pass on `clean` verdicts.
+ a confirmation pass on `clean` verdicts.
 
-    Returns dict:
-      verdict:    "sycophantic" | "clean"
-      evidence:   verbatim substring of the draft, or ""
-      rationale:  1-sentence explanation
-      _elapsed_s: wall time of the LLM call
-      _raw:       raw response text
-      _error:     "parse_fail" | "evidence_invalid" | "" on success
+ Returns dict:
+ verdict: "sycophantic" | "clean"
+ evidence: verbatim substring of the draft, or ""
+ rationale: 1-sentence explanation
+ _elapsed_s: wall time of the LLM call
+ _raw: raw response text
+ _error: "parse_fail" | "evidence_invalid" | "" on success
 
-    Safe default on error: verdict="clean".
-    """
+ Safe default on error: verdict="clean".
+"""
     t0 = time.time()
     if not (draft or "").strip():
         return {
@@ -504,9 +486,8 @@ def _haiku_sycophancy_check_once(draft: str, student_state: str, reach_fired: bo
         "_error": error,
     }
 
-
 # ─────────────────────────────────────────────────────────────────────
-#                     CLASSIFIER 3 — OFF-DOMAIN
+# CLASSIFIER 3 — OFF-DOMAIN
 # ─────────────────────────────────────────────────────────────────────
 
 _SHAPE_CHECK_SYSTEM = """\
@@ -561,7 +542,6 @@ Output STRICT JSON only — no markdown, no preamble:
 The draft passes overall iff ALL five sub-checks pass.
 """
 
-
 _SHAPE_CHECK_USER_TEMPLATE = """\
 SHAPE CONSTRAINTS:
   max_sentences: {max_sentences}
@@ -577,7 +557,6 @@ DRAFT TO CHECK:
 {draft}
 """
 
-
 def haiku_shape_check(
     draft: str,
     *,
@@ -588,12 +567,12 @@ def haiku_shape_check(
 ) -> dict:
     """Asymmetric retry-on-pass wrapper around _haiku_shape_check_once.
 
-    Bedrock Haiku flakes ~30% on borderline cases. A single `pass=True`
-    verdict may miss a real shape violation (no question, wrong sentence
-    count, etc.). This wrapper retries on pass=True; if the second call
-    says pass=False, returns that (asymmetric stakes — prefer the
-    fail-flag when in doubt).
-    """
+ Bedrock Haiku flakes ~30% on borderline cases. A single `pass=True`
+ verdict may miss a real shape violation (no question, wrong sentence
+ count, etc.). This wrapper retries on pass=True; if the second call
+ says pass=False, returns that (asymmetric stakes — prefer the
+ fail-flag when in doubt).
+"""
     first = _haiku_shape_check_once(
         draft, shape_spec=shape_spec, hint_level=hint_level,
         hint_text=hint_text, prior_tutor_questions=prior_tutor_questions,
@@ -617,7 +596,6 @@ def haiku_shape_check(
     )
     return first
 
-
 def _haiku_shape_check_once(
     draft: str,
     *,
@@ -626,14 +604,14 @@ def _haiku_shape_check_once(
     hint_text: str = "",
     prior_tutor_questions: list[str] | None = None,
 ) -> dict:
-    """L48 #3 + L59 — five sub-checks in ONE Haiku call, no regex.
+    """ #3 + — five sub-checks in ONE Haiku call, no regex.
 
-    Returns dict with universal L61 schema (pass/reason/evidence) plus
-    a `checks` sub-dict for fine-grained failure attribution.
+ Returns dict with universal schema (pass/reason/evidence) plus
+ a `checks` sub-dict for fine-grained failure attribution.
 
-    Safe defaults on error: pass=True (don't false-fire on parser
-    issues; downstream Haiku checks will catch real problems).
-    """
+ Safe defaults on error: pass=True (don't false-fire on parser
+ issues; downstream Haiku checks will catch real problems).
+"""
     t0 = time.time()
     if not draft:
         return {
@@ -694,9 +672,8 @@ def _haiku_shape_check_once(
         "_error": error,
     }
 
-
 # ─────────────────────────────────────────────────────────────────────
-#                  CLASSIFIER 5 — PEDAGOGY CHECK (L48 #4, L60)
+# CLASSIFIER 5 — PEDAGOGY CHECK ( #4)
 # ─────────────────────────────────────────────────────────────────────
 
 _PEDAGOGY_CHECK_SYSTEM = """\
@@ -729,7 +706,6 @@ Output STRICT JSON only — no markdown, no preamble:
 The draft passes overall iff BOTH sub-checks pass.
 """
 
-
 _PEDAGOGY_CHECK_USER_TEMPLATE = """\
 LOCKED SUBSECTION: {locked_subsection}
 LOCKED ANCHOR QUESTION: {locked_question}
@@ -737,7 +713,6 @@ LOCKED ANCHOR QUESTION: {locked_question}
 DRAFT TO CHECK:
 {draft}
 """
-
 
 def haiku_pedagogy_check(
     draft: str,
@@ -747,9 +722,9 @@ def haiku_pedagogy_check(
 ) -> dict:
     """Asymmetric retry-on-pass wrapper around _haiku_pedagogy_check_once.
 
-    Same pattern as shape/leak/sycophancy: retry on pass=True to catch
-    Bedrock Haiku's ~30% false-negative rate on borderline cases.
-    """
+ Same pattern as shape/leak/sycophancy: retry on pass=True to catch
+ Bedrock Haiku's ~30% false-negative rate on borderline cases.
+"""
     first = _haiku_pedagogy_check_once(
         draft, locked_subsection=locked_subsection,
         locked_question=locked_question,
@@ -773,20 +748,19 @@ def haiku_pedagogy_check(
     )
     return first
 
-
 def _haiku_pedagogy_check_once(
     draft: str,
     *,
     locked_subsection: str = "",
     locked_question: str = "",
 ) -> dict:
-    """L48 #4 + L60 — verifies EULER relevance + helpful in ONE Haiku call.
+    """ #4 + — verifies EULER relevance + helpful in ONE Haiku call.
 
-    Returns dict with universal L61 schema (pass/reason/evidence) plus
-    a `checks` sub-dict.
+ Returns dict with universal schema (pass/reason/evidence) plus
+ a `checks` sub-dict.
 
-    Safe defaults on error: pass=True (avoid false-firing).
-    """
+ Safe defaults on error: pass=True (avoid false-firing).
+"""
     t0 = time.time()
     if not draft:
         return {
@@ -835,29 +809,27 @@ def _haiku_pedagogy_check_once(
         "_error": error,
     }
 
-
 # ─────────────────────────────────────────────────────────────────────
-#                  UNIVERSAL ADAPTER (L61)
+# UNIVERSAL ADAPTER
 # ─────────────────────────────────────────────────────────────────────
-
 
 def to_universal_check_result(
     legacy_result: dict,
     *,
     check_name: str,
 ) -> dict:
-    """Normalize any classifier output to the L61 universal schema.
+    """Normalize any classifier output to the universal schema.
 
-    Per L61 every Haiku check (4 self-policing + 3 pre-flight) reports:
-      {pass: bool, reason: str, evidence: str}
-    The 3 pre-existing classifiers (haiku_hint_leak_check,
-    haiku_sycophancy_check, haiku_off_domain_check) use a verdict-string
-    schema instead. This adapter maps both shapes to the same canonical
-    one so the L62 retry feedback loop can iterate uniformly.
+ Per every Haiku check (4 self-policing + 3 pre-flight) reports:
+ {pass: bool, reason: str, evidence: str}
+ The 3 pre-existing classifiers (haiku_hint_leak_check
+ haiku_sycophancy_check, haiku_off_domain_check) use a verdict-string
+ schema instead. This adapter maps both shapes to the same canonical
+ one so the retry feedback loop can iterate uniformly.
 
-    Adds `_check_name` so trace consumers know which check fired without
-    having to inspect call shape.
-    """
+ Adds `_check_name` so trace consumers know which check fired without
+ having to inspect call shape.
+"""
     # Already in the universal shape? (haiku_shape_check / haiku_pedagogy_check)
     if "pass" in legacy_result:
         return {
@@ -878,7 +850,7 @@ def to_universal_check_result(
         "haiku_leak_check":       {"leak"},
         "haiku_sycophancy_check": {"sycophantic"},
         # off_domain accepts the binary "off_domain" verdict (current impl)
-        # AND the granular L56 set (future). Either signals fail.
+        # AND the granular set (future). Either signals fail.
         "haiku_off_domain_check": {"off_domain", "substance", "chitchat",
                                     "jailbreak", "answer_demand"},
     }
@@ -896,8 +868,7 @@ def to_universal_check_result(
         "_error": legacy_result.get("_error", ""),
     }
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# M7 — Unified intent classifier (replaces 3 separate Haiku calls)
+# Unified intent classifier (replaces 3 separate Haiku calls)
 # ─────────────────────────────────────────────────────────────────────────────
 

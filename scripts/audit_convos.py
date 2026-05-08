@@ -1,23 +1,22 @@
 """
 scripts/audit_convos.py
------------------------
 Quality audit of saved conversations from a scaled run. Produces a markdown
 report with per-convo summary + flagged quality issues for manual review.
 
 For each conversation:
-  - Pulls the locked_question + locked_answer (the system's pedagogical anchor)
-  - Renders the message turns
-  - Flags potential issues:
-      * answer_reveal: locked_answer terms appear in tutor messages before
-        the student says them
-      * off_topic_drift: tutor's content diverges from locked_question
-      * sycophancy: tutor confirms wrong student claims
-      * generic_filler: tutor messages with no concrete next-step question
-      * stuck_loop: same question repeated across turns
-  - Produces a "quality_score_human" placeholder for the reader to fill in
+Pulls the locked_question + locked_answer (the system's pedagogical anchor)
+Renders the message turns
+Flags potential issues:
+ * answer_reveal: locked_answer terms appear in tutor messages before
+ the student says them
+ * off_topic_drift: tutor's content diverges from locked_question
+ * sycophancy: tutor confirms wrong student claims
+ * generic_filler: tutor messages with no concrete next-step question
+ * stuck_loop: same question repeated across turns
+Produces a "quality_score_human" placeholder for the reader to fill in
 
 Usage:
-  python scripts/audit_convos.py data/artifacts/scaled_convo/<run_dir>
+ python scripts/audit_convos.py
 """
 from __future__ import annotations
 
@@ -29,19 +28,16 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
-
 def normalize(s: str) -> str:
     return re.sub(r"\s+", " ", (s or "").lower()).strip()
-
 
 def content_tokens(s: str) -> set[str]:
     s = re.sub(r"[^a-z0-9 ]+", " ", normalize(s))
     return {t for t in s.split() if len(t) >= 4}
 
-
 def detect_answer_reveal(tutor_msgs: list[str], locked_answer: str) -> bool:
     """True if the tutor's pre-assessment messages contain >=70% of the
-    answer's content tokens."""
+ answer's content tokens."""
     if not locked_answer.strip():
         return False
     ans_toks = content_tokens(locked_answer)
@@ -54,10 +50,9 @@ def detect_answer_reveal(tutor_msgs: list[str], locked_answer: str) -> bool:
             return True
     return False
 
-
 def detect_repetition(tutor_msgs: list[str]) -> int:
     """Count how many tutor messages share substantial content with an
-    earlier tutor message (>=80% token overlap)."""
+ earlier tutor message (>=80% token overlap)."""
     n_repeats = 0
     seen_token_sets: list[set[str]] = []
     for msg in tutor_msgs:
@@ -75,10 +70,9 @@ def detect_repetition(tutor_msgs: list[str]) -> int:
         seen_token_sets.append(toks)
     return n_repeats
 
-
 def detect_off_topic(tutor_msgs: list[str], locked_question: str) -> bool:
     """Loose check: of the locked_question's content tokens, do at least 30%
-    appear across the tutor's turns? If less, the tutor probably drifted."""
+ appear across the tutor's turns? If less, the tutor probably drifted."""
     q_toks = content_tokens(locked_question)
     if not q_toks:
         return False
@@ -88,10 +82,9 @@ def detect_off_topic(tutor_msgs: list[str], locked_question: str) -> bool:
     overlap = len(q_toks & pooled) / max(len(q_toks), 1)
     return overlap < 0.30
 
-
 def detect_generic_filler(tutor_msg: str) -> bool:
     """A message that ends with no question mark AND <12 words is likely
-    filler / sycophancy / closing rather than a Socratic step."""
+ filler / sycophancy / closing rather than a Socratic step."""
     msg = (tutor_msg or "").strip()
     if not msg:
         return False
@@ -102,7 +95,6 @@ def detect_generic_filler(tutor_msg: str) -> bool:
         # No question and short — not driving the next step
         return True
     return False
-
 
 def audit_convo(path: Path) -> dict:
     d = json.load(open(path))
@@ -149,7 +141,7 @@ def audit_convo(path: Path) -> dict:
     if n_filler >= 3:
         flags.append(f"generic_filler_x{n_filler}")
 
-    # Sample tutor turns: rapport, topic-engagement, first 2 tutoring turns,
+    # Sample tutor turns: rapport, topic-engagement, first 2 tutoring turns
     # last 2 turns
     sample_turns = []
     if len(msgs) > 0:
@@ -177,7 +169,6 @@ def audit_convo(path: Path) -> dict:
         "sample_turns": sample_turns,
         "locked_answer": locked_answer_text,
     }
-
 
 def render_report(audits: list[dict], run_label: str) -> str:
     lines: list[str] = []
@@ -230,7 +221,6 @@ def render_report(audits: list[dict], run_label: str) -> str:
 
     return "\n".join(lines)
 
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("run_dir", help="data/artifacts/scaled_convo/<run> directory")
@@ -252,7 +242,6 @@ def main():
     with open(out_path, "w") as f:
         f.write(md)
     print(f"\nReport saved → {out_path}")
-
 
 if __name__ == "__main__":
     main()

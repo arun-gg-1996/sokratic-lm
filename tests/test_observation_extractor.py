@@ -25,7 +25,6 @@ from memory.observation_extractor import (
     extract_observations,
 )
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Mock Anthropic client
 # ─────────────────────────────────────────────────────────────────────────────
@@ -34,11 +33,9 @@ from memory.observation_extractor import (
 class _MockContent:
     text: str
 
-
 @dataclass
 class _MockResponse:
     content: list
-
 
 class MockClient:
     def __init__(self, response_text: str = "", raise_exc: Exception | None = None):
@@ -55,7 +52,6 @@ class MockClient:
         if self.raise_exc:
             raise self.raise_exc
         return _MockResponse(content=[_MockContent(text=self.response_text)])
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Fixtures
@@ -86,7 +82,6 @@ def base_state() -> dict:
         ],
     }
 
-
 GOOD_RESPONSE = json.dumps({
     "misconceptions": [
         {"text": "Student initially thought the deltoid initiates shoulder abduction at 0-15°, but the supraspinatus is responsible for that range.",
@@ -97,7 +92,6 @@ GOOD_RESPONSE = json.dumps({
          "evidence": "i'm not sure, maybe the trapezius?"},
     ],
 })
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Happy path
@@ -112,11 +106,9 @@ def test_extract_returns_both_categories(base_state):
     misc = next(o for o in out if o.category == "misconception")
     assert "supraspinatus" in misc.text
 
-
 def test_categories_restricted():
-    """Only misconception + learning_style are allowed (per L1)."""
+    """Only misconception + learning_style are allowed ()."""
     assert ALLOWED_CATEGORIES == {"misconception", "learning_style"}
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Resilience
@@ -127,19 +119,16 @@ def test_extract_handles_llm_exception(base_state):
     out = extract_observations(base_state, client=client, model="haiku")
     assert out == []
 
-
 def test_extract_handles_garbage_response(base_state):
     client = MockClient(response_text="this is not json at all")
     out = extract_observations(base_state, client=client, model="haiku")
     assert out == []
-
 
 def test_extract_handles_markdown_fenced_json(base_state):
     fenced = "```json\n" + GOOD_RESPONSE + "\n```"
     client = MockClient(response_text=fenced)
     out = extract_observations(base_state, client=client, model="haiku")
     assert len(out) == 2
-
 
 def test_extract_drops_items_without_text(base_state):
     response = json.dumps({
@@ -154,13 +143,11 @@ def test_extract_drops_items_without_text(base_state):
     out = extract_observations(base_state, client=client, model="haiku")
     assert len(out) == 1 and out[0].text == "valid one"
 
-
 def test_extract_handles_empty_categories(base_state):
     response = json.dumps({"misconceptions": [], "learning_style": []})
     client = MockClient(response_text=response)
     out = extract_observations(base_state, client=client, model="haiku")
     assert out == []
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # State handling
@@ -186,7 +173,6 @@ def test_extract_uses_sticky_snapshot_when_locked_topic_blank():
     prompt = client.last_messages[0]["content"]
     assert "Sarcomere Structure" in prompt
 
-
 def test_extract_handles_no_locked_topic(base_state):
     """No topic at all → LLM still gets a prompt, just with '(unspecified)'."""
     state = {**base_state, "locked_topic": None, "debug": {}, "topic_selection": ""}
@@ -194,7 +180,6 @@ def test_extract_handles_no_locked_topic(base_state):
     out = extract_observations(state, client=client, model="haiku")
     assert "(unspecified)" in client.last_messages[0]["content"]
     assert len(out) == 2  # extractor still works
-
 
 def test_extract_includes_transcript_in_prompt(base_state):
     client = MockClient(response_text=GOOD_RESPONSE)

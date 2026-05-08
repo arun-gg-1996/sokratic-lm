@@ -1,33 +1,32 @@
 """
 scripts/eval_legacy_compare.py
-------------------------------
 Run the legacy 231-row test set (data/eval/rag_qa_expanded.jsonl) through
 the CURRENT (v4) retriever and compare against the saved Apr-21 baseline.
 
 Why this script exists separately from eval_realistic.py:
-  - The legacy set scores hits by `source_chunk_id` exact match. Those UUIDs
-    only exist in the OLD corpus (Qdrant `domain="ot"`), which is gone.
-  - Running the OLD retriever end-to-end is impossible without rebuilding
-    that Qdrant collection.
-  - So we score with a PIPELINE-INVARIANT metric — content-word overlap
-    between the row's `expected_answer` sentence and the text of any
-    retrieved chunk. If a retriever (old OR new) put the answer text in
-    front of the LLM, we call that a hit.
+The legacy set scores hits by `source_chunk_id` exact match. Those UUIDs
+ only exist in the OLD corpus (Qdrant `domain="ot"`), which is gone.
+Running the OLD retriever end-to-end is impossible without rebuilding
+ that Qdrant collection.
+So we score with a PIPELINE-INVARIANT metric — content-word overlap
+ between the row's `expected_answer` sentence and the text of any
+ retrieved chunk. If a retriever (old OR new) put the answer text in
+ front of the LLM, we call that a hit.
 
 Three metrics per row:
-  - answer_in_text@k : pipeline-invariant. Apples-to-apples bridge.
-  - section_match    : is any retrieved chunk's section_title equal to
-                       the test row's section_title (after stripping the
-                       "NN.N " chapter prefix and the " — subsection" suffix
-                       that the old set jammed into one field)?
-  - chapter_match    : loose. Any retrieved chunk in the right chapter_num.
+answer_in_text@k : pipeline-invariant. Apples-to-apples bridge.
+section_match : is any retrieved chunk's section_title equal to
+ the test row's section_title (after stripping the
+ "NN.N " chapter prefix and the " — subsection" suffix
+ that the old set jammed into one field)?
+chapter_match : loose. Any retrieved chunk in the right chapter_num.
 
 OOD rows (`question_type == "ood_negative"`) score on refusal — empty result
 is correct.
 
 Usage:
-  cd /Users/arun-ghontale/UB/NLP/sokratic
-  .venv/bin/python scripts/eval_legacy_compare.py
+ cd /Users/arun-ghontale/UB/NLP/sokratic
+ .venv/bin/python scripts/eval_legacy_compare.py
 """
 from __future__ import annotations
 
@@ -51,7 +50,7 @@ EVAL_PATH = ROOT / "data/eval/rag_qa_expanded.jsonl"
 OUT_DIR = ROOT / "data/eval"
 
 # Saved Apr-21 baseline (the OLD pipeline on this exact 231-row file).
-# Source: data/eval/eval_ab_2026-04-21T19-30-05.json (v1.5 column).
+# Source: data/eval/eval_ab_.json (v1.5 column).
 LEGACY_BASELINE = {
     "n_queries": 231,
     "retrieval_n": 181,             # in-scope rows (231 minus 50 OOD)
@@ -83,28 +82,25 @@ their them they we us our you your he she his her their this can will would
 should could may might must i me my mine
 """.split())
 
-
 def normalize(s: str) -> str:
     s = (s or "").lower()
     s = re.sub(r"[^a-z0-9 ]+", " ", s)
     s = re.sub(r"\s+", " ", s).strip()
     return s
 
-
 def content_tokens(s: str) -> list[str]:
     return [t for t in normalize(s).split() if t not in _STOP and len(t) > 2]
 
-
 def parse_legacy_section(section_title: str) -> tuple[str, str]:
     """
-    Old test set section_title format examples:
-      "11.4 Axial Muscles of the Abdominal Wall, and Thorax — Muscles of the Pelvic Floor and Perineum"
-      "13.4 The Peripheral Nervous System"
-      "11.5 Muscles of the Pectoral Girdle and Upper Limbs — Muscles That Move the Humerus"
+ Old test set section_title format examples:
+ "11.4 Axial Muscles of the Abdominal Wall, and Thorax — Muscles of the Pelvic Floor and Perineum"
+ "13.4 The Peripheral Nervous System"
+ "11.5 Muscles of the Pectoral Girdle and Upper Limbs — Muscles That Move the Humerus"
 
-    Strip the "NN.N " chapter prefix; split on " — " into (L1, L2). Return
-    cleaned (section, subsection). subsection is "" if no L2 was present.
-    """
+ Strip the "NN.N " chapter prefix; split on " — " into . Return
+ cleaned (section, subsection). subsection is "" if no was present.
+"""
     s = (section_title or "").strip()
     # Strip "NN.N " prefix.
     s = re.sub(r"^\d+\.\d+\s+", "", s)
@@ -116,13 +112,12 @@ def parse_legacy_section(section_title: str) -> tuple[str, str]:
         return l1.strip(), l2.strip()
     return s, ""
 
-
 def answer_overlap_hit(expected_answer: str, chunk_text: str, threshold: float = 0.60) -> bool:
     """
-    True if `chunk_text` contains at least `threshold` fraction of the
-    content tokens of `expected_answer`. Robust to paraphrasing/word-order
-    changes that pure substring would miss.
-    """
+ True if `chunk_text` contains at least `threshold` fraction of the
+ content tokens of `expected_answer`. Robust to paraphrasing/word-order
+ changes that pure substring would miss.
+"""
     ans_toks = content_tokens(expected_answer)
     if not ans_toks:
         return False
@@ -131,7 +126,6 @@ def answer_overlap_hit(expected_answer: str, chunk_text: str, threshold: float =
         return False
     matched = sum(1 for t in ans_toks if t in chunk_toks)
     return (matched / len(ans_toks)) >= threshold
-
 
 def score_row(row: dict, chunks: list[dict]) -> dict:
     qtype = row.get("question_type", "")
@@ -234,14 +228,12 @@ def score_row(row: dict, chunks: list[dict]) -> dict:
         "qtype": qtype,
     }
 
-
 def hit_at_k(scores: list[dict], k: int, key: str) -> float:
     rank_key = key + "_rank"
     in_scope = [s for s in scores if not s["ood"]]
     if not in_scope:
         return 0.0
     return sum(1 for s in in_scope if 1 <= s.get(rank_key, -1) <= k) / len(in_scope)
-
 
 def mrr_at(scores: list[dict], key: str) -> float:
     rank_key = key + "_rank"
@@ -250,10 +242,8 @@ def mrr_at(scores: list[dict], key: str) -> float:
         return 0.0
     return sum(1.0 / s[rank_key] for s in in_scope if s.get(rank_key, -1) > 0) / len(in_scope)
 
-
 def fmt_pct(x: float) -> str:
     return f"{x*100:5.1f}%"
-
 
 def main():
     import argparse
@@ -428,7 +418,6 @@ def main():
             "timings": timings_log,
         }, f, indent=2, default=str)
     print(f"\nSaved: {out_path}")
-
 
 if __name__ == "__main__":
     main()

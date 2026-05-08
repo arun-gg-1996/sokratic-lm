@@ -1,28 +1,28 @@
 """
-L19 + L38 — Complete topic_index entries with display_label + raptor summary.
+ + — Complete topic_index entries with display_label + raptor summary.
 
 Per docs/AUDIT_2026-05-02.md:
-  L19. Card Label Text — every topic_index entry MUST have a Sonnet-rewritten
-       display_label (concise student-friendly phrasing).
-  L38. Ingestion Guarantees Summary Per Topic_Index Entry — topic_index AND
-       raptor_subsection_summaries MUST be 1:1 by (chapter, section, subsection).
-       Missing summaries trigger an LLM call to generate one from the
-       subsection's chunks.
+ . Card Label Text — every topic_index entry MUST have a Sonnet-rewritten
+ display_label (concise student-friendly phrasing).
+ . Ingestion Guarantees Summary Per Topic_Index Entry — topic_index AND
+ raptor_subsection_summaries MUST be 1:1 by (chapter, section, subsection).
+ Missing summaries trigger an LLM call to generate one from the
+ subsection's chunks.
 
-This script is the L40 trigger condensed: every topic_index rebuild includes
+This script is the trigger condensed: every topic_index rebuild includes
 both passes, single integration point.
 
 Inputs:
-  data/topic_index.json
-  data/processed/chunks_openstax_anatomy.jsonl  (post-L76)
-  data/artifacts/raptor_subsection_summaries.jsonl
+ data/topic_index.json
+ data/processed/chunks_openstax_anatomy.jsonl (post-)
+ data/artifacts/raptor_subsection_summaries.jsonl
 
 Outputs (in-place, with .pre_l19_l38.bak):
-  data/topic_index.json  (entries gain display_label field)
-  data/artifacts/raptor_subsection_summaries.jsonl  (gains missing entries)
+ data/topic_index.json (entries gain display_label field)
+ data/artifacts/raptor_subsection_summaries.jsonl (gains missing entries)
 
 Usage:
-  .venv/bin/python scripts/l19_l38_topic_index_complete.py [--dry-run] [--limit N] [--concurrency N]
+ .venv/bin/python scripts/l19_l38_topic_index_complete.py [--dry-run] [--limit N] [--concurrency N]
 """
 from __future__ import annotations
 
@@ -54,9 +54,8 @@ RAPTOR_PATH = REPO / "data" / "artifacts" / "raptor_subsection_summaries.jsonl"
 SONNET_MODEL = "claude-sonnet-4-6"
 HAIKU_MODEL = "claude-haiku-4-5-20251001"
 
-# Display label conventions per L19 — concise, student-friendly, anatomical.
+# Display label conventions — concise, student-friendly, anatomical.
 DISPLAY_LABEL_STYLE = "concise student-friendly anatomical phrasing"
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Loaders
@@ -67,7 +66,6 @@ def load_topic_index() -> list[dict]:
     if isinstance(raw, list):
         return raw
     return list(raw.values())
-
 
 def load_chunks_by_subsection() -> dict[tuple, list[dict]]:
     """Group chunks by (chapter_title, section_title, subsection_title)."""
@@ -85,7 +83,6 @@ def load_chunks_by_subsection() -> dict[tuple, list[dict]]:
         out[k].sort(key=lambda c: c.get("sequence_index", 0))
     return out
 
-
 def load_raptor_summaries() -> dict[tuple, dict]:
     out: dict[tuple, dict] = {}
     if not RAPTOR_PATH.exists():
@@ -100,14 +97,12 @@ def load_raptor_summaries() -> dict[tuple, dict]:
         out[k] = s
     return out
 
-
 def topic_index_key(entry: dict) -> tuple:
     return (
         entry.get("chapter") or entry.get("chapter_title") or "",
         entry.get("section") or entry.get("section_title") or "",
         entry.get("subsection") or entry.get("subsection_title") or "",
     )
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # LLM call helpers
@@ -121,7 +116,6 @@ async def call_llm(client, model: str, prompt: str, max_tokens: int = 600) -> st
         messages=[{"role": "user", "content": prompt}],
     )
     return resp.content[0].text.strip()
-
 
 def build_summary_prompt(chapter: str, section: str, subsection: str, chunk_texts: list[str]) -> str:
     joined = "\n\n".join(chunk_texts[:8])  # cap at 8 chunks (~8k chars) to keep prompt size sane
@@ -141,7 +135,6 @@ their relationship. Use precise anatomical terminology. No preamble, no
 markdown — just the paragraph.
 """
 
-
 def build_label_prompt(chapter: str, section: str, subsection: str, summary: str) -> str:
     return f"""You are rewriting a textbook table-of-contents entry into a {DISPLAY_LABEL_STYLE}.
 
@@ -160,7 +153,6 @@ Rules:
 
 Output ONLY the label string.
 """
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Generation
@@ -185,7 +177,6 @@ async def gen_summary(client, entry: dict, chunks_by_sub: dict[tuple, list[dict]
             return {"key": k, "summary": "", "error": f"llm_error: {e}"}
         return {"key": k, "summary": summary, "error": None}
 
-
 async def gen_label(client, entry: dict, summary_text: str, sem) -> dict:
     async with sem:
         k = topic_index_key(entry)
@@ -200,7 +191,6 @@ async def gen_label(client, entry: dict, summary_text: str, sem) -> dict:
         # Single-line guard
         label = label.split("\n")[0].strip()
         return {"key": k, "label": label, "error": None}
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Main
@@ -341,7 +331,6 @@ async def main_async(args):
     if not no_label and not no_sum:
         print("  ✓ L19 + L38 invariants satisfied", flush=True)
 
-
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--dry-run", action="store_true")
@@ -349,7 +338,6 @@ def main():
     p.add_argument("--concurrency", type=int, default=10)
     args = p.parse_args()
     asyncio.run(main_async(args))
-
 
 if __name__ == "__main__":
     main()

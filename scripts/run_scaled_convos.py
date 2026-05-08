@@ -1,39 +1,33 @@
 """
 scripts/run_scaled_convos.py
-----------------------------
 Scaled e2e harness for measuring conversation quality + latency + cost.
 
 Why this exists
----------------
 The original `run_final_convos.py` runs 6 hardcoded conversations — useful
 as a smoke test, useless for tracking iteration impact. This harness:
-
-  - Loads a topic bank (`data/eval/topic_bank_v1.jsonl`) — 30 textbook-
-    answerable topics with profile-specific student phrasings.
-  - Stratifies: 3 seeds × 6 profiles = 18 conversations per run (configurable).
-  - Captures per-call cache stats by patching the Anthropic SDK (same trick
-    used by cache_smoke_test.py).
-  - Aggregates an at-a-glance report: per-profile success rates, per-turn
-    latency p50/p95, cache hit rate, total cost.
+Loads a topic bank (`data/eval/topic_bank_v1.jsonl`) — 30 textbook-
+ answerable topics with profile-specific student phrasings.
+Stratifies: 3 seeds × 6 profiles = 18 conversations per run (configurable).
+Captures per-call cache stats by patching the Anthropic SDK (same trick
+ used by cache_smoke_test.py).
+Aggregates an at-a-glance report: per-profile success rates, per-turn
+ latency p50/p95, cache hit rate, total cost.
 
 Output
-------
-  data/artifacts/scaled_convo/<timestamp>/
-    convo_<profile>_<seed>_<conv_id>.json     — per-convo full state + turns
-    summary.json                               — aggregate metrics
-    summary.txt                                — human-readable report
+
+ convo_<profile>_<seed>_<conv_id>.json — per-convo full state + turns
+ summary.json — aggregate metrics
+ summary.txt — human-readable report
 
 Cost
-----
-  18 conversations × ~$0.30 average = ~$5–7
-  Wall: ~30–45 min
+18 conversations × ~$0.30 average = ~$5–7
+ Wall: ~30–45 min
 
 Usage
------
-  cd /Users/arun-ghontale/UB/NLP/sokratic
-  SOKRATIC_RETRIEVER=chunks .venv/bin/python scripts/run_scaled_convos.py
-  SOKRATIC_RETRIEVER=chunks .venv/bin/python scripts/run_scaled_convos.py --seeds 1   # smoke
-  SOKRATIC_RETRIEVER=chunks .venv/bin/python scripts/run_scaled_convos.py --label cache_fix_v1
+cd /Users/arun-ghontale/UB/NLP/sokratic
+ SOKRATIC_RETRIEVER=chunks .venv/bin/python scripts/run_scaled_convos.py
+ SOKRATIC_RETRIEVER=chunks .venv/bin/python scripts/run_scaled_convos.py --seeds 1 # smoke
+ SOKRATIC_RETRIEVER=chunks .venv/bin/python scripts/run_scaled_convos.py --label cache_fix_v1
 """
 from __future__ import annotations
 
@@ -68,7 +62,6 @@ _current_convo: contextvars.ContextVar[str] = contextvars.ContextVar(
     "scaled_convos_current_id", default=""
 )
 
-
 def _patched_messages_create(self, *args, **kwargs):
     resp = self._original_messages_create(*args, **kwargs)
     usage = getattr(resp, "usage", None)
@@ -83,13 +76,11 @@ def _patched_messages_create(self, *args, **kwargs):
     })
     return resp
 
-
 def _install_patch():
     from anthropic.resources.messages.messages import Messages
     if not hasattr(Messages, "_original_messages_create"):
         Messages._original_messages_create = Messages.create
         Messages.create = _patched_messages_create
-
 
 _install_patch()
 
@@ -105,17 +96,14 @@ TOPIC_BANK_PATH = ROOT / "data/eval/topic_bank_v2.jsonl"  # v2: anatomy-only (Ch
 PROFILES_TO_RUN = ["S1", "S2", "S3", "S4", "S5", "S6"]
 MAX_TURNS_PER_CONVO = 25  # safety cap
 
-
 def load_topic_bank(path: Path) -> list[dict]:
     return [json.loads(l) for l in open(path)]
-
 
 def pick_topics_for_profile(bank: list[dict], profile: str, n: int, rng: random.Random) -> list[dict]:
     """Pick `n` distinct topics from the bank that have a phrasing for this profile."""
     eligible = [t for t in bank if (t.get("queries") or {}).get(profile)]
     rng.shuffle(eligible)
     return eligible[:n]
-
 
 async def run_one_convo(
     profile_id: str,
@@ -195,7 +183,7 @@ async def run_one_convo(
 
     # Score: did retrieval ground the conversation in the right area?
     # We score "on_topic" based on whether ANY of the retrieved chunks the
-    # tutor was working from carry the expected (chapter, section,
+    # tutor was working from carry the expected (chapter, section
     # subsection). State["locked_topic"] is set by the dean but isn't
     # always retained on the LangGraph state at session end (depends on
     # what the most-recent node returned), so retrieved_chunks is the
@@ -286,7 +274,6 @@ async def run_one_convo(
     # doesn't accidentally inherit this convo's id.
     _current_convo.reset(_convo_token)
     return record
-
 
 def aggregate_report(records: list[dict], out_dir: Path, run_label: str) -> None:
     """Build summary.json and summary.txt."""
@@ -395,7 +382,6 @@ def aggregate_report(records: list[dict], out_dir: Path, run_label: str) -> None
         f.write(text_report)
     print(f"\nReport saved → {out_dir.relative_to(ROOT)}/summary.{{json,txt}}")
 
-
 async def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--seeds", type=int, default=3,
@@ -464,19 +450,17 @@ async def main():
     # its own asyncio task; the semaphore caps in-flight conversations to
     # `args.concurrency`. Each task gets its own contextvar value (set inside
     # run_one_convo) so cache-stat attribution stays correct.
-    #
     # Why this gives real parallelism even though dean/teacher use sync
     # `anthropic.Anthropic`: LangGraph's `ainvoke` schedules sync nodes onto
     # an executor thread pool. Multiple awaiting `ainvoke` calls run their
     # nodes on different threads. Network I/O (Anthropic + OpenAI + Qdrant)
     # is the actual time spent, and that I/O happens concurrently across
     # threads.
-    #
     # Concurrency limits:
-    #   - Anthropic Sonnet 4.5 Tier-1 ≈ 50 RPM. Each convo emits ~30-70
-    #     calls over ~2 min ≈ 15-35 RPM peak. Safe up to ~3 concurrent.
-    #   - OpenAI text-embedding-3-large: large rate budget; not a bottleneck.
-    #   - Qdrant: local; not a bottleneck.
+    # - Anthropic Sonnet 4.5 Tier-1 ≈ 50 RPM. Each convo emits ~30-70
+    # calls over ~2 min ≈ 15-35 RPM peak. Safe up to ~3 concurrent.
+    # - OpenAI text-embedding-3-large: large rate budget; not a bottleneck.
+    # - Qdrant: local; not a bottleneck.
     sem = asyncio.Semaphore(max(1, int(args.concurrency)))
 
     async def _run_with_sem(prof, topic, seed_idx, k):
@@ -496,7 +480,6 @@ async def main():
     print(f"\n{'='*60}\nALL CONVOS DONE in {int(time.time()-t_run_start)}s.\n",
           flush=True)
     aggregate_report(list(records), out_dir, run_label=args.label)
-
 
 if __name__ == "__main__":
     asyncio.run(main())

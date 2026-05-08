@@ -5,7 +5,7 @@
  * generated 3 anchor question variations. Student picks WHICH angle they
  * want to work on; that variation's question becomes the locked_question.
  *
- * Visual hierarchy per M4 spec:
+ * Visual hierarchy spec:
  *   Subsection (header — same for all cards)
  *   ▸ Question text (one per card, italic-styled to read like a question)
  */

@@ -6,7 +6,7 @@
  *   2. user clicks the [End session] button in the chat header.
  *
  * Modal shows 2 buttons: [Cancel] / [End session]. End-session always
- * means "no save" — confirmed UX decision (per M1 spec). The static
+ * means "no save" — confirmed UX decision (spec). The static
  * copy here makes that explicit.
  *
  * Per M-FB: this is interface chrome (button labels, modal copy), not

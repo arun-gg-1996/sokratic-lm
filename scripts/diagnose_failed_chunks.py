@@ -1,25 +1,24 @@
 """
 scripts/diagnose_failed_chunks.py
----------------------------------
 Diagnose why ~18% of chunks errored during the B.9 dual-task run.
 
 The pipeline's stage_dual_task counts errors but doesn't write them to
 disk — the DualTaskResult.error field stays in memory and is lost on
 process exit. This script:
 
-  1. Loads chunks_<source>.jsonl and propositions_<source>.jsonl.
-  2. Identifies chunks with NO propositions (failed extraction).
-  3. Picks N stratified samples from the failed set (default 20).
-  4. Re-runs dual-task on each, INCLUDING the raw model response text
-     when JSON parsing fails (so we can see exactly what Haiku returned).
-  5. Categorizes the failure mode (empty response / malformed JSON /
-     missing fields / "no content" disclaimer / API error / etc.).
+ 1. Loads chunks_<source>.jsonl and propositions_<source>.jsonl.
+ 2. Identifies chunks with NO propositions (failed extraction).
+ 3. Picks N stratified samples from the failed set (default 20).
+ 4. Re-runs dual-task on each, INCLUDING the raw model response text
+ when JSON parsing fails (so we can see exactly what Haiku returned).
+ 5. Categorizes the failure mode (empty response / malformed JSON /
+ missing fields / "no content" disclaimer / API error / etc.).
 
 After running this, we'll know whether to fix the parser, prompt, or
 retry strategy.
 
 Run:
-  python scripts/diagnose_failed_chunks.py [--source openstax_anatomy] [--n 20]
+ python scripts/diagnose_failed_chunks.py [--source openstax_anatomy] [--n 20]
 """
 from __future__ import annotations
 
@@ -43,7 +42,6 @@ from ingestion.core.propositions_dual import (  # noqa: E402
     parse_response,
 )
 
-
 def categorize(text: str, parse_err: str | None) -> str:
     """Bucket the model's response into one of a handful of failure modes."""
     if not text:
@@ -63,7 +61,6 @@ def categorize(text: str, parse_err: str | None) -> str:
     if re.search(r"(?i)\bno propositions?\b", t):
         return "no_propositions_disclaimer"
     return "unclassified"
-
 
 async def diagnose_one(client, chunk: dict, cached_system) -> dict:
     """Single chunk; returns diagnostic dict including raw model response."""
@@ -109,7 +106,6 @@ async def diagnose_one(client, chunk: dict, cached_system) -> dict:
         "n_propositions": len(props) if not parse_err else 0,
     }
 
-
 def find_failed_chunks(source: str = "openstax_anatomy") -> list[dict]:
     chunks_path = ROOT / f"data/processed/chunks_{source}.jsonl"
     props_path = ROOT / f"data/processed/propositions_{source}.jsonl"
@@ -122,7 +118,6 @@ def find_failed_chunks(source: str = "openstax_anatomy") -> list[dict]:
 
     failed = [c for c in chunks if c["chunk_id"] not in parents]
     return failed
-
 
 async def main() -> int:
     ap = argparse.ArgumentParser()
@@ -173,7 +168,6 @@ async def main() -> int:
     out.write_text(json.dumps(results, indent=2))
     print(f"\nFull diagnostic written to {out.relative_to(ROOT)}")
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(asyncio.run(main()))

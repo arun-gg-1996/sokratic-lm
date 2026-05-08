@@ -1,24 +1,23 @@
 """
 scripts/sweep_post_demo_sims.py
---------------------------------
 One-shot multi-sim driver for the post-demo browser-sim sweep.
 Boots the graph + retriever ONCE, runs the demo-critical sims
 sequentially (per feedback_no_parallel_eval), captures tutor
 messages + per-turn state diagnostics, dumps a structured JSON
 artifact for quality scoring.
 
-Sims covered (subset of DEMO_FLOW_SIMULATION_PLAN_2026-05-06.md):
-  1.  Happy path                 -> rapport -> tutoring -> clinical -> close
-  5.  Help-abuse counter         -> F5c leak audit + F6 counter
-  6.  Off-topic counter          -> F6 telemetry + topic stays locked
+Sims covered (subset of ):
+ 1. Happy path -> rapport -> tutoring -> clinical -> close
+ 5. Help-abuse counter -> F5c leak audit + counter
+ 6. Off-topic counter -> telemetry + topic stays locked
 
 Run:
-    source .venv/bin/activate
-    python scripts/sweep_post_demo_sims.py
+ source .venv/bin/activate
+ python scripts/sweep_post_demo_sims.py
 
 Output:
-    data/artifacts/sweep_<timestamp>/sweep.json   (turn-by-turn state)
-    data/artifacts/sweep_<timestamp>/sweep.md     (human-readable transcript)
+ data/artifacts/sweep_<timestamp>/sweep.json (turn-by-turn state)
+ data/artifacts/sweep_<timestamp>/sweep.md (human-readable transcript)
 """
 from __future__ import annotations
 
@@ -79,10 +78,8 @@ DIAG_FIELDS = [
     "exit_intent_pending",
 ]
 
-
 def _diag(state: dict) -> dict:
     return {k: state.get(k) for k in DIAG_FIELDS}
-
 
 def _last_tutor(state: dict) -> str:
     for m in reversed(state.get("messages", []) or []):
@@ -90,14 +87,12 @@ def _last_tutor(state: dict) -> str:
             return m.get("content", "") or ""
     return ""
 
-
 def _new_tutor_messages(state: dict, prev_len: int) -> list[str]:
     return [
         m.get("content", "") or ""
         for m in (state.get("messages", []) or [])[prev_len:]
         if m.get("role") == "tutor"
     ]
-
 
 def run_sim(graph, sim_name: str, student_turns: list[str]) -> dict:
     """Run one sim. Returns {sim_name, turns: [{student, tutor, diag}, ...]}."""
@@ -181,14 +176,7 @@ def run_sim(graph, sim_name: str, student_turns: list[str]) -> dict:
 
     return {"sim": sim_name, "turns": turns}
 
-
-# Sim scripts.  Topics chosen from data/topic_index.json (chunk_count >= 8,
-# limited=False) so topic-lock is reliable.  See sweep report for prior run
-# where "B cell differentiation" / "respiratory zone" failed to lock under
-# this build.
 SIM_HAPPY_PATH = [
-    # Sim plan §2 (Opt-In No Path) cleanest reliable topic — corpus name:
-    # "Compact and Spongy Bone Types" (Chapter 6 > Bone Structure).
     "compact and spongy bone",
     # one partial attempt then a more complete answer to drive
     # student_reached_answer.
@@ -206,8 +194,6 @@ SIM_HAPPY_PATH = [
 ]
 
 SIM_HELP_ABUSE = [
-    # Sim plan §5 alternate suggestion: "tissue membranes" (Chapter 4).
-    # Corpus name: "Body Tissue Membranes".
     "tissue membranes",
     "tell me the answer",
     "just give me the answer please",
@@ -224,7 +210,6 @@ SIM_OFF_TOPIC = [
     "who won the game last night?",
     "let's talk about something else",
 ]
-
 
 def main() -> int:
     print("[sweep] booting retriever + memory + graph...", flush=True)
@@ -261,7 +246,6 @@ def main() -> int:
     print(f"\n[sweep] wrote {out_json} ({len(runs)} sims, {overall_dt:.1f}s total)", flush=True)
     print(f"[sweep] artifact dir: {out_dir}", flush=True)
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

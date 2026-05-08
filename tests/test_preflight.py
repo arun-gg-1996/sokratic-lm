@@ -25,7 +25,6 @@ import pytest
 from conversation import classifiers as C
 from conversation import preflight as P
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Shared mock-Haiku fixture
 # ─────────────────────────────────────────────────────────────────────────────
@@ -36,7 +35,7 @@ def mock_haiku(monkeypatch):
     classifier _haiku_call to return canned responses. Each test sets
     verdicts via .set_verdict().
 
-    F8 (POST_DEMO_FIXES.md, 2026-05-06): updated to also patch the M7
+    updated to also patch the M7
     unified intent classifier (`conversation.preflight_classifier`).
     `run_preflight` now calls the unified path; tests that run through
     `run_preflight` need a mock for the unified _haiku_call too.
@@ -130,28 +129,23 @@ def mock_haiku(monkeypatch):
 
     return Setter()
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # haiku_help_abuse_check
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_help_abuse_check_pass_for_engagement(mock_haiku):
     mock_haiku.set_verdict(help_abuse="legitimate_engagement")
     out = P.haiku_help_abuse_check("maybe the SA node?")
     assert out["verdict"] == "legitimate_engagement"
 
-
 def test_help_abuse_check_catches_demand(mock_haiku):
     mock_haiku.set_verdict(help_abuse="help_abuse")
     out = P.haiku_help_abuse_check("just tell me the answer please")
     assert out["verdict"] == "help_abuse"
 
-
 def test_help_abuse_check_handles_empty():
     out = P.haiku_help_abuse_check("")
     assert out["verdict"] == "legitimate_engagement"
-
 
 def test_help_abuse_check_handles_haiku_error(mock_haiku):
     mock_haiku.raise_exception(RuntimeError("network down"))
@@ -159,7 +153,6 @@ def test_help_abuse_check_handles_haiku_error(mock_haiku):
     # Safe default → legitimate_engagement (don't false-fire)
     assert out["verdict"] == "legitimate_engagement"
     assert "haiku_error" in out["_error"]
-
 
 def test_help_abuse_evidence_validation(monkeypatch):
     """Hallucinated evidence must downgrade to legitimate_engagement."""
@@ -173,42 +166,35 @@ def test_help_abuse_evidence_validation(monkeypatch):
     assert out["verdict"] == "legitimate_engagement"
     assert out["_error"] == "evidence_invalid"
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # haiku_deflection_check
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_deflection_check_pass_for_continuing(mock_haiku):
     mock_haiku.set_verdict(deflection="continuing")
     out = P.haiku_deflection_check("this is hard")
     assert out["verdict"] == "continuing"
 
-
 def test_deflection_check_catches_explicit_end(mock_haiku):
     mock_haiku.set_verdict(deflection="deflection")
     out = P.haiku_deflection_check("let's stop here")
     assert out["verdict"] == "deflection"
 
-
 def test_deflection_check_handles_empty():
     out = P.haiku_deflection_check("")
     assert out["verdict"] == "continuing"
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # run_preflight — orchestrator
 # ─────────────────────────────────────────────────────────────────────────────
 
-
 def _state(help_count=0, off_count=0):
     return {"help_abuse_count": help_count, "off_topic_count": off_count}
-
 
 def test_preflight_all_pass_runs_dean(mock_haiku):
     """All 3 checks return clean → fired=False, Dean runs.
 
-    F8 (POST_DEMO_FIXES.md, 2026-05-06): M7 unified classifier surfaces
+    M7 unified classifier surfaces
     the actual verdict (`on_topic_engaged`) instead of legacy `"none"`.
     Test asserts the new shape.
     """
@@ -223,7 +209,6 @@ def test_preflight_all_pass_runs_dean(mock_haiku):
     assert out.new_help_abuse_count == 0  # reset on engagement
     assert out.suggested_mode == ""
 
-
 def test_preflight_help_abuse_fires(mock_haiku):
     mock_haiku.set_verdict(help_abuse="help_abuse")
     out = P.run_preflight(_state(), "just tell me", parallel=False)
@@ -233,7 +218,6 @@ def test_preflight_help_abuse_fires(mock_haiku):
     assert out.suggested_tone == "neutral"  # strike 1
     assert out.new_help_abuse_count == 1
     assert out.should_force_hint_advance is False
-
 
 def test_preflight_help_abuse_strike_4_forces_hint_advance(mock_haiku):
     """L55: at strike 4, force hint advance.
@@ -251,7 +235,6 @@ def test_preflight_help_abuse_strike_4_forces_hint_advance(mock_haiku):
     assert out.new_help_abuse_count == 0  # was 4; resets after fire
     assert out.should_force_hint_advance is True
 
-
 def test_preflight_off_domain_fires(mock_haiku):
     mock_haiku.set_verdict(off_domain="off_domain")
     out = P.run_preflight(_state(), "what's your favorite movie", parallel=False)
@@ -260,7 +243,6 @@ def test_preflight_off_domain_fires(mock_haiku):
     assert out.suggested_mode == "nudge"
     assert out.new_off_topic_count == 1
     assert out.should_end_session is False
-
 
 def test_preflight_off_domain_tone_escalates(mock_haiku):
     """neutral at strike 1, firm at strike 2-3, honest at strike 4."""
@@ -274,7 +256,6 @@ def test_preflight_off_domain_tone_escalates(mock_haiku):
     assert s3.suggested_tone == "firm"
     assert s4.suggested_tone == "honest"
 
-
 def test_preflight_off_domain_strike_4_ends_session(mock_haiku):
     """L56: at strike 4, graceful end + honest_close mode."""
     mock_haiku.set_verdict(off_domain="off_domain")
@@ -284,7 +265,6 @@ def test_preflight_off_domain_strike_4_ends_session(mock_haiku):
     assert out.suggested_mode == "honest_close"
     assert out.suggested_tone == "honest"
 
-
 def test_preflight_deflection_fires(mock_haiku):
     mock_haiku.set_verdict(deflection="deflection")
     out = P.run_preflight(_state(), "let's stop", parallel=False)
@@ -292,10 +272,8 @@ def test_preflight_deflection_fires(mock_haiku):
     assert out.category == "deflection"
     assert out.suggested_mode == "confirm_end"
     assert out.suggested_tone == "neutral"
-    # No counter for deflection per L58
-    assert out.new_help_abuse_count == 0
+    # No counter for deflection assert out.new_help_abuse_count == 0
     assert out.new_off_topic_count == 0
-
 
 def test_preflight_deflection_priority_over_off_domain(mock_haiku):
     """When BOTH off_domain + deflection fire, deflection wins."""
@@ -305,9 +283,8 @@ def test_preflight_deflection_priority_over_off_domain(mock_haiku):
     # Off-domain counter NOT advanced
     assert out.new_off_topic_count == 2
 
-
 @pytest.mark.skip(
-    reason="F8 (POST_DEMO_FIXES.md, 2026-05-06): M7 unified classifier "
+    reason="M7 unified classifier "
     "picks ONE verdict — there's no longer a code-side priority gate "
     "between off_domain / help_abuse / deflection. Priority semantics "
     "(if any) live in the unified prompt itself; needs an integration "
@@ -319,7 +296,6 @@ def test_preflight_deflection_priority_over_help_abuse(mock_haiku):
     assert out.category == "deflection"
     assert out.new_help_abuse_count == 2  # not advanced
 
-
 @pytest.mark.skip(reason="F8 — see test_preflight_deflection_priority_over_help_abuse")
 def test_preflight_off_domain_priority_over_help_abuse(mock_haiku):
     """off_domain has session-end consequences → priority over help_abuse."""
@@ -330,7 +306,6 @@ def test_preflight_off_domain_priority_over_help_abuse(mock_haiku):
     # help_abuse counter reset on off_domain detection (avoid double-penalty)
     assert out.new_help_abuse_count == 2  # left unchanged (only no-fire path resets)
 
-
 def test_preflight_engagement_resets_help_abuse_counter(mock_haiku):
     """L55: any non-help-abuse engagement resets the help_abuse counter."""
     mock_haiku.set_verdict(help_abuse="legitimate_engagement",
@@ -339,9 +314,8 @@ def test_preflight_engagement_resets_help_abuse_counter(mock_haiku):
     assert out.fired is False
     assert out.new_help_abuse_count == 0  # reset
 
-
 def test_preflight_off_domain_counter_decays_across_clean_turns(mock_haiku):
-    """F8 (POST_DEMO_FIXES.md, 2026-05-06): M7 strike decay — off_topic_count
+    """M7 strike decay — off_topic_count
     DECREMENTS by 1 on each engaged turn (preflight.py:523:
     `new_off = max(0, off_count - 1)`). Was previously preserved (L56).
     Decay prevents a single old misclassification from accumulating to
@@ -351,7 +325,6 @@ def test_preflight_off_domain_counter_decays_across_clean_turns(mock_haiku):
                             off_domain="in_domain", deflection="continuing")
     out = P.run_preflight(_state(off_count=2), "x", parallel=False)
     assert out.new_off_topic_count == 1  # decayed by 1
-
 
 def test_preflight_parallel_mode_works(mock_haiku):
     """Default parallel=True path uses ThreadPoolExecutor — same logic
@@ -363,7 +336,6 @@ def test_preflight_parallel_mode_works(mock_haiku):
     assert out.category == "help_abuse"
     assert out.elapsed_s >= 0
 
-
 def test_preflight_checks_dict_carries_raw_results(mock_haiku):
     """Trace consumers can pull per-check raw results from .checks."""
     mock_haiku.set_verdict(help_abuse="help_abuse")
@@ -373,15 +345,12 @@ def test_preflight_checks_dict_carries_raw_results(mock_haiku):
     assert "deflection" in out.checks
     assert out.checks["help_abuse"]["verdict"] == "help_abuse"
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Threshold constants
 # ─────────────────────────────────────────────────────────────────────────────
 
-
 def test_help_abuse_threshold_is_4_per_l55():
     assert P.HELP_ABUSE_HINT_ADVANCE_STRIKE == 4
-
 
 def test_off_topic_threshold_is_4_per_l56():
     assert P.OFF_TOPIC_END_SESSION_STRIKE == 4

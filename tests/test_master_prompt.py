@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from conversation.master_prompt import build_master_prompt, _MASTER_SYSTEM_PROMPT
 
-
 # Topic-specific terms that must NEVER appear in master prompt.
 # Same list as registry purity test — extended with answer values.
 FORBIDDEN_TERMS = [
@@ -25,7 +24,6 @@ FORBIDDEN_TERMS = [
     "nidhi", "arun",
 ]
 
-
 def test_master_prompt_purity_no_topic_terms():
     """Master prompt must contain no topic-specific text (Safeguard #3)."""
     rendered = build_master_prompt(domain_name="Human Anatomy & Physiology").lower()
@@ -34,7 +32,6 @@ def test_master_prompt_purity_no_topic_terms():
         f"Master prompt contains forbidden terms: {violations}\n"
         f"Master prompt should reference fields by NAME never by VALUE."
     )
-
 
 def test_master_prompt_references_state_fields_by_name():
     """Master prompt must explain state field NAMES (not their values)."""
@@ -50,20 +47,17 @@ def test_master_prompt_references_state_fields_by_name():
     missing = [f for f in required_field_names if f not in rendered]
     assert not missing, f"Master prompt missing required field references: {missing}"
 
-
 def test_master_prompt_describes_4_phases():
     """All 4 conversation phases must be described in master prompt."""
     rendered = build_master_prompt().upper()
     for phase in ("RAPPORT", "TUTORING", "ASSESSMENT", "MEMORY_UPDATE"):
         assert phase in rendered, f"Master prompt missing phase: {phase}"
 
-
 def test_master_prompt_describes_4_agents():
     """The 4 agent roles must be described in master prompt."""
     rendered = build_master_prompt().upper()
     for agent in ("PREFLIGHT", "DEAN", "TEACHER", "VERIFIER QUARTET"):
         assert agent in rendered, f"Master prompt missing agent role: {agent}"
-
 
 def test_master_prompt_contains_safety_contracts():
     """The 5 safety contracts must be stated in master prompt."""
@@ -77,7 +71,6 @@ def test_master_prompt_contains_safety_contracts():
     ]
     missing = [c for c in contracts if c not in rendered]
     assert not missing, f"Master prompt missing safety contracts: {missing}"
-
 
 def test_master_prompt_includes_all_vocabulary_blocks():
     """All 6 registry vocabularies must appear in the rendered master prompt."""
@@ -93,13 +86,11 @@ def test_master_prompt_includes_all_vocabulary_blocks():
     missing = [h for h in headers if h not in rendered]
     assert not missing, f"Master prompt missing vocabulary blocks: {missing}"
 
-
 def test_master_prompt_deterministic():
     """Repeated builds with same args must return byte-identical output."""
     first = build_master_prompt("Human Anatomy & Physiology")
     for _ in range(5):
         assert build_master_prompt("Human Anatomy & Physiology") == first
-
 
 def test_master_prompt_template_has_no_topic_terms():
     """The static template (before format-substitution) must also be pure."""

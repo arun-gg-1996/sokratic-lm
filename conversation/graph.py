@@ -1,55 +1,29 @@
 """
-conversation/graph.py
-─────────────────────
-Assembles the V2 LangGraph StateGraph and compiles it into a runnable.
+Builds the LangGraph StateGraph for one tutoring turn.
 
 Graph shape:
-  START → rapport_node → dean_node ⟷ (loops on student input)
-                                    ↓ (when answer reached, hints exhausted, or turn limit)
-                         assessment_node → memory_update_node → END
 
-V2 stack (single source of truth post-D1):
-  rapport_node       — conversation.lifecycle_v2 (TeacherV2 mode="rapport")
-  dean_node          — conversation.nodes_v2.dean_node_v2 (preflight + dean_v2
-                       + retry orchestrator + verifier quartet)
-  assessment_node    — conversation.assessment_v2.assessment_node_v2 (opt-in +
-                       clinical phase via DeanV2 + TeacherV2)
-  memory_update_node — conversation.lifecycle_v2 (close-LLM + mem0 flush +
-                       SQLite session-end + L21 mastery upsert)
+    START → rapport_node → dean_node → assessment_node → memory_update_node → END
 
-Edges (also in conversation/lifecycle_v2):
-  after_rapport      — rapport → dean / assessment / memory_update
-  after_dean         — dean → assessment / memory_update / END
-  after_assessment   — assessment → memory_update / END
+Each node owns one phase: rapport greets the student and loads
+cross-session memory; dean_node runs preflight + Dean planner +
+Teacher draft + verifier quartet; assessment_node handles the opt-in
+and clinical loop after the answer is reached; memory_update_node
+flushes the session to mem0 + SQLite and writes the closing message.
 
-Note: the graph does NOT loop internally. Each graph.invoke() handles
-exactly ONE student turn and ends at END (or after assessment when
-assessment_turn < 2). The frontend calls invoke() again on each student
-message. The LangGraph MemorySaver checkpointer preserves state between
+Each `graph.invoke(state, config)` handles exactly ONE student turn
+and ends at END. The frontend calls invoke again on each new student
+message; LangGraph's MemorySaver checkpointer preserves state between
 calls via thread_id.
 
-Usage:
+The bootstrap path (topic-lock anchor calls, starter cards, prelock
+refusal handlers) still uses the legacy DeanAgent / TeacherAgent for
+its LLM calls, so both are instantiated here and threaded into the
+relevant nodes.
+
     from conversation.graph import build_graph
     graph = build_graph(retriever, memory_manager)
-    config = {"configurable": {"thread_id": thread_id}}
-    state = graph.invoke(state, config=config)
-
-D1 note (V1 → V2 consolidation): the previous graph.py instantiated V1
-DeanAgent + TeacherAgent and routed dean_node / assessment_node via the
-SOKRATIC_USE_V2_FLOW feature flag. The flag is gone — V2 owns the
-per-turn graph. BUT the V1 DeanAgent is STILL load-bearing for the
-bootstrap path: `topic_lock_v2._render_starter_cards`,
-`_render_anchor_pick`, the prelock refuse/fail handlers, and the
-topic-lock anchor calls (`_lock_anchors_call`,
-`_build_topic_ack_message`, `_prelock_refuse_call`,
-`_prelock_anchor_fail_call`, `_retrieve_on_topic_lock`) all dispatch
-through the `dean` partial-kwarg. Setting it to None silently breaks
-the LLM-generated bootstrap responses → student sees templated
-"could not find a strong textbook match" fallbacks instead of the
-LLM-crafted contextual replies. Until the D1-bootstrap migration ports
-those 4 dean methods into V2 namespace, V1 DeanAgent is instantiated
-and passed in here. The TeacherAgent is similarly retained (legacy
-fallback paths the bootstrap may still hit).
+    state = graph.invoke(state, config={"configurable": {"thread_id": tid}})
 """
 
 from functools import partial
@@ -69,22 +43,21 @@ from conversation.nodes_v2 import dean_node_v2, assessment_node_v2
 # V1 agents — retained until the D1-bootstrap migration ports the 4
 # legacy dean methods used by topic_lock_v2 (and the teacher callback
 # registry; the latter has already moved to conversation/streaming.py).
-# These instances are passed via partial() into the V2 nodes so the
+# These instances are passed via partial into the V2 nodes so the
 # bootstrap path's LLM-driven refuse/anchor/ack calls still work.
 from conversation.dean import DeanAgent
 from conversation.teacher import TeacherAgent
 
-
 def build_graph(retriever, memory_manager):
     """Build and compile the V2 LangGraph StateGraph.
 
-    Args:
-        retriever:       Retriever or MockRetriever instance
-        memory_manager:  MemoryManager instance (loads/flushes mem0)
+ Args:
+ retriever: Retriever or MockRetriever instance
+ memory_manager: MemoryManager instance (loads/flushes mem0)
 
-    Returns:
-        Compiled LangGraph runnable (with MemorySaver checkpointer).
-    """
+ Returns:
+ Compiled LangGraph runnable (with MemorySaver checkpointer).
+"""
     # Compatibility: real MemoryManager exposes `.persistent`, while the
     # current stubbed manager may not. Dean accepts either and currently
     # does not depend on persistence-specific methods.
@@ -102,10 +75,10 @@ def build_graph(retriever, memory_manager):
         partial(rapport_node, teacher=teacher, memory_manager=memory_manager),
     )
 
-    # dean_node: V2 per-turn loop — preflight → dean_v2.plan() → retry
+    # dean_node: V2 per-turn loop — preflight → dean_v2.plan → retry
     # orchestrator → verifier quartet. `dean` is V1 DeanAgent — required
-    # by topic_lock_v2's bootstrap helpers (_lock_anchors_call,
-    # _retrieve_on_topic_lock, _build_topic_ack_message,
+    # by topic_lock_v2's bootstrap helpers (_lock_anchors_call
+    # _retrieve_on_topic_lock, _build_topic_ack_message
     # _prelock_refuse_call, _prelock_anchor_fail_call). Without a real
     # DeanAgent instance, those calls silently fail and the bootstrap
     # path emits templated fallbacks instead of LLM-crafted replies.
@@ -121,7 +94,7 @@ def build_graph(retriever, memory_manager):
     )
 
     # memory_update_node: V2 — close-LLM (TeacherV2 mode="close") +
-    # mem0 flush + SQLite session-end + L21 mastery upsert.
+    # mem0 flush + SQLite session-end + mastery upsert.
     graph.add_node(
         "memory_update_node",
         partial(memory_update_node, dean=dean, memory_manager=memory_manager),

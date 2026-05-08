@@ -2,52 +2,51 @@
 fix_corpus_metadata_2026_05_01.py — corpus-level metadata patches.
 
 Two bugs surfaced by Tier 1 #1.2(c) sample_related investigation
-(see progress_journal/2026-05-01_19-05-43_*.md):
+(see progress_journal/_19-05-43_*.md):
 
 X1. Chapter 20 chunks have chapter_title='Circulation' (truncated by the
-    chunker). textbook_structure.json key is 'Chapter 20: The
-    Cardiovascular System: Blood Vessels and Circulation'. After
-    _strip_chapter_prefix, structure expects 'The Cardiovascular System:
-    Blood Vessels and Circulation' but chunks say 'Circulation' →
-    scripts/build_topic_index.py join fails → 0 ch20 entries in
-    topic_index.json → no card suggestions for blood-vessel /
-    aorta / pulmonary-circulation queries.
+ chunker). textbook_structure.json key is 'Chapter 20: The
+ Cardiovascular System: Blood Vessels and Circulation'. After
+ _strip_chapter_prefix, structure expects 'The Cardiovascular System:
+ Blood Vessels and Circulation' but chunks say 'Circulation' →
+ scripts/build_topic_index.py join fails → 0 ch20 entries in
+ topic_index.json → no card suggestions for blood-vessel /
+ aorta / pulmonary-circulation queries.
 
-    439 chunks affected. Plus 12 garbage 'REFERENCES' chunks at chapter_num=28
-    that look like bibliography pages and should be dropped entirely.
+ 439 chunks affected. Plus 12 garbage 'REFERENCES' chunks at chapter_num=28
+ that look like bibliography pages and should be dropped entirely.
 
 X2. 6 chunks have subsection_title='Diseases of the…' (truncated, with
-    literal ellipsis char). textbook_structure.json line 1201 has
-    'Disorders of the...' (3 dot chars, not ellipsis). Word also
-    differs (Diseases vs Disorders). Neither side is canonical; the
-    PDF parse mis-extracted the same subsection two different ways.
+ literal ellipsis char). textbook_structure.json line 1201 has
+ 'Disorders of the...' (3 dot chars, not ellipsis). Word also
+ differs (Diseases vs Disorders). Neither side is canonical; the
+ PDF parse mis-extracted the same subsection two different ways.
 
-    Pragmatic fix: rename both to a clean placeholder
-    'Disorders of the Cardiovascular System' so they match each other
-    AND the structure rebuild finds them. Not the canonical OpenStax
-    title (would need PDF re-extraction to know the full title), but
-    functional and stable.
+ Pragmatic fix: rename both to a clean placeholder
+ 'Disorders of the Cardiovascular System' so they match each other
+ AND the structure rebuild finds them. Not the canonical OpenStax
+ title (would need PDF re-extraction to know the full title), but
+ functional and stable.
 
 What this script does
----------------------
-  1. Reads data/processed/chunks_openstax_anatomy.jsonl
-  2. Backs up to chunks_openstax_anatomy.jsonl.pre_2026_05_01.bak
-  3. For each chunk:
-     - if chapter_num=20 and chapter_title='Circulation':
-       rewrite chapter_title → 'The Cardiovascular System: Blood Vessels and Circulation'
-     - if chapter_title='REFERENCES': drop the chunk (bibliography junk)
-     - if subsection_title contains '…' or '...':
-       rewrite to 'Disorders of the Cardiovascular System'
-  4. Atomic write back to chunks_openstax_anatomy.jsonl
-  5. For Qdrant collection sokratic_kb_chunks: set_payload on the
-     affected points (same chapter_title + subsection_title fixes),
-     delete REFERENCES points.
-  6. Print before/after counts as proof.
+1. Reads data/processed/chunks_openstax_anatomy.jsonl
+ 2. Backs up to chunks_openstax_anatomy.jsonl.pre_2026_05_01.bak
+ 3. For each chunk:
+if chapter_num=20 and chapter_title='Circulation':
+ rewrite chapter_title → 'The Cardiovascular System: Blood Vessels and Circulation'
+if chapter_title='REFERENCES': drop the chunk (bibliography junk)
+if subsection_title contains '…' or '...':
+ rewrite to 'Disorders of the Cardiovascular System'
+ 4. Atomic write back to chunks_openstax_anatomy.jsonl
+ 5. For Qdrant collection sokratic_kb_chunks: set_payload on the
+ affected points (same chapter_title + subsection_title fixes)
+ delete REFERENCES points.
+ 6. Print before/after counts as proof.
 
 Idempotent — safe to re-run; second run finds nothing to fix.
 
 Run:
-    .venv/bin/python scripts/fix_corpus_metadata_2026_05_01.py [--dry-run]
+ .venv/bin/python scripts/fix_corpus_metadata_2026_05_01.py [--dry-run]
 """
 from __future__ import annotations
 
@@ -76,12 +75,10 @@ JUNK_CHAPTER_TITLE = "REFERENCES"
 ELLIPSIS_CHARS = ("…", "...")
 NEW_DISEASES_SUBSECTION = "Disorders of the Cardiovascular System"
 
-
 def _is_truncated_subsection(sub: str) -> bool:
     if not sub:
         return False
     return any(e in sub for e in ELLIPSIS_CHARS)
-
 
 def patch_chunks_jsonl(dry_run: bool = False) -> dict:
     """Patch the chunks JSONL. Returns stats dict."""
@@ -133,7 +130,7 @@ def patch_chunks_jsonl(dry_run: bool = False) -> dict:
                 stats["ch20_title_fixed"] += 1
                 stats["ch20_chunks_with_title_fix_ids"].append(cid)
 
-            # X2 — subsection title truncation
+            # subsection title truncation
             if _is_truncated_subsection(sub_title):
                 c["subsection_title"] = NEW_DISEASES_SUBSECTION
                 stats["subsection_truncation_fixed"] += 1
@@ -162,7 +159,6 @@ def patch_chunks_jsonl(dry_run: bool = False) -> dict:
     print(f"\nwrote {len(out_lines)} chunks to {CHUNKS_PATH}")
     return stats
 
-
 def patch_qdrant_payloads(stats: dict, dry_run: bool = False) -> dict:
     """Patch Qdrant payloads for the same chunks. Drops REFERENCES points."""
     from qdrant_client import QdrantClient
@@ -181,7 +177,7 @@ def patch_qdrant_payloads(stats: dict, dry_run: bool = False) -> dict:
     info = client.get_collection(collection)
     print(f"\nQdrant '{collection}' has {info.points_count} points (pre-fix)")
 
-    # Strategy: scroll through points, identify the affected ones by chunk_id,
+    # Strategy: scroll through points, identify the affected ones by chunk_id
     # then set_payload / delete in batches. The chunk_id is in the payload.
     # Build set of chunk_ids to update / delete.
     ch20_ids = set(stats["ch20_chunks_with_title_fix_ids"])
@@ -261,18 +257,16 @@ def patch_qdrant_payloads(stats: dict, dry_run: bool = False) -> dict:
     print(f"  points deleted:       {qd_stats['references_deleted']}")
     return qd_stats
 
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="preview changes without writing")
     args = ap.parse_args()
 
-    print(f"=== Corpus metadata fix (2026-05-01) ===\n")
+    print(f"=== Corpus metadata fix ===\n")
     stats = patch_chunks_jsonl(dry_run=args.dry_run)
     qd = patch_qdrant_payloads(stats, dry_run=args.dry_run)
 
     print(f"\n=== Done ===")
-
 
 if __name__ == "__main__":
     main()

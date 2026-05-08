@@ -1,36 +1,35 @@
 """
 scripts/eval_realistic.py
--------------------------
 Run the realistic-student-profile retrieval eval against the v1 retriever.
 
 Each row in data/eval/rag_qa_realistic_v1.jsonl carries:
-  - question:            student-style query (S1..S6 profiles or OOD)
-  - expected_section:    canonical section_title in the corpus (or "" for OOD)
-  - expected_subsection: canonical subsection_title (often "" — section-only)
-  - chapter_num:         expected chapter
-  - profile:             S1 | S2 | S3 | S4 | S5 | S6 | OOD
-  - type:                factual / mechanism / comparison / vague_layman /
-                         leading_assertion / terse_concept / hesitant_multipart /
-                         abbreviation / clinical_alias / typo / long_multipart /
-                         ood_off_topic / ood_gibberish / ood_borderline / ood_empty
+question: student-style query (.. profiles or OOD)
+expected_section: canonical section_title in the corpus (or "" for OOD)
+expected_subsection: canonical subsection_title (often "" — section-only)
+chapter_num: expected chapter
+profile: | | | | | | OOD
+type: factual / mechanism / comparison / vague_layman /
+ leading_assertion / terse_concept / hesitant_multipart /
+ abbreviation / clinical_alias / typo / long_multipart /
+ ood_off_topic / ood_gibberish / ood_borderline / ood_empty
 
 Scoring (per query, against the top-k chunks the retriever returns):
-  - in-scope query (profile != OOD):
-      hit_subsection : any chunk's subsection_title (case-insensitive) ==
-                       expected_subsection — only scored when label is set.
-      hit_section    : any chunk's section_title       ==  expected_section.
-      hit_chapter    : any chunk's chapter_num         ==  expected_chapter.
-      MRR is computed at the section level (1 / first rank with section hit).
-  - OOD query (profile == OOD):
-      Correct outcome = retriever returned [] (refused).
+in-scope query (profile != OOD):
+ hit_subsection : any chunk's subsection_title (case-insensitive) ==
+ expected_subsection — only scored when label is set.
+ hit_section : any chunk's section_title == expected_section.
+ hit_chapter : any chunk's chapter_num == expected_chapter.
+ MRR is computed at the section level (1 / first rank with section hit).
+OOD query (profile == OOD):
+ Correct outcome = retriever returned (refused).
 
 Window expansion is left at the config default (W=2 per base.yaml). The score
 considers the whole returned payload — primaries plus expansion neighbors —
 since the LLM downstream sees that whole set.
 
 Usage:
-  .venv/bin/python scripts/eval_realistic.py
-  .venv/bin/python scripts/eval_realistic.py --top-k 5 --window 2
+ .venv/bin/python scripts/eval_realistic.py
+ .venv/bin/python scripts/eval_realistic.py --top-k 5 --window 2
 """
 from __future__ import annotations
 
@@ -53,18 +52,15 @@ from retrieval.retriever import Retriever  # noqa: E402
 EVAL_PATH = ROOT / "data/eval/rag_qa_realistic_v1.jsonl"
 OUT_DIR = ROOT / "data/eval"
 
-
 def load_jsonl(path: Path) -> list[dict]:
     return [json.loads(l) for l in open(path)]
-
 
 def norm(s: str) -> str:
     return (s or "").strip().lower()
 
-
 def score_row(row: dict, chunks: list[dict]) -> dict:
     """Return per-query scoring details. `chunks` is the full retriever payload
-    (primaries + window neighbors), in rank order."""
+ (primaries + window neighbors), in rank order."""
     profile = row.get("profile", "").upper()
     if profile == "OOD":
         # Empty-result is the correct behavior for off-topic queries.
@@ -121,7 +117,6 @@ def score_row(row: dict, chunks: list[dict]) -> dict:
         "chapter_rank": chapter_rank,
     }
 
-
 def hit_at_k(scores: list[dict], k: int, key: str) -> float:
     """Fraction of in-scope queries whose `key`_rank is in [1..k]."""
     in_scope = [s for s in scores if not s["ood"]]
@@ -130,7 +125,6 @@ def hit_at_k(scores: list[dict], k: int, key: str) -> float:
     rank_key = key + "_rank"
     return sum(1 for s in in_scope if 1 <= s.get(rank_key, -1) <= k) / len(in_scope)
 
-
 def mrr(scores: list[dict], key: str = "section") -> float:
     in_scope = [s for s in scores if not s["ood"]]
     if not in_scope:
@@ -138,10 +132,8 @@ def mrr(scores: list[dict], key: str = "section") -> float:
     rank_key = key + "_rank"
     return sum(1.0 / s[rank_key] for s in in_scope if s.get(rank_key, -1) > 0) / len(in_scope)
 
-
 def fmt_pct(x: float) -> str:
     return f"{x*100:5.1f}%"
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -187,7 +179,7 @@ def main():
             print(f"  [{i:>3}] ERROR: {type(e).__name__}: {e}", flush=True)
             chunks = []
         latencies.append(int((time.time() - t0) * 1000))
-        # Capture per-stage timings populated by Retriever.retrieve().
+        # Capture per-stage timings populated by Retriever.retrieve.
         tcap = dict(getattr(retriever, "last_timings", {}) or {})
         tcap["question"] = row["question"]
         tcap["profile"] = row.get("profile", "")
@@ -410,7 +402,6 @@ def main():
             "timings": timings_log,
         }, f, indent=2, default=str)
     print(f"\nSaved: {out_path}")
-
 
 if __name__ == "__main__":
     main()

@@ -1,46 +1,45 @@
 """
 ingestion/core/qdrant.py
-------------------------
 Qdrant payload schema + window-navigation metadata for the dual-task pipeline.
 
 Why this module exists separately from `core/index.py`:
-  index.py has accumulated mixed concerns (BM25 + Qdrant + diagrams + tests).
-  qdrant.py is the single source of truth for the v1 payload schema and the
-  helpers that produce a payload from a (chunk, proposition) pair. The B.7
-  pipeline orchestrator wires this together with the batch embed/upsert logic.
+ index.py has accumulated mixed concerns (BM25 + Qdrant + diagrams + tests).
+ qdrant.py is the single source of truth for the v1 payload schema and the
+ helpers that produce a payload from a (chunk, proposition) pair. The B.7
+ pipeline orchestrator wires this together with the batch embed/upsert logic.
 
 Schema contract — every Qdrant point's payload contains:
 
-  Identity
-    proposition_id           UUID, the embedded unit
-    chunk_id                 UUID of the parent chunk this proposition came from
-    parent_chunk_text        full text of the parent chunk (for retrieval display)
-    text                     proposition text (also embedded)
-    textbook_id              e.g. "openstax_anatomy"
-    chunk_type               "paragraph" | "paragraph_overlap" | "table" | "figure_caption"
-    domain                   legacy alias for textbook_id (kept for back-compat with retriever)
+ Identity
+ proposition_id UUID, the embedded unit
+ chunk_id UUID of the parent chunk this proposition came from
+ parent_chunk_text full text of the parent chunk (for retrieval display)
+ text proposition text (also embedded)
+ textbook_id e.g. "openstax_anatomy"
+ chunk_type "paragraph" | "paragraph_overlap" | "table" | "figure_caption"
+ domain legacy alias for textbook_id (kept for back-compat with retriever)
 
-  Hierarchy
-    chapter_num              int
-    chapter_title            str
-    section_num              str   ("20.1")
-    section_title            str   (canonical, post un-mash)
-    subsection_title         str   (may be empty)
-    subsection_id            str   composite "<textbook_id>:<section_num>:<subsection_norm>"
+ Hierarchy
+ chapter_num int
+ chapter_title str
+ section_num str ("20.1")
+ section_title str (canonical, post un-mash)
+ subsection_title str (may be empty)
+ subsection_id str composite "<textbook_id>:<section_num>:<subsection_norm>"
 
-  Window navigation
-    sequence_index           int   0-indexed position within subsection_id
-    prev_chunk_id            str | None   chunk_id of previous chunk in same subsection
-    next_chunk_id            str | None   chunk_id of next chunk in same subsection
-    subsection_chunk_count   int   total chunks in this subsection
+ Window navigation
+ sequence_index int 0-indexed position within subsection_id
+ prev_chunk_id str | None chunk_id of previous chunk in same subsection
+ next_chunk_id str | None chunk_id of next chunk in same subsection
+ subsection_chunk_count int total chunks in this subsection
 
-  Provenance
-    page                     int
-    prompt_version           str   tags the dual-task prompt version
-    ingested_at              str   ISO-8601 UTC timestamp
+ Provenance
+ page int
+ prompt_version str tags the dual-task prompt version
+ ingested_at str ISO-8601 UTC timestamp
 
-  Forward hooks (null in v1)
-    subsection_summary_id    str | None   populated in Phase D if summaries are added
+ Forward hooks (null in v1)
+ subsection_summary_id str | None populated in Phase D if summaries are added
 
 The BM25 path (build_bm25_only in core/index.py) consumes the same proposition
 records so payloads stay in sync between dense and sparse indexes.
@@ -75,11 +74,9 @@ VALID_CHUNK_TYPES: frozenset[str] = frozenset({
     "paragraph", "paragraph_overlap", "table", "figure_caption",
 })
 
-
 # ── Subsection ID ────────────────────────────────────────────────────────────
 
 _NORM_RE = re.compile(r"[^a-z0-9]+")
-
 
 def normalize_subsection_id(
     textbook_id: str,
@@ -87,57 +84,56 @@ def normalize_subsection_id(
     subsection_title: str,
 ) -> str:
     """
-    Build a stable, lookup-friendly composite ID for a subsection.
+ Build a stable, lookup-friendly composite ID for a subsection.
 
-    Format: "<textbook_id>:<section_num>:<subsection_norm>"
+ Format: "<textbook_id>:<section_num>:<subsection_norm>"
 
-    subsection_norm is lowercase, ASCII-alphanumeric only, with runs of any
-    other character collapsed to a single '_'. Empty subsection_title yields
-    an empty trailing component (chunk lives at section-level, not in a
-    specific subsection).
+ subsection_norm is lowercase, ASCII-alphanumeric only, with runs of any
+ other character collapsed to a single '_'. Empty subsection_title yields
+ an empty trailing component (chunk lives at section-level, not in a
+ specific subsection).
 
-    Examples:
-        ("openstax_anatomy", "20.1", "Shared Structure of Vessels")
-            -> "openstax_anatomy:20.1:shared_structure_of_vessels"
+ Examples:
+ ("openstax_anatomy", "20.1", "Shared Structure of Vessels")
+> "openstax_anatomy:20.1:shared_structure_of_vessels"
 
-        ("openstax_anatomy", "1.3", "")
-            -> "openstax_anatomy:1.3:"
-    """
+ ("openstax_anatomy", "1.3", "")
+> "openstax_anatomy:1.3:"
+"""
     sub_raw = (subsection_title or "").strip().lower()
     sub_norm = _NORM_RE.sub("_", sub_raw).strip("_")
     section = (section_num or "").strip()
     return f"{textbook_id}:{section}:{sub_norm}"
 
-
 # ── Window-navigation metadata ───────────────────────────────────────────────
 
 def compute_window_nav_metadata(chunks: list[dict]) -> dict[str, dict]:
     """
-    Given the full list of chunks emitted by the chunker, compute window
-    navigation metadata so the retriever can do W=1 / W=2 expansion via
-    prev_chunk_id / next_chunk_id walks.
+ Given the full list of chunks emitted by the chunker, compute window
+ navigation metadata so the retriever can do W=1 / W=2 expansion via
+ prev_chunk_id / next_chunk_id walks.
 
-    Inputs (per chunk dict):
-      chunk_id         (str, required)
-      subsection_id    (str, required — call normalize_subsection_id first)
-      sequence_index   (numeric, required — global ordering from the chunker)
-      chunk_type       (str, optional — only "paragraph" + "paragraph_overlap"
-                        contribute to navigation; "table" / "figure_caption"
-                        get sequence_index but no prev/next chain since they
-                        don't appear in the inline narrative flow)
+ Inputs (per chunk dict):
+ chunk_id (str, required)
+ subsection_id (str, required — call normalize_subsection_id first)
+ sequence_index (numeric, required — global ordering from the chunker)
+ chunk_type (str, optional — only "paragraph" + "paragraph_overlap"
+ contribute to navigation; "table" / "figure_caption"
+ get sequence_index but no prev/next chain since they
+ don't appear in the inline narrative flow)
 
-    Returns:
-      dict mapping chunk_id -> {
-        "sequence_index": int (0-indexed within subsection),
-        "prev_chunk_id":  str | None,
-        "next_chunk_id":  str | None,
-        "subsection_chunk_count": int,
-      }
+ Returns:
+ dict mapping chunk_id -> {
+ "sequence_index": int (0-indexed within subsection)
+ "prev_chunk_id": str | None
+ "next_chunk_id": str | None
+ "subsection_chunk_count": int
+ }
 
-    Sort order within a subsection: by the input chunk's `sequence_index`
-    ascending (which reflects the chunker's natural output order). Ties are
-    broken by chunk_id for determinism.
-    """
+ Sort order within a subsection: by the input chunk's `sequence_index`
+ ascending (which reflects the chunker's natural output order). Ties are
+ broken by chunk_id for determinism.
+"""
     # Group by subsection_id, but only chain navigable chunk_types.
     navigable_types = {"paragraph", "paragraph_overlap"}
 
@@ -185,7 +181,6 @@ def compute_window_nav_metadata(chunks: list[dict]) -> dict[str, dict]:
 
     return nav
 
-
 # ── Payload assembly ─────────────────────────────────────────────────────────
 
 def build_payload(
@@ -198,25 +193,25 @@ def build_payload(
     ingested_at: str | None = None,
 ) -> dict:
     """
-    Assemble a Qdrant payload for one proposition derived from one chunk.
+ Assemble a Qdrant payload for one proposition derived from one chunk.
 
-    Args:
-        proposition  dict with at least {proposition_id, text}.
-        chunk        the parent chunk dict (must include chunk_id, chunk_type,
-                     chapter/section metadata, page).
-        nav          the window-nav entry for this chunk_id (from
-                     compute_window_nav_metadata).
-        textbook_id  e.g. "openstax_anatomy".
-        prompt_version  tag for the dual-task prompt that produced the
-                     proposition. Default: PROMPT_VERSION_DEFAULT.
-        ingested_at  ISO-8601 UTC timestamp; defaults to now.
+ Args:
+ proposition dict with at least {proposition_id, text}.
+ chunk the parent chunk dict (must include chunk_id, chunk_type
+ chapter/section metadata, page).
+ nav the window-nav entry for this chunk_id (from
+ compute_window_nav_metadata).
+ textbook_id e.g. "openstax_anatomy".
+ prompt_version tag for the dual-task prompt that produced the
+ proposition. Default: PROMPT_VERSION_DEFAULT.
+ ingested_at ISO-8601 UTC timestamp; defaults to now.
 
-    Returns:
-        dict whose keys are exactly PAYLOAD_FIELDS.
+ Returns:
+ dict whose keys are exactly PAYLOAD_FIELDS.
 
-    Raises:
-        ValueError if a required field is missing or chunk_type is invalid.
-    """
+ Raises:
+ ValueError if a required field is missing or chunk_type is invalid.
+"""
     if "proposition_id" not in proposition or "text" not in proposition:
         raise ValueError("proposition must include proposition_id and text")
     if "chunk_id" not in chunk:
@@ -277,7 +272,6 @@ def build_payload(
         )
     return payload
 
-
 # ── Bulk metadata enrichment ─────────────────────────────────────────────────
 
 def enrich_chunks_with_subsection_id(
@@ -286,7 +280,7 @@ def enrich_chunks_with_subsection_id(
     textbook_id: str,
 ) -> None:
     """In-place: populate `subsection_id` on every chunk that doesn't have one.
-    Idempotent: chunks that already have a subsection_id are left alone."""
+ Idempotent: chunks that already have a subsection_id are left alone."""
     for c in chunks:
         if c.get("subsection_id"):
             continue
@@ -296,13 +290,12 @@ def enrich_chunks_with_subsection_id(
             c.get("subsection_title", ""),
         )
 
-
 def enrich_chunks_with_window_nav(chunks: list[dict]) -> None:
     """In-place: compute and attach window-nav fields to every chunk.
 
-    Calls compute_window_nav_metadata then writes the four nav fields
-    (sequence_index, prev_chunk_id, next_chunk_id, subsection_chunk_count)
-    onto each chunk. Run this AFTER enrich_chunks_with_subsection_id."""
+ Calls compute_window_nav_metadata then writes the four nav fields
+ (sequence_index, prev_chunk_id, next_chunk_id, subsection_chunk_count)
+ onto each chunk. Run this AFTER enrich_chunks_with_subsection_id."""
     nav = compute_window_nav_metadata(chunks)
     for c in chunks:
         entry = nav.get(c["chunk_id"], {})
@@ -310,7 +303,6 @@ def enrich_chunks_with_window_nav(chunks: list[dict]) -> None:
         c["prev_chunk_id"] = entry.get("prev_chunk_id")
         c["next_chunk_id"] = entry.get("next_chunk_id")
         c["subsection_chunk_count"] = entry.get("subsection_chunk_count", 0)
-
 
 # ── Collection lifecycle ─────────────────────────────────────────────────────
 
@@ -322,11 +314,11 @@ def ensure_collection(
     fresh: bool = False,
 ) -> None:
     """
-    Make sure a Qdrant collection exists with the right vector size.
+ Make sure a Qdrant collection exists with the right vector size.
 
-    fresh=True wipes and recreates. fresh=False creates only if missing.
-    Raises if the existing collection has a different vector_size.
-    """
+ fresh=True wipes and recreates. fresh=False creates only if missing.
+ Raises if the existing collection has a different vector_size.
+"""
     from qdrant_client.models import Distance, VectorParams
 
     try:
@@ -357,7 +349,6 @@ def ensure_collection(
             "Pass fresh=True to recreate."
         )
 
-
 # ── Iteration helper ─────────────────────────────────────────────────────────
 
 def iter_payload_records(
@@ -369,11 +360,11 @@ def iter_payload_records(
     ingested_at: str | None = None,
 ):
     """
-    Yield (proposition_id, payload) pairs for batched upsert.
+ Yield (proposition_id, payload) pairs for batched upsert.
 
-    Skips propositions whose parent chunk_id can't be resolved (with a warning).
-    Caller must have already enriched the chunks with subsection_id and window-nav.
-    """
+ Skips propositions whose parent chunk_id can't be resolved (with a warning).
+ Caller must have already enriched the chunks with subsection_id and window-nav.
+"""
     timestamp = ingested_at or datetime.now(timezone.utc).isoformat(timespec="seconds")
     skipped = 0
     for prop in propositions:

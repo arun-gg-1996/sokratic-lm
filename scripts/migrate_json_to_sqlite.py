@@ -2,48 +2,48 @@
 scripts/migrate_json_to_sqlite.py
 ─────────────────────────────────
 One-shot migration of legacy per-student JSON mastery files into the new
-SQLite store (per docs/AUDIT_2026-05-02.md L1, L2).
+SQLite store (per docs/AUDIT_2026-05-02.md ).
 
-Source:    data/student_state/{student_id}.json              (one file per student)
-Target:    data/student_state/sokratic_{domain}.sqlite3      (per-domain DB)
+Source: data/student_state/{student_id}.json (one file per student)
+Target: data/student_state/sokratic_{domain}.sqlite3 (per-domain DB)
 
 Pass --domain to control which DB file you migrate into (default
-"openstax_anatomy"). Per docs/AUDIT_2026-05-02.md L1, each domain has its
+"openstax_anatomy"). Per docs/AUDIT_2026-05-02.md , each domain has its
 own SQLite file; same student_id can hold independent progress in each.
 
 The legacy JSON shape is:
 
-    {
-      "concepts": {
-        "Ch20|<section>|<subsection>": {
-          "mastery": 0.25, "confidence": 0.25, "sessions": 2,
-          "last_seen": "2026-04-30", "last_outcome": "not_reached",
-          "last_rationale": "..."
-        },
-        ...
-      }
-    }
+ {
+ "concepts": {
+ "Ch20|<section>|<subsection>": {
+ "mastery": 0.25, "confidence": 0.25, "sessions": 2
+ "last_seen": "", "last_outcome": "not_reached"
+ "last_rationale": "..."
+ }
+ ...
+ }
+ }
 
 Path conversion: legacy uses "Ch{N}|<section>|<subsection>" with chapter
-shorthand. The new canonical path per L4 is "<full chapter title> > <section>
+shorthand. The new canonical path is "<full chapter title> > <section>
 > <subsection>". The mapping Ch{N} → full title is read from
 data/textbook_structure.json.
 
 What does NOT migrate:
-  * `last_rationale` — narrative text, belongs to mem0 / message logs, not
-    SQLite. Dropped on migration; the SQL row only carries the numeric
-    score + categorical outcome + counters.
-  * `confidence` — not in the L2 schema; the EWMA score IS the confidence-
-    weighted estimate. Dropped.
-  * Per-session history — the legacy JSON doesn't have full session rows,
-    so the `sessions` table is NOT populated by this migration. Sessions
-    will accrue forward from the first new session on the SQLite store.
+ * `last_rationale` — narrative text, belongs to mem0 / message logs, not
+ SQLite. Dropped on migration; the SQL row only carries the numeric
+ score + categorical outcome + counters.
+ * `confidence` — not in the schema; the EWMA score IS the confidence-
+ weighted estimate. Dropped.
+ * Per-session history — the legacy JSON doesn't have full session rows
+ so the `sessions` table is NOT populated by this migration. Sessions
+ will accrue forward from the first new session on the SQLite store.
 
-Idempotent: re-running is safe (uses INSERT OR IGNORE for students,
+Idempotent: re-running is safe (uses INSERT OR IGNORE for students
 upsert for subsection_mastery via plain UPDATE-or-INSERT).
 
 Usage:
-    .venv/bin/python scripts/migrate_json_to_sqlite.py [--dry-run] [--db PATH]
+ .venv/bin/python scripts/migrate_json_to_sqlite.py [--dry-run] [--db PATH]
 """
 from __future__ import annotations
 
@@ -60,7 +60,6 @@ from memory.sqlite_store import SQLiteStore  # noqa: E402
 
 JSON_DIR = REPO / "data" / "student_state"
 STRUCTURE_PATH = REPO / "data" / "textbook_structure.json"
-
 
 def load_chapter_lookup() -> dict[int, str]:
     """Return {chapter_num: full_chapter_title} from textbook_structure.json."""
@@ -79,12 +78,11 @@ def load_chapter_lookup() -> dict[int, str]:
             continue
     return out
 
-
 def convert_path(legacy_path: str, chapter_lookup: dict[int, str]) -> str | None:
     """Convert "Ch20|Section|Subsection" → "<full title> > Section > Subsection".
 
-    Returns None if the chapter number can't be resolved.
-    """
+ Returns None if the chapter number can't be resolved.
+"""
     parts = legacy_path.split("|")
     if len(parts) != 3:
         return None
@@ -99,7 +97,6 @@ def convert_path(legacy_path: str, chapter_lookup: dict[int, str]) -> str | None
     if not full_title:
         return None
     return f"{full_title} > {section} > {subsection}"
-
 
 def main():
     p = argparse.ArgumentParser()
@@ -169,7 +166,7 @@ def main():
             if args.dry_run or store is None:
                 continue
 
-            # Coerce outcome to one of the L3 enum values.
+            # Coerce outcome to one of the enum values.
             if outcome not in {"reached", "partial", "not_reached"}:
                 outcome = "not_reached"
 
@@ -212,7 +209,6 @@ def main():
     print(f"  concepts dropped:   {n_concepts_dropped}", flush=True)
     for reason, n in sorted(drop_reasons.items(), key=lambda x: -x[1]):
         print(f"    {n:4d}  {reason}", flush=True)
-
 
 if __name__ == "__main__":
     main()

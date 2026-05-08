@@ -7,7 +7,7 @@ Coverage:
   * safe_mem0_read returns [] on infra failure (never raises)
   * Trace entry emitted on every read with hit_count + elapsed_ms + error
   * Empty results vs infra failure are distinguishable in trace
-  * Dedupe by thread_id (default ON per L5)
+  * Dedupe by thread_id (default ON )
   * top_k cap honored
   * safe_mem0_write returns False + traces on missing required metadata
   * safe_mem0_write returns False on stub-unavailable (no exception)
@@ -26,7 +26,6 @@ from memory.mem0_safe import (
     safe_mem0_read,
     safe_mem0_write,
 )
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Fakes for PersistentMemory
@@ -54,10 +53,8 @@ class FakeAvailable:
         self.add_calls.append({"student_id": student_id, "text": text, "metadata": metadata})
         return self._add_succeeds
 
-
 class FakeUnavailable:
     available = False
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Required metadata spec (L4 + Codex round-1 fix #4)
@@ -67,7 +64,6 @@ def test_required_metadata_matches_l4_spec():
     assert REQUIRED_WRITE_METADATA == {
         "category", "subsection_path", "section_path", "session_at", "thread_id"
     }
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # safe_mem0_read
@@ -82,7 +78,6 @@ def test_read_returns_empty_when_pm_unavailable_and_traces():
     assert trace[0]["error"] == "stub_unavailable"
     assert trace[0]["hit_count"] == 0
 
-
 def test_read_returns_results_and_traces_success():
     rows = [
         {"text": "claim 1", "metadata": {"thread_id": "t1"}},
@@ -93,7 +88,6 @@ def test_read_returns_results_and_traces_success():
     assert len(out) == 2
     trace = state["debug"]["turn_trace"][0]
     assert trace["error"] is None and trace["hit_count"] == 2
-
 
 def test_read_distinguishes_zero_hits_from_failure():
     state_empty = {"debug": {"turn_trace": []}}
@@ -108,7 +102,6 @@ def test_read_distinguishes_zero_hits_from_failure():
     assert e_trace["hit_count"] == 0 and e_trace["error"] is None
     assert f_trace["hit_count"] == 0 and "RuntimeError" in (f_trace["error"] or "")
 
-
 def test_read_deduplicates_by_thread_id_by_default():
     rows = [
         {"text": "claim A1", "metadata": {"thread_id": "t1"}},
@@ -119,7 +112,6 @@ def test_read_deduplicates_by_thread_id_by_default():
     threads = [h["metadata"]["thread_id"] for h in out]
     assert threads == ["t1", "t2"]
 
-
 def test_read_dedup_off_returns_all_rows():
     rows = [
         {"text": "claim A1", "metadata": {"thread_id": "t1"}},
@@ -128,18 +120,15 @@ def test_read_dedup_off_returns_all_rows():
     out = safe_mem0_read(FakeAvailable(rows), "alice", "x", dedupe_by_thread_id=False)
     assert len(out) == 2
 
-
 def test_read_top_k_cap():
     rows = [{"text": str(i), "metadata": {"thread_id": f"t{i}"}} for i in range(10)]
     out = safe_mem0_read(FakeAvailable(rows), "alice", "x", top_k=3)
     assert len(out) == 3
 
-
 def test_read_no_state_does_not_crash():
     """Trace skipping when state is None should not raise."""
     out = safe_mem0_read(FakeAvailable([]), "alice", "x", state=None)
     assert out == []
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # safe_mem0_write
@@ -153,7 +142,6 @@ VALID_METADATA = {
     "thread_id": "alice_abcdef",
 }
 
-
 def test_write_succeeds_with_valid_metadata():
     pm = FakeAvailable()
     state = {"debug": {"turn_trace": []}}
@@ -162,7 +150,6 @@ def test_write_succeeds_with_valid_metadata():
     assert pm.add_calls and pm.add_calls[0]["text"] == "Student confused X with Y."
     trace = state["debug"]["turn_trace"][0]
     assert trace["wrapper"] == "mem0_write" and trace["success"] is True
-
 
 @pytest.mark.parametrize("missing_field", sorted(REQUIRED_WRITE_METADATA))
 def test_write_rejects_missing_required_field(missing_field):
@@ -177,7 +164,6 @@ def test_write_rejects_missing_required_field(missing_field):
     assert trace["error"] == "missing_required_field"
     assert trace["dropped_field"] == missing_field
 
-
 def test_write_rejects_empty_string_required_field():
     pm = FakeAvailable()
     md = {**VALID_METADATA, "subsection_path": "  "}  # whitespace only
@@ -186,13 +172,11 @@ def test_write_rejects_empty_string_required_field():
     assert ok is False
     assert state["debug"]["turn_trace"][0]["dropped_field"] == "subsection_path"
 
-
 def test_write_returns_false_on_pm_unavailable():
     state = {"debug": {"turn_trace": []}}
     ok = safe_mem0_write(FakeUnavailable(), "alice", "x", VALID_METADATA, state=state)
     assert ok is False
     assert state["debug"]["turn_trace"][0]["error"] == "stub_unavailable"
-
 
 def test_write_returns_false_on_pm_exception():
     pm = FakeAvailable(raise_on_add=ConnectionError("Qdrant down"))
@@ -201,12 +185,10 @@ def test_write_returns_false_on_pm_exception():
     assert ok is False
     assert "ConnectionError" in (state["debug"]["turn_trace"][0]["error"] or "")
 
-
 def test_write_no_state_does_not_crash():
     pm = FakeAvailable()
     ok = safe_mem0_write(pm, "alice", "x", VALID_METADATA, state=None)
     assert ok is True
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # emit_session_summary_trace

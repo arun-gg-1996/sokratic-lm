@@ -20,7 +20,6 @@ from conversation.snapshots import (
 )
 from conversation.history_render import render_history
 
-
 def test_sensitive_key_detection():
     sensitive = [
         "locked_answer", "full_answer", "locked_answer_aliases",
@@ -39,7 +38,6 @@ def test_sensitive_key_detection():
     ]
     for k in safe:
         assert not _is_sensitive_key(k), f"{k!r} should be safe"
-
 
 def test_student_snapshot_strips_sensitive_extras():
     state = {
@@ -74,7 +72,6 @@ def test_student_snapshot_strips_sensitive_extras():
     assert "the full answer" not in serialized
     assert "chunk content" not in serialized
 
-
 def test_tutor_snapshot_strips_sensitive_extras():
     state = {
         "messages": [{"role": "tutor", "content": "What do you think?"}],
@@ -101,7 +98,6 @@ def test_tutor_snapshot_strips_sensitive_extras():
     serialized = repr(snap)
     assert "pyruvate" not in serialized
 
-
 def test_system_event_strips_sensitive_payload():
     state = {"messages": [{"role": "tutor", "content": "test"}]}
     log_system_event(
@@ -120,7 +116,6 @@ def test_system_event_strips_sensitive_payload():
     assert payload.get("chapter_num") == 3
     serialized = repr(ev)
     assert "pyruvate" not in serialized
-
 
 def test_render_history_with_sensitive_state_no_leak():
     """End-to-end: render history with state where locked_answer='pyruvate'.
@@ -159,7 +154,6 @@ def test_render_history_with_sensitive_state_no_leak():
     assert "[mode=socratic" in rendered
     assert "[intent=low_effort" in rendered
 
-
 def test_render_history_falls_back_when_no_snapshots():
     """Legacy calls without snapshots should still work."""
     messages = [
@@ -171,7 +165,6 @@ def test_render_history_falls_back_when_no_snapshots():
     assert "STUDENT: not sure" in rendered
     # No annotations rendered when no snapshots
     assert "[" not in rendered  # no [intent=...] or [mode=...] markers
-
 
 def test_render_history_with_system_event():
     """System events render as inline SYSTEM_EVENT lines."""
@@ -189,7 +182,6 @@ def test_render_history_with_system_event():
     rendered = render_history(messages, snapshots=[], events=events)
     assert "SYSTEM_EVENT: topic_locked" in rendered
     assert "subsection=Test Sub" in rendered
-
 
 def test_intent_evidence_truncated():
     """Long intent evidence is capped at 120 chars (no answer leak via evidence)."""

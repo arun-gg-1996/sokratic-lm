@@ -1,32 +1,17 @@
 """
-conversation/history_render.py
-==============================
-BLOCK 5 (REAL-Q5) — enriched conversation history renderer.
+Renders conversation history for the LLM, weaving in per-turn
+snapshots and system events.
 
-Weaves raw `state["messages"]` with `per_turn_snapshots` and
-`system_events` to produce annotated history that the LLM can read
-to understand system provenance per turn.
+Output looks like:
 
-Used by both Teacher (`teacher_v2._format_history`) and Dean
-(`dean_v2._format_history`) — single source of truth for rendering.
+    TUTOR [mode=socratic, hint=1, tone=encouraging]: <text>
+    STUDENT [intent=on_topic_engaged]: <text>
+    SYSTEM_EVENT: hint_advance, from=1, to=2
+    TUTOR [mode=redirect, hint=2, tone=neutral]: <text>
 
-SAFETY CONTRACT (Safeguard #1): annotations must NEVER include
-locked_answer / full_answer / aliases / chunk content. Snapshot
-helpers in `snapshots.py` enforce this at write time; this renderer
-only reads the safe keys explicitly.
-
-Output format (when snapshots+events present):
-
-  TUTOR [mode=socratic, hint=1, tone=encouraging, attempts=1]: <text>
-  STUDENT [intent=on_topic_engaged]: <text>
-  TUTOR [mode=socratic, hint=1, tone=encouraging, attempts=2]: <text>
-  STUDENT [intent=low_effort, consecutive_low_effort=2]: <text>
-  SYSTEM_EVENT: hint_advance, from=1, to=2
-  TUTOR [mode=redirect, hint=2, tone=neutral, attempts=1]: <text>
-  ...
-
-When snapshots/events are missing (early turns, legacy state), falls
-back gracefully to plain TUTOR: / STUDENT: lines.
+The renderer only reads safe snapshot keys, so answer / chunk content
+never leaks into the formatted history. When snapshots are missing
+it falls back to plain TUTOR / STUDENT lines.
 """
 from __future__ import annotations
 
@@ -38,7 +23,6 @@ from conversation.registry import (
     TeacherModeVocabulary,
 )
 
-
 def render_history(
     messages: list[dict],
     *,
@@ -48,16 +32,16 @@ def render_history(
 ) -> str:
     """Render conversation history with optional system-state annotations.
 
-    Args:
-      messages: state["messages"] — raw conversation
-      snapshots: state["debug"]["per_turn_snapshots"] — per-turn metadata
-      events: state["debug"]["system_events"] — system events between turns
-      max_turns: max student/tutor pairs to render (default 50)
+ Args:
+ messages: state["messages"] — raw conversation
+ snapshots: state["debug"]["per_turn_snapshots"] — per-turn metadata
+ events: state["debug"]["system_events"] — system events between turns
+ max_turns: max student/tutor pairs to render (default 50)
 
-    Returns:
-      Multi-line string with annotated history (or plain history if
-      no snapshots provided).
-    """
+ Returns:
+ Multi-line string with annotated history (or plain history if
+ no snapshots provided).
+"""
     if not messages:
         return "(no history)"
 
@@ -91,9 +75,8 @@ def render_history(
     tail = messages[start_idx:]
 
     out_lines: list[str] = []
-    # Q20/C1: emit pre-conversation system events (after_turn = -1) BEFORE
+    # /C1: emit pre-conversation system events (after_turn = -1) BEFORE
     # the first message. anchor_pick_shown fires before any tutor turn —
-    # without this, Teacher would not see that anchor cards were rendered
     # and might accuse the student of "skipping the question" when they
     # clicked a chip.
     if start_idx == 0:
@@ -118,7 +101,6 @@ def render_history(
                 out_lines.append(ev_line)
 
     return "\n\n".join(out_lines) or "(no history)"
-
 
 def _render_message_line(
     role: str,
@@ -160,7 +142,6 @@ def _render_message_line(
         return f"SYSTEM: {content}" if content else ""
     else:
         return f"{role.upper()}: {content}"
-
 
 def _render_event_line(ev: dict) -> str:
     """Render a system event line."""

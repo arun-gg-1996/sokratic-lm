@@ -1,11 +1,10 @@
 """
 evaluation/quality/dimensions.py
---------------------------------
 Assemble the 10 SECONDARY (diagnostic) dimensions from the deterministic
 results + LLM judge outputs.
 
 Each dimension produces:
-  {"score": 0.0-1.0, "sub": {key: value, ...}}
+ {"score": 0.0-1.0, "sub": {key: value, ...}}
 
 A dimension's `score` is the mean of its non-null sub-metrics. Missing
 sub-metrics are skipped (never zeroed) — so partial signals don't drag the
@@ -18,7 +17,6 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from .schema import SessionView
-
 
 # =============================================================================
 # Per-dimension thresholds (docs/EVALUATION_FRAMEWORK.md §8).
@@ -38,16 +36,13 @@ DIMENSION_THRESHOLDS = {
     "MSC": 0.70,
 }
 
-
 def _mean_present(values: list) -> Optional[float]:
     """Mean of non-None values, or None if all are missing."""
     vs = [float(v) for v in values if v is not None]
     return sum(vs) / len(vs) if vs else None
 
-
 def _round_or_none(x, digits: int = 3):
     return round(x, digits) if x is not None else None
-
 
 def assemble_dimensions(
     view: SessionView,
@@ -200,7 +195,6 @@ def assemble_dimensions(
     out["MSC"] = _wrap("MSC", msc_sub)
 
     return out
-
 
 def _wrap(dim_name: str, sub: dict) -> dict:
     """Compute mean of present sub-metrics. Round score to 3 places."""

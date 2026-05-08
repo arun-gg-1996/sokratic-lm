@@ -1,28 +1,27 @@
 """
 scripts/run_eval_18_convos.py
------------------------------
-The curated 18-conversation eval batch (Phase 1, 2026-04-30).
+The curated 18-conversation eval batch (Phase 1).
 
 Tests both:
-  - Per-session quality (across S1-S6 profiles + diverse topics)
-  - Cross-session memory cycle (mem0 read in rapport_node + mastery EWMA)
+Per-session quality (across - profiles + diverse topics)
+Cross-session memory cycle (mem0 read in rapport_node + mastery EWMA)
 
 Structure:
-  - 11 distinct students, 18 conversations total
-  - 3 students × 2 sessions (memory pair tests, 6 convos)
-  - 2 students × 3 sessions (EWMA convergence tests, 6 convos)
-  - 6 students × 1 session (single-session quality, 6 convos)
+11 distinct students, 18 conversations total
+3 students × 2 sessions (memory pair tests, 6 convos)
+2 students × 3 sessions (EWMA convergence tests, 6 convos)
+6 students × 1 session (single-session quality, 6 convos)
 
 Concurrency:
-  - Across DIFFERENT students: 4 parallel chains
-  - Within ONE student's chain: STRICTLY SEQUENTIAL (session N+1 must
-    see session N's mem0 + mastery state on disk before it starts)
+Across DIFFERENT students: 4 parallel chains
+Within ONE student's chain: STRICTLY SEQUENTIAL (session N+1 must
+ see session N's mem0 + mastery state on disk before it starts)
 
 Each student's mem0 + mastery_store is cleared BEFORE their chain starts
 so we test the memory cycle from a clean baseline.
 
 Usage (from sokratic/ root):
-    .venv/bin/python scripts/run_eval_18_convos.py
+ .venv/bin/python scripts/run_eval_18_convos.py
 """
 
 from __future__ import annotations
@@ -44,7 +43,6 @@ from evaluation.simulation.student_simulator import StudentSimulator
 
 OUTPUT_DIR = Path(cfg.paths.artifacts) / "eval_run_18"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
 
 # =============================================================================
 # 18-conversation plan
@@ -97,7 +95,7 @@ PLAN: list[dict] = [
         ],
     },
 
-    # === Single-session quality (6 convos, S1-S6, distinct topics) ===
+    # === Single-session quality (6 convos, -, distinct topics) ===
     {
         "student_id": "eval18_solo1_S1",
         "profile": "S1",
@@ -142,7 +140,6 @@ PLAN: list[dict] = [
     },
 ]
 
-
 # =============================================================================
 # State dump (mirror of test_reached_gate_e2e.py — keeps scorer-compatible)
 # =============================================================================
@@ -150,7 +147,7 @@ PLAN: list[dict] = [
 KEEP_TOP = (
     "student_id", "phase", "messages", "retrieved_chunks",
     "locked_question", "locked_answer", "locked_answer_aliases",
-    "full_answer",  # Change 2026-04-30: two-tier anchor design
+    "full_answer",  # Change : two-tier anchor design
     "locked_topic", "topic_confirmed", "topic_selection",
     "topic_just_locked", "hint_level", "max_hints", "max_turns",
     "turn_count", "student_state", "student_reached_answer",
@@ -164,7 +161,6 @@ KEEP_TOP = (
     "weak_topics", "rejected_topic_paths",
     "exploration_max", "exploration_used",
 )
-
 
 def _dump_state_for_scorer(state: dict) -> dict:
     out = {}
@@ -184,14 +180,13 @@ def _dump_state_for_scorer(state: dict) -> dict:
     out["debug"] = safe
     return out
 
-
 # =============================================================================
 # Memory + mastery clear helper
 # =============================================================================
 
 def clear_student_state(student_id: str, memory_manager) -> None:
     """Reset mem0 + mastery_store for this student before their chain starts.
-    Best-effort: failures (e.g. mem0 unavailable) shouldn't block the test."""
+ Best-effort: failures (e.g. mem0 unavailable) shouldn't block the test."""
     try:
         memory_manager.forget(student_id)
     except Exception as e:
@@ -203,7 +198,6 @@ def clear_student_state(student_id: str, memory_manager) -> None:
             print(f"  [{student_id}] cleared mastery_store at {state_path}")
     except Exception as e:
         print(f"  [{student_id}] mastery_store clear failed: {e}")
-
 
 # =============================================================================
 # Single-session driver (LLM-driven student via simulator)
@@ -217,10 +211,10 @@ async def run_one_session(
     graph,
 ) -> dict:
     """Drive ONE session through the full graph. LLM-driven student via
-    simulator. Returns a dict with the full state + transcript + bugs."""
+ simulator. Returns a dict with the full state + transcript + bugs."""
     conv_id = str(uuid.uuid4())[:8]
     thread_id = f"{student_id}_s{session_index}_{conv_id}"
-    # M2 Bug A — production calls SQLiteStore.ensure_student in start_session;
+    # Bug A — production calls SQLiteStore.ensure_student in start_session;
     # the eval harness bypasses that path, so insert here to satisfy the
     # students→sessions FK constraint at session-end time.
     try:
@@ -261,14 +255,13 @@ async def run_one_session(
         return _build_result(student_id, conv_id, profile_id, topic, session_index, turns_log, state, bugs_noted)
 
     # ---- Pre-lock loop (handles legacy topic-cards AND v2 confirm_topic UX) ----
-    # B1 fix (2026-05-03): the legacy harness only checked `state.topic_options`
-    # and hard-picked opts[0]. v2's L10 confirm_and_lock sets topic_options=[]
+    # fix: the legacy harness only checked `state.topic_options`
+    # and hard-picked opts[0]. v2's confirm_and_lock sets topic_options=
     # and puts options under `pending_user_choice.options` (kind="confirm_topic").
     # Hard-picking opts[0] then fell back to `topic` (re-typing the original
     # question), which v2 read as a fresh topic query, kicking off another
     # confirm_and_lock — infinite loop until the harness 16-turn cap.
-    #
-    # New approach: defer to simulator.respond() which already handles every
+    # New approach: defer to simulator.respond which already handles every
     # pending_user_choice kind correctly (mimics UI button clicks per the
     # f78f8e1 simulator fix). Loop a few times because the v2 flow may need
     # multiple turns to lock (confirm_and_lock → yes → coverage gate → cards
@@ -277,7 +270,7 @@ async def run_one_session(
     MAX_PRELOCK_LOOPS = 5
     while not state.get("topic_confirmed", False) and prelock_loops < MAX_PRELOCK_LOOPS:
         prelock_loops += 1
-        # If v2 surfaced a pending choice, simulator.respond() returns the
+        # If v2 surfaced a pending choice, simulator.respond returns the
         # appropriate button click. Otherwise fall back to first card option
         # / typed topic — same as the legacy behavior.
         pending = state.get("pending_user_choice") or {}
@@ -361,7 +354,6 @@ async def run_one_session(
 
     return _build_result(student_id, conv_id, profile_id, topic, session_index, turns_log, state, bugs_noted)
 
-
 def _build_result(student_id, conv_id, profile_id, topic, session_index, turns_log, state, bugs_noted):
     return {
         "student_id": student_id,
@@ -396,7 +388,6 @@ def _build_result(student_id, conv_id, profile_id, topic, session_index, turns_l
         # Critical for the eval scorer:
         "final_state": _dump_state_for_scorer(state),
     }
-
 
 # =============================================================================
 # Per-student chain (sessions sequential, mem0 carries forward)
@@ -436,13 +427,11 @@ async def run_student_chain(student_plan: dict, graph, memory_manager) -> list[d
         results.append(result)
     return results
 
-
 # =============================================================================
 # Orchestrator: 4 parallel students max
 # =============================================================================
 
 CONCURRENCY = 4
-
 
 async def main():
     from conversation.graph import build_graph
@@ -501,7 +490,6 @@ async def main():
     with open(manifest_path, "w") as f:
         json.dump(manifest, f, indent=2, default=str)
     print(f"Manifest: {manifest_path}\n")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

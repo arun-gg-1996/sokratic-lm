@@ -6,35 +6,35 @@ End-to-end simulation of the My Mastery → Start → Pick-Anchor → Tutor flow
 Mirrors what happens in production when a student clicks Start on a
 subsection from My Mastery:
 
-  1. Frontend calls POST /api/session/start with prelocked_topic=<path>.
-  2. Backend _apply_prelock fires:
-       - sets state.locked_topic
-       - retrieves chunks
-       - generates 3 anchor question variations via Sonnet
-       - stashes pending_user_choice = {kind: "anchor_pick", options, anchor_meta}
-  3. Backend graph.invoke runs rapport_node which emits a deterministic
-     prelock-aware greeting.
-  4. Frontend renders cards. Student picks one (or types a pivot).
-  5. Backend graph.invoke (with student message = picked question text):
-       - dean_node_v2 entry gate detects pending=anchor_pick
-       - run_topic_lock_v2 anchor_pick handler resolves the pick:
-           * sets state.locked_question / locked_answer / aliases / full_answer
-           * clears pending_user_choice
-           * sets topic_just_locked=True
-       - dean_node_v2 falls through to tutoring on the SAME invocation:
-           * Dean.plan emits a TurnPlan
-           * Teacher.draft produces the first Socratic question
-       - Final return merges both the anchor-pick state updates AND
-         the tutoring response.
-  6. Frontend shows the Socratic question.
-  7. Subsequent turns engage normally.
+ 1. Frontend calls POST /api/session/start with prelocked_topic=<path>.
+ 2. Backend _apply_prelock fires:
+sets state.locked_topic
+retrieves chunks
+generates 3 anchor question variations via Sonnet
+stashes pending_user_choice = {kind: "anchor_pick", options, anchor_meta}
+ 3. Backend graph.invoke runs rapport_node which emits a deterministic
+ prelock-aware greeting.
+ 4. Frontend renders cards. Student picks one (or types a pivot).
+ 5. Backend graph.invoke (with student message = picked question text):
+dean_node_v2 entry gate detects pending=anchor_pick
+run_topic_lock_v2 anchor_pick handler resolves the pick:
+ * sets state.locked_question / locked_answer / aliases / full_answer
+ * clears pending_user_choice
+ * sets topic_just_locked=True
+dean_node_v2 falls through to tutoring on the SAME invocation:
+ * Dean.plan emits a TurnPlan
+ * Teacher.draft produces the first Socratic question
+Final return merges both the anchor-pick state updates AND
+ the tutoring response.
+ 6. Frontend shows the Socratic question.
+ 7. Subsequent turns engage normally.
 
 This script asserts the invariants for each step and prints a
 detailed per-turn dump.
 
 Usage:
-  SOKRATIC_USE_V2_FLOW=1 SOKRATIC_RETRIEVER=chunks \\
-    .venv/bin/python -u scripts/check_prelock_flow.py
+ SOKRATIC_USE_V2_FLOW=1 SOKRATIC_RETRIEVER=chunks \\
+ .venv/bin/python -u scripts/check_prelock_flow.py
 """
 from __future__ import annotations
 
@@ -50,7 +50,6 @@ sys.path.insert(0, str(REPO))
 from dotenv import load_dotenv
 load_dotenv(REPO / ".env", override=True)
 
-
 # Path to a touched subsection — canonical "Chapter X > Section > Subsection"
 # format that the mastery_tree returns. The session.py prelock parser now
 # accepts both this and legacy "Ch1|Section|Subsection".
@@ -60,9 +59,7 @@ CANONICAL_PATH = (
 )
 STUDENT_ID = "nidhi"  # any student in the students table
 
-
 # ── Per-step assertion helpers ─────────────────────────────────────────────
-
 
 class StepReport:
     def __init__(self) -> None:
@@ -82,14 +79,11 @@ class StepReport:
         print(f"SUMMARY: {n_pass}/{len(self.checks)} passed, {n_fail} failed")
         return n_fail
 
-
 def _truncate(s: str, n: int = 80) -> str:
     s = (s or "").replace("\n", " ")
     return s[:n] + ("…" if len(s) > n else "")
 
-
 # ── End-to-end driver ──────────────────────────────────────────────────────
-
 
 async def run() -> int:
     from config import cfg
@@ -350,7 +344,6 @@ async def run() -> int:
         f"total={(dt_prelock + dt_rapport + dt_pick + dt_engage):.1f}s"
     )
     return 0 if n_fail == 0 else 1
-
 
 if __name__ == "__main__":
     sys.exit(asyncio.run(run()))

@@ -1,27 +1,26 @@
 """
 ingestion/run.py
-----------------
 CLI entry point for the rebuilt ingestion pipeline (B.7).
 
 Examples:
 
-  Dry run — print the plan, no API calls:
-      python -m ingestion.run --source openstax_anatomy --dry-run
+ Dry run — print the plan, no API calls:
+ python -m ingestion.run --source openstax_anatomy --dry-run
 
-  Pilot — first 50 chunks only, stop before Qdrant upsert:
-      python -m ingestion.run --source openstax_anatomy \
-          --limit 50 --skip-stages embed,bm25,upsert
+ Pilot — first 50 chunks only, stop before Qdrant upsert:
+ python -m ingestion.run --source openstax_anatomy \
+limit 50 --skip-stages embed,bm25,upsert
 
-  Full run, fresh Qdrant collection:
-      python -m ingestion.run --source openstax_anatomy --fresh
+ Full run, fresh Qdrant collection:
+ python -m ingestion.run --source openstax_anatomy --fresh
 
-  Resume after a partial failure — skip already-done stages:
-      python -m ingestion.run --source openstax_anatomy \
-          --skip-stages parse,chunk,enrich
+ Resume after a partial failure — skip already-done stages:
+ python -m ingestion.run --source openstax_anatomy \
+skip-stages parse,chunk,enrich
 
-  Just rebuild BM25 + Qdrant without re-running the LLM:
-      python -m ingestion.run --source openstax_anatomy \
-          --only-stages embed,bm25,upsert
+ Just rebuild BM25 + Qdrant without re-running the LLM:
+ python -m ingestion.run --source openstax_anatomy \
+only-stages embed,bm25,upsert
 
 The CLI is a thin wrapper over `ingestion.core.pipeline.run_pipeline`. All
 real logic lives in pipeline.py; this file only parses argv and translates
@@ -37,10 +36,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # Force line-buffered stdout so progress prints (cost ticks, stage markers)
-# flush immediately when piped through `tee`. Without this, Python block-
 # buffers stdout when stdout is a pipe, and a 10-min run that gets killed
 # mid-flight loses all progress visibility — that bug let B.9 run dual-task
-# silently for ~6 minutes on 2026-04-28 before it was caught.
+# silently for ~6 minutes on before it was caught.
 try:
     sys.stdout.reconfigure(line_buffering=True)
     sys.stderr.reconfigure(line_buffering=True)
@@ -57,13 +55,11 @@ from ingestion.core.propositions_dual import (  # noqa: E402
     DEFAULT_MODEL as DEFAULT_PROPS_MODEL,
 )
 
-
 def _parse_stages(value: str) -> set[str]:
     """Parse comma-separated stage list from CLI."""
     if not value:
         return set()
     return {s.strip() for s in value.split(",") if s.strip()}
-
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
@@ -171,7 +167,6 @@ def main(argv: list[str] | None = None) -> int:
         if not r.skipped and any("err=" in n and not n.endswith("err=0") for n in r.notes)
     )
     return 0 if n_failed == 0 else 1
-
 
 if __name__ == "__main__":
     sys.exit(main())

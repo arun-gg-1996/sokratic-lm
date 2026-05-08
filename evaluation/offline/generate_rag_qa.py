@@ -1,18 +1,17 @@
 """
 evaluation/generate_rag_qa.py
-------------------------------
 One-time script: generate a grounded RAG Q&A dataset from existing chunks.
 
 Current generation plan (fixed-size, deterministic):
-  - 100 total pairs
-  - Chapter distribution:
-      Ch11: 30, Ch13: 20, Ch14: 20, Ch9: 15, Cross-group: 15
-  - Question type distribution:
-      factual: 40, clinical: 35, cross_chapter: 25
+100 total pairs
+Chapter distribution:
+ Ch11: 30, Ch13: 20, Ch14: 20, Ch9: 15, Cross-group: 15
+Question type distribution:
+ factual: 40, clinical: 35, cross_chapter: 25
 
 Rules:
-  - Every expected answer is copied from source chunk text (1-2 sentences).
-  - No outside knowledge and no free-text hallucinated answers.
+Every expected answer is copied from source chunk text (1-2 sentences).
+No outside knowledge and no free-text hallucinated answers.
 """
 
 import json
@@ -35,11 +34,10 @@ GROUP_PLAN: dict[str, dict] = {
     "cross": {"chapter": None, "total": 15, "factual": 0, "clinical": 0, "cross_chapter": 15},
 }
 
-
 def load_chunks(path: str) -> list[dict]:
     """
-    Load base chunks only.
-    """
+ Load base chunks only.
+"""
     chunks = []
     with open(path, encoding="utf-8") as f:
         for line in f:
@@ -56,22 +54,20 @@ def load_chunks(path: str) -> list[dict]:
             chunks.append(c)
     return chunks
 
-
 def split_sentences(text: str) -> list[str]:
     """
-    Lightweight sentence splitter suitable for textbook prose.
-    """
+ Lightweight sentence splitter suitable for textbook prose.
+"""
     text = re.sub(r"\s+", " ", text.strip())
     if not text:
         return []
     parts = re.split(r"(?<=[.!?])\s+", text)
     return [p.strip() for p in parts if len(p.strip()) >= 35]
 
-
 def is_quality_chunk(text: str) -> bool:
     """
-    Filter out glossary/index/noise style chunks to keep eval questions meaningful.
-    """
+ Filter out glossary/index/noise style chunks to keep eval questions meaningful.
+"""
     low = text.lower()
 
     # Known noise markers
@@ -103,7 +99,6 @@ def is_quality_chunk(text: str) -> bool:
 
     return True
 
-
 def _usable_answer_sentence(s: str) -> bool:
     s_strip = s.strip()
     if len(s_strip) < 45 or len(s_strip) > 260:
@@ -121,7 +116,6 @@ def _usable_answer_sentence(s: str) -> bool:
         return False
     return True
 
-
 def _pick_clinical_sentence(sentences: list[str]) -> str | None:
     clinical_patterns = [
         r"\b(patient|clinical|exam|diagnos|injur|damage|paraly|lesion|sever|weakness|loss)\b",
@@ -135,11 +129,10 @@ def _pick_clinical_sentence(sentences: list[str]) -> str | None:
             return s
     return None
 
-
 def _pick_cross_sentence(sentences: list[str]) -> str | None:
     """
-    Find a sentence with multi-system linkage cues.
-    """
+ Find a sentence with multi-system linkage cues.
+"""
     buckets = {
         "muscle": r"\b(muscle|deltoid|biceps|triceps|rotator cuff|contraction)\b",
         "nerve": r"\b(nerve|axillary|brachial plexus|c5|c6|motor neuron)\b",
@@ -158,7 +151,6 @@ def _pick_cross_sentence(sentences: list[str]) -> str | None:
             return s
     return None
 
-
 def _pick_factual_sentence(sentences: list[str]) -> str | None:
     factual_patterns = [
         r"\b(is|are|refers to|defined as)\b",
@@ -176,12 +168,11 @@ def _pick_factual_sentence(sentences: list[str]) -> str | None:
             return s
     return None
 
-
 def pick_answer(chunk_text: str, question_type: str) -> str | None:
     """
-    Expected answer must be directly grounded in chunk text.
-    Return 1-2 sentences (we use one authoritative sentence).
-    """
+ Expected answer must be directly grounded in chunk text.
+ Return 1-2 sentences (we use one authoritative sentence).
+"""
     sentences = split_sentences(chunk_text)
     if not sentences:
         return None
@@ -203,7 +194,6 @@ def pick_answer(chunk_text: str, question_type: str) -> str | None:
 
     return _pick_factual_sentence(sentences)
 
-
 def _extract_subject(sentence: str) -> str:
     sentence = sentence.strip()
     sentence = re.sub(r"^(In males|In females|Finally|However|Therefore|Thus|For example|In skeletal muscle tissue|In anatomical terminology),?\s+", "", sentence, flags=re.IGNORECASE)
@@ -218,11 +208,10 @@ def _extract_subject(sentence: str) -> str:
         return "this concept"
     return " ".join(words[:4]).strip()
 
-
 def make_question(answer_sentence: str, question_type: str) -> str:
     """
-    Convert grounded answer sentence into a student-style question.
-    """
+ Convert grounded answer sentence into a student-style question.
+"""
     low = answer_sentence.lower()
     subject = _extract_subject(answer_sentence)
 
@@ -290,12 +279,11 @@ def make_question(answer_sentence: str, question_type: str) -> str:
         return "What is the brachial plexus according to this text?"
     return f"What does this passage state about {subject}?"
 
-
 def _cross_candidate(chunk: dict) -> bool:
     """
-    Candidate chunk for cross-group: should carry multi-concept linkage
-    and not come from the 4 fixed chapter groups.
-    """
+ Candidate chunk for cross-group: should carry multi-concept linkage
+ and not come from the 4 fixed chapter groups.
+"""
     ch = int(chunk.get("chapter_num", 0))
     if ch in {9, 11, 13, 14}:
         return False
@@ -311,7 +299,6 @@ def _cross_candidate(chunk: dict) -> bool:
         buckets += 1
     return buckets >= 2
 
-
 def _sample_records(
     chunks: list[dict],
     chapter_num: int | None,
@@ -321,8 +308,8 @@ def _sample_records(
     require_cross_candidate: bool = False,
 ) -> list[dict]:
     """
-    Sample source chunks and build Q&A records for one bucket.
-    """
+ Sample source chunks and build Q&A records for one bucket.
+"""
     candidates = []
     for c in chunks:
         cid = c.get("chunk_id")
@@ -358,11 +345,10 @@ def _sample_records(
 
     return out
 
-
 def run() -> list[dict]:
     """
-    Main entry point. Load chunks, sample, generate Q&A pairs, save to JSONL.
-    """
+ Main entry point. Load chunks, sample, generate Q&A pairs, save to JSONL.
+"""
     random.seed(SEED)
 
     chunks_path = cfg.domain_path("chunks")
@@ -445,7 +431,6 @@ def run() -> list[dict]:
     print(f"Chapter distribution (9/11/13/14): {dict(chapter_counter)}")
     print(f"Cross-group records (chapters not 9/11/13/14): {cross_group_count}")
     return records
-
 
 if __name__ == "__main__":
     run()

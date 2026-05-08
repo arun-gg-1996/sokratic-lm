@@ -1,6 +1,5 @@
 """
 scripts/score_conversation_quality.py
--------------------------------------
 CLI entry point for the conversation quality scorer.
 
 Reads a saved session JSON, computes the full evaluation (primary EULER +
@@ -8,22 +7,21 @@ RAGAS, 10 secondary dimensions, penalties), and writes a structured report
 to disk.
 
 Usage:
-    .venv/bin/python scripts/score_conversation_quality.py SESSION_JSON [-o OUT_JSON]
-                       [--no-llm]
-                       [--skip-anchor]
+ .venv/bin/python scripts/score_conversation_quality.py SESSION_JSON [-o OUT_JSON]
+ [--no-llm]
+ [--skip-anchor]
 
 Examples:
-    # Score one test-harness session, write to data/artifacts/eval/
-    .venv/bin/python scripts/score_conversation_quality.py \\
-        data/artifacts/gate_e2e/T1_wrong_answer_*.json
+ # Score one test-harness session, write to data/artifacts/eval.venv/bin/python scripts/score_conversation_quality.py \\
+ data/artifacts/gate_e2e/T1_wrong_answer_*.json
 
-    # Deterministic only (no API costs) — useful for fast iteration:
-    .venv/bin/python scripts/score_conversation_quality.py SESSION.json --no-llm
+ # Deterministic only (no API costs) — useful for fast iteration:
+ .venv/bin/python scripts/score_conversation_quality.py SESSION.json --no-llm
 
-    # Score every gate test JSON in one go:
-    for f in data/artifacts/gate_e2e/T*.json; do
-        .venv/bin/python scripts/score_conversation_quality.py "$f"
-    done
+ # Score every gate test JSON in one go:
+ for f in data/artifacts/gate_e2e/T*.json; do
+ .venv/bin/python scripts/score_conversation_quality.py "$f"
+ done
 """
 from __future__ import annotations
 import argparse
@@ -39,9 +37,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from evaluation.quality import runner  # noqa: E402
 
-
 DEFAULT_OUTPUT_DIR = Path(__file__).parent.parent / "data" / "artifacts" / "eval"
-
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -89,7 +85,6 @@ def main() -> int:
     if verdict == "failed_threshold":
         return 2
     return 0
-
 
 def _print_full_summary(report: dict) -> None:
     print()
@@ -141,7 +136,6 @@ def _print_full_summary(report: dict) -> None:
     print(f"    intervention rate: {raw.get('interventions')}/{raw.get('n_tutoring_turns')}")
     print()
 
-
 def _fmt(v) -> str:
     if v is None:
         return "—"
@@ -150,7 +144,6 @@ def _fmt(v) -> str:
     if isinstance(v, (int, float)):
         return f"{v:.3f}" if isinstance(v, float) else str(v)
     return str(v)
-
 
 if __name__ == "__main__":
     sys.exit(main())

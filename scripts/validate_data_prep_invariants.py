@@ -1,23 +1,23 @@
 """
 Validation gate — assert all data-prep invariants from docs/AUDIT_2026-05-02.md
-are satisfied after the L76 + L19 + L38 + reindex passes.
+are satisfied after the + + + reindex passes.
 
 Invariants checked:
 
-L76 — every chunk has all 3 hierarchy levels (chapter + section + subsection).
-L38 — topic_index <-> raptor_subsection_summaries are 1:1 by (chapter, section, subsection).
-L19 — every topic_index entry has display_label.
-G   — BM25 pickle file exists and loads.
-H   — Qdrant collection chunk count matches chunks JSONL count.
-TS  — textbook_structure contains every (chapter, section, subsection) referenced
-       by chunks (parser + llm_synthesized).
+every chunk has all 3 hierarchy levels (chapter + section + subsection).
+topic_index <-> raptor_subsection_summaries are 1:1 by (chapter, section, subsection).
+every topic_index entry has display_label.
+G — BM25 pickle file exists and loads.
+H — Qdrant collection chunk count matches chunks JSONL count.
+TS — textbook_structure contains every (chapter, section, subsection) referenced
+ by chunks (parser + llm_synthesized).
 RAG — Smoke retrieval test on a known topic returns >= 1 chunk for each of
-       3 canonical anatomy queries.
+ 3 canonical anatomy queries.
 
 Exit code 0 = all green. Non-zero = at least one invariant violated.
 
 Usage:
-  .venv/bin/python scripts/validate_data_prep_invariants.py [--no-rag] [--verbose]
+ .venv/bin/python scripts/validate_data_prep_invariants.py [--no-rag] [--verbose]
 """
 from __future__ import annotations
 
@@ -49,7 +49,6 @@ CANONICAL_RAG_QUERIES = [
     "What is the function of the SA node?",
 ]
 
-
 class CheckResult:
     def __init__(self, name: str, passed: bool, detail: str = ""):
         self.name = name
@@ -58,7 +57,6 @@ class CheckResult:
 
     def __repr__(self):
         return f"{'✓' if self.passed else '✗'} {self.name}: {self.detail}"
-
 
 def check_l76() -> CheckResult:
     missing = 0
@@ -69,7 +67,6 @@ def check_l76() -> CheckResult:
     if missing == 0:
         return CheckResult("L76 — every chunk has full hierarchy", True, "0 chunks orphaned")
     return CheckResult("L76 — every chunk has full hierarchy", False, f"{missing} chunks orphaned")
-
 
 def _topic_index_keys() -> set[tuple]:
     raw = json.loads(TOPIC_INDEX_PATH.read_text())
@@ -84,7 +81,6 @@ def _topic_index_keys() -> set[tuple]:
         if isinstance(x, dict)
     }
 
-
 def _raptor_keys() -> set[tuple]:
     out = set()
     for line in RAPTOR_PATH.open():
@@ -97,7 +93,6 @@ def _raptor_keys() -> set[tuple]:
             )
         )
     return out
-
 
 def check_l38() -> CheckResult:
     ti = _topic_index_keys()
@@ -112,7 +107,6 @@ def check_l38() -> CheckResult:
         f"{len(missing_summary)} entries missing summary, {len(orphan_summary)} orphan summaries",
     )
 
-
 def check_l19() -> CheckResult:
     raw = json.loads(TOPIC_INDEX_PATH.read_text())
     items = raw if isinstance(raw, list) else list(raw.values())
@@ -122,7 +116,6 @@ def check_l19() -> CheckResult:
     return CheckResult(
         "L19 — every topic_index entry has display_label", False, f"{len(missing)} missing labels"
     )
-
 
 def check_textbook_structure_coverage() -> CheckResult:
     """Every (chapter, section, subsection) referenced by chunks must exist in textbook_structure."""
@@ -170,7 +163,6 @@ def check_textbook_structure_coverage() -> CheckResult:
         f"{len(not_in_structure)} chunk hierarchies missing from textbook_structure (sample: {list(not_in_structure)[:2]})",
     )
 
-
 def check_bm25() -> CheckResult:
     if not BM25_PATH.exists():
         return CheckResult("G — BM25 index file exists", False, f"missing: {BM25_PATH}")
@@ -181,7 +173,6 @@ def check_bm25() -> CheckResult:
         return CheckResult("G — BM25 index loads", True, f"loaded ({type(obj).__name__})")
     except Exception as e:
         return CheckResult("G — BM25 index loads", False, f"load error: {e}")
-
 
 def check_qdrant() -> CheckResult:
     try:
@@ -206,7 +197,6 @@ def check_qdrant() -> CheckResult:
         f"qdrant has {qcount}, jsonl has {chunk_count}",
     )
 
-
 def check_curated_abbrevs() -> CheckResult:
     if not CURATED_ABBREVS_PATH.exists():
         return CheckResult("L9 — curated_abbrevs_ot.json exists", False, f"missing: {CURATED_ABBREVS_PATH}")
@@ -218,7 +208,6 @@ def check_curated_abbrevs() -> CheckResult:
         return CheckResult("L9 — curated_abbrevs_ot.json valid", True, f"{n} abbreviations")
     except Exception as e:
         return CheckResult("L9 — curated_abbrevs_ot.json parses", False, f"parse error: {e}")
-
 
 def check_rag_smoke() -> CheckResult:
     """End-to-end retrieval smoke test."""
@@ -250,7 +239,6 @@ def check_rag_smoke() -> CheckResult:
         )
     return CheckResult("RAG — canonical queries all return results", False, "; ".join(failures))
 
-
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--no-rag", action="store_true", help="Skip RAG smoke test")
@@ -280,7 +268,6 @@ def main():
         print(f"FAILED: {len(failed)} of {len(checks)} invariants violated.", flush=True)
         sys.exit(1)
     print(f"ALL GREEN: {len(checks)}/{len(checks)} invariants satisfied. Data prep complete.", flush=True)
-
 
 if __name__ == "__main__":
     main()

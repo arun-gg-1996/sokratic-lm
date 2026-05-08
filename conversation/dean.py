@@ -1,25 +1,16 @@
 """
-conversation/dean.py
----------------------
-Dean agent — the supervisor of the tutoring session.
+The Dean — supervisor of the tutoring session.
 
-Dean's responsibilities each turn:
-  1. _setup_call(): retrieve context if needed, lock answer, classify student_state,
-     and decide whether student reached answer (structured output via submit_turn_evaluation).
-  2. If student reached answer, return early (assessment_node handles clinical flow).
-  3. Help-abuse gating in Python: low-effort streak can still advance hint level.
-  4. teacher.draft_socratic(): generate a candidate tutor response.
-  5. _quality_check_call(): enforce EULER-like quality + LeakGuard entailment.
-  6. If quality fails, apply Dean's revised_teacher_draft in one pass.
-     If no valid revision is returned, Dean writes fallback directly.
-  7. Append approved response to state["messages"], update debug trace/metrics.
+Each turn the Dean retrieves context, classifies what the student
+just did (correct / partial / off-topic / low-effort), checks whether
+the answer was reached, asks the Teacher for a candidate reply, and
+runs a quality check on the draft. If quality fails, the Dean
+rewrites the draft once before falling back to a safe template.
 
-All Anthropic calls are timed and logged in state["debug"]["turn_trace"] with:
-  - full system prompt blocks,
-  - sent messages,
-  - tool inputs,
-  - raw response text,
-  - token/cost/cache metrics.
+All Anthropic calls are timed and logged in
+`state["debug"]["turn_trace"]` so a turn can be inspected after the
+fact (system prompt, messages sent, raw response, token + cost
+metrics).
 """
 
 import ast
@@ -39,13 +30,13 @@ from retrieval.topic_matcher import get_topic_matcher, TopicMatch, MatchResult
 # Sonnet pricing (per million tokens)
 _PRICE_IN = 3.0
 _PRICE_OUT = 15.0
-# 2026-05-01: _BANNED_FILLER_PREFIXES + _STRONG_AFFIRM_PATTERNS were
+# : _BANNED_FILLER_PREFIXES + _STRONG_AFFIRM_PATTERNS were
 # regex-based sycophancy / banned-opener detectors. Per the user's
 # "LLM-only QC" directive, both were replaced by
 # conversation/classifiers.haiku_sycophancy_check, which reads the draft
 # + student_state + reach_fired and returns a verdict. Validated 100%
 # accuracy on 27 hand-curated cases (15 sycophantic + 12 clean) — see
-# data/artifacts/classifiers/2026-05-01T21-03-51/report.md. The Haiku
+# The Haiku
 # classifier catches Sonnet 4.6's empathic soft-affirmation patterns
 # ("on an interesting track", "in the right neighborhood", "you've
 # touched on the answer") that the regex required ad-hoc maintenance to
@@ -56,7 +47,6 @@ _RETRIEVAL_NOISE_PATTERNS = (
     r"^\s*(i think|i guess|maybe|honestly)\s+",
     r"\s+",  # collapsed at end
 )
-
 
 def _domain_prompt_vars() -> dict:
     domain = getattr(cfg, "domain", object())
@@ -71,17 +61,14 @@ def _domain_prompt_vars() -> dict:
         "assessment_dimension_examples": getattr(domain, "assessment_dimension_examples", "examples, problems, or context"),
     }
 
-
 def _clamp01(value: float) -> float:
     return max(0.0, min(1.0, float(value)))
-
 
 def _apply_domain_vars(text: str) -> str:
     rendered = text or ""
     for key, val in _domain_prompt_vars().items():
         rendered = rendered.replace(f"{{{key}}}", str(val))
     return rendered
-
 
 def _cached_system(
     role_base: str,
@@ -91,58 +78,54 @@ def _cached_system(
     turn_deltas: str,
 ) -> list:
     """
-    Multi-block cache layout (post-2026-04-29 rewrite).
+ Multi-block cache layout (post- rewrite).
 
-    Why this exists
-    ---------------
-    The previous implementation joined `role_base + wrapper_delta + chunks +
-    history` into a single cached block. Because `history` grows turn-over-
-    turn, the block's bytes changed every turn → cache prefix never matched
-    → cache hit rate was 0% in production (verified via cache_smoke_test
-    on 2026-04-29). Caching telemetry showed the previous code WAS writing
-    cache entries (e.g. one call cache_write=4922) but never reading them
-    on subsequent turns because the prefix had changed.
+ Why this exists
+The previous implementation joined `role_base + wrapper_delta + chunks +
+ history` into a single cached block. Because `history` grows turn-over-
+ turn, the block's bytes changed every turn → cache prefix never matched
+ → cache hit rate was 0% in production (verified via cache_smoke_test
+ on ). Caching telemetry showed the previous code WAS writing
+ cache entries (e.g. one call cache_write=4922) but never reading them
+ on subsequent turns because the prefix had changed.
 
-    New layout
-    ----------
-      Block 1 [CACHED-if-large-enough]:  role_base + wrapper_delta + chunks
-        Stable across all turns of a session, so cache_read on Block 1
-        fires from turn 2 onward.
-      Block 2 [CACHED-if-large-enough]:  history
-        On turn N, the history is `messages[0..N-1]` rendered. Anthropic's
-        cache lookup matches the full prefix up to each cache_control marker:
-        for Block 2 to hit, the EXACT history bytes have to have been seen
-        before. So Block 2 caches only fire on retries within the same turn
-        (same history value) — not across turns. This is fine: the win on
-        cross-turn caching comes from Block 1 alone, since Block 1's prefix
-        is stable.
-      Block 3 UNCACHED: turn_deltas
-        Per-turn variable content (current student message, hints, etc.).
+ New layout
+Block 1 [CACHED-if-large-enough]: role_base + wrapper_delta + chunks
+ Stable across all turns of a session, so cache_read on Block 1
+ fires from turn 2 onward.
+ Block 2 [CACHED-if-large-enough]: history
+ On turn N, the history is `messages[0..N-1]` rendered. Anthropic's
+ cache lookup matches the full prefix up to each cache_control marker:
+ for Block 2 to hit, the EXACT history bytes have to have been seen
+ before. So Block 2 caches only fire on retries within the same turn
+ (same history value) — not across turns. This is fine: the win on
+ cross-turn caching comes from Block 1 alone, since Block 1's prefix
+ is stable.
+ Block 3 UNCACHED: turn_deltas
+ Per-turn variable content (current student message, hints, etc.).
 
-    Why split history into its own block instead of leaving it uncached
-    -------------------------------------------------------------------
-    The Anthropic cache key for a breakpoint is the prefix UP TO AND
-    INCLUDING the marker. If history were in the SAME block as
-    role/wrapper/chunks, history's growth would invalidate the marker for
-    Block 1 too. Pulling history into a separate block means Block 1's
-    marker hashes only over (role + wrapper + chunks), which is stable.
+ Why split history into its own block instead of leaving it uncached
+The Anthropic cache key for a breakpoint is the prefix UP TO AND
+ INCLUDING the marker. If history were in the SAME block as
+ role/wrapper/chunks, history's growth would invalidate the marker for
+ Block 1 too. Pulling history into a separate block means Block 1's
+ marker hashes only over (role + wrapper + chunks), which is stable.
 
-    Caching threshold notes
-    -----------------------
-    Haiku 4.5 caches blocks ≥ 4096 tokens; Sonnet 4.5 ≥ 1024. Our estimate
-    is len/4 and overshoots, so we use 4000 as the gate to be conservative
-    on Haiku. Sub-threshold blocks are sent without cache_control (Anthropic
-    silently ignores cache markers below the threshold anyway).
-    """
+ Caching threshold notes
+Haiku 4.5 caches blocks ≥ 4096 tokens; Sonnet 4.5 ≥ 1024. Our estimate
+ is len/4 and overshoots, so we use 4000 as the gate to be conservative
+ on Haiku. Sub-threshold blocks are sent without cache_control (Anthropic
+ silently ignores cache markers below the threshold anyway).
+"""
     blocks: list[dict] = []
     # Per Anthropic 2026 docs: minimum cacheable prompt is 1024 tokens for
     # Sonnet 4-5 and 2048 for Haiku 4-5. We use 1500 — covers Sonnet
     # cleanly, slightly over-aggressive for Haiku. Sub-threshold
-    # cache_control markers are silently ignored by the API (no error,
+    # cache_control markers are silently ignored by the API (no error
     # no charge), so a too-low threshold costs us nothing; a too-high
     # threshold costs us cache hits we should be getting. The previous
     # value 4000 was based on a misread — it ruled out caching on most of
-    # our calls (verified empirically 2026-04-29).
+    # our calls (verified empirically ).
     cache_min_tokens = 1500
     role_base = _apply_domain_vars(role_base)
     wrapper_delta = _apply_domain_vars(wrapper_delta)
@@ -155,7 +138,7 @@ def _cached_system(
     stable = "\n\n".join(part for part in [role_base, wrapper_delta, chunks] if part)
 
     # Optional per-call cache-block diagnostic (toggleable via env var).
-    # Used to verify the fix on 2026-04-29 against scripts/cache_smoke_test.py;
+    # Used to verify the fix on against scripts/cache_smoke_test.py;
     # leaving in as a debugging hook for future cache regressions.
     import os as _os
     _DEBUG = bool(_os.environ.get("SOKRATIC_CACHE_DEBUG"))
@@ -194,17 +177,15 @@ def _cached_system(
 
     return blocks
 
-
 def _estimate_tokens(text: str) -> int:
     """Cheap token estimate for debug visibility (~4 chars/token)."""
     if not text:
         return 0
     return max(1, int(len(text) / 4))
 
-
 def _timed_create(client, state: dict, wrapper_name: str, **kwargs):
     """Wrapper around client.messages.create that records timing, cost, and full
-    prompt/response into turn_trace for debug UI."""
+ prompt/response into turn_trace for debug UI."""
     # Extract full prompt for debug before sending
     system_blocks = kwargs.get("system", [])
     system_text = ""
@@ -240,7 +221,7 @@ def _timed_create(client, state: dict, wrapper_name: str, **kwargs):
     t0 = time.time()
     from conversation.llm_client import beta_headers
     extra_headers = kwargs.pop("extra_headers", {})
-    # beta_headers() returns {"anthropic-beta": "..."} for Direct API,
+    # beta_headers returns {"anthropic-beta": "..."} for Direct API
     # empty dict for Bedrock (which rejects the header).
     extra_headers.update(beta_headers())
     resp = client.messages.create(extra_headers=extra_headers, **kwargs)
@@ -292,7 +273,6 @@ def _timed_create(client, state: dict, wrapper_name: str, **kwargs):
     })
     return resp
 
-
 def _request_fingerprint(system_blocks, messages) -> str:
     """Stable fingerprint for duplicate-call guard on expensive wrappers."""
     if isinstance(system_blocks, list):
@@ -305,18 +285,16 @@ def _request_fingerprint(system_blocks, messages) -> str:
     payload = system_text + "\n\n" + json.dumps(messages or [], sort_keys=True, ensure_ascii=False)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
 
-
 def _normalize_text(text: str) -> str:
     text = (text or "").strip().lower()
     text = re.sub(r"[^a-z0-9\s]+", " ", text)
     text = re.sub(r"\s+", " ", text)
     return text
 
-
 # Stop words dropped when computing content-token overlap for the
 # reached-answer gate. Kept conservative: only true filler tokens that
 # don't carry meaning in answer phrases. We want "the skeletal muscle pump"
-# in a student message to match locked_answer="skeletal muscle pump",
+# in a student message to match locked_answer="skeletal muscle pump"
 # but NOT match locked_answer="muscle" alone (single-token overlap is
 # usually too weak — handled by requiring the full content set).
 _OVERLAP_STOPWORDS = frozenset({
@@ -328,10 +306,10 @@ _OVERLAP_STOPWORDS = frozenset({
 # When any appear, Step A (token overlap) is skipped and we fall through
 # to the LLM paraphrase check, which can read intent more reliably.
 # Examples this catches:
-#   "I don't know what skeletal muscle pump is" → tokens overlap but
-#       the assertion isn't there → fall to LLM, which says no.
-#   "Is it gravity?" → "gravity" doesn't overlap anyway, but if locked
-#       answer were "gravity" we'd correctly defer to LLM.
+# "I don't know what skeletal muscle pump is" → tokens overlap but
+# the assertion isn't there → fall to LLM, which says no.
+# "Is it gravity?" → "gravity" doesn't overlap anyway, but if locked
+# answer were "gravity" we'd correctly defer to LLM.
 _HEDGE_MARKERS = (
     "i don't know", "i dont know", "i do not know",
     "no idea", "not sure", "not certain",
@@ -339,41 +317,38 @@ _HEDGE_MARKERS = (
     "i can't remember", "i cant remember", "can't remember",
 )
 
-
 def _content_tokens(s: str) -> list[str]:
     """Lowercased, punct-stripped tokens of `s` minus filler stopwords."""
     norm = _normalize_text(s)
     return [t for t in norm.split() if t and t not in _OVERLAP_STOPWORDS]
 
-
 def _has_hedge(msg_lower_raw: str) -> bool:
     """True if the message contains any hedge/denial marker."""
     return any(h in msg_lower_raw for h in _HEDGE_MARKERS)
 
-
 def _split_locked_answer(answer: str) -> list[str]:
     """Split a multi-component locked_answer into its top-level noun-phrase
-    components. Single-component answers return a 1-element list.
+ components. Single-component answers return a 1-element list.
 
-    Splits on conjunctions/separators commonly used to enumerate components:
-      - " and " / " or " (with surrounding spaces — won't split "android")
-      - "," / ";" with optional whitespace
+ Splits on conjunctions/separators commonly used to enumerate components:
+" and " / " or " (with surrounding spaces — won't split "android")
+"," / ";" with optional whitespace
 
-    Examples:
-      "skeletal muscle pump"
-        -> ["skeletal muscle pump"]                            (single)
-      "left and right coronary arteries"
-        -> ["left", "right coronary arteries"]                 (2-component)
-      "ingestion, propulsion, mechanical digestion, chemical digestion"
-        -> ["ingestion", "propulsion", "mechanical digestion",
-            "chemical digestion"]                              (4-component)
-      "pivot, hinge, condyloid, saddle, plane, ball-and-socket"
-        -> ["pivot", "hinge", "condyloid", "saddle", "plane",
-            "ball-and-socket"]                                 (6-component)
+ Examples:
+ "skeletal muscle pump"
+> ["skeletal muscle pump"] (single)
+ "left and right coronary arteries"
+> ["left", "right coronary arteries"] (2-component)
+ "ingestion, propulsion, mechanical digestion, chemical digestion"
+> ["ingestion", "propulsion", "mechanical digestion"
+ "chemical digestion"] (4-component)
+ "pivot, hinge, condyloid, saddle, plane, ball-and-socket"
+> ["pivot", "hinge", "condyloid", "saddle", "plane"
+ "ball-and-socket"] (6-component)
 
-    Note: 'ball-and-socket' is hyphenated so it's treated as one token,
-    not split by "and". Splitter operates on whitespace-padded "and" only.
-    """
+ Note: 'ball-and-socket' is hyphenated so it's treated as one token
+ not split by "and". Splitter operates on whitespace-padded "and" only.
+"""
     if not answer or not answer.strip():
         return []
     # Lowercase for splitting; preserve original casing per component is
@@ -382,7 +357,6 @@ def _split_locked_answer(answer: str) -> list[str]:
     parts = re.split(r"\s+and\s+|\s+or\s+|[,;]\s*", answer.lower())
     parts = [p.strip() for p in parts if p.strip()]
     return parts
-
 
 # Common short anatomy/biology nouns that frequently appear in legitimate
 # Socratic scaffolding ("the heart muscle...", "what nerve innervates...")
@@ -401,9 +375,7 @@ _COMMON_ANCHOR_FALSE_POSITIVES = frozenset({
     "medial", "lateral", "deep", "central", "peripheral",
 })
 
-
 # Curated short clinical / anatomical / biological abbreviations that are
-# DISTINCTIVE despite being below the 5-char floor. Without this set,
 # `_is_distinctive_anchor` rejects them (e.g. "sa", "rca", "atp") because
 # they're too short — but they're real anchors that need leak-protection.
 # Lowercased; matched after the caller's lowercase normalization.
@@ -426,24 +398,23 @@ _DISTINCTIVE_SHORT_ABBREVIATIONS = frozenset({
     "icu", "er", "or", "ot", "pt",
 })
 
-
 def _is_distinctive_anchor(token: str) -> bool:
     """True iff a single-word anchor is distinctive enough to safely
-    block as a leak. Multi-word anchors are always considered distinctive
-    (callers should special-case the multi-word path).
+ block as a leak. Multi-word anchors are always considered distinctive
+ (callers should special-case the multi-word path).
 
-    Rules (any one suffices):
-      1. Multi-word phrase (always distinctive).
-      2. ≥5 chars AND not in the common-anatomy/biology stopword set.
-         Catches: nucleus, ganglion, pepsin, septum, nephron, alveolus,
-         hepatocyte, axillary, deltoid, etc.
-      3. ALL-CAPS short token (2-4 chars), case preserved (e.g. "SA",
-         "RCA", "ATP", "Fc"). Detected on raw input before lowercasing.
-      4. Lowercased token in the curated short-abbreviation set
-         (closes the gap when caller already lowercased).
+ Rules (any one suffices):
+ 1. Multi-word phrase (always distinctive).
+ 2. ≥5 chars AND not in the common-anatomy/biology stopword set.
+ Catches: nucleus, ganglion, pepsin, septum, nephron, alveolus
+ hepatocyte, axillary, deltoid, etc.
+ 3. ALL-CAPS short token (2-4 chars), case preserved (e.g. "SA"
+ "RCA", "ATP", "Fc"). Detected on raw input before lowercasing.
+ 4. Lowercased token in the curated short-abbreviation set
+ (closes the gap when caller already lowercased).
 
-    Skips: muscle, nerve, vein, bone, left, right (would false-positive).
-    """
+ Skips: muscle, nerve, vein, bone, left, right (would false-positive).
+"""
     raw = (token or "").strip()
     if not raw:
         return False
@@ -463,14 +434,13 @@ def _is_distinctive_anchor(token: str) -> bool:
         return True
     return False
 
-
-# 2026-05-01: _LETTER_HINT_PATTERNS + _has_letter_hint were the regex
+# : _LETTER_HINT_PATTERNS + _has_letter_hint were the regex
 # detector for letter / blank / etymology / MCQ / synonym / acronym
 # leaks at hint-3. Per the user's "LLM-only QC" directive, replaced by
 # conversation/classifiers.haiku_hint_leak_check, which reads the draft
 # + locked_answer + aliases and returns a verdict. Validated 96.7% /
 # 100% leak precision on 30 hand-curated cases (see
-# data/artifacts/classifiers/2026-05-01T21-03-51/report.md). The
+# The
 # classifier catches novel phrasings the regex didn't list ("the
 # textbook uses a word starting with the letter f", "the medical word
 # for funny bone is...") and avoids false-firing on legitimate
@@ -480,10 +450,8 @@ def _sentence_count(text: str) -> int:
     parts = [p.strip() for p in re.split(r"[.!?]+", text or "") if p.strip()]
     return len(parts)
 
-
 def _question_count(text: str) -> int:
     return (text or "").count("?")
-
 
 def _extract_question_text(text: str) -> str:
     """Return the final question-like segment for repetition checks."""
@@ -494,19 +462,16 @@ def _extract_question_text(text: str) -> str:
         return ""
     return parts[-1]
 
-
 def _first_sentence(text: str) -> str:
     if not text:
         return ""
     parts = re.split(r"[.!?]+", text, maxsplit=1)
     return (parts[0] or "").strip()
 
-
-# 2026-05-01: _has_strong_affirmation was the regex sycophancy
+# : _has_strong_affirmation was the regex sycophancy
 # detector. Replaced by conversation/classifiers.haiku_sycophancy_check
 # which is state-aware (only flags affirmation when student wasn't
 # actually correct). Validated 100% accuracy on 27 cases.
-
 
 def _recent_tutor_questions(messages: list[dict], limit: int = 3) -> list[str]:
     questions: list[str] = []
@@ -523,7 +488,6 @@ def _recent_tutor_questions(messages: list[dict], limit: int = 3) -> list[str]:
             break
     return questions
 
-
 def _is_repetitive_question(new_question: str, prior_questions: list[str], threshold: float) -> bool:
     a = _normalize_text(new_question)
     if not a:
@@ -536,16 +500,15 @@ def _is_repetitive_question(new_question: str, prior_questions: list[str], thres
             return True
     return False
 
-
 def _extract_json_object(text: str) -> dict | None:
     """
-    Robustly extract a JSON object from model text.
-    Handles:
-    - raw JSON
-    - fenced JSON blocks
-    - leading/trailing prose around JSON
-    - python-dict style fallbacks when model slips
-    """
+ Robustly extract a JSON object from model text.
+ Handles:
+raw JSON
+fenced JSON blocks
+leading/trailing prose around JSON
+python-dict style fallbacks when model slips
+"""
     if not text:
         return None
 
@@ -633,104 +596,29 @@ def _extract_json_object(text: str) -> dict | None:
         return None
     return _try_parse_dict(candidate[start:end + 1])
 
-
 def _latest_student_message(messages: list[dict]) -> str:
     for msg in reversed(messages or []):
         if msg.get("role") == "student":
             return str(msg.get("content", "")).strip()
     return ""
 
-
-def _sanitize_locked_answer(
-    candidate: str,
-    chunks: list[dict],
-    prior: str = "",
-) -> tuple[str, str]:
-    """
-    Validate the locked_answer:
-      1) shape: short noun phrase, not a sentence
-      2) GROUNDING: the answer's content tokens must appear in at least one
-         retrieved chunk's text. The lock-anchors prompt asks the LLM to
-         ground the answer in propositions, but Haiku/Sonnet have parametric
-         knowledge of anatomy and will produce textbook-correct answers
-         (e.g. "axillary nerve" for a deltoid-innervation question) even when
-         retrieval did not surface the supporting content. That's a real bug
-         observed end-to-end (S4b conversation 2026-04-29: tutor declared
-         "axillary nerve" locked despite retrieval returning chunks about
-         the axillary artery, not nerve). The grounding check is a sentinel
-         against that failure mode.
-    """
-    cand = (candidate or "").strip()
-    if not cand:
-        return (prior or "").strip(), "empty_input"
-
-    cand_norm = _normalize_text(cand)
-    prior_norm = _normalize_text(prior or "")
-
-    # locked_answer must be a canonical noun phrase, NOT a sentence. Sentences
-    # are caught by `sentence_markers` below. The word-count cap is a separate
-    # guard against runaway descriptions. The original cap of 6 was tuned for
-    # the proposition-era pipeline when answers were single anatomical terms
-    # ("axillary nerve"). Some legitimate textbook answers ARE multi-component
-    # lists — e.g. "Pivot, hinge, condyloid, saddle, plane, ball-and-socket"
-    # for the 6 types of synovial joints, or "Bones as levers, synovial joints
-    # as fulcrums, muscle contraction as effort, load as resistance" for the 4
-    # components of a musculoskeletal lever system. The 6-word cap rejected
-    # these as "too long" (verified 2026-04-29 via dean.py debug trace), which
-    # broke the topic-engagement gate for any list-shaped topic. Relaxed to
-    # 15 to allow comma-separated noun lists; sentence detection below still
-    # catches actual prose.
-    word_count = len(cand_norm.split())
-    if word_count > 15:
-        return prior_norm, "wiped_too_long"
-    # Reject "and"-joined anchors. The lock prompt explicitly forbids this
-    # ("no 'and' joining multiple ideas") because the gate is a single-utterance
-    # token-overlap matcher — joined anchors like "left and right coronary
-    # arteries" never match what students actually say. The repair path picks
-    # up an empty result and re-prompts for a single umbrella term plus
-    # per-component aliases. Note: we test for ' and ' with spaces, so the
-    # hyphenated "ball-and-socket" anatomical term isn't false-positive.
-    if " and " in cand_norm:
-        return prior_norm, "wiped_and_joined"
-    # Also reject anchors that are clearly sentences (contain verbs like "innervates",
-    # "arises", "branches", "passes", "courses", etc.), even if short enough.
-    sentence_markers = (
-        "innervates", "innervate", "arises", "branches", "passes", "courses",
-        "supplies", "controls", "causes", "results", "from the", "through the",
-        "superior to", "inferior to", "above the", "below the", "near the",
-    )
-    if any(marker in cand_norm for marker in sentence_markers):
-        return prior_norm, "wiped_sentence_like"
-
-    # Grounding check: does the answer's distinctive content (non-stopword
-    # words >= 4 chars) appear in at least one retrieved chunk's text? We
-    # require that >= 60% of the answer's content tokens be present in some
-    # chunk to count as grounded. This blocks parametric-knowledge leaks
-    # without rejecting every valid short noun phrase.
-    if chunks:
-        STOPS = {"the", "a", "an", "of", "and", "or", "to", "in", "on", "at",
-                 "for", "with", "by", "from"}
-        ans_tokens = [t for t in cand_norm.split()
-                      if t not in STOPS and len(t) >= 4]
-        if ans_tokens:
-            joined_corpus = " ".join(
-                _normalize_text(c.get("text", "") or "") for c in chunks
-            )
-            hits = sum(1 for t in ans_tokens if t in joined_corpus)
-            if (hits / len(ans_tokens)) < 0.60:
-                return prior_norm, "wiped_ungrounded"
-
-    return cand_norm, "kept"
-
+# Note: `_sanitize_locked_answer` was removed. All shape + grounding rules
+# (1-5 words, single noun phrase, no "and"-joined compounds, must be
+# grounded in retrieved chunks) now live exclusively in the lock-anchors
+# prompt (`config/base.yaml::dean_lock_anchors_static`). When the LLM's
+# first attempt produces an unusable locked_answer, the repair call is
+# the LLM's own retry — we accept whatever the second attempt returns.
+# Final safety: if both attempts come back empty, the caller falls back
+# to the topic_selection so locked_answer is never null downstream.
 
 def _match_topic_selection(student_text: str, options: list[str]) -> str:
     """
-    Match explicit student selection to one of the presented topic options.
-    Accepted forms:
-      - exact/pasted option text
-      - unambiguous substring match against one option
-    Returns selected option text or empty string when no explicit match.
-    """
+ Match explicit student selection to one of the presented topic options.
+ Accepted forms:
+exact/pasted option text
+unambiguous substring match against one option
+ Returns selected option text or empty string when no explicit match.
+"""
     txt = _normalize_text(student_text)
     if not txt or not options:
         return ""
@@ -782,14 +670,13 @@ def _match_topic_selection(student_text: str, options: list[str]) -> str:
 
     return ""
 
-
 def _clean_retrieval_query(text: str) -> str:
     """
-    Keep retrieval input concise and semantic.
-    - remove numbering artifacts ("2.", "3)")
-    - trim low-information hedges
-    - collapse whitespace
-    """
+ Keep retrieval input concise and semantic.
+remove numbering artifacts ("2.", "3)")
+trim low-information hedges
+collapse whitespace
+"""
     q = (text or "").strip()
     if not q:
         return ""
@@ -800,14 +687,13 @@ def _clean_retrieval_query(text: str) -> str:
         q = q[:280].rsplit(" ", 1)[0].strip()
     return q
 
-
 def _build_retrieval_query(state: TutorState) -> str:
     """
-    Build a retrieval query from the locked topic + latest student message.
-    By the time we reach retrieval, a TOC-grounded topic lock is guaranteed,
-    so the topic string alone is always a valid query. The latest message is
-    blended in only when it adds fresh substantive detail.
-    """
+ Build a retrieval query from the locked topic + latest student message.
+ By the time we reach retrieval, a TOC-grounded topic lock is guaranteed
+ so the topic string alone is always a valid query. The latest message is
+ blended in only when it adds fresh substantive detail.
+"""
     topic = str(state.get("topic_selection", "") or "").strip()
     latest = _latest_student_message(state.get("messages", []))
 
@@ -831,7 +717,6 @@ def _build_retrieval_query(state: TutorState) -> str:
 
     return _clean_retrieval_query(candidate)
 
-
 def _retrieval_trace_payload(query: str, chunks: list[dict], top_n: int = 7) -> dict:
     top = []
     for i, c in enumerate(chunks[:top_n], start=1):
@@ -849,28 +734,27 @@ def _retrieval_trace_payload(query: str, chunks: list[dict], top_n: int = 7) -> 
         "total_chunks_returned": len(chunks),
     }
 
-
 def _coverage_gate(state: TutorState, retriever=None) -> dict | None:
     """
-    Check whether retrieved_chunks actually cover the locked TOC node.
+ Check whether retrieved_chunks actually cover the locked TOC node.
 
-    Args:
-        state: tutor state.
-        retriever: optional retriever for picking SEMANTICALLY-RELATED
-            alternative cards via sample_related. Without it, falls back
-            to sample_diverse (random teachable picks).
+ Args:
+ state: tutor state.
+ retriever: optional retriever for picking SEMANTICALLY-RELATED
+ alternative cards via sample_related. Without it, falls back
+ to sample_diverse (random teachable picks).
 
-    Returns None on pass. On fail, returns metadata for the caller (run_turn)
-    to build a refuse turn with an LLM-authored intro + card list. Shape:
-      {reason, topic_label, options, pending_user_choice, rejected_path,
-       failure_count}
+ Returns None on pass. On fail, returns metadata for the caller (run_turn)
+ to build a refuse turn with an LLM-authored intro + card list. Shape:
+ {reason, topic_label, options, pending_user_choice, rejected_path
+ failure_count}
 
-    Rules:
-      1. Empty retrieval → fail hard.
-      2. Locked topic has a known section/subsection AND none of the top-5
-         chunks reference it → fail (retrieval drifted to another chapter).
-      3. Top chunk cosine below ood_cosine_threshold → fail.
-    """
+ Rules:
+ 1. Empty retrieval → fail hard.
+ 2. Locked topic has a known section/subsection AND none of the top-5
+ chunks reference it → fail (retrieval drifted to another chapter).
+ 3. Top chunk cosine below ood_cosine_threshold → fail.
+"""
     chunks = state.get("retrieved_chunks", []) or []
     locked = state.get("locked_topic") or {}
     topic_label = locked.get("subsection") or locked.get("section") or state.get("topic_selection", "this topic")
@@ -885,7 +769,6 @@ def _coverage_gate(state: TutorState, retriever=None) -> dict | None:
         min_chunks = 5 if failure_count < 2 else 8
         # Prefer SEMANTICALLY-RELATED alternatives via sample_related when
         # we have a retriever. Falls back to sample_diverse if retriever
-        # is unavailable or returns nothing related. Without this,
         # students typing "brain" got cards like "DNA Replication" —
         # technically teachable but unrelated to the query.
         query_for_related = (
@@ -937,8 +820,6 @@ def _coverage_gate(state: TutorState, retriever=None) -> dict | None:
     # them — so the gate uses a dedicated threshold (`dean_topic_gate_ce_threshold`)
     # that is much lower than the OOD cosine floor used by the retriever's
     # in-scope check. Default 0.05 — virtually any non-zero CE score passes.
-    #
-    # 2026-04-29: previously this gate read `ood_cosine_threshold` (0.45) and
     # refused valid topics like "what nerve innervates the deltoid?" on the
     # basis of CE score 0.20-0.40 — see e2e S6a where the deltoid topic was
     # refused and the conversation pivoted to "muscle tone".
@@ -949,7 +830,6 @@ def _coverage_gate(state: TutorState, retriever=None) -> dict | None:
 
     return None
 
-
 def _format_topic_label(m: TopicMatch) -> str:
     """Card label for a TOC match — human-readable, with a limited-coverage tag."""
     base = m.label
@@ -957,12 +837,11 @@ def _format_topic_label(m: TopicMatch) -> str:
         return f"{base} · limited coverage"
     return base
 
-
 def _replace_latest_student_message(messages: list[dict], new_content: str) -> list[dict]:
     """
-    Replace latest student message content so downstream retrieval/classification
-    runs on the selected topic text (instead of a numeric reply like '2').
-    """
+ Replace latest student message content so downstream retrieval/classification
+ runs on the selected topic text (instead of a numeric reply like '2').
+"""
     patched = list(messages or [])
     for i in range(len(patched) - 1, -1, -1):
         msg = patched[i]
@@ -973,15 +852,14 @@ def _replace_latest_student_message(messages: list[dict], new_content: str) -> l
             break
     return patched
 
-
 class DeanAgent:
     def __init__(self, retriever, memory_client):
         """
-        Args:
-            retriever:      Retriever (or MockRetriever) instance
-            memory_client:  PersistentMemory instance (memory/persistent_memory.py)
-        Note: no embed_fn — correctness checking done by LLM, not cosine similarity.
-        """
+ Args:
+ retriever: Retriever (or MockRetriever) instance
+ memory_client: PersistentMemory instance (memory/persistent_memory.py)
+ Note: no embed_fn — correctness checking done by LLM, not cosine similarity.
+"""
         from conversation.llm_client import make_anthropic_client, resolve_model
         self.client = make_anthropic_client()
         self.model = resolve_model(cfg.models.dean)
@@ -991,23 +869,23 @@ class DeanAgent:
 
     def run_turn(self, state: TutorState, teacher) -> dict:
         """
-        Orchestrate one full Dean turn. Called by dean_node in nodes.py.
+ Orchestrate one full Dean turn. Called by dean_node in nodes.py.
 
-        Flow:
-          1. _setup_call(state) → eval dict
-          2. If student_reached_answer → return partial state (assessment handles rest)
-          3. Help abuse gating (Python counter)
-          4. teacher.draft_socratic(state) → draft
-          5. _quality_check_call(state, draft) → {pass, critique, leak_detected}
-          6. PASS → approved_response = draft
-             FAIL → use Dean-proposed revised_teacher_draft when valid (single-pass repair)
-             FAIL with no valid revision → Dean-authored fallback, log intervention
-          7. Append {"role": "tutor", "content": approved_response} to state["messages"]
-          8. Return partial state update dict
+ Flow:
+ 1. _setup_call(state) → eval dict
+ 2. If student_reached_answer → return partial state (assessment handles rest)
+ 3. Help abuse gating (Python counter)
+ 4. teacher.draft_socratic(state) → draft
+ 5. _quality_check_call(state, draft) → {pass, critique, leak_detected}
+ 6. PASS → approved_response = draft
+ FAIL → use Dean-proposed revised_teacher_draft when valid (single-pass repair)
+ FAIL with no valid revision → Dean-authored fallback, log intervention
+ 7. Append {"role": "tutor", "content": approved_response} to state["messages"]
+ 8. Return partial state update dict
 
-        Returns:
-            dict with updated state fields (merged by dean_node)
-        """
+ Returns:
+ dict with updated state fields (merged by dean_node)
+"""
         # ── Topic engagement gate (explicit selection required) ───────────────
         # Until topic_confirmed=True, tutoring does not start.
         # 1) First pass: generate 3-4 scoped options.
@@ -1028,7 +906,7 @@ class DeanAgent:
             latest_student = _latest_student_message(messages)
 
             # LLM intent classifier — replaces the old regex-based low-effort /
-            # non-topic / ambiguity detectors. Returns {intent, normalized_topic,
+            # non-topic / ambiguity detectors. Returns {intent, normalized_topic
             # tutor_reply, rationale}.
             _fire_activity_pre("Understanding your intent")
             intent_result = self._prelock_intent_call(state)
@@ -1088,8 +966,7 @@ class DeanAgent:
 
             # Free-text topic query (or a card_pick that couldn't resolve) →
             # SEMANTIC topic resolution via the chunks retriever.
-            #
-            # 2026-04-29: replaced the rapidfuzz token_set_ratio TopicMatcher
+            # : replaced the rapidfuzz token_set_ratio TopicMatcher
             # for free-text resolution. Empirically, fuzzy string matching of
             # natural student queries against TOC titles is not reliable: for
             # "What are the structural and functional differences between T
@@ -1111,7 +988,6 @@ class DeanAgent:
                 # biased) than the full sentence does. The full message
                 # carries more keyword signal and lets the vote-based
                 # resolution converge on the correct TOC node.
-                #
                 # We still fall back to normalized_topic (a) when latest
                 # student message is empty/whitespace, and (b) for the
                 # fuzzy matcher below — short normalized strings are what
@@ -1128,20 +1004,18 @@ class DeanAgent:
                 # Resolve topic by rank-weighted VOTE across top primaries
                 # rather than picking primaries[0]. Why: cross-encoder scores
                 # saturate at 1.000 in the high-relevance regime, so when 4
-                # out of 5 top primaries agree on (chapter, section,
+                # out of 5 top primaries agree on (chapter, section
                 # subsection) and 1 disagrees, the disagreeing one will
                 # often appear at rank 0 by sort-noise — and primaries[0]
                 # would pick the WRONG topic.
-                #
-                # Concrete failure observed (2026-04-29):
-                #   Query: "What are the structural and functional
-                #     distinctions between the superior and inferior venae
-                #     cavae, and how do their tributary patterns differ?"
-                #   primaries[0] = Ch19 Heart: Heart Defects     (score 1.0)
-                #   primaries[1..4] = Ch20 Overview of Systemic Veins (1.0)
-                #   → top-1 picks Heart Defects (wrong) but 4-of-5 vote
-                #     correctly resolves to Systemic Veins.
-                #
+                # Concrete failure observed:
+                # Query: "What are the structural and functional
+                # distinctions between the superior and inferior venae
+                # cavae, and how do their tributary patterns differ?"
+                # primaries[0] = Ch19 Heart: Heart Defects (score 1.0)
+                # primaries[1..4] = Ch20 Overview of Systemic Veins (1.0)
+                # → top-1 picks Heart Defects (wrong) but 4-of-5 vote
+                # correctly resolves to Systemic Veins.
                 # Vote weighting: 1/(rank+1) so earlier results count more
                 # but a single rank-0 outlier can be overridden by 2-3
                 # consistent results at ranks 1-3.
@@ -1234,7 +1108,7 @@ class DeanAgent:
                           f"fuzzy_score={(result.top.score if result.top else 0)}",
                           flush=True)
 
-                # Vague-query gate (added 2026-05-01, refined for e2e):
+                # Vague-query gate (added , refined for e2e):
                 # If the user typed a SHORT vague query AND the fuzzy
                 # matcher couldn't strongly confirm the topic, do NOT
                 # commit to semantic_top — surface cards instead. The
@@ -1243,8 +1117,7 @@ class DeanAgent:
                 # Life" because one chunk mentions brain cells needing
                 # oxygen, even though the user clearly wants brain
                 # anatomy. Show options.
-                #
-                # Refinement (2026-05-01 e2e bug A1): use the ORIGINAL
+                # Refinement ( e2e bug ): use the ORIGINAL
                 # student message word count, not fuzzy_query (which is
                 # the LLM-normalized condensed form like "heart"). A
                 # query like "What part of the heart starts the
@@ -1353,24 +1226,22 @@ class DeanAgent:
                     }
 
             # Topic locked to a TOC node.
-            #
             # We only OVERWRITE the latest student message with the
             # canonical TOC label when the message was a CARD PICK
             # ("1", "first option", "the second one"). Card-pick
             # responses are content-free shortcuts that downstream
             # rendering needs translated to the actual topic name.
-            #
             # For free-text topic queries ("what is the function of the
             # SA node?") we KEEP the student's original phrasing in
             # the messages list. Two reasons:
-            #   1) UX — the student's specific question stays visible
-            #      in the chat transcript, not blanked out into the
-            #      canonical label.
-            #   2) Pedagogy — the teacher's first Socratic draft sees
-            #      the actual question and can address it directly,
-            #      instead of generating a generic foundational
-            #      question for the whole subsection.
-            # Topic resolution metadata (topic_selection, locked_topic,
+            # 1) UX — the student's specific question stays visible
+            # in the chat transcript, not blanked out into the
+            # canonical label.
+            # 2) Pedagogy — the teacher's first Socratic draft sees
+            # the actual question and can address it directly
+            # instead of generating a generic foundational
+            # question for the whole subsection.
+            # Topic resolution metadata (topic_selection, locked_topic
             # debug.locked_topic_snapshot) still carries the canonical
             # label for retrieval / classification calls — those don't
             # need the rewrite.
@@ -1399,7 +1270,7 @@ class DeanAgent:
             # when the student picked a different card after the coverage
             # gate refused — so the gate then ran against chunks for the
             # PREVIOUS topic and refused again, producing the runaway loop
-            # observed in nidhi sessions 2026-04-30 (P0-A from the handoff).
+            # observed in nidhi sessions (P0-A from the handoff).
             # Resetting retrieval_calls here lets _retrieve_on_topic_lock
             # fire again with the new card's section filter.
             state["retrieved_chunks"] = []
@@ -1416,7 +1287,7 @@ class DeanAgent:
                 "limited": picked_topic.limited,
             })
             topic_just_locked = True
-            # Persist the flag so the ack-emit branch (further down,
+            # Persist the flag so the ack-emit branch (further down
             # right before teacher.draft_socratic) sees it and produces
             # the deterministic "topic + question" message instead of a
             # paraphrased hint. The flag is consumed (set False) at
@@ -1429,11 +1300,11 @@ class DeanAgent:
             _fire_activity_pre("Loading textbook context")
             self._retrieve_on_topic_lock(state)
 
-            # Strict-groundedness coverage gate: retrieval must return real,
+            # Strict-groundedness coverage gate: retrieval must return real
             # in-section content for the locked TOC node. If it doesn't, we
             # refuse instead of teaching from parametric knowledge or from
             # chunks that drifted off-topic (this is what caused the
-            # liver→spinal-cord bug in the 2026-04-21 live session).
+            # liver→spinal-cord bug in the live session).
             gate = _coverage_gate(state, retriever=self.retriever)
             if gate is not None:
                 messages = list(state.get("messages", []))
@@ -1518,10 +1389,10 @@ class DeanAgent:
                     "debug": state["debug"],
                 }
 
-            # F7 (POST_DEMO_FIXES.md): fetch prior locked_questions for this
+            # : fetch prior locked_questions for this
             # student × subsection so the LLM can avoid re-asking the same
             # anchor on repeat visits. Empty list on first visit; pulled
-            # from SQLite via the M5 subsection_path filter.
+            # from SQLite via the subsection_path filter.
             from conversation.anchor_history import fetch_prior_locked_questions
             _locked_topic = state.get("locked_topic") or {}
             _subsection_path = str(_locked_topic.get("path", "") or "").strip()
@@ -1547,7 +1418,7 @@ class DeanAgent:
                 [str(a) for a in raw_aliases_out if isinstance(a, str) and str(a).strip()]
                 if isinstance(raw_aliases_out, list) else []
             )
-            # Two-tier (Change 2026-04-30): full_answer for grading layer.
+            # Two-tier (Change ): full_answer for grading layer.
             state["full_answer"] = str(anchors.get("full_answer", "") or "").strip() or state["locked_answer"]
             if not state["locked_question"] or not state["locked_answer"]:
                 # Optional debug trace (toggleable via SOKRATIC_TOPIC_DEBUG env var).
@@ -1567,9 +1438,8 @@ class DeanAgent:
                 })
                 # Anchor extraction failed — unlock the topic and show fresh
                 # coverage-tested alternatives with an LLM-authored intro.
-                # Tier 1 #1.4 fix (e2e bug A1+G1+B1): use sample_related
+                # Tier 1 #1.4 fix (e2e bug +G1+): use sample_related
                 # so the alternatives match what the student was actually
-                # asking about, not random teachable picks. Without this,
                 # "What part of the heart starts the heartbeat?" gets
                 # alternatives like "Pulmonary Circulation / Large
                 # Intestine / Sensory Pathways" — useless cards.
@@ -1640,9 +1510,9 @@ class DeanAgent:
                     "rejected_topic_paths": rejected_list,
                     "debug": state["debug"],
                 }
-            # NOTE (2026-04-29 Change 2): we used to bump hint_level to 1
+            # NOTE ( Change 2): we used to bump hint_level to 1
             # here so the immediate teacher.draft_socratic call would
-            # render hint_plan[0]. With the new topic-acknowledgement flow,
+            # render hint_plan[0]. With the new topic-acknowledgement flow
             # the lock turn emits a deterministic ack instead of a hint —
             # so hint_level stays at 0 here. On the student's NEXT
             # incorrect attempt, the increment logic moves 0 → 1 (a single
@@ -1670,7 +1540,7 @@ class DeanAgent:
                 "hints": hint_plan,
             })
         elif state.get("topic_confirmed", False):
-            # Recovery path: if topic is confirmed but retrieval is missing and answer isn't locked yet,
+            # Recovery path: if topic is confirmed but retrieval is missing and answer isn't locked yet
             # re-run retrieval on refined topic text.
             if not state.get("retrieved_chunks", []) and not state.get("locked_answer", ""):
                 self._retrieve_on_topic_lock(state)
@@ -1702,30 +1572,22 @@ class DeanAgent:
             parsed_hint_level = int(eval_result.get("hint_level", state.get("hint_level", 0)))
         except (TypeError, ValueError):
             parsed_hint_level = int(state.get("hint_level", 0))
-        sanitized_locked, sanitize_action = _sanitize_locked_answer(
-            str(state.get("locked_answer", "")),
-            state.get("retrieved_chunks", []),
-            str(state.get("locked_answer", "")),
-        )
-        state["debug"]["turn_trace"].append({
-            "wrapper": "dean.sanitize_locked_answer",
-            "candidate": str(state.get("locked_answer", ""))[:100],
-            "action": sanitize_action,
-            "final": sanitized_locked,
-        })
+        # locked_answer pass-through. Constraints (shape + grounding) are
+        # owned by the lock-anchors prompt at lock time; nothing to revalidate
+        # here. Just hand the existing state value forward.
         eval_result = {
             "student_state": eval_result.get("student_state", "irrelevant"),
             "student_reached_answer": bool(eval_result.get("student_reached_answer", False)),
             "confidence_score": eval_result.get("confidence_score", 0.0),
             "hint_level": parsed_hint_level,
-            "locked_answer": sanitized_locked,
+            "locked_answer": str(state.get("locked_answer", "")),
             "search_needed": bool(eval_result.get("search_needed", False)),
             "critique": eval_result.get("critique", ""),
         }
 
         confidence_score = self._compute_student_confidence(state, eval_result)
         eval_result["confidence_score"] = confidence_score
-        # NOTE (2026-04-29 reached-gate refactor): the previous design
+        # NOTE ( reached-gate refactor): the previous design
         # gated student_reached_answer on (LLM-self-rated answer_confidence
         # >= 0.72). That conflated step-correctness ("on the right track")
         # with answer-reached ("stated the locked answer"), producing
@@ -1733,7 +1595,6 @@ class DeanAgent:
         # answer is "skeletal muscle pump", LLM returns 0.95, threshold
         # flips reached=True, tutor fabricates "you've correctly identified
         # the skeletal muscle pump."
-        #
         # New gate: deterministic token-overlap (against locked_answer +
         # aliases) with hedge-detection short-circuit, plus an LLM
         # paraphrase fallback that must quote the student verbatim. The
@@ -1752,7 +1613,7 @@ class DeanAgent:
         # will produce the question; the student's NEXT message is the
         # first real attempt and the gate runs as normal then.
         skip_gate_for_ack = bool(state.get("topic_just_locked", False))
-        # Phase 1 (2026-04-30): activity log surfacing for the reached-gate
+        # Phase 1: activity log surfacing for the reached-gate
         # decision. Mirrors Claude's "tool call X, Y, Z" pattern — when
         # the gate fires, show the student which step matched.
         from conversation.teacher import fire_activity as _fa_gate
@@ -1834,7 +1695,7 @@ class DeanAgent:
             if current_hint < 1:
                 # First incorrect after the topic-lock acknowledgement
                 # (Change 2): jump 0 → 1 so plan[0] fires as the first
-                # scaffold. Old code clamped to 1 then incremented to 2,
+                # scaffold. Old code clamped to 1 then incremented to 2
                 # which silently skipped plan[0] entirely.
                 next_hint = 1
                 hint_reason = "incorrect_first_post_ack"
@@ -1925,19 +1786,17 @@ class DeanAgent:
             }
 
         # ============================================================
-        # Change 4 (2026-04-30): unified counter system (deterministic
+        # Change 4: unified counter system (deterministic
         # state-machine counters, not semantic judgments).
-        #
         # Two counters track conversation health:
-        #   - help_abuse_count: consecutive low_effort turns
-        #   - off_topic_count:  consecutive off-DOMAIN turns (category C)
-        #     — domain-tangential questions handled by exploration_judge
-        #       (category B) do NOT increment this counter
-        #
+        # - help_abuse_count: consecutive low_effort turns
+        # - off_topic_count: consecutive off-DOMAIN turns (category C)
+        # — domain-tangential questions handled by exploration_judge
+        # (category B) do NOT increment this counter
         # Plus two non-resetting telemetry counters that the mastery
         # scorer reads to assess session-wide patterns:
-        #   - total_low_effort_turns
-        #   - total_off_topic_turns
+        # - total_low_effort_turns
+        # - total_off_topic_turns
         # ============================================================
 
         # ----- help_abuse_count (low_effort) -----
@@ -1998,7 +1857,7 @@ class DeanAgent:
             # earlier version of this brief said "deliver the new hint"
             # without that guard, and the LLM caved under stonewalling
             # pressure — observed verbatim leak "The structure combines
-            # 'coronary' + 'sinus'" at the cap turn (session 2026-04-30).
+            # 'coronary' + 'sinus'" at the cap turn (session ).
             # The brief now forbids naming any anchor or alias term.
             state["_dean_warning_brief_pending"] = (
                 f"The student has been unable to engage with hint level {prev_hint} "
@@ -2047,7 +1906,7 @@ class DeanAgent:
 
         from conversation.teacher import fire_activity
 
-        # D.2 — Adaptive-RAG (Jeong 2024) complexity tier classification.
+        # — Adaptive-RAG (Jeong 2024) complexity tier classification.
         # Logged only today; doesn't gate behavior. Provides citable
         # architectural component for the thesis lit-review section and
         # produces telemetry (per-turn tier distribution) for evaluation.
@@ -2065,7 +1924,7 @@ class DeanAgent:
         fire_activity("Considering related topics")
         self._exploration_retrieval_maybe(state)
 
-        # Change 2 (2026-04-29): topic-acknowledgement turn.
+        # Change 2: topic-acknowledgement turn.
         # When the topic just locked (this turn for free-text path, or via
         # _apply_prelock for revisit path), emit a deterministic message
         # that announces the topic location AND states the locked_question
@@ -2139,7 +1998,7 @@ class DeanAgent:
                     fire_stream_invalidate()
                     fire_activity("Falling back to safe response")
 
-        # Change 6 (2026-04-30): hint indicator caption.
+        # Change 6: hint indicator caption.
         # Append "— Hint X of Y —" to the tutor message when we're in a
         # tutoring turn that's actively rendering a hint (hint_level >= 1).
         # Suppressed for the topic-ack turn (no hint consumed yet) and for
@@ -2219,9 +2078,9 @@ class DeanAgent:
 
     def _compute_student_confidence(self, state: TutorState, eval_result: dict) -> float:
         """
-        Compute per-turn answer confidence without changing categorical labels.
-        Uses model score directly; falls back to state-based default when missing.
-        """
+ Compute per-turn answer confidence without changing categorical labels.
+ Uses model score directly; falls back to state-based default when missing.
+"""
         student_state = str(eval_result.get("student_state", "")).strip().lower()
         raw = eval_result.get("confidence_score", None)
         try:
@@ -2244,9 +2103,9 @@ class DeanAgent:
 
     def _retrieve_on_topic_lock(self, state: TutorState) -> None:
         """
-        Retrieval for topic scoping/locking.
-        Product invariant for this milestone: retrieval fires at most once per session.
-        """
+ Retrieval for topic scoping/locking.
+ Product invariant for this milestone: retrieval fires at most once per session.
+"""
         retrieval_calls = int(state.get("debug", {}).get("retrieval_calls", 0))
         if retrieval_calls >= 1:
             state["debug"]["turn_trace"].append({
@@ -2286,32 +2145,32 @@ class DeanAgent:
         })
 
     def _classify_complexity(self, state: TutorState) -> dict:
-        """D.2 — Adaptive-RAG (Jeong 2024) query complexity classifier.
+        """Adaptive-RAG (Jeong 2024) query complexity classifier.
 
-        Classifies the student's most recent message into one of three
-        tiers driving downstream retrieval strategy:
+ Classifies the student's most recent message into one of three
+ tiers driving downstream retrieval strategy:
 
-          simple      — direct factual / definitional, single-hop
-          tangential  — curiosity drift, warrants exploration retrieval
-          complex     — multi-step / cross-topic synthesis, multi-hop
-                        candidate (D.4 stub — currently treated as simple)
+ simple — direct factual / definitional, single-hop
+ tangential — curiosity drift, warrants exploration retrieval
+ complex — multi-step / cross-topic synthesis, multi-hop
+ candidate ( stub — currently treated as simple)
 
-        Returns:
-            {"tier": "simple"|"tangential"|"complex", "rationale": str}
-            or {"tier": "simple", "rationale": "<error>"} on any failure
-            so callers can rely on the dict shape.
+ Returns:
+ {"tier": "simple"|"tangential"|"complex", "rationale": str}
+ or {"tier": "simple", "rationale": "<error>"} on any failure
+ so callers can rely on the dict shape.
 
-        Cost: one Haiku-tier LLM call per turn (~$0.001). Result is also
-        logged to turn_trace under wrapper="dean.complexity_classifier"
-        for thesis-evaluable telemetry — frequency distribution across
-        tiers can be reported in the ablation table.
+ Cost: one Haiku-tier LLM call per turn (~$0.001). Result is also
+ logged to turn_trace under wrapper="dean.complexity_classifier"
+ for thesis-evaluable telemetry — frequency distribution across
+ tiers can be reported in the ablation table.
 
-        Behavior coupling: today the tier is logged only — runtime
-        behavior is unchanged (the existing _exploration_retrieval_maybe
-        still uses its internal judge). A future commit can replace
-        that judge with the tier signal once we have data on how often
-        the two agree.
-        """
+ Behavior coupling: today the tier is logged only — runtime
+ behavior is unchanged (the existing _exploration_retrieval_maybe
+ still uses its internal judge). A future commit can replace
+ that judge with the tier signal once we have data on how often
+ the two agree.
+"""
         if not state.get("topic_confirmed"):
             # Pre-lock messages aren't tutoring queries; classifier is
             # only meaningful after a topic is locked.
@@ -2387,20 +2246,20 @@ class DeanAgent:
 
     def _exploration_retrieval_maybe(self, state: TutorState) -> None:
         """
-        Budget-capped exploration retrieval. When the student asks something
-        tangential to the locked topic (a connected concept, a prerequisite,
-        a cross-system link), this fetches un-section-filtered chunks and
-        merges them into `retrieved_chunks` so Teacher can address the
-        tangent without drifting off the locked question.
+ Budget-capped exploration retrieval. When the student asks something
+ tangential to the locked topic (a connected concept, a prerequisite
+ a cross-system link), this fetches un-section-filtered chunks and
+ merges them into `retrieved_chunks` so Teacher can address the
+ tangent without drifting off the locked question.
 
-        Skipped if:
-          - no topic locked yet,
-          - no session budget remaining,
-          - LLM judge says the latest message is on-topic / venting / OOD.
+ Skipped if:
+no topic locked yet
+no session budget remaining
+LLM judge says the latest message is on-topic / venting / OOD.
 
-        Cost: one LLM classification per tutoring turn (small, Haiku-grade).
-        When the judge fires exploration, one extra retrieval call is made.
-        """
+ Cost: one LLM classification per tutoring turn (small, Haiku-grade).
+ When the judge fires exploration, one extra retrieval call is made.
+"""
         if not state.get("topic_confirmed") or not state.get("locked_question"):
             return
         budget = int(state.get("exploration_max", 0) or 0)
@@ -2478,14 +2337,14 @@ class DeanAgent:
 
     def _prelock_intent_call(self, state: TutorState) -> dict:
         """
-        LLM-driven intent classifier for the pre-lock (topic-selection) phase.
-        Replaces the rule-based low-effort / non-topic / ambiguity detectors.
+ LLM-driven intent classifier for the pre-lock (topic-selection) phase.
+ Replaces the rule-based low-effort / non-topic / ambiguity detectors.
 
-        Returns a dict: {intent, normalized_topic, tutor_reply, rationale}.
-          intent ∈ {topic_query, card_pick, greeting, distress, off_topic, ambiguous}
-          normalized_topic — cleaned topic string for topic_query/card_pick, else ""
-          tutor_reply      — LLM-written reply for non-topic intents, else ""
-        """
+ Returns a dict: {intent, normalized_topic, tutor_reply, rationale}.
+ intent ∈ {topic_query, card_pick, greeting, distress, off_topic, ambiguous}
+ normalized_topic — cleaned topic string for topic_query/card_pick, else ""
+ tutor_reply — LLM-written reply for non-topic intents, else ""
+"""
         messages = state.get("messages", [])
         latest = _latest_student_message(messages) or ""
         topic_options = list(state.get("topic_options", []))
@@ -2528,7 +2387,7 @@ class DeanAgent:
         }
         intent = str(parsed.get("intent", "") or "").strip().lower()
         if intent not in valid_intents:
-            # Parse fallback: treat substantive multi-word text as a topic query,
+            # Parse fallback: treat substantive multi-word text as a topic query
             # everything else as ambiguous (handled by LLM reply downstream).
             tokens = [t for t in _normalize_text(latest).split() if t]
             intent = "topic_query" if len(tokens) >= 2 else "ambiguous"
@@ -2548,10 +2407,10 @@ class DeanAgent:
         refuse_reason: str,
     ) -> dict:
         """
-        LLM-authored intro text for a refuse-with-cards turn. Used when a TOC
-        match fails or the coverage gate rejects a locked topic. The caller is
-        responsible for rendering the card list after `tutor_reply`.
-        """
+ LLM-authored intro text for a refuse-with-cards turn. Used when a TOC
+ match fails or the coverage gate rejects a locked topic. The caller is
+ responsible for rendering the card list after `tutor_reply`.
+"""
         conversation_history = render_history(state.get("messages", []))
         wrapper_delta = (
             getattr(cfg.prompts, "dean_prelock_refuse_delta", "")
@@ -2593,9 +2452,9 @@ class DeanAgent:
         topic_selection: str,
     ) -> dict:
         """
-        LLM-authored intro text for the anchor-extraction-failed path. Used when
-        retrieval succeeded but no clean pedagogical anchor could be locked.
-        """
+ LLM-authored intro text for the anchor-extraction-failed path. Used when
+ retrieval succeeded but no clean pedagogical anchor could be locked.
+"""
         conversation_history = render_history(state.get("messages", []))
         wrapper_delta = (
             getattr(cfg.prompts, "dean_prelock_anchor_fail_delta", "")
@@ -2636,29 +2495,29 @@ class DeanAgent:
         prior_questions: list[str] | None = None,
     ) -> dict:
         """
-        Lock both question and answer anchors immediately after topic-lock retrieval.
-        Returns a dict with: locked_question, locked_answer, rationale.
+ Lock both question and answer anchors immediately after topic-lock retrieval.
+ Returns a dict with: locked_question, locked_answer, rationale.
 
-        Change (2026-04-30, post-18-convo eval review): added lock-time
-        section filtering. The 18-convo run produced lock drift (e.g.
-        student asked about long bone structure, dean locked on "skeletal
-        cardiac and smooth muscle" because the matcher's chunks included
-        muscle attachment content). Filter retrieved chunks to ONLY those
-        whose subsection_title matches state.locked_topic.subsection
-        before passing to the lock LLM. This forces the lock to be
-        grounded in the actually-locked subsection, not whatever
-        adjacent content the chunker pulled in.
+ Change (, post-18-convo eval review): added lock-time
+ section filtering. The 18-convo run produced lock drift (e.g.
+ student asked about long bone structure, dean locked on "skeletal
+ cardiac and smooth muscle" because the matcher's chunks included
+ muscle attachment content). Filter retrieved chunks to ONLY those
+ whose subsection_title matches state.locked_topic.subsection
+ before passing to the lock LLM. This forces the lock to be
+ grounded in the actually-locked subsection, not whatever
+ adjacent content the chunker pulled in.
 
-        F7 (2026-05-06, POST_DEMO_FIXES.md): added `prior_questions`
-        parameter so repeat visits to a subsection produce a different
-        anchor question instead of the same one (temperature=0 made the
-        LLM deterministic on identical inputs).
-          * empty / None     → temperature=0 (today's behavior)
-          * 1-3 prior        → temperature=0.5 + AVOID block in prompt
-          * 4+ prior         → temperature=0.5 + AVOID + reframe-lens
-                               instruction (honest reuse with different
-                               angle: clinical / mechanistic / comparative)
-        """
+ : added `prior_questions`
+ parameter so repeat visits to a subsection produce a different
+ anchor question instead of the same one (temperature=0 made the
+ LLM deterministic on identical inputs).
+ * empty / None → temperature=0 (today's behavior)
+ * 1-3 prior → temperature=0.5 + AVOID block in prompt
+ * 4+ prior → temperature=0.5 + AVOID + reframe-lens
+ instruction (honest reuse with different
+ angle: clinical / mechanistic / comparative)
+"""
         topic_selection = str(state.get("topic_selection", "") or "").strip()
 
         # Filter chunks to the locked subsection ONLY. If the filter
@@ -2712,7 +2571,7 @@ class DeanAgent:
             **_domain_prompt_vars(),
         )
 
-        # F7 — branch prompt + temperature on prior history for this
+        # branch prompt + temperature on prior history for this
         # student × subsection. Empty list → today's deterministic path.
         # 1-3 prior → AVOID block + temp=0.5. 4+ prior → AVOID + reframe
         # instruction (LLM picks a different lens rather than pretend
@@ -2764,45 +2623,43 @@ class DeanAgent:
         text = (resp.content[0].text or "").strip()
         parsed = _extract_json_object(text)
         if parsed is None:
-            fallback_answer_raw = self._extract_answer_parametric(state)
-            fallback_answer, fallback_action = _sanitize_locked_answer(
-                fallback_answer_raw,
-                state.get("retrieved_chunks", []),
-                "",
-            )
+            # JSON parse failed — fall back to a parametric extract over
+            # the chunks. We accept whatever it returns verbatim; the
+            # constraints live in the prompts the parametric extract
+            # itself uses, not in any post-hoc gate.
+            fallback_answer = (self._extract_answer_parametric(state) or "").strip()
             state["debug"]["turn_trace"].append({
                 "wrapper": "dean._lock_anchors_call_parse_fallback",
                 "result": "parse_failed",
                 "fallback_answer": fallback_answer,
-                "fallback_action": fallback_action,
             })
             return {
                 "locked_question": topic_selection if fallback_answer else "",
                 "locked_answer": fallback_answer,
                 "locked_answer_aliases": [],
-                "full_answer": fallback_answer,  # fallback: same as locked_answer
+                "full_answer": fallback_answer,
                 "rationale": "parse_failed",
             }
 
         locked_question = str(parsed.get("locked_question", "") or "").strip()
         locked_answer_raw = str(parsed.get("locked_answer", "") or "").strip()
-        # Two-tier (Change 2026-04-30): full_answer is the complete textbook
-        # answer (may be a list/sentence). Falls back to locked_answer if
-        # the lock prompt didn't produce it (older runs / minor LLM omissions).
+        # Two-tier: full_answer is the complete textbook answer (may be a
+        # list/sentence). Falls back to locked_answer when the lock prompt
+        # omitted it. Capped at 400 chars to prevent runaway.
         full_answer_raw = str(parsed.get("full_answer", "") or "").strip()
-        # Cap full_answer at 400 chars to prevent runaway. If empty,
-        # fall back to locked_answer (preserves backward compat).
         full_answer = full_answer_raw[:400] if full_answer_raw else ""
-        locked_answer, sanitize_action = _sanitize_locked_answer(
-            locked_answer_raw,
-            state.get("retrieved_chunks", []),
-            "",
-        )
+        # Accept the LLM's locked_answer verbatim. All shape + grounding
+        # constraints (1-5 words, single noun phrase, no "and"-joined
+        # compounds, must be grounded in chunks) live in
+        # dean_lock_anchors_static — if the model produced something
+        # broken, the repair pass below is its own retry. No post-hoc
+        # rule gate.
+        locked_answer = locked_answer_raw
         # Aliases: optional list of equivalent phrasings produced by the lock
         # prompt. Used by reached_answer_gate's Step A token-overlap check
         # so paraphrases get credit without needing the LLM fallback. We
         # sanitize permissively — empty/duplicate aliases are dropped, the
-        # locked_answer itself is filtered out (it's checked separately),
+        # locked_answer itself is filtered out (it's checked separately)
         # and we cap at 5 to keep prompts and overlap-loops bounded.
         raw_aliases = parsed.get("locked_answer_aliases", []) or []
         if isinstance(raw_aliases, str):  # tolerate single-string output
@@ -2813,8 +2670,8 @@ class DeanAgent:
 
         def _push_alias(a_clean: str) -> bool:
             """Add a single alias if it passes filters. Returns True iff added.
-            Hard cap on individual alias length: 50 chars (longer = LLM
-            smuggled in a sentence, not a phrase)."""
+ Hard cap on individual alias length: 50 chars (longer = LLM
+ smuggled in a sentence, not a phrase)."""
             a_low = a_clean.lower()
             if not a_clean or a_low == locked_lower or a_low in seen_lower:
                 return False
@@ -2842,19 +2699,18 @@ class DeanAgent:
                 _push_alias(a_clean)
             if len(locked_answer_aliases) >= 5:
                 break
-        # Optional debug trace (toggleable via SOKRATIC_TOPIC_DEBUG env var).
-        import os as _os_dbg
-        if _os_dbg.environ.get("SOKRATIC_TOPIC_DEBUG"):
-            print(f"  [lock-anchors] raw_answer={locked_answer_raw!r} "
-                  f"action={sanitize_action!r} final={locked_answer!r}",
-                  flush=True)
         state["debug"]["turn_trace"].append({
-            "wrapper": "dean.sanitize_locked_answer",
-            "candidate": locked_answer_raw[:100],
-            "action": sanitize_action,
-            "final": locked_answer,
+            "wrapper": "dean._lock_anchors_call.parsed",
+            "locked_answer": locked_answer[:100],
+            "n_aliases": len(locked_answer_aliases),
+            "full_answer_present": bool(full_answer_raw),
         })
-        # Repair once with a focused LLM pass if answer still failed sanitization.
+
+        # Repair once if the LLM came back with no locked_answer. Same
+        # system prompt → all constraints already encoded — we just nudge
+        # the model to try harder. Whatever the second attempt produces
+        # is accepted verbatim; per design we don't run it through any
+        # rule gate, and we don't retry beyond this single repair.
         if not locked_answer:
             repair_resp = _timed_create(
                 self.client,
@@ -2862,11 +2718,6 @@ class DeanAgent:
                 "dean._lock_anchors_repair_call",
                 model=self.model,
                 temperature=0,
-                # Bumped from 140 to 240 (2026-04-29): the new schema with
-                # locked_answer_aliases + rationale wouldn't fit in 140 tokens,
-                # causing JSON to truncate mid-output. JSON parse then failed
-                # silently and locked_answer stayed empty even when the LLM
-                # had produced a perfectly-good answer term.
                 max_tokens=240,
                 system=_cached_system(
                     getattr(cfg.prompts, "dean_base", ""),
@@ -2878,19 +2729,13 @@ class DeanAgent:
                 messages=[{
                     "role": "user",
                     "content": (
-                        "Return strict JSON only. locked_question must be specific. "
-                        "locked_answer must be 1-5 words, a SINGLE noun phrase (like "
-                        "'axillary nerve' or 'quadrangular space'). NO lists, NO verbs, "
-                        "NO cord origins, NO supporting facts — only the target term. "
-                        "**HARD RULE: never use 'and' to join two ideas.** If the "
-                        "question is about TWO components (e.g. 'left and right coronary "
-                        "arteries'), pick a single umbrella term ('coronary arteries') "
-                        "for locked_answer and put each component as a SEPARATE alias "
-                        "(e.g. aliases=['left coronary artery', 'right coronary artery', "
-                        "'LCA', 'RCA']). The umbrella covers the gate; aliases match "
-                        "what the student actually says. "
-                        "Keep rationale to <=15 words and aliases to 4 short phrases so the "
-                        "JSON fits well within max_tokens."
+                        "Your previous attempt produced an empty or unusable "
+                        "locked_answer. Re-emit the JSON now, paying close "
+                        "attention to the constraints in the system prompt: "
+                        "minimal phrasing that fully resolves the question, "
+                        "grounded in the supplied chunks, with each component "
+                        "of an enumerated answer as its own alias rather than "
+                        "joined by 'and'. Return strict JSON only."
                     ),
                 }],
             )
@@ -2898,23 +2743,12 @@ class DeanAgent:
             repair = _extract_json_object(repair_text)
             if repair is not None:
                 repaired_question = str(repair.get("locked_question", "") or "").strip()
-                repaired_raw = str(repair.get("locked_answer", "") or "").strip()
-                repaired_answer, repaired_action = _sanitize_locked_answer(
-                    repaired_raw,
-                    state.get("retrieved_chunks", []),
-                    "",
-                )
-                # Optional debug trace (toggleable via SOKRATIC_TOPIC_DEBUG env var).
-                if _os_dbg.environ.get("SOKRATIC_TOPIC_DEBUG"):
-                    print(f"  [lock-anchors-repair] raw={repaired_raw!r} "
-                          f"action={repaired_action!r} final={repaired_answer!r}",
-                          flush=True)
+                repaired_answer = str(repair.get("locked_answer", "") or "").strip()
+                repaired_full = str(repair.get("full_answer", "") or "").strip()
                 state["debug"]["turn_trace"].append({
-                    "wrapper": "dean.sanitize_locked_answer",
-                    "candidate": repaired_raw[:100],
-                    "action": repaired_action,
-                    "final": repaired_answer,
-                    "decision_effect": "anchor_repair_attempt",
+                    "wrapper": "dean._lock_anchors_repair_call.parsed",
+                    "locked_answer": repaired_answer[:100],
+                    "had_question": bool(repaired_question),
                 })
                 if repaired_question:
                     locked_question = repaired_question
@@ -2924,80 +2758,46 @@ class DeanAgent:
                         str(parsed.get("rationale", "") or "").strip()
                         + " | repaired_once"
                     ).strip(" |")
-                    # Repair often produces cleaner aliases (the original
-                    # answer was wiped because it was a sentence; aliases
-                    # generated alongside that sentence tend to also be
-                    # paraphrases-of-a-sentence rather than term variants).
-                    # Prefer the repair's aliases when available.
-                    repair_aliases_raw = repair.get("locked_answer_aliases", []) or []
-                    if isinstance(repair_aliases_raw, str):
-                        repair_aliases_raw = [repair_aliases_raw]
-                    if isinstance(repair_aliases_raw, list) and repair_aliases_raw:
-                        seen_lower2: set[str] = set()
-                        rebuilt: list[str] = []
-                        locked_lower2 = locked_answer.lower().strip()
-                        for a in repair_aliases_raw:
-                            if not isinstance(a, str):
-                                continue
-                            ac = a.strip()
-                            al = ac.lower()
-                            if not ac or al == locked_lower2 or al in seen_lower2:
-                                continue
-                            if len(ac) > 50:
-                                continue
-                            seen_lower2.add(al)
-                            rebuilt.append(ac)
-                            if len(rebuilt) >= 5:
-                                break
-                        if rebuilt:
-                            locked_answer_aliases = rebuilt
+                if repaired_full and not full_answer:
+                    full_answer = repaired_full[:400]
+                # Prefer repair's aliases when the original was empty —
+                # they're usually better-shaped because the repair prompt
+                # had a fresh shot at the constraints.
+                repair_aliases_raw = repair.get("locked_answer_aliases", []) or []
+                if isinstance(repair_aliases_raw, str):
+                    repair_aliases_raw = [repair_aliases_raw]
+                if isinstance(repair_aliases_raw, list) and repair_aliases_raw:
+                    seen_lower2: set[str] = set()
+                    rebuilt: list[str] = []
+                    locked_lower2 = locked_answer.lower().strip()
+                    for a in repair_aliases_raw:
+                        if not isinstance(a, str):
+                            continue
+                        ac = a.strip()
+                        al = ac.lower()
+                        if not ac or al == locked_lower2 or al in seen_lower2:
+                            continue
+                        seen_lower2.add(al)
+                        rebuilt.append(ac)
+                        if len(rebuilt) >= 5:
+                            break
+                    if rebuilt:
+                        locked_answer_aliases = rebuilt
 
-        # Final fallback (added 2026-05-01): if both the original lock and the
-        # repair attempt produced "and"-joined answers (Haiku frequently does
-        # this for "two of X" questions despite explicit prompt rules), accept
-        # the raw answer rather than dead-ending the lock. The alias splitter
-        # above has already converted joined aliases into per-component
-        # aliases — those will match what students actually say. The
-        # locked_answer itself being a sentence-shape phrase only means the
-        # gate's literal-match path won't fire on it; aliases cover the gap.
-        # Without this fallback, the user sees a card-rejection loop instead
-        # of getting their topic locked (regression observed 2026-05-01).
+        # Last-resort safety: if both the main call AND the repair came
+        # back empty, use the topic_selection so locked_answer is never
+        # null downstream. The reach gate then has SOMETHING to compare
+        # against (the topic phrase the student picked) — imperfect, but
+        # the session doesn't dead-end on the lock step.
         if not locked_answer:
-            fallback_raw = locked_answer_raw or ""
-            if " and " in fallback_raw.lower() and len(fallback_raw.split()) <= 15:
-                # Try to derive an umbrella. Heuristic: "X and Y NOUN(S)" → "NOUN(S)".
-                # Split on " and ", take the LONGEST part, drop leading modifiers
-                # ("left", "right", "anterior", etc.). If that fails, use the longer part.
-                parts = [p.strip() for p in re.split(r"\s+and\s+", fallback_raw, flags=re.IGNORECASE) if p.strip()]
-                modifiers = {"left", "right", "anterior", "posterior", "superior",
-                             "inferior", "upper", "lower", "medial", "lateral",
-                             "deep", "superficial", "internal", "external"}
-                # Longest-suffix umbrella attempt: from the longer part, strip
-                # leading modifier tokens.
-                longer = max(parts, key=lambda s: len(s.split())) if parts else fallback_raw
-                tokens = longer.split()
-                while tokens and tokens[0].lower() in modifiers:
-                    tokens = tokens[1:]
-                umbrella = " ".join(tokens) if tokens else longer
-                # If the umbrella is too short (1 word) or empty, fall back to the
-                # full longer part.
-                if not umbrella or len(umbrella.split()) < 2:
-                    umbrella = longer
-                locked_answer = umbrella
-                # Add each split part as an alias (deduped against locked_answer).
-                for p in parts:
-                    if p and p.lower() != locked_answer.lower():
-                        if not any(p.lower() == a.lower() for a in locked_answer_aliases):
-                            if len(locked_answer_aliases) < 5 and len(p) <= 50:
-                                locked_answer_aliases.append(p)
-                state["debug"]["turn_trace"].append({
-                    "wrapper": "dean._lock_anchors_call.and_join_fallback",
-                    "result": f"raw={fallback_raw!r} → umbrella={locked_answer!r}",
-                })
+            locked_answer = (topic_selection or "this concept").strip()
+            state["debug"]["turn_trace"].append({
+                "wrapper": "dean._lock_anchors_call.empty_fallback",
+                "result": f"both attempts empty; using topic_selection={locked_answer!r}",
+            })
 
-        # If the lock prompt didn't produce a full_answer, fall back to
-        # locked_answer for backward compat — but flag it so we know
-        # this session has a degraded full_answer.
+        # full_answer falls back to locked_answer when the lock prompt
+        # didn't emit one (older runs / minor LLM omissions).
         if not full_answer:
             full_answer = locked_answer
             state["debug"]["turn_trace"].append({
@@ -3015,18 +2815,18 @@ class DeanAgent:
     def _generate_anchor_variations(
         self, state: TutorState, n: int = 3,
     ) -> list[dict]:
-        """M4 — generate N anchor question variations for the locked subsection.
+        """generate N anchor question variations for the locked subsection.
 
-        Returns a list of dicts: [{question, answer, aliases, full_answer}, ...].
-        Used by the My Mastery prelock UX so the student picks WHICH anchor
-        question they want to work on (rather than auto-locking one).
+ Returns a list of dicts: [{question, answer, aliases, full_answer}, ...].
+ Used by the My Mastery prelock UX so the student picks WHICH anchor
+ question they want to work on (rather than auto-locking one).
 
-        Single Sonnet call. Uses the same chunks as _lock_anchors_call (already
-        filtered to the locked subsection). On parse failure or empty response,
-        returns [] — caller falls back to single _lock_anchors_call.
+ Single Sonnet call. Uses the same chunks as _lock_anchors_call (already
+ filtered to the locked subsection). On parse failure or empty response
+ returns — caller falls back to single _lock_anchors_call.
 
-        ~$0.01 per call (small JSON output, cached system block).
-        """
+ ~$0.01 per call (small JSON output, cached system block).
+"""
         import json as _json
         target_subsection = str((state.get("locked_topic") or {}).get("subsection") or "").strip()
         all_chunks = state.get("retrieved_chunks", []) or []
@@ -3117,9 +2917,9 @@ class DeanAgent:
 
     def _hint_plan_call(self, state: TutorState) -> list[str]:
         """
-        Build a 3-step progressive hint plan after anchors lock.
-        Returned hints are guidance intents for Teacher, not direct answer reveals.
-        """
+ Build a 3-step progressive hint plan after anchors lock.
+ Returned hints are guidance intents for Teacher, not direct answer reveals.
+"""
         conversation_history = render_history(state.get("messages", []))
         chunks_str = _format_chunks(state.get("retrieved_chunks", []))
         dynamic_prompt = getattr(cfg.prompts, "dean_hint_plan_dynamic", "").format(
@@ -3164,11 +2964,11 @@ class DeanAgent:
 
     def _extract_answer_parametric(self, state: TutorState) -> str:
         """
-        Parametric (LLM-from-memory) answer extraction is disabled under the
-        strict-groundedness policy: answers must come from retrieval over the
-        indexed corpus, never from the model's training data. Callers fall
-        back to deterministic chunk-derived anchors instead.
-        """
+ Parametric (LLM-from-memory) answer extraction is disabled under the
+ strict-groundedness policy: answers must come from retrieval over the
+ indexed corpus, never from the model's training data. Callers fall
+ back to deterministic chunk-derived anchors instead.
+"""
         state["debug"]["turn_trace"].append({
             "wrapper": "dean._extract_answer_parametric",
             "result": "disabled_strict_groundedness",
@@ -3177,23 +2977,23 @@ class DeanAgent:
 
     def _build_topic_ack_message(self, state: TutorState) -> str:
         """
-        Build the deterministic topic-acknowledgement message that fires on
-        the first dean_node turn after a topic locks. Two-line format:
+ Build the deterministic topic-acknowledgement message that fires on
+ the first dean_node turn after a topic locks. Two-line format:
 
-            Got it — let's work on **{subsection}** from Chapter {N} → {section}.
+ Got it — let's work on **{subsection}** from Chapter {N} → {section}.
 
-            {locked_question}
+ {locked_question}
 
-        No LLM call. Robust to missing fields: degrades gracefully if any
-        path component is empty (uses what's available, omits the rest).
+ No LLM call. Robust to missing fields: degrades gracefully if any
+ path component is empty (uses what's available, omits the rest).
 
-        Leak guard (Tier 1 #1.4 fix, e2e bug E1): when the subsection
-        title contains the locked_answer or any alias (e.g. subsection
-        "The Aorta" with locked_answer "aorta"), rendering the
-        subsection verbatim pre-reveals the answer. In that case,
-        fall back to section-level phrasing ("let's work on a topic
-        from Section X") which doesn't echo the answer.
-        """
+ Leak guard (Tier 1 #1.4 fix, e2e bug E1): when the subsection
+ title contains the locked_answer or any alias (e.g. subsection
+ "The Aorta" with locked_answer "aorta"), rendering the
+ subsection verbatim pre-reveals the answer. In that case
+ fall back to section-level phrasing ("let's work on a topic
+ from Section X") which doesn't echo the answer.
+"""
         locked_topic = state.get("locked_topic") or {}
         subsection = (
             str(locked_topic.get("subsection") or "").strip()
@@ -3248,7 +3048,7 @@ class DeanAgent:
         else:
             location = ""
 
-        # BLOCK 13 (Q4/Q13) — naturalize the topic-ack header. Drop the
+        # (/) — naturalize the topic-ack header. Drop the
         # "Chapter N → Section" catalog notation that reads mechanical;
         # use plain "we're looking at X" framing instead.
         if masked:
@@ -3272,16 +3072,14 @@ class DeanAgent:
         return f"{header} Let's start with this:\n\n{locked_question}"
 
     # ============================================================
-    # Off-domain detector (Change 4, 2026-04-30; rewritten 2026-05-01).
-    #
-    # 2026-05-01: replaced the keyword regex (vape|smoke|alcohol|...)
+    # Off-domain detector (Change 4; rewritten ).
+    # : replaced the keyword regex (vape|smoke|alcohol|...)
     # with a Haiku classifier (conversation/classifiers.haiku_off_domain_check)
     # per the user's "LLM-only QC" directive. The classifier
     # disambiguates clinical questions involving substances ("how does
     # alcohol damage liver hepatocytes?") from off-domain chitchat
     # ("let's just get drunk"). The regex couldn't make this distinction —
     # both fired \balcohol\b. Validated 100% on 27 hand-curated cases.
-    #
     # Activates only when student_state is already "irrelevant" (i.e.
     # dean's LLM classifier already decided the message is off-target).
     # The Haiku classifier then categorizes which kind of off-domain it
@@ -3292,13 +3090,13 @@ class DeanAgent:
 
     def _is_off_domain_judgment(self, state: TutorState) -> bool:
         """Fast deterministic check: is the latest student message off-DOMAIN
-        (category C) rather than domain-tangential (category B)?
+ (category C) rather than domain-tangential (category B)?
 
-        Default to True when student_state == 'irrelevant' AND the message
-        contains an off-domain keyword. Otherwise False — the message
-        might be a legitimate domain question that just isn't on the
-        locked topic (let exploration_judge handle that).
-        """
+ Default to True when student_state == 'irrelevant' AND the message
+ contains an off-domain keyword. Otherwise False — the message
+ might be a legitimate domain question that just isn't on the
+ locked topic (let exploration_judge handle that).
+"""
         latest_student_msg = ""
         for _msg in reversed(state.get("messages", []) or []):
             if (_msg or {}).get("role") == "student":
@@ -3306,7 +3104,7 @@ class DeanAgent:
                 break
         if not latest_student_msg:
             return False
-        # Off-domain detection (replaces _OFF_DOMAIN_REGEX per 2026-05-01
+        # Off-domain detection (replaces _OFF_DOMAIN_REGEX per
         # LLM-only directive). Haiku classifier disambiguates clinical
         # questions involving substances ("how does alcohol damage liver")
         # from off-domain chitchat ("let's get drunk"). Validated 100%
@@ -3330,14 +3128,14 @@ class DeanAgent:
 
     def _build_strike_warning_brief(self, state: TutorState) -> str:
         """Return a string to append to dean_critique on strike turns.
-        The TEACHER's prompt sees this and naturally weaves the warning
-        into the response. Empty string when no warning applies.
+ The TEACHER's prompt sees this and naturally weaves the warning
+ into the response. Empty string when no warning applies.
 
-        Strike 1: no warning (single low-effort can be just thinking)
-        Strike 2: gentle nudge
-        Strike 3: firmer warning + offer to switch
-        Strike 4: handled separately (advances hint OR terminates)
-        """
+ Strike 1: no warning (single low-effort can be just thinking)
+ Strike 2: gentle nudge
+ Strike 3: firmer warning + offer to switch
+ Strike 4: handled separately (advances hint OR terminates)
+"""
         help_n = int(state.get("help_abuse_count", 0))
         ot_n = int(state.get("off_topic_count", 0))
 
@@ -3380,54 +3178,54 @@ class DeanAgent:
 
     def reached_answer_gate(self, state: TutorState, student_msg: str) -> dict:
         """
-        Strict gate that decides whether the student has STATED the locked
-        answer in their most recent message. Replaces the old
-        confidence_score >= 0.72 threshold which conflated step-correctness
-        with answer-reach (the 'gravity counted as muscle pump' bug).
+ Strict gate that decides whether the student has STATED the locked
+ answer in their most recent message. Replaces the old
+ confidence_score >= 0.72 threshold which conflated step-correctness
+ with answer-reach (the 'gravity counted as muscle pump' bug).
 
-        Three-step strategy:
+ Three-step strategy:
 
-          Step A.1 — deterministic full token-overlap (free, fast):
-            If the message contains all content tokens of locked_answer or
-            any single alias AND no hedge marker is present, accept as
-            FULL reach (coverage=1.0). Evidence is the matched phrase.
+ Step A.1 — deterministic full token-overlap (free, fast):
+ If the message contains all content tokens of locked_answer or
+ any single alias AND no hedge marker is present, accept as
+ FULL reach (coverage=1.0). Evidence is the matched phrase.
 
-          Step A.2 — K-of-N partial reach (multi-component answers only):
-            For locked_answer like "left and right coronary arteries" or
-            "ingestion, propulsion, mechanical digestion, chemical
-            digestion", split into N >= 2 components. Count how many
-            components or aliases match by token overlap. If matches >=
-            ceil(N/2), accept as PARTIAL reach (coverage=K/N, path=
-            'partial_overlap' when K<N else 'overlap'). Closes the gap
-            where a student saying just "LCA" on a multi-component answer
-            was previously rejected.
+ Step A.2 — K-of-N partial reach (multi-component answers only):
+ For locked_answer like "left and right coronary arteries" or
+ "ingestion, propulsion, mechanical digestion, chemical
+ digestion", split into N >= 2 components. Count how many
+ components or aliases match by token overlap. If matches >=
+ ceil(N/2), accept as PARTIAL reach (coverage=K/N, path=
+ 'partial_overlap' when K<N else 'overlap'). Closes the gap
+ where a student saying just "LCA" on a multi-component answer
+ was previously rejected.
 
-          Step B — LLM paraphrase fallback (~one cheap call):
-            Otherwise, ask the LLM whether the message paraphrases the
-            answer. The LLM must quote a verbatim substring of the
-            student message; quote-or-no-reach is enforced post-call so
-            a hallucinated quote forces reached=False.
+ Step B — LLM paraphrase fallback (~one cheap call):
+ Otherwise, ask the LLM whether the message paraphrases the
+ answer. The LLM must quote a verbatim substring of the
+ student message; quote-or-no-reach is enforced post-call so
+ a hallucinated quote forces reached=False.
 
-        Bias: reached=False on any ambiguity. False positives fabricate
-        confirmations the student didn't earn — much worse than running
-        one extra hint turn. Partial reach is a softer affirmation that
-        still routes to assessment so the student gets credit for what
-        they DID say without requiring full coverage of multi-component
-        answers.
+ Bias: reached=False on any ambiguity. False positives fabricate
+ confirmations the student didn't earn — much worse than running
+ one extra hint turn. Partial reach is a softer affirmation that
+ still routes to assessment so the student gets credit for what
+ they DID say without requiring full coverage of multi-component
+ answers.
 
-        Returns: dict with keys
-          reached:    bool          (true on full or partial reach)
-          coverage:   float in [0,1] (1.0 on full, K/N on partial,
-                                      0.0 on no-reach paths)
-          evidence:   str           (matched span or LLM quote)
-          path:       str           (overlap | partial_overlap |
-                                    paraphrase | hedge_block |
-                                    no_overlap_no_paraphrase | no_lock |
-                                    llm_no_quote | llm_parse_fail |
-                                    llm_error)
-          n_matched:  int           (components matched, multi-component only)
-          n_total:    int           (total components, multi-component only)
-        """
+ Returns: dict with keys
+ reached: bool (true on full or partial reach)
+ coverage: float in [0,1] (1.0 on full, K/N on partial
+ 0.0 on no-reach paths)
+ evidence: str (matched span or LLM quote)
+ path: str (overlap | partial_overlap |
+ paraphrase | hedge_block |
+ no_overlap_no_paraphrase | no_lock |
+ llm_no_quote | llm_parse_fail |
+ llm_error)
+ n_matched: int (components matched, multi-component only)
+ n_total: int (total components, multi-component only)
+"""
         locked_answer = (state.get("locked_answer") or "").strip()
         if not locked_answer:
             return {"reached": False, "coverage": 0.0, "evidence": "", "path": "no_lock"}
@@ -3489,7 +3287,7 @@ class DeanAgent:
                     if key in seen_token_keys:
                         continue
                     # Also dedup by subset/superset: if a longer match
-                    # already covers this one's tokens (or vice versa),
+                    # already covers this one's tokens (or vice versa)
                     # skip the shorter to avoid double-counting "left
                     # coronary" + "left coronary artery" as 2 hits.
                     skip = False
@@ -3595,7 +3393,7 @@ class DeanAgent:
         evidence = str(parsed.get("evidence", "") or "").strip()
 
         # Strict gate: if the LLM claims reached, it must quote a verbatim
-        # substring of the student message. Two checks (normalized first,
+        # substring of the student message. Two checks (normalized first
         # then raw lowercase) so we accept legit quotes that just differ
         # in punctuation/whitespace, but reject hallucinated quotes that
         # don't appear at all.
@@ -3627,13 +3425,13 @@ class DeanAgent:
 
     def _setup_call(self, state: TutorState) -> dict:
         """
-        Dean setup classification call (single-call, no tool loop).
-        Retrieval and answer locking are done in Python before this call.
+ Dean setup classification call (single-call, no tool loop).
+ Retrieval and answer locking are done in Python before this call.
 
-        Returns:
-            dict with student_state, student_reached_answer, hint_level,
-                  search_needed, critique
-        """
+ Returns:
+ dict with student_state, student_reached_answer, hint_level
+ search_needed, critique
+"""
         conversation_history = render_history(state.get("messages", []))
         wrapper_delta = (
             getattr(cfg.prompts, "dean_setup_delta", "")
@@ -3696,9 +3494,9 @@ class DeanAgent:
 
     def _setup_local_fallback(self, state: TutorState) -> dict:
         """
-        Local classification fallback when Dean JSON parsing fails.
-        Uses safe defaults — no domain-specific heuristics.
-        """
+ Local classification fallback when Dean JSON parsing fails.
+ Uses safe defaults — no domain-specific heuristics.
+"""
         msg = _latest_student_message(state.get("messages", []))
         txt = (msg or "").strip().lower()
         locked = _normalize_text(state.get("locked_answer", "") or "")
@@ -3737,10 +3535,10 @@ class DeanAgent:
 
     def _evaluate_tutoring_draft(self, state: TutorState, teacher_draft: str) -> dict:
         """
-        Two-stage quality gate for tutoring drafts:
-        1) deterministic Python checks (fast, no API call)
-        2) Dean LLM quality check when deterministic checks pass
-        """
+ Two-stage quality gate for tutoring drafts:
+ 1) deterministic Python checks (fast, no API call)
+ 2) Dean LLM quality check when deterministic checks pass
+"""
         deterministic = self._deterministic_tutoring_check(state, teacher_draft)
         state["debug"]["turn_trace"].append({
             "wrapper": "dean._deterministic_quality_check",
@@ -3753,8 +3551,8 @@ class DeanAgent:
 
     def _deterministic_tutoring_check(self, state: TutorState, teacher_draft: str) -> dict:
         """
-        Local deterministic checks to catch obvious violations before spending API tokens.
-        """
+ Local deterministic checks to catch obvious violations before spending API tokens.
+"""
         text = teacher_draft or ""
         lowered = _normalize_text(text)
         locked = _normalize_text(state.get("locked_answer", ""))
@@ -3768,9 +3566,8 @@ class DeanAgent:
             reason_codes.append("multi_question")
 
         # Word-boundary reveal check. Use _is_distinctive_anchor so that
-        # single-word distinctive anchors like "nucleus", "ganglion",
-        # "pepsin" are checked too — previously the >=2 words filter
-        # excluded them entirely (observed 2026-05-01 nidhi CNS session
+        # single-word distinctive anchors like "nucleus", "ganglion"
+        # excluded them entirely (observed nidhi CNS session
         # where "nucleus" leaked verbatim through Hint 1, 2, and 3).
         # Common short anatomy nouns ("muscle", "nerve", "vein") still
         # skipped to avoid false-positives on legitimate scaffolding.
@@ -3790,12 +3587,11 @@ class DeanAgent:
                     break
 
         # Hint-leak detection (replaces _LETTER_HINT_PATTERNS regex per
-        # 2026-05-01 LLM-only directive). Haiku classifier reads the
+        # LLM-only directive). Haiku classifier reads the
         # draft and decides if it contains a letter / blank / etymology
         # / MCQ / synonym / acronym leak. State-aware via the locked
         # answer + aliases passed in. Validated 96.7% accuracy / 100%
         # leak precision on 30 hand-curated cases (see
-        # data/artifacts/classifiers/2026-05-01T21-03-51).
         from conversation.verifier_quartet import (
             haiku_hint_leak_check, haiku_sycophancy_check,
         )
@@ -3805,7 +3601,7 @@ class DeanAgent:
             "draft": text,
             "locked_answer": state.get("locked_answer", "") or "",
             "aliases": state.get("locked_answer_aliases") or [],
-            # F5c (POST_DEMO_FIXES.md, 2026-05-06): pass locked_question
+            # F5c: pass locked_question
             # so the leak check can reason about classification / list
             # / enumeration questions where naming the categories IS
             # the answer (even if `aliases` doesn't list them literally).
@@ -3875,7 +3671,7 @@ class DeanAgent:
             reason_codes.append("verbosity")
 
         # Sycophancy detection (replaces _STRONG_AFFIRM_PATTERNS regex
-        # per 2026-05-01 LLM-only directive). The Haiku classifier was
+        # per LLM-only directive). The Haiku classifier was
         # already invoked above in parallel with the hint-leak check;
         # we just consume its verdict here. State-aware: classifier
         # only fires "sycophantic" when student_state is NOT correct
@@ -3939,8 +3735,8 @@ class DeanAgent:
 
     def _format_dean_critique(self, quality: dict) -> str:
         """
-        Format retry critique into a structured instruction block for Teacher.
-        """
+ Format retry critique into a structured instruction block for Teacher.
+"""
         codes = quality.get("reason_codes") or ["other"]
         instruction = quality.get("rewrite_instruction") or "Tighten the draft and end with one specific question."
         critique = quality.get("critique", "")
@@ -3952,17 +3748,17 @@ class DeanAgent:
 
     def _deterministic_assessment_check(self, state: TutorState, draft: str) -> dict:
         """
-        Pre-LLM deterministic checks for assessment-phase drafts.
+ Pre-LLM deterministic checks for assessment-phase drafts.
 
-        Catches three classes of leak/violation that the LLM QC was
-        observed to miss in the 2026-04-30 nidhi clinical session:
-          1. Locked-answer or alias mentioned verbatim (whole-phrase, ≥2 tokens).
-          2. Two or more distinctive nouns from full_answer recited.
-          3. Internal chunk-citation patterns ([6], passage [7], reference 3).
+ Catches three classes of leak/violation that the LLM QC was
+ observed to miss in the nidhi clinical session:
+ 1. Locked-answer or alias mentioned verbatim (whole-phrase, ≥2 tokens).
+ 2. Two or more distinctive nouns from full_answer recited.
+ 3. Internal chunk-citation patterns ([6], passage [7], reference 3).
 
-        Returns the same shape as `_deterministic_tutoring_check` so it
-        can short-circuit `_quality_check_call` for assessment.
-        """
+ Returns the same shape as `_deterministic_tutoring_check` so it
+ can short-circuit `_quality_check_call` for assessment.
+"""
         text = draft or ""
         lowered = _normalize_text(text)
         reason_codes: list[str] = []
@@ -3982,7 +3778,7 @@ class DeanAgent:
                     break
 
         # Hint-leak detection (replaces _LETTER_HINT_PATTERNS regex per
-        # 2026-05-01 LLM-only directive). Same Haiku classifier as
+        # LLM-only directive). Same Haiku classifier as
         # tutoring path. Single call here (no parallel partner —
         # sycophancy isn't checked in assessment phase since the
         # student is being graded, not coached).
@@ -4064,13 +3860,13 @@ class DeanAgent:
 
     def _teacher_preflight_brief(self, state: TutorState) -> str:
         """
-        Non-LLM Dean guidance passed to Teacher before first draft each turn.
-        This makes Teacher generation explicitly aware of Dean QC constraints.
+ Non-LLM Dean guidance passed to Teacher before first draft each turn.
+ This makes Teacher generation explicitly aware of Dean QC constraints.
 
-        Change 4: also weaves in any pending narration brief (hint-advance
-        narration on help_abuse=4, off-topic farewell on off_topic=4) and
-        any escalating strike warnings for strikes 1-3.
-        """
+ Change 4: also weaves in any pending narration brief (hint-advance
+ narration on help_abuse=4, off-topic farewell on off_topic=4) and
+ any escalating strike warnings for strikes 1-3.
+"""
         student_state = state.get("student_state") or "unknown"
         hint_level = int(state.get("hint_level", 0))
         hint_plan = state.get("debug", {}).get("hint_plan", [])
@@ -4106,19 +3902,19 @@ class DeanAgent:
 
     def _quality_check_call(self, state: TutorState, teacher_draft: str, phase: str = "tutoring") -> dict:
         """
-        Dean's quality check call.
-        Checks Teacher's draft against EULER 4 criteria + LeakGuard Level 3.
+ Dean's quality check call.
+ Checks Teacher's draft against EULER 4 criteria + LeakGuard Level 3.
 
-        Returns:
-            dict: {"pass": bool, "critique": str, "leak_detected": bool}
-        """
+ Returns:
+ dict: {"pass": bool, "critique": str, "leak_detected": bool}
+"""
         # Deterministic pre-check for ASSESSMENT phase. Catches the most
         # common leak patterns (alias mention, chunk citation, multi-noun
         # full_answer recitation) before spending an LLM call. Mirrors the
         # tutoring-phase check but tuned for clinical drafts which are
         # 2-5 sentences (vs 1-3 for tutoring) and may legitimately
         # discuss anatomy in scenario form.
-        # Observed in nidhi session 2026-04-30: "the RIGHT coronary artery"
+        # Observed in nidhi session : "the RIGHT coronary artery"
         # + "passage [6] and [10]" leaked through because the assessment QC
         # prompt was both more permissive AND missing the alias / full_answer
         # context. This check runs FIRST so those don't ship.
@@ -4252,16 +4048,16 @@ class DeanAgent:
 
     def _clinical_turn_call(self, state: TutorState) -> dict:
         """
-        Evaluate one clinical-response turn and produce targeted coaching feedback.
+ Evaluate one clinical-response turn and produce targeted coaching feedback.
 
-        Returns:
-            {
-              "student_state": "correct|partial_correct|incorrect",
-              "confidence_score": float,
-              "pass": bool,
-              "feedback_message": str
-            }
-        """
+ Returns:
+ {
+ "student_state": "correct|partial_correct|incorrect"
+ "confidence_score": float
+ "pass": bool
+ "feedback_message": str
+ }
+"""
         conversation_history = render_history(state.get("messages", []))
         student_msg = _latest_student_message(state.get("messages", []))
         last_tutor_msg = ""
@@ -4375,8 +4171,8 @@ class DeanAgent:
 
     def _clinical_turn_local_fallback(self, state: TutorState, student_msg: str) -> dict:
         """
-        Deterministic backup when clinical-eval JSON cannot be parsed.
-        """
+ Deterministic backup when clinical-eval JSON cannot be parsed.
+"""
         txt = _normalize_text(student_msg)
         locked = _normalize_text(state.get("locked_answer", ""))
         has_reasoning = any(k in txt for k in ("because", "since", "due to", "therefore", "so "))
@@ -4410,9 +4206,9 @@ class DeanAgent:
 
     def _close_session_call(self, state: TutorState) -> dict:
         """
-        Single batched close-session call:
-        returns tiers + rationale + student-facing closeout + memory summary.
-        """
+ Single batched close-session call:
+ returns tiers + rationale + student-facing closeout + memory summary.
+"""
         reached = bool(state.get("student_reached_answer", False))
         outcome = "reached_answer" if reached else "did_not_reach_answer"
         conversation_history = render_history(state.get("messages", []))
@@ -4557,8 +4353,8 @@ class DeanAgent:
 
     def _close_session_fallback_payload(self, state: TutorState, parse_error: bool = False) -> dict:
         """
-        Deterministic fallback if close-session JSON is malformed or the call fails.
-        """
+ Deterministic fallback if close-session JSON is malformed or the call fails.
+"""
         reached = bool(state.get("student_reached_answer", False))
         clinical_done = bool(state.get("clinical_completed", False))
         if reached and clinical_done:
@@ -4614,8 +4410,8 @@ class DeanAgent:
 
     def _assessment_clinical_fallback(self, state: TutorState) -> str:
         """
-        Dean-written fallback clinical question if Teacher fails quality twice.
-        """
+ Dean-written fallback clinical question if Teacher fails quality twice.
+"""
         chunks_str = _format_chunks(state.get("retrieved_chunks", []))
         system = _apply_domain_vars(
             "You are a {domain_short} tutor writing a single {assessment_dimension} question. "
@@ -4638,9 +4434,9 @@ class DeanAgent:
 
     def _assessment_clinical_followup_fallback(self, state: TutorState) -> str:
         """
-        Dean-written fallback coaching follow-up for clinical multi-turn loops.
-        Must include what was right, what to correct, and one follow-up question.
-        """
+ Dean-written fallback coaching follow-up for clinical multi-turn loops.
+ Must include what was right, what to correct, and one follow-up question.
+"""
         chunks_str = _format_chunks(state.get("retrieved_chunks", []))
         student_msg = _latest_student_message(state.get("messages", []))
         system = _apply_domain_vars(
@@ -4688,7 +4484,7 @@ class DeanAgent:
         return resp.content[0].text
 
     def _log_prompt(self, conv_id: str, turn: int, wrapper: str, prompt: str) -> None:
-        """Save full assembled prompt to data/artifacts/session_prompts/."""
+        """Save full assembled prompt to data/artifacts/session_prompts."""
         try:
             out_dir = Path(cfg.paths.artifacts) / "session_prompts"
             out_dir.mkdir(parents=True, exist_ok=True)
@@ -4698,7 +4494,7 @@ class DeanAgent:
             pass  # non-fatal
 
     def _log_intervention(self, conv_id: str, turn: int, critique: str, draft: str) -> None:
-        """Append Dean intervention record to data/artifacts/dean_interventions/."""
+        """Append Dean intervention record to data/artifacts/dean_interventions."""
         try:
             out_dir = Path(cfg.paths.artifacts) / "dean_interventions"
             out_dir.mkdir(parents=True, exist_ok=True)
@@ -4715,7 +4511,6 @@ class DeanAgent:
             out_path.write_text(json.dumps(existing, indent=2))
         except Exception:
             pass  # non-fatal
-
 
 # --- Formatting helpers (shared with teacher.py pattern) ---
 

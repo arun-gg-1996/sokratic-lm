@@ -1,20 +1,19 @@
 """
 tools/mcp_tools.py
-------------------
 Tool definitions and implementations available to the Dean agent.
 Teacher has NO tools — Teacher only receives what Dean passes in the prompt.
 
 Tools:
-  - search_textbook(query, retriever)
-  - get_student_memory(student_id, memory_client)
-  - update_student_memory(student_id, memory_text, memory_client)
-  - submit_turn_evaluation  (schema only — Dean calls this via Anthropic tool_use
-                             to return structured JSON each turn)
+search_textbook(query, retriever)
+get_student_memory(student_id, memory_client)
+update_student_memory(student_id, memory_text, memory_client)
+submit_turn_evaluation (schema only — Dean calls this via Anthropic tool_use
+ to return structured JSON each turn)
 
 Removed from earlier design:
-  - check_student_answer: Dean LLM now reasons about correctness directly
-  - flag_answer_leak:     LeakGuard Level 3 (entailment) is embedded in
-                          dean._quality_check_call prompt — no separate tool needed
+check_student_answer: Dean LLM now reasons about correctness directly
+flag_answer_leak: LeakGuard Level 3 (entailment) is embedded in
+ dean._quality_check_call prompt — no separate tool needed
 
 Each schema is defined in Anthropic tool-calling format (not OpenAI format).
 The full schema is saved to data/artifacts/tool_definitions.json for human inspection.
@@ -27,7 +26,6 @@ instructions in the Dean system prompt.
 import json
 from pathlib import Path
 from config import cfg
-
 
 # --- Tool schemas (Anthropic tool-calling format) ---
 
@@ -149,15 +147,13 @@ SUBMIT_TURN_EVALUATION = {
     }
 }
 
-
 # Tools given to Dean during _setup_call.
-# Note: get_student_memory is handled in rapport_node via memory_manager.load(),
+# Note: get_student_memory is handled in rapport_node via memory_manager.load
 # so we avoid exposing it in every tutoring turn to keep setup fast.
 DEAN_TOOLS = [SEARCH_TEXTBOOK, SUBMIT_TURN_EVALUATION]
 
 # All tools (for artifact saving)
 ALL_TOOLS = [SEARCH_TEXTBOOK, GET_STUDENT_MEMORY, UPDATE_STUDENT_MEMORY, SUBMIT_TURN_EVALUATION]
-
 
 def save_tool_definitions():
     """Save all tool schemas to data/artifacts/tool_definitions.json for human review."""
@@ -166,7 +162,6 @@ def save_tool_definitions():
     with open(out, "w") as f:
         json.dump(ALL_TOOLS, f, indent=2)
     print(f"Tool definitions saved to {out}")
-
 
 # --- Tool implementations (called by dean.py when Claude makes a tool call) ---
 
@@ -178,23 +173,23 @@ def search_textbook(
     locked_subsection: str | None = None,
 ) -> list[dict]:
     """
-    Run hybrid retrieval and return top chunks.
+ Run hybrid retrieval and return top chunks.
 
-    Args:
-        query:             Student's question or topic string.
-        retriever:         Retriever or MockRetriever instance.
-        top_k:             Optional override of the default top_chunks_final.
-                           Lock-anchors and hint-plan benefit from wider recall
-                           (~12); per-turn Teacher drafts can stick with default.
-        locked_section:    When set, CE rerank applies a soft bonus to chunks
-                           whose section_title contains this section name.
-                           Preserves cross-chapter recall (no hard filter).
-        locked_subsection: Stronger version of locked_section for subsection-level
-                           matches.
+ Args:
+ query: Student's question or topic string.
+ retriever: Retriever or MockRetriever instance.
+ top_k: Optional override of the default top_chunks_final.
+ Lock-anchors and hint-plan benefit from wider recall
+ (~12); per-turn Teacher drafts can stick with default.
+ locked_section: When set, CE rerank applies a soft bonus to chunks
+ whose section_title contains this section name.
+ Preserves cross-chapter recall (no hard filter).
+ locked_subsection: Stronger version of locked_section for subsection-level
+ matches.
 
-    Returns:
-        List of chunk dicts with text, metadata, and score.
-    """
+ Returns:
+ List of chunk dicts with text, metadata, and score.
+"""
     kwargs: dict = {}
     if top_k is not None:
         kwargs["top_k"] = int(top_k)
@@ -213,28 +208,26 @@ def search_textbook(
                 pass
         return retriever.retrieve(query)
 
-
 def get_student_memory(student_id: str, memory_client) -> list[dict]:
     """
-    Fetch relevant past memories for this student from mem0.
+ Fetch relevant past memories for this student from mem0.
 
-    Args:
-        student_id:    Unique student identifier.
-        memory_client: PersistentMemory instance.
+ Args:
+ student_id: Unique student identifier.
+ memory_client: PersistentMemory instance.
 
-    Returns:
-        List of memory dicts (may be empty if no history or Qdrant unavailable).
-    """
+ Returns:
+ List of memory dicts (may be empty if no history or Qdrant unavailable).
+"""
     return memory_client.get(student_id)
-
 
 def update_student_memory(student_id: str, memory_text: str, memory_client) -> None:
     """
-    Write session outcome to mem0.
+ Write session outcome to mem0.
 
-    Args:
-        student_id:    Unique student identifier.
-        memory_text:   Natural language session summary.
-        memory_client: PersistentMemory instance.
-    """
+ Args:
+ student_id: Unique student identifier.
+ memory_text: Natural language session summary.
+ memory_client: PersistentMemory instance.
+"""
     memory_client.add(student_id, memory_text)

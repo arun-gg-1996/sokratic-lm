@@ -1,20 +1,14 @@
 """
-conversation/state.py
----------------------
-Defines TutorState — the single shared object that flows through every
-node in the LangGraph graph.
+TutorState — the shared object passed between every node in the
+LangGraph tutoring graph.
 
-Every field is described inline. Nodes read from state and return
-partial updates (LangGraph merges them automatically).
-
-One topic per session. A new session (new thread_id) handles the next topic.
-Memory continuity across sessions is handled by mem0 (persistent_memory.py).
-
-Use initial_state() to create a properly initialized state at session start.
+A session covers one locked topic. Cross-session continuity lives in
+mem0; this state is in-memory per thread. Nodes read from state and
+return partial updates that LangGraph merges. Use `initial_state()`
+to produce a fresh state at session start.
 """
 
 from typing import TypedDict, Literal, Optional
-
 
 class TutorState(TypedDict):
     # --- Identity ---
@@ -53,14 +47,14 @@ class TutorState(TypedDict):
     # pump". Never shown to Teacher. Empty list means not yet locked
     # (or generation failed — gate falls back to LLM paraphrase check).
     locked_answer_aliases: list[str]
-    # Two-tier anchor design (2026-04-30, post-18-convo eval review):
+    # Two-tier anchor design (, post-18-convo eval review):
     # `locked_answer` is the SHORT concept anchor (1-5 words, used by
     # the reached_answer_gate token-overlap check). `full_answer` is the
     # COMPLETE textbook answer — may be a list, may be a sentence — used
     # by the mastery scorer + clinical assessment + end-of-session
     # summary. Decoupling them solves the "what are the parts of a
     # nephron?" problem where the gate needs a short anchor but the
-    # genuine answer is a 4-component list. When `full_answer` is empty,
+    # genuine answer is a 4-component list. When `full_answer` is empty
     # callers fall back to `locked_answer` for backward compatibility.
     full_answer: str
 
@@ -80,10 +74,10 @@ class TutorState(TypedDict):
     # 0.0 when not reached. Surfaced to mastery scorer for partial credit.
     student_reach_coverage: float
     # Path that the reach gate took on the latest evaluation:
-    #   overlap | partial_overlap | paraphrase | hedge_block |
-    #   no_overlap_no_paraphrase | no_lock | llm_no_quote |
-    #   llm_parse_fail | llm_error | skipped_topic_just_locked |
-    #   skipped_no_msg_or_lock
+    # overlap | partial_overlap | paraphrase | hedge_block |
+    # no_overlap_no_paraphrase | no_lock | llm_no_quote |
+    # llm_parse_fail | llm_error | skipped_topic_just_locked |
+    # skipped_no_msg_or_lock
     student_reach_path: str
     # Confidence attached to the latest student answer classification (0.0 - 1.0).
     student_answer_confidence: float
@@ -94,10 +88,10 @@ class TutorState(TypedDict):
 
     # --- Assessment flow ---
     # Controls assessment sequence:
-    #   0 = not started
-    #   1 = asked whether student wants optional clinical question; waiting for yes/no
-    #   2 = clinical question sent; waiting for student response
-    #   3 = done (mastery summary or reveal sent; ready for memory_update)
+    # 0 = not started
+    # 1 = asked whether student wants optional clinical question; waiting for yes/no
+    # 2 = clinical question sent; waiting for student response
+    # 3 = done (mastery summary or reveal sent; ready for memory_update)
     # after_assessment checks this to decide whether to wait (END) or route to memory_update_node.
     assessment_turn: int
     clinical_opt_in: Optional[bool]
@@ -111,7 +105,7 @@ class TutorState(TypedDict):
     # --- Mastery grading ---
     # Tiered outcome based on both core tutoring and clinical application.
     # Valid values:
-    #   strong | proficient | developing | needs_review | not_assessed
+    # strong | proficient | developing | needs_review | not_assessed
     core_mastery_tier: str
     clinical_mastery_tier: str
     mastery_tier: str
@@ -158,7 +152,6 @@ class TutorState(TypedDict):
     # Consumed by dean_node's "topic acknowledgement" branch which emits a
     # deterministic message announcing the topic and stating the locked
     # question verbatim, BEFORE any Socratic hints fire. Set to False at
-    # turn-start in dean_node (or by the prelock helper). Without this
     # flag, students never saw the actual question — only paraphrased
     # hint #1 — which made the session feel directionless from turn one.
     topic_just_locked: bool
@@ -171,26 +164,26 @@ class TutorState(TypedDict):
     # When it reaches cfg.dean.help_abuse_threshold, hint_level advances and counter resets.
     # Gated entirely in Python (dean.py) — not LLM logic.
     help_abuse_count: int
-    # BLOCK 6 (S1) — consecutive low-effort streak (passive "idk" non-
+    # — consecutive low-effort streak (passive "idk" non-
     # engagement). Increments per low_effort verdict; resets on any
-    # real engagement (on_topic_engaged). Read by Dean (BLOCK 7) for
+    # real engagement (on_topic_engaged). Read by Dean for
     # escalation strategy. Distinct from help_abuse_count which counts
     # ACTIVE answer-demand attempts.
     consecutive_low_effort_count: int
-    # BLOCK 9 (S3) — cancel-modal lifecycle. Set True when student
+    # — cancel-modal lifecycle. Set True when student
     # clicks Cancel on exit modal; Dean reads this on the next turn
     # and switches to mode="soft_reset" for a fresh-angle bridging
     # message. recent_cancel_at_turn tracks WHEN it happened so the
     # flag can be cleared after one bridging turn.
     cancel_modal_pending: bool
     recent_cancel_at_turn: int
-    # --- Off-topic tracking (Change 4, 2026-04-30) ---
+    # --- Off-topic tracking (Change 4) ---
     # Counts consecutive off-DOMAIN turns (category C — outside the textbook
     # subject entirely; e.g. vaping, profanity, sexual content). Domain-
     # tangential questions (category B — in-domain but off the locked
     # topic) do NOT increment this counter; they're handled by
     # exploration_judge / exploration_retrieval.
-    # Resets on ANY engaged turn. At cfg.dean.off_topic_threshold (default 4),
+    # Resets on ANY engaged turn. At cfg.dean.off_topic_threshold (default 4)
     # the dean terminates the WHOLE session (sets core/clinical mastery_tier
     # to "not_assessed", routes to memory_update with farewell narration).
     off_topic_count: int
@@ -202,24 +195,24 @@ class TutorState(TypedDict):
     # threshold.
     total_low_effort_turns: int
     total_off_topic_turns: int
-    # F6 (POST_DEMO_FIXES.md, 2026-05-06): non-resetting counter for
+    # non-resetting counter for
     # ACTIVE answer-demand turns ("just tell me", "what's the answer").
     # Distinct from total_low_effort_turns (passive "idk"). Surfaces in
     # the debug payload so help_abuse activity is visible even after
     # the consecutive `help_abuse_count` resets on engagement.
     total_help_abuse_turns: int
-    # --- Clinical phase counters (Change 5.1, 2026-04-30) ---
+    # --- Clinical phase counters (Change 5.1) ---
     # Mirror help_abuse_count / off_topic_count but for the clinical
-    # (assessment) phase. At cfg.dean.clinical_strike_threshold (default 2),
+    # (assessment) phase. At cfg.dean.clinical_strike_threshold (default 2)
     # the clinical phase ENDS (clinical_mastery_tier=not_assessed) but the
     # session continues to memory_update — student keeps tutoring credit.
     clinical_low_effort_count: int
     clinical_off_topic_count: int
-    # N3 (POST_DEMO_FIXES.md, 2026-05-06): clinical phase mirrors
+    # clinical phase mirrors
     # tutoring's help_abuse counter exactly. Increments when preflight
     # verdict=help_abuse during a clinical turn.
     clinical_help_abuse_count: int
-    # Non-resetting clinical totals (mirror the F6 totals in tutoring).
+    # Non-resetting clinical totals (mirror the totals in tutoring).
     total_clinical_low_effort_turns: int
     total_clinical_off_topic_turns: int
     total_clinical_help_abuse_turns: int
@@ -227,69 +220,68 @@ class TutorState(TypedDict):
     # --- Topic-lock rejection tracking ---
     # TOC paths that failed the coverage gate in this session. Used by
     # sample_diverse to avoid re-suggesting topics we've already proven we
-    # can't teach, which caused the card-loop bug in the 2026-04-22 session.
+    # can't teach, which caused the card-loop bug in the session.
     rejected_topic_paths: list[str]
 
-    # M6 — count of exploration retrievals fired this session.
+    # count of exploration retrievals fired this session.
     # Increments on tangential turns, decays on engaged on-topic turns.
     # Surfaced to Dean's prompt so it can soft-warn about turn budget.
     exploration_count: int
 
-    # M1 — session lifecycle flags
+    # session lifecycle flags
     # session_ended: stamped True on any close path. Frontend reads to
-    #   disable input + show "Session ended" banner.
+    # disable input + show "Session ended" banner.
     # exit_intent_pending: set True when preflight detects deflection.
-    #   Frontend renders ExitConfirmModal directly (NO Teacher draft).
-    #   Cleared on either confirmation action (end / cancel).
+    # Frontend renders ExitConfirmModal directly (NO Teacher draft).
+    # Cleared on either confirmation action (end / cancel).
     # close_reason: which auto-end / explicit-exit path fired. Drives
-    #   the unified close mode's prompt + the save/no-save bucket.
+    # the unified close mode's prompt + the save/no-save bucket.
     session_ended: bool
     exit_intent_pending: bool
     close_reason: str
-    # F1 (POST_DEMO_FIXES.md): set True when off-topic strikes hit the
+    # : set True when off-topic strikes hit the
     # end-session threshold. Read by lifecycle_v2._derive_close_reason
     # to pick close_reason="off_domain_strike" instead of falling
     # through to "tutoring_cap". Must be in the schema so LangGraph's
     # reducer doesn't drop the propagated value between nodes.
     session_ended_off_domain: bool
-    # N7 / Block G (POST_DEMO_FIXES.md, 2026-05-06): diagnostic counters
+    #: diagnostic counters
     # for the engagement-details sidebar panel (gated by debugMode).
-    # NOT used for control logic — pure observability. See N7 for the
+    # NOT used for control logic — pure observability. See for the
     # control-vs-diagnostic split rationale.
-    #
-    # engaged_wrong_count       — turns where preflight=on_topic_engaged
-    #                              AND reach gate didn't fire (student
-    #                              tried, didn't reach yet)
-    # dean_hint_override_count  — times Dean's TurnPlan.advance_hint_level
-    #                              caused the hint to bump
-    # rule_hint_advance_count   — times preflight strike-4 OR
-    #                              consecutive_low_effort streak-4 caused
-    #                              the hint to bump
+    # engaged_wrong_count — turns where preflight=on_topic_engaged
+    # AND reach gate didn't fire (student
+    # tried, didn't reach yet)
+    # dean_hint_override_count — times Dean's TurnPlan.advance_hint_level
+    # caused the hint to bump
+    # rule_hint_advance_count — times preflight strike-4 OR
+    # consecutive_low_effort streak-4 caused
+    # the hint to bump
     engaged_wrong_count: int
     dean_hint_override_count: int
     rule_hint_advance_count: int
-    # Block G — per-turn exploration flag (true ONLY for the turn Dean
+    # — per-turn exploration flag (true ONLY for the turn Dean
     # signaled needs_exploration; cleared on next non-exploration turn).
     # Drives the sidebar EXPLORING sub-badge. cumulative count lives in
     # exploration_count.
     currently_exploring: bool
     exploration_query_last: str
 
-    # --- Pre-lock loop counter (L11) ---
+    # --- Pre-lock loop counter ---
     # Counts student round-trips before a topic is locked. Separate from
     # turn_count, which starts only after the Socratic tutoring anchor exists.
-    # At 7, the v2 pre-lock flow forces guided-pick cards (L22).
+    # At 7, the v2 pre-lock flow forces guided-pick cards .
     prelock_loop_count: int
 
-    # --- L6 mem0 carryover (Track 4.7f) ---
+    # --- mem0 carryover ---
     # Stashed by topic_lock_v2._lock_topic at lock time (injection #1):
     # a formatted block of misconception + learning_style notes from
-    # prior sessions. Consumed by dean_node_v2's per-turn dean.plan()
+    # prior sessions. Consumed by dean_node_v2's per-turn dean.plan
     # call as carryover_notes. Persists across turns until the topic
     # changes (next lock seeds fresh notes).
     mem0_carryover_notes: str
     # The turn number at which hint_level last advanced. Used by
-    # dean_node_v2 to fire L6 injection #2 (hint_advance learning_style
+    # dean_node_v2 to fire injection #2 (hint_advance learning_style
     # read) on the NEXT turn after an advance. -1 = never advanced.
     last_hint_advance_at_turn: int
 
@@ -309,8 +301,8 @@ class TutorState(TypedDict):
     # Set per-session via the StartSessionRequest payload from the UI.
     memory_enabled: bool
 
-    # --- Client-local hour (D.6b-5) ---
-    # 0-23 from the frontend's `new Date().getHours()`, so the rapport
+    # --- Client-local hour ---
+    # 0-23 from the frontend's `new Date.getHours`, so the rapport
     # greeting picks morning/afternoon/evening from the user's clock
     # rather than the server's tz. None means the request didn't supply
     # it (legacy callers / curl tests) — server-time falls through.
@@ -319,48 +311,47 @@ class TutorState(TypedDict):
     # --- Multimodal ---
     is_multimodal: bool
     image_structures: list[str]     # structure names from Vision model
-    # L77 — full VLM JSON output stash. Populated at upload time by the
+    # full VLM JSON output stash. Populated at upload time by the
     # /api/upload-image endpoint (Sonnet vision call). Carried through
     # the session so Dean's lock_anchors_call + Teacher's per-turn draft
     # can ground responses in identified structures + description.
     # None when the session was not image-initiated. Schema mirrors the
-    # L77 spec — see docs/AUDIT_2026-05-02.md L77 "VLM output JSON schema".
+    # spec — see docs/AUDIT_2026-05-02.md "VLM output JSON schema".
     # Populated by the rapport-phase upload flow only; mid-tutoring
-    # uploads are deferred per L77 "Not mid-tutoring".
+    # uploads are deferred "Not mid-tutoring".
     image_context: Optional[dict]
 
     # --- Debug tracking (per-session, shown in Streamlit debug panel) ---
     # Updated after every Anthropic API call and every tool call.
-    # turn_trace resets to [] at the start of each new student turn in dean_node.
+    # turn_trace resets to at the start of each new student turn in dean_node.
     debug: dict
     # Schema:
     # {
-    #   "api_calls": int,           # total Anthropic API calls this session
-    #   "input_tokens": int,        # cumulative input tokens
-    #   "output_tokens": int,       # cumulative output tokens
-    #   "cost_usd": float,          # cumulative estimated API cost (incl. cache pricing)
-    #   "interventions": int,       # times Dean fallback was used instead of Teacher
-    #   "retrieval_calls": int,     # retrieval fire count (must be 1 per session after topic lock)
-    #   "current_node": str,        # last LangGraph node that ran
-    #   "last_routing": str,        # what after_dean returned + reason
-    #   "turn_trace": list[dict],   # current student turn list of wrappers called + outcomes
-    #   "all_turn_traces": list[dict]  # full session history of per-turn traces
+    # "api_calls": int, # total Anthropic API calls this session
+    # "input_tokens": int, # cumulative input tokens
+    # "output_tokens": int, # cumulative output tokens
+    # "cost_usd": float, # cumulative estimated API cost (incl. cache pricing)
+    # "interventions": int, # times Dean fallback was used instead of Teacher
+    # "retrieval_calls": int, # retrieval fire count (must be 1 per session after topic lock)
+    # "current_node": str, # last LangGraph node that ran
+    # "last_routing": str, # what after_dean returned + reason
+    # "turn_trace": list[dict], # current student turn list of wrappers called + outcomes
+    # "all_turn_traces": list[dict] # full session history of per-turn traces
     # }
     # turn_trace entry format:
     # {"wrapper": "dean._setup_call", "tool_called": "search_textbook", "result": "5 chunks returned"}
     # {"wrapper": "teacher.draft_socratic", "tool_called": None, "result": "drafted"}
     # {"wrapper": "dean._quality_check_call", "tool_called": None, "result": "PASS"}
 
-
 def initial_state(student_id: str, cfg) -> TutorState:
     """
-    Return a fully initialized TutorState for a new session.
-    Call this at the start of every session before invoking the graph.
+ Return a fully initialized TutorState for a new session.
+ Call this at the start of every session before invoking the graph.
 
-    Args:
-        student_id: Unique identifier for the student.
-        cfg:        Loaded config object (from config.py).
-    """
+ Args:
+ student_id: Unique identifier for the student.
+ cfg: Loaded config object (from config.py).
+"""
     return TutorState(
         student_id=student_id,
         thread_id="",
@@ -409,14 +400,14 @@ def initial_state(student_id: str, cfg) -> TutorState:
         off_topic_count=0,
         total_low_effort_turns=0,
         total_off_topic_turns=0,
-        total_help_abuse_turns=0,  # F6
+        total_help_abuse_turns=0,  # 
         clinical_low_effort_count=0,
-        clinical_help_abuse_count=0,  # N3
-        total_clinical_low_effort_turns=0,  # N3
-        total_clinical_off_topic_turns=0,  # N3
-        total_clinical_help_abuse_turns=0,  # N3
-        consecutive_low_effort_count=0,  # BLOCK 6 (S1)
-        cancel_modal_pending=False,      # BLOCK 9 (S3)
+        clinical_help_abuse_count=0,  # 
+        total_clinical_low_effort_turns=0,  # 
+        total_clinical_off_topic_turns=0,  # 
+        total_clinical_help_abuse_turns=0,  # 
+        consecutive_low_effort_count=0,  # 
+        cancel_modal_pending=False,      # 
         recent_cancel_at_turn=-1,
         clinical_off_topic_count=0,
         rejected_topic_paths=[],
@@ -424,16 +415,20 @@ def initial_state(student_id: str, cfg) -> TutorState:
         session_ended=False,
         exit_intent_pending=False,
         close_reason="",
-        session_ended_off_domain=False,  # F1 — off-topic strike-4 marker
-        engaged_wrong_count=0,           # N7 / Block G — diagnostic
-        dean_hint_override_count=0,      # N7 / Block G — diagnostic
-        rule_hint_advance_count=0,       # N7 / Block G — diagnostic
-        currently_exploring=False,       # Block G — per-turn flag
-        exploration_query_last="",       # Block G — last tangent query
+        session_ended_off_domain=False,  # — off-topic strike-4 marker
+        engaged_wrong_count=0,           # / — diagnostic
+        dean_hint_override_count=0,      # / — diagnostic
+        rule_hint_advance_count=0,       # / — diagnostic
+        currently_exploring=False,       # — per-turn flag
+        exploration_query_last="",       # — last tangent query
         prelock_loop_count=0,
         mem0_carryover_notes="",
         last_hint_advance_at_turn=-1,
-        exploration_max=int(getattr(getattr(cfg, "session", object()), "exploration_max", 3)),
+        # Exploration cap is now a runaway-protection sanity limit, not a
+        # behavior gate. Pacing pressure comes from urgency_tier (a
+        # turn_count / max_turns ratio). Default raised 3 → 10 so
+        # legitimate scaffolding never gets refused mid-session.
+        exploration_max=int(getattr(getattr(cfg, "session", object()), "exploration_max", 10)),
         exploration_used=0,
         memory_enabled=True,
         client_hour=None,

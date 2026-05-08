@@ -1,28 +1,12 @@
 """
-backend/api/vlm.py
-──────────────────
-L77 — image upload + Sonnet vision endpoint.
+Image upload endpoint backed by Sonnet vision.
 
-Single endpoint:
-  POST /api/vlm/upload
-    multipart/form-data:
-      thread_id: str (required)
-      file:      UploadFile (required, ≤ 5 MB, png/jpg/webp)
+  POST /api/vlm/upload   multipart: thread_id + file (≤5 MB, png/jpg/webp)
 
-Returns the canonical VLM JSON (per vlm/extract.py) plus the route_decision
-that the frontend uses to decide what to show next:
-
-  * "lock_immediately"  — strong topic guess, frontend pre-fills the
-                          first chat message with the description so the
-                          v2 pre-lock topic flow locks deterministically
-  * "show_top_matches"  — borderline confidence, frontend offers a retry
-                          button + "Type topic instead" fallback
-  * "refuse"            — no usable identification, frontend shows retry
-
-Defense in depth: when cfg.domain.vlm.enabled is False, the endpoint
-returns 403 with a clear message so a malicious client can't sneak an
-image through to Sonnet vision in a domain that opted out (per L77 +
-L78 domain gating).
+Returns the structured VLM JSON plus a `route_decision` the frontend
+uses: `lock_immediately` for confident matches, `show_top_matches` for
+borderline cases, or `refuse` when nothing is identified. Returns 403
+when the active domain has `cfg.domain.vlm.enabled = False`.
 """
 from __future__ import annotations
 
@@ -35,12 +19,10 @@ from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/vlm", tags=["vlm"])
 
-
 class IdentifiedStructure(BaseModel):
     name: str
     location: str = ""
     confidence: float = 0.0
-
 
 class VlmUploadResponse(BaseModel):
     thread_id: str
@@ -55,9 +37,8 @@ class VlmUploadResponse(BaseModel):
     elapsed_ms: int
     error: str = ""
 
-
 def _route_decision(result: dict) -> str:
-    """Map VLM confidence + structure count to a frontend hint per L77."""
+    """Map VLM confidence + structure count to a frontend hint ."""
     conf = float(result.get("confidence") or 0.0)
     structs = result.get("identified_structures") or []
     if not structs or conf < 0.5:
@@ -66,17 +47,16 @@ def _route_decision(result: dict) -> str:
         return "lock_immediately"
     return "show_top_matches"
 
-
 @router.post("/upload", response_model=VlmUploadResponse)
 async def upload_image(
     request: Request,
     thread_id: str = Form(...),
     file: UploadFile = File(...),
 ) -> VlmUploadResponse:
-    """L77 image upload + Sonnet vision extraction."""
+    """ image upload + Sonnet vision extraction."""
     from config import cfg as _cfg
 
-    # Per L77 + L78 — domain gate. When disabled, refuse the upload with
+    # Per + — domain gate. When disabled, refuse the upload with
     # a clear message; defense in depth even though the frontend hides
     # the upload button in those domains.
     vlm_cfg = getattr(_cfg.domain, "vlm", None)
@@ -98,7 +78,7 @@ async def upload_image(
     if suffix not in {".png", ".jpg", ".jpeg", ".webp", ".gif"}:
         raise HTTPException(status_code=400, detail=f"unsupported extension: {suffix}")
 
-    # Persist under data/uploads/{thread_id}/{image_id}.{ext} per L77.
+    # Persist under data/uploads/{thread_id}/{image_id}.{ext} .
     image_id = uuid.uuid4().hex[:12]
     upload_dir = Path("data/uploads") / tid
     upload_dir.mkdir(parents=True, exist_ok=True)
@@ -121,7 +101,7 @@ async def upload_image(
 
     path.write_bytes(contents)
 
-    # Sonnet vision call — uses the per-domain prompt template per L77/L78.
+    # Sonnet vision call — uses the per-domain prompt template.
     from conversation.llm_client import make_anthropic_client, resolve_model
     from vlm.extract import extract_image_context
 

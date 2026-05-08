@@ -1,6 +1,5 @@
 from conversation.rendering import render_history
 
-
 def test_append_only_contract():
     messages = [
         {"role": "student", "content": "hi"},
@@ -9,7 +8,6 @@ def test_append_only_contract():
     ]
     for n in range(1, len(messages)):
         assert render_history(messages[: n + 1]).startswith(render_history(messages[:n]))
-
 
 def test_ignores_extra_metadata():
     # Durable guarantee for Step 2 audit: render output is based only on role/content.
@@ -24,7 +22,6 @@ def test_ignores_extra_metadata():
         }
     ]
     assert render_history(base) == render_history(with_extra)
-
 
 def test_ignores_metadata_across_multiple_messages():
     base = [
@@ -49,7 +46,6 @@ def test_ignores_metadata_across_multiple_messages():
         },
     ]
     assert render_history(base) == render_history(with_meta)
-
 
 def test_handles_summarizer_system_message():
     messages = [

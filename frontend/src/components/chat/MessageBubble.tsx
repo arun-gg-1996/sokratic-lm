@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { MouseEvent } from "react";
 import type { ChatMessage } from "../../types";
 import { useSessionStore } from "../../stores/sessionStore";
-import { useUserStore } from "../../stores/userStore";
 import { renderMarkdown } from "../../utils/renderMarkdown";
 import { ActivityFeed } from "./ActivityFeed";
 import { StreamingText } from "./StreamingText";
@@ -60,9 +59,9 @@ function SpeakButton({ text }: { text: string }) {
 
 export function MessageBubble({ message }: { message: ChatMessage }) {
   const markStreamed = useSessionStore((s) => s.markTutorMessageStreamed);
-  const setSelectedDebugMessageId = useSessionStore((s) => s.setSelectedDebugMessageId);
-  const selectedDebugMessageId = useSessionStore((s) => s.selectedDebugMessageId);
-  const debugMode = useUserStore((s) => s.debugMode);
+  // Note: the click-to-inspect trace handler was removed when the
+  // chat-window debug panel was retired. Debug info now renders in
+  // the sidebar's Debug section.
 
   if (message.role === "student") {
     return (
@@ -98,16 +97,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
       />
       <div className="flex-1">
         <div
-          className={[
-            "text-text leading-relaxed rounded-card bg-panel border border-border px-4 py-3",
-            debugMode && (message.debugTrace?.length ?? 0) > 0 ? "cursor-pointer hover:border-accent" : "",
-            selectedDebugMessageId === message.id ? "border-accent" : "",
-          ].join(" ")}
-          onClick={() => {
-            if (!debugMode || (message.debugTrace?.length ?? 0) === 0) return;
-            setSelectedDebugMessageId(selectedDebugMessageId === message.id ? null : message.id);
-          }}
-          title={debugMode && (message.debugTrace?.length ?? 0) > 0 ? "Click to inspect turn trace" : undefined}
+          className="text-text leading-relaxed rounded-card bg-panel border border-border px-4 py-3"
         >
           <StreamingText
             text={message.content}

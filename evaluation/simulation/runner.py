@@ -1,23 +1,22 @@
 """
 simulation/runner.py
----------------------
 Async simulation runner. Runs conversations in parallel batches.
 
 Distribution for full run:
-  6 profiles × ~15 anatomy topics × ~17 convos per combo = ~1,500 total
+ 6 profiles × ~15 anatomy topics × ~17 convos per combo = ~1,500 total
 
 Each conversation:
-  - Initializes TutorState with profile_id as student_id
-  - Drives student turns using StudentSimulator
-  - Loops until phase == "memory_update" or turn_count >= max_turns
-  - Logs full conversation to data/simulations/ via logger.py
+Initializes TutorState with profile_id as student_id
+Drives student turns using StudentSimulator
+Loops until phase == "memory_update" or turn_count >= max_turns
+Logs full conversation to data/simulations/ via logger.py
 
 Parallelism: asyncio with max cfg.simulation.max_concurrent concurrent conversations.
 Resume support: skip conv_ids that already exist in output JSONL.
 
 Usage:
-    python -m simulation.runner                         # full 1500 convos
-    python -m simulation.runner --profile S1 --n 50    # smoke test: 1 profile, 50 convos
+ python -m simulation.runner # full 1500 convos
+ python -m simulation.runner --profile --n 50 # smoke test: 1 profile, 50 convos
 """
 
 import asyncio
@@ -31,9 +30,8 @@ from config import cfg
 load_dotenv()
 
 # Anatomy topics — loaded from textbook_structure.json at startup.
-# Populated by _load_topics() in run_all().
+# Populated by _load_topics in run_all.
 TOPICS: list[str] = []
-
 
 async def run_conversation(
     profile_id: str,
@@ -43,18 +41,18 @@ async def run_conversation(
     semaphore: asyncio.Semaphore,
 ) -> dict:
     """
-    Run a single simulated conversation asynchronously.
+ Run a single simulated conversation asynchronously.
 
-    Args:
-        profile_id: One of S1-S6
-        topic:      Full topic path e.g. "Chapter 11 > Deltoid Innervation"
-        graph:      Compiled LangGraph runnable (built once, shared across convos)
-        simulator:  StudentSimulator instance for this profile
-        semaphore:  Limits concurrent API calls to cfg.simulation.max_concurrent
+ Args:
+ profile_id: One of -
+ topic: Full topic path e.g. "Chapter 11 > Deltoid Innervation"
+ graph: Compiled LangGraph runnable (built once, shared across convos)
+ simulator: StudentSimulator instance for this profile
+ semaphore: Limits concurrent API calls to cfg.simulation.max_concurrent
 
-    Returns:
-        Conversation result dict matching simulation/logger.py schema.
-    """
+ Returns:
+ Conversation result dict matching simulation/logger.py schema.
+"""
     async with semaphore:
         from conversation.state import initial_state
 
@@ -123,13 +121,12 @@ async def run_conversation(
 
         return result
 
-
 def _load_topics() -> list[str]:
     """
-    Load anatomy topics from textbook_structure.json.
-    Returns flat list of topic paths e.g. ["Chapter 11 > Deltoid Innervation", ...]
-    Falls back to 5 hardcoded topics if file doesn't exist yet (MockRetriever mode).
-    """
+ Load anatomy topics from textbook_structure.json.
+ Returns flat list of topic paths e.g. ["Chapter 11 > Deltoid Innervation", ...]
+ Falls back to 5 hardcoded topics if file doesn't exist yet (MockRetriever mode).
+"""
     structure_path = Path(cfg.paths.textbook_structure)
     if not structure_path.exists():
         # Fallback for MockRetriever development mode
@@ -216,15 +213,14 @@ def _load_topics() -> list[str]:
         "Chapter 13 > Brachial Plexus",
     ]
 
-
 async def run_all(n: int = None, profile_id: str = None):
     """
-    Run the full simulation batch.
+ Run the full simulation batch.
 
-    Args:
-        n:          Override total number of conversations (default: cfg.simulation.n_conversations)
-        profile_id: Run only this profile (default: all 6)
-    """
+ Args:
+ n: Override total number of conversations (default: cfg.simulation.n_conversations)
+ profile_id: Run only this profile (default: all 6)
+"""
     from evaluation.simulation.profiles import PROFILES
     from evaluation.simulation.student_simulator import StudentSimulator
     from evaluation.simulation.logger import log_conversation, load_conversations
@@ -274,7 +270,6 @@ async def run_all(n: int = None, profile_id: str = None):
             success += 1
 
     print(f"Simulation complete: {success}/{len(pairs)} conversations logged.")
-
 
 if __name__ == "__main__":
     import argparse

@@ -1,20 +1,19 @@
 """
 scripts/bootstrap_corpus.py
----------------------------
 Teammate-facing: pulls processed corpus artifacts from a HuggingFace dataset
 repo into the correct local paths. Skips files that already exist with the
 matching sha256. Safe to re-run.
 
 Usage:
-  python scripts/bootstrap_corpus.py                       # default: pull to ./data
-  python scripts/bootstrap_corpus.py --manifest-only       # just fetch the manifest (plumbing test)
-  python scripts/bootstrap_corpus.py --target-dir /tmp/x   # pull into a scratch dir
-  python scripts/bootstrap_corpus.py --force               # re-download even if local sha matches
-  python scripts/bootstrap_corpus.py --version v0-messy-metadata   # pin to a tag
+ python scripts/bootstrap_corpus.py # default: pull to ./data
+ python scripts/bootstrap_corpus.py --manifest-only # just fetch the manifest (plumbing test)
+ python scripts/bootstrap_corpus.py --target-dir /tmp/x # pull into a scratch dir
+ python scripts/bootstrap_corpus.py --force # re-download even if local sha matches
+ python scripts/bootstrap_corpus.py --version v0-messy-metadata # pin to a tag
 
 Env vars (from .env):
-  HF_TOKEN     — optional (only needed for private repos)
-  HF_USERNAME  — default repo owner
+ HF_TOKEN — optional (only needed for private repos)
+ HF_USERNAME — default repo owner
 """
 from __future__ import annotations
 
@@ -34,7 +33,6 @@ load_dotenv(ROOT / ".env", override=True)
 
 DEFAULT_REPO_NAME = "sokratic-anatomy-corpus"
 
-
 def _sha256(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as f:
@@ -42,13 +40,11 @@ def _sha256(path: Path) -> str:
             h.update(block)
     return h.hexdigest()
 
-
 def _download(repo_id: str, filename: str, revision: str | None, token: str | None) -> Path:
     return Path(hf_hub_download(
         repo_id=repo_id, filename=filename, repo_type="dataset",
         revision=revision, token=token,
     ))
-
 
 def main() -> int:
     ap = argparse.ArgumentParser()
@@ -124,7 +120,6 @@ def main() -> int:
 
     print(f"\nDone. fetched={fetched}  skipped={skipped}  failed={failed}")
     return 0 if failed == 0 else 1
-
 
 if __name__ == "__main__":
     sys.exit(main())

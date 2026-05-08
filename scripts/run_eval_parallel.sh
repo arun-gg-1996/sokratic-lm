@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # Launch the 11 18-convo chains as 4 parallel processes.
 # Each gets its own ChunkRetriever (no shared CrossEncoder → no MPS thread-safety bug).
-#
 # Usage (from repo root):
 #   SOKRATIC_USE_V2_FLOW=1 SOKRATIC_RETRIEVER=chunks bash scripts/run_eval_parallel.sh
 set -u

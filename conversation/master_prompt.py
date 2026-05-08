@@ -1,28 +1,16 @@
 """
-conversation/master_prompt.py
-==============================
-The Master System Prompt — gives Teacher and Dean a complete mental
-model of the Sokratic system they operate inside.
+The master system prompt that gives the Dean and the Teacher a
+shared mental model of the tutoring system: lifecycle phases, agent
+roles, and the meaning of each state field.
 
-Without this, each mode prompt operates in tunnel vision (knows its
-job for THIS turn but not the broader lifecycle, agent roles, or
-state field meanings). This produces correct-but-disconnected
-responses that feel scaffolded rather than conversational.
-
-The master prompt is STATIC across all sessions. It references
-state fields by NAME and never by VALUE. It is the most cacheable
-content in the entire system — goes in Tier 1 of the cache (BLOCK 3).
-
-SAFETY CONTRACT (Safeguard #3):
-- Must reference state fields by NAME never by VALUE
-- Must NOT contain the locked_answer, full_answer, or any
-  topic-specific text
-- Enforced by tests/test_master_prompt.py
+The prompt is static across every session and references state by
+name only — never by value, and never by any topic-specific term.
+This makes it the most cacheable content in the system. The
+no-topic-leak invariant is enforced by tests/test_master_prompt.py.
 """
 from __future__ import annotations
 
 from conversation.registry import all_vocabulary_blocks
-
 
 _MASTER_SYSTEM_PROMPT = """\
 You are working inside Sokratic — a Socratic tutoring system for {domain_name}.
@@ -110,23 +98,22 @@ SAFETY CONTRACTS (apply regardless of mode):
     different angle.
 """
 
-
 def build_master_prompt(domain_name: str = "this subject") -> str:
     """Render the master system prompt + all vocabulary blocks.
 
-    The master prompt + vocabulary blocks together form the static
-    Tier 1 of the cache architecture (BLOCK 3) — cached across
-    SESSIONS within the 5-min TTL.
+ The master prompt + vocabulary blocks together form the static
+ Tier 1 of the cache architecture — cached across
+ SESSIONS within the 5-min TTL.
 
-    Args:
-      domain_name: human-readable domain ("Human Anatomy & Physiology",
-                   etc.). Doesn't affect cache key as long as it's
-                   stable across calls in the same session.
+ Args:
+ domain_name: human-readable domain ("Human Anatomy & Physiology"
+ etc.). Doesn't affect cache key as long as it's
+ stable across calls in the same session.
 
-    Returns:
-      Full master prompt string ready to prepend to Teacher/Dean
-      mode-specific instructions.
-    """
+ Returns:
+ Full master prompt string ready to prepend to Teacher/Dean
+ mode-specific instructions.
+"""
     master = _MASTER_SYSTEM_PROMPT.format(domain_name=domain_name)
     vocab = all_vocabulary_blocks()
     return master + "\n\n" + vocab + "\n"

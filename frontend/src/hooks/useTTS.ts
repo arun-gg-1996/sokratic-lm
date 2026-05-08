@@ -57,7 +57,7 @@ export function useTTS(): void {
 }
 
 /** Feature-detect — used by the settings UI to hide the toggle when
- * the API isn't available (graceful degradation per L79). */
+ * the API isn't available (graceful degradation ). */
 export function isTTSAvailable(): boolean {
   return typeof window !== "undefined" && "speechSynthesis" in window;
 }

@@ -2,19 +2,18 @@
  * Sidebar — phase badge + phase-contextual counters + tooltips
  * (L80.a + L80.c + L80.h from the UX polish pass)
  *
- * Counter strategy per L80.a:
+ * Counter strategy .a:
  *   - Pre-lock (topic not confirmed): show prelock_loop_count/7 only
  *   - Tutoring (topic locked, phase=tutoring): turn_count, hint_level,
  *     conversation-health strike pills as they accumulate
  *   - Clinical (phase=assessment, assessment_turn>=2): clinical_turn_count
- *     plus the same strike pills (counters tick during clinical per L70
- *     but do not escalate)
+ *     plus the same strike pills (counters tick during clinical *     but do not escalate)
  *   - memory_update / wrap-up: counters fade out
  *
- * Phase badge per L80.c renders at the top of the sidebar with a
+ * Phase badge .c renders at the top of the sidebar with a
  * color-coded label so the student always knows what mode they're in.
  *
- * Tooltips per L80.h are attached to every counter pill via the
+ * Tooltips .h are attached to every counter pill via the
  * native `title` attribute (no extra dependencies). Each tooltip
  * explains what the counter measures + what triggers escalation.
  */
@@ -58,7 +57,7 @@ const PHASE_BADGE_CLASS: Record<PhaseKind, string> = {
 function derivePhase(d: DebugRecord, topicConfirmed: boolean, assessmentTurn: number): PhaseKind {
   const phase = str(d, "phase");
   if (phase === "memory_update") return "wrap";
-  // F10 (POST_DEMO_FIXES.md, 2026-05-06): show CLINICAL chip starting at
+  // show CLINICAL chip starting at
   // assessment_turn=1 (opt-in rendered) instead of waiting for
   // assessment_turn=2 (clinical scenario). The opt-in IS part of the
   // assessment phase per backend (state.phase === "assessment"), and the
@@ -109,10 +108,10 @@ export function Sidebar() {
   const lowEffortThreshold = num(debug, "low_effort_threshold", 4);
   const totalLowEffort = num(debug, "total_low_effort_turns", 0);
   const totalOffTopic = num(debug, "total_off_topic_turns", 0);
-  // F6 (POST_DEMO_FIXES.md, 2026-05-06): non-resetting help-abuse counter
+  // non-resetting help-abuse counter
   // (consecutive `help_abuse_count` resets on engagement; this stays).
   const totalHelpAbuse = num(debug, "total_help_abuse_turns", 0);
-  // N3 (POST_DEMO_FIXES.md, 2026-05-06): clinical phase mirror counters.
+  // clinical phase mirror counters.
   // Surfaced separately from tutoring counters so the user can see how
   // engagement quality differs between core tutoring and the clinical
   // application loop.
@@ -140,7 +139,7 @@ export function Sidebar() {
     return "text-muted";
   };
 
-  // N6 (POST_DEMO_FIXES.md, 2026-05-06): hint level color escalation.
+  // hint level color escalation.
   // Different curve from counterColor — hint level signals scaffolding
   // depth, not strike accumulation. 0 = neutral; ≥1 = visible signal
   // that we're in scaffolded territory; max+1 = exhausted (red).
@@ -176,7 +175,7 @@ export function Sidebar() {
             >
               {PHASE_LABEL[phase]}
             </div>
-            {/* Block G (POST_DEMO_FIXES.md, 2026-05-06) — EXPLORING
+            {/* Block G — EXPLORING
                 sub-badge. Only visible when Dean fired needs_exploration
                 this turn. Shown to ALL users (not gated by debugMode)
                 because it provides student-facing context for what
@@ -227,26 +226,31 @@ export function Sidebar() {
         <div className="rounded-card border border-border bg-bg px-3 py-3 space-y-2 text-sm transition-opacity duration-300">
           {phase === "rapport" && (
             <div
-              className={`text-sm ${counterColor(prelockLoopCount, 10)}`}
+              className={`text-sm flex items-baseline justify-between gap-2 ${counterColor(prelockLoopCount, 10)}`}
               title="After 10 attempts to pick a topic, a guided picker appears. Currently at this many attempts."
             >
-              Pre-lock: {prelockLoopCount}/10
+              <span>Pre-lock</span>
+              <span className="font-mono tabular-nums">{prelockLoopCount}/10</span>
             </div>
           )}
 
           {phase === "tutoring" && (
             <>
               <div
-                className={`text-sm ${counterColor(turnCount, maxTurns)}`}
+                className={`text-sm flex items-baseline justify-between gap-2 ${counterColor(turnCount, maxTurns)}`}
                 title={`Tutoring sessions are capped at ${maxTurns} turns. Currently at this many turns.`}
               >
-                Turn: {turnCount}/{maxTurns}
+                <span>Turn</span>
+                <span className="font-mono tabular-nums">{turnCount}/{maxTurns}</span>
               </div>
               <div
-                className={`text-sm ${hintColor(hintLevel, maxHints)}`}
+                className={`text-sm flex items-baseline justify-between gap-2 ${hintColor(hintLevel, maxHints)}`}
                 title="Hints get more direct as the level rises. Cap is 3; level 4 forces session close."
               >
-                {hintsExhausted ? "Hints exhausted" : `Hint: ${displayHint}/${maxHints}`}
+                <span>Hint</span>
+                <span className="font-mono tabular-nums">
+                  {hintsExhausted ? "exhausted" : `${displayHint}/${maxHints}`}
+                </span>
               </div>
             </>
           )}
@@ -254,51 +258,88 @@ export function Sidebar() {
           {phase === "clinical" && (
             <>
               <div
-                className={`text-sm ${counterColor(clinicalTurnCount, clinicalMaxTurns)}`}
+                className={`text-sm flex items-baseline justify-between gap-2 ${counterColor(clinicalTurnCount, clinicalMaxTurns)}`}
                 title={`Clinical phase is capped at ${clinicalMaxTurns} turns. Counter ticks then closes naturally.`}
               >
-                Clinical turn: {clinicalTurnCount}/{clinicalMaxTurns}
+                <span>Clinical turn</span>
+                <span className="font-mono tabular-nums">{clinicalTurnCount}/{clinicalMaxTurns}</span>
               </div>
               <div
-                className="text-xs text-muted/70"
+                className="text-[10px] text-muted/70 italic"
                 title="Tutoring complete; clinical scenario is the bonus phase."
               >
-                Tutoring done at turn {turnCount}
+                Tutoring closed at turn {turnCount}
               </div>
             </>
           )}
 
           {phase === "wrap" && (
-            <div className="text-xs text-muted/70" title="Session wrapping up — saving memory + scoring mastery.">
-              Wrapping up — saving session
+            <div className="text-xs text-muted/70 italic" title="Session wrapping up — saving memory + scoring mastery.">
+              Wrapping up — saving session…
             </div>
           )}
 
           {topicConfirmed && (subsectionName || topicSelection) && phase !== "wrap" && (
-            <details className="text-muted text-xs group pt-1">
-              <summary className="cursor-pointer list-none flex items-center gap-1 hover:text-fg transition">
+            <details className="group pt-2 mt-1 border-t border-border/60" open>
+              <summary className="cursor-pointer list-none flex items-center gap-1.5 text-xs font-medium text-fg/90 hover:text-fg transition">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
                   strokeWidth={1.5}
                   stroke="currentColor"
-                  className="w-3 h-3 group-open:rotate-90 transition"
+                  className="w-3 h-3 shrink-0 text-muted group-open:rotate-90 transition"
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                 </svg>
-                <span className="truncate" title={subsectionName || topicSelection}>
-                  Topic: {subsectionName || topicSelection}
+                <span className="text-[10px] uppercase tracking-wider text-muted/80 font-semibold">
+                  Current topic
                 </span>
               </summary>
-              <div className="pl-4 pt-1 space-y-0.5 text-muted/80">
-                {chapterName && <div><span className="text-muted/60">Chapter:</span> {chapterName}</div>}
-                {sectionName && <div><span className="text-muted/60">Section:</span> {sectionName}</div>}
-                {subsectionName && <div><span className="text-muted/60">Subsection:</span> {subsectionName}</div>}
+              <div className="pt-2 space-y-2">
+                {/* Curriculum hierarchy as a definition list — three rows
+                    with small-caps labels and indented values so it scans
+                    as structured data, not a paragraph. */}
+                <dl className="space-y-1.5 text-xs">
+                  {chapterName && (
+                    <div className="flex flex-col">
+                      <dt className="text-[9px] uppercase tracking-wider text-muted/60 font-medium">
+                        Chapter
+                      </dt>
+                      <dd className="text-fg/85 leading-snug">{chapterName}</dd>
+                    </div>
+                  )}
+                  {sectionName && (
+                    <div className="flex flex-col">
+                      <dt className="text-[9px] uppercase tracking-wider text-muted/60 font-medium">
+                        Section
+                      </dt>
+                      <dd className="text-fg/85 leading-snug">{sectionName}</dd>
+                    </div>
+                  )}
+                  {(subsectionName || topicSelection) && (
+                    <div className="flex flex-col">
+                      <dt className="text-[9px] uppercase tracking-wider text-muted/60 font-medium">
+                        Subsection
+                      </dt>
+                      <dd className="text-fg font-medium leading-snug">
+                        {subsectionName || topicSelection}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+                {/* Locked question rendered as a quote-style block so it
+                    visually separates from the curriculum hierarchy
+                    above. The accent-colored left border anchors it as
+                    "this is what the student is working on right now". */}
                 {lockedQuestionText && (
-                  <div className="pt-1">
-                    <span className="text-muted/60">Question:</span>
-                    <div className="italic">{lockedQuestionText}</div>
+                  <div className="pt-2 mt-2 border-t border-border/60">
+                    <div className="text-[9px] uppercase tracking-wider text-muted/60 font-medium mb-1">
+                      Question
+                    </div>
+                    <blockquote className="border-l-2 border-accent/50 pl-2.5 text-xs italic text-fg/85 leading-snug">
+                      {lockedQuestionText}
+                    </blockquote>
                   </div>
                 )}
               </div>
@@ -307,35 +348,40 @@ export function Sidebar() {
 
           {/* Conversation-health pills — N2: always visible during tutoring/clinical
               so the student can see counters tick before they hit thresholds.
-              N3 (POST_DEMO_FIXES.md, 2026-05-06): in clinical phase, show
+              in clinical phase, show
               the clinical_* mirror counters instead of tutoring's. */}
           {showStrikePills && phase !== "clinical" && (
-            <div className="pt-2 mt-2 border-t border-border space-y-1">
-              <div className="text-xs text-muted/70">Conversation health</div>
+            <div className="pt-2 mt-2 border-t border-border/60 space-y-1.5">
+              <div className="text-[10px] uppercase tracking-wider text-muted/70 font-semibold">
+                Conversation health
+              </div>
               <div
-                className={`text-xs ${counterColor(consecutiveLowEffort, lowEffortThreshold)}`}
+                className={`text-xs flex items-baseline justify-between gap-2 ${counterColor(consecutiveLowEffort, lowEffortThreshold)}`}
                 title={`Consecutive passive 'i don't know' / 'idk' turns. At ${lowEffortThreshold}, the dean advances the hint level. Counter resets on any genuine attempt.`}
               >
-                Low-effort: {consecutiveLowEffort}/{lowEffortThreshold}
+                <span>Low-effort</span>
+                <span className="font-mono tabular-nums">{consecutiveLowEffort}/{lowEffortThreshold}</span>
               </div>
               <div
-                className={`text-xs ${counterColor(helpAbuseCount, helpAbuseThreshold)}`}
+                className={`text-xs flex items-baseline justify-between gap-2 ${counterColor(helpAbuseCount, helpAbuseThreshold)}`}
                 title={`Active 'just tell me' / 'skip' demands. At ${helpAbuseThreshold}, the dean force-advances the hint level. Counter resets on any genuine attempt.`}
               >
-                Help-abuse: {helpAbuseCount}/{helpAbuseThreshold}
+                <span>Help-abuse</span>
+                <span className="font-mono tabular-nums">{helpAbuseCount}/{helpAbuseThreshold}</span>
               </div>
               <div
-                className={`text-xs ${counterColor(offTopicCount, offTopicThreshold)}`}
+                className={`text-xs flex items-baseline justify-between gap-2 ${counterColor(offTopicCount, offTopicThreshold)}`}
                 title={`Consecutive off-DOMAIN turns (in-domain tangents don't count). At ${offTopicThreshold}, the session ends gracefully. Counter resets on any engaged turn.`}
               >
-                Off-topic: {offTopicCount}/{offTopicThreshold}
+                <span>Off-topic</span>
+                <span className="font-mono tabular-nums">{offTopicCount}/{offTopicThreshold}</span>
               </div>
               {(totalLowEffort > 0 || totalOffTopic > 0 || totalHelpAbuse > 0) && (
                 <div
-                  className="text-xs text-muted/70 pt-1"
+                  className="text-[10px] text-muted/60 pt-1 italic"
                   title="Session-wide telemetry. Mastery scorer reads these to penalize patterns even when no consecutive chain hit threshold."
                 >
-                  Total: {totalLowEffort} low / {totalOffTopic} off / {totalHelpAbuse} demand
+                  Session totals: {totalLowEffort} low · {totalOffTopic} off · {totalHelpAbuse} demand
                 </div>
               )}
             </div>
@@ -347,99 +393,188 @@ export function Sidebar() {
               terminate on strike — only the natural CLINICAL_TURN_CAP ends
               the loop. The threshold display is for reference only. */}
           {showStrikePills && phase === "clinical" && (
-            <div className="pt-2 mt-2 border-t border-border space-y-1">
-              <div className="text-xs text-muted/70">Clinical health</div>
+            <div className="pt-2 mt-2 border-t border-border/60 space-y-1.5">
+              <div className="text-[10px] uppercase tracking-wider text-muted/70 font-semibold">
+                Clinical health
+              </div>
               <div
-                className={`text-xs ${counterColor(clinicalLowEffort, clinicalStrikeThreshold)}`}
+                className={`text-xs flex items-baseline justify-between gap-2 ${counterColor(clinicalLowEffort, clinicalStrikeThreshold)}`}
                 title="Clinical-phase consecutive low-effort turns (telemetry only — clinical never terminates on strike, just on the natural turn cap)."
               >
-                Low-effort: {clinicalLowEffort}/{clinicalStrikeThreshold}
+                <span>Low-effort</span>
+                <span className="font-mono tabular-nums">{clinicalLowEffort}/{clinicalStrikeThreshold}</span>
               </div>
               <div
-                className={`text-xs ${counterColor(clinicalHelpAbuse, clinicalStrikeThreshold)}`}
+                className={`text-xs flex items-baseline justify-between gap-2 ${counterColor(clinicalHelpAbuse, clinicalStrikeThreshold)}`}
                 title="Clinical-phase consecutive help-abuse turns (telemetry only)."
               >
-                Help-abuse: {clinicalHelpAbuse}/{clinicalStrikeThreshold}
+                <span>Help-abuse</span>
+                <span className="font-mono tabular-nums">{clinicalHelpAbuse}/{clinicalStrikeThreshold}</span>
               </div>
               <div
-                className={`text-xs ${counterColor(clinicalOffTopic, clinicalStrikeThreshold)}`}
+                className={`text-xs flex items-baseline justify-between gap-2 ${counterColor(clinicalOffTopic, clinicalStrikeThreshold)}`}
                 title="Clinical-phase consecutive off-domain turns (telemetry only)."
               >
-                Off-topic: {clinicalOffTopic}/{clinicalStrikeThreshold}
+                <span>Off-topic</span>
+                <span className="font-mono tabular-nums">{clinicalOffTopic}/{clinicalStrikeThreshold}</span>
               </div>
               {(totalClinicalLowEffort > 0 || totalClinicalOffTopic > 0 || totalClinicalHelpAbuse > 0) && (
                 <div
-                  className="text-xs text-muted/70 pt-1"
+                  className="text-[10px] text-muted/60 pt-1 italic"
                   title="Session-wide clinical telemetry."
                 >
-                  Total: {totalClinicalLowEffort} low / {totalClinicalOffTopic} off / {totalClinicalHelpAbuse} demand
+                  Session totals: {totalClinicalLowEffort} low · {totalClinicalOffTopic} off · {totalClinicalHelpAbuse} demand
                 </div>
               )}
             </div>
           )}
 
-          {/* Block G (POST_DEMO_FIXES.md, 2026-05-06) — Engagement
-              details panel. Visible ONLY when debugMode is on (the
-              existing toggle persists in localStorage). Splits into
-              Engagement / Hint-advance audit. Diagnostic only — these
-              counters do NOT drive control logic; they're for
-              testing + debugging visibility. Never shown to students
-              by default to avoid clutter. */}
-          {debugMode && showStrikePills && (
-            <details className="text-xs pt-2 mt-2 border-t border-border" open>
-              <summary className="cursor-pointer text-muted/70 hover:text-muted">
-                Engagement details (debug)
-              </summary>
-              <div className="pl-2 pt-2 space-y-1.5">
-                <div className="text-muted/60 uppercase tracking-wide text-[10px]">
-                  Engagement quality
-                </div>
-                <div
-                  className="text-xs text-muted/80"
-                  title="Turns where the student engaged on-topic but did not reach the locked answer. Higher = more genuine effort despite missing the target."
-                >
-                  Engaged but wrong:{" "}
-                  <span className="font-mono text-muted">
-                    {num(debug, "engaged_wrong_count", 0)}
-                  </span>
-                </div>
-
-                <div className="text-muted/60 uppercase tracking-wide text-[10px] pt-1">
-                  Topic discipline
-                </div>
-                <div
-                  className="text-xs text-muted/80"
-                  title="Cumulative tangent retrievals fired this session. Tangent = student asked an OT-related sub-aspect outside the locked anchor's chunks."
-                >
-                  Tangents (cumulative):{" "}
-                  <span className="font-mono text-muted">
-                    {num(debug, "exploration_count", 0)}
-                  </span>
-                </div>
-
-                <div className="text-muted/60 uppercase tracking-wide text-[10px] pt-1">
-                  Hint advance audit
-                </div>
-                <div
-                  className="text-xs text-muted/80"
-                  title="Hint advances fired by Dean's TurnPlan signal (substantive-but-wrong attempts). Adds to the engaged-wrong count."
-                >
-                  Dean override:{" "}
-                  <span className="font-mono text-muted">
-                    {num(debug, "dean_hint_override_count", 0)}
-                  </span>
-                </div>
-                <div
-                  className="text-xs text-muted/80"
-                  title="Hint advances forced by rule-based thresholds: help_abuse strike-4 OR consecutive_low_effort streak-4. Independent of Dean's vote."
-                >
-                  Rule advance:{" "}
-                  <span className="font-mono text-muted">
-                    {num(debug, "rule_hint_advance_count", 0)}
-                  </span>
-                </div>
+          {/* Debug section — visible ONLY when debugMode is on. Renders
+              all grader-only fields inline in the sidebar panel (no
+              chat-window debug card). Sections:
+                Locked target — locked_answer + aliases + full_answer
+                Pacing       — turn budget %, urgency tier, exploration budget
+                Last verdict — last preflight category for the most recent turn
+                Counters     — engaged_wrong / tangents / hint advances (audit)
+              These do NOT drive control logic; they're for grader
+              visibility into what the gate is comparing against and
+              what tier the dean's pacing is in. */}
+          {debugMode && (
+            <div className="text-xs pt-2 mt-2 border-t border-border space-y-3">
+              <div className="text-[10px] uppercase tracking-wider text-accent font-semibold">
+                Debug
               </div>
-            </details>
+
+              {/* Locked target — what the reach gate compares against */}
+              {(str(debug, "locked_answer") || str(debug, "full_answer")) && (
+                <div className="space-y-1.5">
+                  <div className="text-[9px] uppercase tracking-wider text-muted/60 font-medium">
+                    Locked target
+                  </div>
+                  {str(debug, "locked_answer") && (
+                    <div className="text-xs">
+                      <span className="text-muted/70">answer: </span>
+                      <span className="font-medium text-fg">
+                        {str(debug, "locked_answer")}
+                      </span>
+                    </div>
+                  )}
+                  {Array.isArray((debug as Record<string, unknown>)?.locked_answer_aliases) &&
+                    ((debug as Record<string, unknown>).locked_answer_aliases as string[]).length > 0 && (
+                      <div className="text-xs leading-snug">
+                        <span className="text-muted/70">aliases: </span>
+                        <span className="text-fg/80">
+                          {((debug as Record<string, unknown>).locked_answer_aliases as string[]).join(", ")}
+                        </span>
+                      </div>
+                    )}
+                  {str(debug, "full_answer")
+                    && str(debug, "full_answer") !== str(debug, "locked_answer") && (
+                      <details className="text-xs">
+                        <summary className="cursor-pointer text-muted/70 hover:text-muted">
+                          full_answer (textbook)
+                        </summary>
+                        <div className="pt-1 pl-2 text-fg/80 leading-snug">
+                          {str(debug, "full_answer")}
+                        </div>
+                      </details>
+                    )}
+                </div>
+              )}
+
+              {/* Pacing — turn budget + urgency tier + exploration budget */}
+              <div className="space-y-1.5">
+                <div className="text-[9px] uppercase tracking-wider text-muted/60 font-medium">
+                  Pacing
+                </div>
+                {(() => {
+                  const turn = num(debug, "turn_count", 0);
+                  const max = num(debug, "max_turns", 25);
+                  const pct = max > 0 ? Math.round((turn / max) * 100) : 0;
+                  const tier = str(debug, "urgency_tier") || "early";
+                  const tierColor = {
+                    early: "text-muted",
+                    mid: "text-muted/90",
+                    late: "text-amber-600 dark:text-amber-400",
+                    final_stretch: "text-red-600 dark:text-red-400",
+                  }[tier] ?? "text-muted";
+                  return (
+                    <>
+                      <div className="text-xs flex items-baseline justify-between gap-2 text-muted/80"
+                        title={`Session turn budget. ${turn} of ${max} turns used (${pct}%).`}
+                      >
+                        <span>Session</span>
+                        <span className="font-mono tabular-nums">{turn}/{max} ({pct}%)</span>
+                      </div>
+                      <div
+                        className={`text-xs flex items-baseline justify-between gap-2 ${tierColor}`}
+                        title="Urgency tier scales pacing pressure. early→expansive, mid→orient, late→direct hints, final_stretch→push for commitment."
+                      >
+                        <span>Urgency</span>
+                        <span className="font-mono">{tier}</span>
+                      </div>
+                      <div className="text-xs flex items-baseline justify-between gap-2 text-muted/80"
+                        title={`Exploration retrievals used this session. Cap is runaway protection only — ${num(debug, "exploration_max", 10)}. Pacing pressure comes from urgency_tier, not from this counter.`}
+                      >
+                        <span>Exploration</span>
+                        <span className="font-mono tabular-nums">
+                          {num(debug, "exploration_used", 0)}/{num(debug, "exploration_max", 10)}
+                        </span>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+
+              {/* Last preflight verdict — what the unified intent
+                  classifier said about the most recent student turn */}
+              {str(debug, "last_preflight_category") && (
+                <div className="space-y-1.5">
+                  <div className="text-[9px] uppercase tracking-wider text-muted/60 font-medium">
+                    Last preflight
+                  </div>
+                  <div className="text-xs flex items-baseline justify-between gap-2 text-muted/80"
+                    title="Verdict from the unified intent classifier on the most recent student turn (on_topic_engaged | exploration | low_effort | help_abuse | off_domain | deflection | opt_in_*)."
+                  >
+                    <span>Verdict</span>
+                    <span className="font-mono">{str(debug, "last_preflight_category")}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Engagement audit — diagnostic counters, NOT control */}
+              {showStrikePills && (
+                <div className="space-y-1.5">
+                  <div className="text-[9px] uppercase tracking-wider text-muted/60 font-medium">
+                    Engagement audit
+                  </div>
+                  <div className="text-xs flex items-baseline justify-between gap-2 text-muted/80"
+                    title="Turns where the student engaged on-topic but did not reach the locked answer."
+                  >
+                    <span>Engaged-wrong</span>
+                    <span className="font-mono tabular-nums">{num(debug, "engaged_wrong_count", 0)}</span>
+                  </div>
+                  <div className="text-xs flex items-baseline justify-between gap-2 text-muted/80"
+                    title="Recent-tangent frequency (decays on engaged turns, increments on tangents)."
+                  >
+                    <span>Recent tangents</span>
+                    <span className="font-mono tabular-nums">{num(debug, "exploration_count", 0)}</span>
+                  </div>
+                  <div className="text-xs flex items-baseline justify-between gap-2 text-muted/80"
+                    title="Hint advances fired by Dean's TurnPlan signal (substantive-but-wrong attempts)."
+                  >
+                    <span>Dean hint-advance</span>
+                    <span className="font-mono tabular-nums">{num(debug, "dean_hint_override_count", 0)}</span>
+                  </div>
+                  <div className="text-xs flex items-baseline justify-between gap-2 text-muted/80"
+                    title="Hint advances forced by rule-based thresholds (help_abuse strike-4 / consecutive_low_effort streak-4)."
+                  >
+                    <span>Rule hint-advance</span>
+                    <span className="font-mono tabular-nums">{num(debug, "rule_hint_advance_count", 0)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
         )}

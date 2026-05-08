@@ -1,23 +1,22 @@
 """
 evaluation/quality/llm_judges.py
---------------------------------
 Three-to-four batched LLM calls per session for the semantic judgments.
 
 Calls:
-  1. evaluate_per_turn(view) — EULER, RAGAS faithfulness/answer_relevancy,
-     repetition, fabrication. Batches all tutor turns into one prompt.
-  2. evaluate_retrieval(view) — RAGAS context_precision/recall/relevancy.
-  3. evaluate_session_synthesis(view, det) — ARC.*, MSC.rationale_grounding,
-     semantic-level penalty checks.
-  4. evaluate_anchor_quality(view) — AQ.question_specificity, aliases_diversity.
+ 1. evaluate_per_turn(view) — EULER, RAGAS faithfulness/answer_relevancy
+ repetition, fabrication. Batches all tutor turns into one prompt.
+ 2. evaluate_retrieval(view) — RAGAS context_precision/recall/relevancy.
+ 3. evaluate_session_synthesis(view, det) — ARC.*, MSC.rationale_grounding
+ semantic-level penalty checks.
+ 4. evaluate_anchor_quality(view) — AQ.question_specificity, aliases_diversity.
 
 All four return dicts with stable schemas. Failures (parse error, API error)
 return None — the caller treats None as "skipped" and uses fallback values.
 
 Cost discipline:
-  - Haiku model (~$0.001/call) → ~$0.005 per session for all four.
-  - System block per call is identical across sessions → prompt caching
-    drops cost on subsequent sessions in the same eval run.
+Haiku model (~$0.001/call) → ~$0.005 per session for all four.
+System block per call is identical across sessions → prompt caching
+ drops cost on subsequent sessions in the same eval run.
 """
 
 from __future__ import annotations
@@ -35,7 +34,6 @@ from .schema import SessionView, TutorTurn
 
 load_dotenv()
 
-
 # =============================================================================
 # Client + model
 # =============================================================================
@@ -44,11 +42,10 @@ def _client():
     from conversation.llm_client import make_anthropic_client
     return make_anthropic_client()
 
-
 def _model() -> str:
     """Use cfg.models.evaluator. Override via SOKRATIC_EVAL_MODEL env var
-    (e.g. for one-shot Sonnet adjudication passes). Resolves Bedrock IDs
-    when SOKRATIC_USE_BEDROCK=1."""
+ (e.g. for one-shot Sonnet adjudication passes). Resolves Bedrock IDs
+ when SOKRATIC_USE_BEDROCK=1."""
     from conversation.llm_client import resolve_model
     override = os.environ.get("SOKRATIC_EVAL_MODEL")
     if override:
@@ -59,7 +56,6 @@ def _model() -> str:
         or "claude-haiku-4-5-20251001"
     )
     return resolve_model(name)
-
 
 # =============================================================================
 # JSON extraction (robust against markdown fences)
@@ -90,20 +86,18 @@ def _extract_json_object(text: str) -> Optional[dict]:
         except json.JSONDecodeError:
             return None
 
-
 # =============================================================================
 # Prompt loading
 # =============================================================================
 
 def _load_prompt(key: str) -> str:
     """Read a prompt template from config.cfg.eval_prompts (loaded from
-    config/eval_prompts.yaml). Returns empty string if missing — callers
-    should treat empty as 'skip this judge call'."""
+ config/eval_prompts.yaml). Returns empty string if missing — callers
+ should treat empty as 'skip this judge call'."""
     eval_prompts = getattr(cfg, "eval_prompts", None)
     if eval_prompts is None:
         return ""
     return getattr(eval_prompts, key, "") or ""
-
 
 # =============================================================================
 # Shared LLM call helper
@@ -115,9 +109,9 @@ def _call_llm(
 ) -> tuple[Optional[dict], dict]:
     """Run one LLM call and parse the JSON response.
 
-    Returns (parsed_json_or_None, telemetry_dict).
-    Telemetry contains: elapsed_s, in_tok, out_tok, cost_estimate, error (if any).
-    """
+ Returns (parsed_json_or_None, telemetry_dict).
+ Telemetry contains: elapsed_s, in_tok, out_tok, cost_estimate, error (if any).
+"""
     client = _client()
     model = _model()
 
@@ -166,20 +160,19 @@ def _call_llm(
 
     return parsed, telemetry
 
-
 # =============================================================================
 # CALL 1 — Per-turn quality
 # =============================================================================
 
 def evaluate_per_turn(view: SessionView) -> tuple[Optional[dict], dict]:
     """Score every tutor turn on EULER + RAGAS-per-turn + repetition + fabrication.
-    Returns (result_or_None, telemetry).
+ Returns (result_or_None, telemetry).
 
-    result schema:
-      {"turns": [{turn_id, question_present, relevance, helpful, no_reveal,
-                  faithfulness, answer_relevancy, repetition_to_prior,
-                  fabrication_detected, fabrication_evidence, rationale}]}
-    """
+ result schema:
+ {"turns": [{turn_id, question_present, relevance, helpful, no_reveal
+ faithfulness, answer_relevancy, repetition_to_prior
+ fabrication_detected, fabrication_evidence, rationale}]}
+"""
     static = _load_prompt("evaluator_per_turn_static")
     dynamic = _load_prompt("evaluator_per_turn_dynamic")
     if not static or not dynamic:
@@ -207,7 +200,6 @@ def evaluate_per_turn(view: SessionView) -> tuple[Optional[dict], dict]:
         label="per_turn",
     )
     return parsed, tele
-
 
 # =============================================================================
 # CALL 2 — Retrieval quality
@@ -237,7 +229,6 @@ def evaluate_retrieval(view: SessionView) -> tuple[Optional[dict], dict]:
     )
     return parsed, tele
 
-
 # =============================================================================
 # CALL 3 — Session-level synthesis
 # =============================================================================
@@ -247,7 +238,7 @@ def evaluate_session_synthesis(
     deterministic_results: dict[str, Any],
 ) -> tuple[Optional[dict], dict]:
     """Session-level pedagogical integrity. Uses pre-computed intermediate_turns
-    from the deterministic pass to focus the model on the at-risk turns."""
+ from the deterministic pass to focus the model on the at-risk turns."""
     static = _load_prompt("evaluator_session_synthesis_static")
     dynamic = _load_prompt("evaluator_session_synthesis_dynamic")
     if not static or not dynamic:
@@ -283,7 +274,6 @@ def evaluate_session_synthesis(
     )
     return parsed, tele
 
-
 # =============================================================================
 # CALL 4 — Anchor quality (cheap, optional)
 # =============================================================================
@@ -311,7 +301,6 @@ def evaluate_anchor_quality(view: SessionView) -> tuple[Optional[dict], dict]:
     )
     return parsed, tele
 
-
 # =============================================================================
 # Helpers — text block formatters
 # =============================================================================
@@ -332,10 +321,9 @@ def _format_chunks_block(chunks: list[dict], *, max_chunks: int = 8, with_id: bo
         out.append(f"...({len(chunks) - max_chunks} more chunks omitted)")
     return "\n".join(out)
 
-
 def _format_turns_block(tutoring_turns: list[TutorTurn], *, max_prior: int = 3) -> str:
     """Render every tutoring turn with its student msg, tutor msg, and the
-    last `max_prior` tutor messages (so the evaluator can score repetition)."""
+ last `max_prior` tutor messages (so the evaluator can score repetition)."""
     out = []
     for i, t in enumerate(tutoring_turns):
         prior = tutoring_turns[max(0, i - max_prior):i]
@@ -351,7 +339,6 @@ def _format_turns_block(tutoring_turns: list[TutorTurn], *, max_prior: int = 3) 
             f"prior tutor messages:\n{prior_block}"
         )
     return "\n\n".join(out)
-
 
 def _format_full_transcript(view: SessionView, *, max_turns: int = 15) -> str:
     out = []

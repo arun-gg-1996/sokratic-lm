@@ -833,6 +833,47 @@ prompts:
     the intent is topic_query or card_pick, leave `tutor_reply` as an empty string — the
     routing layer will handle it.
 
+    The `tutor_reply` field is read directly to the student. It MUST sound conversational
+    and varied across sessions — never a stock filler. The following are FORBIDDEN openers
+    because they read as templated UI copy regardless of context:
+      "No worries — here are some..."
+      "tap anything that catches your eye"
+      "Browse the cards below"
+      "well-covered topics"
+      generic openers like "Here are some..." / "Take a look at..."
+
+    Calibration examples (do NOT echo these verbatim — match the SHAPE):
+
+      Intent: greeting
+      Student: "hey"
+      → tutor_reply: "Hey — what's on your mind today?"
+
+      Intent: greeting (cards on screen)
+      Student: "hello"
+      → tutor_reply: "Hi! Pick one of the cards on the right, or tell me what you're
+                      curious about."
+
+      Intent: distress
+      Student: "i hate this"
+      → tutor_reply: "That's fair — anatomy can feel like a lot at first. Want to start
+                      with something specific that's been bugging you?"
+
+      Intent: off_topic
+      Student: "what's the weather like"
+      → tutor_reply: "Ha — not my department. Want to pick an anatomy topic to dig into?"
+
+      Intent: ambiguous
+      Student: "ok"
+      → tutor_reply: "Got it — what would you like to study?"
+
+      Intent: ambiguous (cards on screen)
+      Student: "suggest me something"
+      → tutor_reply: "Pick whichever one of the cards looks interesting, or throw out
+                      a body part / system you've been wondering about."
+
+    Note the ranges: distress is empathetic, off_topic is light-but-redirecting, greeting
+    is brief, ambiguous-with-cards points at the cards without reciting templated copy.
+
     Never ask multiple questions. Never reveal answers. Never produce headers or lists.
 
     Return strict JSON only:
@@ -1184,43 +1225,94 @@ prompts:
        capture the actual richness of the textbook material; locked_answer is
        just the gate-friendly short form.
 
+    ## CRITICAL OWNERSHIP NOTE
+
+    There is NO post-hoc validator on your output. Whatever you emit
+    becomes the locked anchor for the session. There is one repair
+    retry if you return an empty locked_answer; otherwise your output
+    is used verbatim. Read every constraint below carefully and meet
+    it on the FIRST attempt — no rule-based gate exists to fix
+    your work.
+
     ## locked_answer (the SHORT gate anchor) — STRICT
 
-    HARD CONSTRAINT: 1–5 words. **NEVER more than 5 words.** This is the
-    GATE anchor — the downstream token-overlap matcher needs a short
-    distinctive term. If you produce a 6+ word locked_answer, the gate
-    fails to match student paraphrases and the session breaks.
+    HARD CONSTRAINTS — meet ALL of these on every output:
 
-    - Must be a noun phrase, not a sentence. No verbs. No commas. No "and"
-      joining multiple ideas. Examples: "Purkinje fibers", "sinoatrial
-      node", "skeletal muscle pump", "ATP synthase", "saliva", "pepsin",
-      "nephron loop".
-    - When the question asks about MULTIPLE parts (e.g. "parts of a
-      nephron"), do NOT list all parts in locked_answer. **Pick a single
-      umbrella term** that names the concept-class:
-        - "What are the parts of a nephron?" → locked_answer: "renal corpuscle"
-          (the most distinctive single component) — full_answer holds the list.
-        - "What are the phases of muscle twitch?" → locked_answer: "muscle twitch phases"
-          — full_answer holds latent/contraction/relaxation.
-        - "What enzymes break down proteins in the stomach?" → locked_answer: "pepsin"
-          — full_answer holds the longer description.
-        - "What are the five mechanisms of tubular transport?" →
-          locked_answer: "secondary active transport" (the canonical mechanism for the
-          locked_question's specific angle) — full_answer holds all five.
-        - "What are the two main coronary arteries that arise from the aorta?" →
-          locked_answer: "coronary arteries" (umbrella, NOT "left and right
-          coronary arteries" — that uses 'and' to join two ideas, which is
-          forbidden). Aliases hold the individual components: ["left coronary
-          artery", "right coronary artery", "LCA", "RCA"]. full_answer holds
-          both arteries with the regions each supplies.
-    - **For "two/three/multiple of X" questions specifically**: locked_answer
-      MUST be a single umbrella noun phrase. Aliases MUST include each
-      individual component as its own entry — that is how the gate fires
-      when the student names ONE component coherently. Do NOT pack two
-      components into one alias with "and" — that defeats the matcher
-      (e.g. "LCA and RCA" matches no real student utterance; emit "LCA"
-      and "RCA" as two separate aliases).
-    - Must be grounded in the retrieved chunks.
+    1. **Length**: 1–5 words maximum. Never more than 5.
+    2. **Shape**: A noun phrase. Not a sentence. No verbs ("innervates",
+       "arises", "branches", "passes", "supplies", "controls", etc.).
+       No prepositional phrases ("from the…", "above the…", "near the…").
+       No commas.
+    3. **No "and"-joining**: Never use the word "and" to connect two
+       ideas. The downstream token-overlap matcher checks one utterance
+       at a time; "left and right coronary arteries" matches no real
+       student utterance because the student would say either "the left
+       coronary" or "the right coronary" — not both joined by 'and'.
+       For multi-component answers, pick a single UMBRELLA term and put
+       each component into aliases (see below).
+    4. **Grounded in chunks**: Every distinctive content word in
+       locked_answer MUST appear in at least one of the retrieved
+       chunks. Do NOT use parametric / training-data knowledge — if the
+       chunks are about the axillary ARTERY, you must not emit
+       "axillary nerve" even if you "know" that's the textbook answer
+       to a deltoid-innervation question. If the chunks don't contain
+       the answer cleanly, return your best minimal phrasing of what
+       IS in the chunks rather than reaching for unsupported terms.
+
+    ## Examples — locked_answer + aliases for every common question shape
+
+    Single-concept questions (most common):
+      Q: "What is the primary pacemaker of the heart?"
+      → locked_answer: "sinoatrial node"
+      → aliases: ["SA node", "sinus node", "pacemaker of the heart", "cardiac pacemaker"]
+
+      Q: "What enzyme breaks down proteins in the stomach?"
+      → locked_answer: "pepsin"
+      → aliases: ["pepsinogen", "gastric enzyme", "stomach protease"]
+
+    Two-component questions (umbrella + per-component aliases):
+      Q: "What are the two main coronary arteries that arise from the aorta?"
+      → locked_answer: "coronary arteries"        ← single umbrella
+      → aliases: ["left coronary artery", "right coronary artery", "LCA", "RCA"]
+      → full_answer: "The left and right coronary arteries arise from the aortic
+        sinuses; the LCA supplies the anterior left ventricle and septum, the RCA
+        supplies the right ventricle and inferior left ventricle."
+
+    Three-component enumerations:
+      Q: "What are the three columns of the spinal cord white matter?"
+      → locked_answer: "white matter columns"     ← umbrella
+      → aliases: ["posterior column", "lateral column", "anterior column",
+                   "dorsal funiculus", "ventral funiculus"]
+      → full_answer: "The white matter of the spinal cord is organized into the
+        posterior, lateral, and anterior columns (also called funiculi). Each
+        carries specific tracts: posterior is mostly ascending sensory, lateral
+        is mixed, anterior is mostly descending motor."
+
+      Q: "What are the three types of cartilage?"
+      → locked_answer: "cartilage types"          ← umbrella
+      → aliases: ["hyaline cartilage", "elastic cartilage", "fibrocartilage"]
+      → full_answer: "The three cartilage types are hyaline (most abundant; in
+        joints, nose, trachea), elastic (in the ear and epiglottis), and
+        fibrocartilage (in intervertebral discs and the meniscus)."
+
+    "Phases of X" / "steps of X" questions:
+      Q: "What are the phases of a muscle twitch?"
+      → locked_answer: "muscle twitch phases"
+      → aliases: ["latent period", "contraction phase", "relaxation phase"]
+      → full_answer: "A muscle twitch has three phases: a latent period (action
+        potential propagation, ~2 ms), a contraction phase (cross-bridge cycling,
+        force generation), and a relaxation phase (Ca2+ reuptake, force decay)."
+
+    Notice in every multi-component example:
+    - locked_answer is a SHORT umbrella term (2–4 words)
+    - aliases include EACH component as its own entry (not joined by "and")
+    - full_answer holds the rich textbook description for clinical grading
+
+    Why aliases-per-component matters: the gate checks each student
+    utterance against locked_answer + each alias. When a student says
+    "I think it's the SA node", the gate matches against the alias
+    "SA node" and credits the reach. If you put "left and right coronary
+    arteries" as one alias, no real student utterance will ever match it.
 
     ## full_answer (the COMPLETE textbook answer)
 

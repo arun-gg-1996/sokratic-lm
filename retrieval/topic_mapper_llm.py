@@ -1,25 +1,18 @@
 """
-retrieval/topic_mapper_llm.py
-─────────────────────────────
-L9 implementation — single Haiku call replaces the 3-stage pipeline
-(LLM intent classify → semantic vote → RapidFuzz fallback).
+LLM-driven topic mapper. Single Haiku call that turns a student
+utterance into a ranked list of TOC subsections.
 
-Per docs/AUDIT_2026-05-02.md L9:
+Inputs:
+  1. Student utterance (raw free-text).
+  2. Full TOC plus per-leaf one-line summary.
+  3. Curated abbreviation list (CN VII, RCA, LAD, ATP, …) presented
+     as "common shortcuts students use; generalize, not exhaustive".
 
-  Inputs:
-    1. Student utterance (raw free-text).
-    2. Full TOC + per-leaf 1-line summary
-       (topic_index.json ⋈ raptor_subsection_summaries.jsonl).
-    3. Curated abbreviation list (~30 entries: CN VII, RCA, LAD, ATP, etc.)
-       framed as "common shortcuts students use, generalize from your own
-       medical knowledge — not exhaustive".
+Output (strict JSON):
 
-  Output (strict JSON):
     {
       "verdict": "strong" | "borderline" | "none",
       "confidence": float,
-      "student_intent": "topic_request",   # locked per L24 (deferred handling)
-      "deferred_question": null,
       "top_matches": [
         {"path": "<chapter> > <section> > <subsection>",
          "confidence": float,
@@ -28,15 +21,10 @@ Per docs/AUDIT_2026-05-02.md L9:
       ]
     }
 
-  Routing thresholds (caller-side, see TopicMapperResult.route_decision()):
-    verdict=strong,     conf >= 0.85   → lock_anchors_call → coverage gate
-    verdict=borderline, conf in 0.7-0.85 → confirm-and-lock UX (L10)
-    verdict=borderline, conf in 0.5-0.7  → cards from top_matches
-    verdict=none,       conf <  0.5    → refuse intro + sample_diverse cards
-
-This module is the *implementation*, not the wiring. Wiring into dean.py
-(replacing the topic_matcher.TopicMatcher.match() call site) lands in a
-follow-up commit so the rewrite can ship + be tested in isolation first.
+The caller maps `(verdict, confidence)` to a routing decision via
+`TopicMapperResult.route_decision()`: lock immediately, ask the
+student to confirm, show "did you mean …?" cards, or refuse with
+starter cards.
 """
 from __future__ import annotations
 
@@ -48,9 +36,8 @@ from typing import Any, Iterable, Literal, Optional
 
 from memory.sqlite_store import REPO  # repo root anchor (consistent with other modules)
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# Routing thresholds (per L9; mirrored on the caller side via .route_decision)
+# Routing thresholds (; mirrored on the caller side via .route_decision)
 # ─────────────────────────────────────────────────────────────────────────────
 
 STRONG_MIN_CONFIDENCE = 0.85
@@ -65,7 +52,6 @@ RouteDecision = Literal[
     "refuse_with_starter_cards", # none, <0.50
 ]
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Data structures
 # ─────────────────────────────────────────────────────────────────────────────
@@ -76,15 +62,14 @@ class TopicMatchCandidate:
     confidence: float
     rationale: str
 
-
 @dataclass
 class TopicMapperResult:
-    """Parsed + validated output of the L9 Haiku call."""
+    """Parsed + validated output of the Haiku call."""
     query: str
     verdict: Literal["strong", "borderline", "none"]
     confidence: float
-    student_intent: Literal["topic_request"]   # locked per L24
-    deferred_question: Optional[str]           # always None per L24
+    student_intent: Literal["topic_request"]   # locked
+    deferred_question: Optional[str] = None    # always None in current pipeline
     top_matches: list[TopicMatchCandidate] = field(default_factory=list)
     raw_response: str = ""                     # for trace / debugging
     elapsed_ms: int = 0
@@ -106,7 +91,6 @@ class TopicMapperResult:
     def best_match(self) -> Optional[TopicMatchCandidate]:
         return self.top_matches[0] if self.top_matches else None
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # TOC + abbreviations loaders (cached per process)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -115,11 +99,49 @@ _TOC_BLOCK_CACHE: dict[str, str] = {}        # keyed by topic_index path
 _TOC_COMPACT_CACHE: dict[str, str] = {}      # keyed by topic_index path (compact variant)
 _ABBREVS_BLOCK_CACHE: dict[str, str] = {}    # keyed by curated_abbrevs path
 
+def _load_curriculum_from_sql() -> list[dict]:
+    """Pull all chapter > section > subsection rows from SQLite, including
+  display_label and the RAPTOR summary if populated. Source of truth
+  post-migration 003+004; replaces the old topic_index.json +
+  raptor_subsection_summaries.jsonl flat-file loaders.
 
+  Returns a list of dicts shaped like the legacy topic_index entries so
+  build_toc_block / build_toc_block_compact don't need a rewrite.
+  """
+    from memory.sqlite_store import SQLiteStore
+    store = SQLiteStore()
+    cur = store._conn().execute(
+        """
+        SELECT
+            c.chapter_num,
+            c.title AS chapter,
+            s.title AS section,
+            sub.title AS subsection,
+            sub.display_label,
+            sub.summary
+        FROM subsections sub
+        JOIN sections s ON s.section_id = sub.section_id
+        JOIN chapters c ON c.chapter_id = s.chapter_id
+        ORDER BY c.chapter_num, s.section_order, sub.subsection_order
+        """
+    )
+    return [dict(r) for r in cur.fetchall()]
+
+def _load_abbreviations_from_sql() -> list[dict]:
+    """Pull alias → canonical pairs from SQLite topic_abbreviations table."""
+    from memory.sqlite_store import SQLiteStore
+    store = SQLiteStore()
+    cur = store._conn().execute(
+        "SELECT alias AS short, canonical AS expansion, notes AS context "
+        "FROM topic_abbreviations ORDER BY alias"
+    )
+    return [dict(r) for r in cur.fetchall()]
+
+# ── Legacy file loaders kept as fallback for non-default domains that
+#    haven't been migrated to SQL yet. Not called in the OT pipeline.
 def _load_topic_index(path: Path) -> list[dict]:
     raw = json.loads(path.read_text())
     return raw if isinstance(raw, list) else list(raw.values())
-
 
 def _load_raptor_summaries(path: Path) -> dict[tuple, str]:
     out: dict[tuple, str] = {}
@@ -135,30 +157,47 @@ def _load_raptor_summaries(path: Path) -> dict[tuple, str]:
         out[k] = s.get("summary") or s.get("text") or ""
     return out
 
-
 def build_toc_block(
-    topic_index_path: Path,
-    raptor_summaries_path: Path,
+    topic_index_path: Optional[Path] = None,
+    raptor_summaries_path: Optional[Path] = None,
     *,
     use_cache: bool = True,
 ) -> str:
     """Build the TOC + summaries text block fed to the Haiku prompt.
 
-    One line per topic_index entry, formatted as:
-        <chapter> > <section> > <subsection>
-            display_label: <label>
-            summary: <one-line raptor summary>
+  One line per subsection, formatted as:
+      <chapter> > <section> > <subsection>
+      display_label: <label>
+      summary: <one-line raptor summary>
 
-    Cached by topic_index path (the heaviest part of the prompt — ~25K
-    tokens for the full anatomy index — and stable for the lifetime of
-    a process).
-    """
-    cache_key = str(topic_index_path.resolve())
+  Source of truth: SQLite chapters/sections/subsections joined together.
+  The path arguments are kept for backward compatibility with non-default
+  domains that haven't been migrated yet — when both are None we read
+  from SQL.
+
+  Cached so the heavy ~25K-token block is only built once per process.
+  """
+    # Cache key: "sql" for the SQL-backed default; legacy file-based key
+    # for any domain still passing paths.
+    cache_key = (
+        "sql"
+        if topic_index_path is None and raptor_summaries_path is None
+        else str(topic_index_path.resolve()) if topic_index_path else "sql"
+    )
     if use_cache and cache_key in _TOC_BLOCK_CACHE:
         return _TOC_BLOCK_CACHE[cache_key]
 
-    entries = _load_topic_index(topic_index_path)
-    summaries = _load_raptor_summaries(raptor_summaries_path)
+    if cache_key == "sql":
+        # SQL path — single JOIN, no flat files.
+        entries = _load_curriculum_from_sql()
+        summaries: dict[tuple, str] = {
+            (e["chapter"], e["section"], e["subsection"]): e.get("summary") or ""
+            for e in entries
+        }
+    else:
+        # Legacy file path — kept for non-migrated domains.
+        entries = _load_topic_index(topic_index_path)
+        summaries = _load_raptor_summaries(raptor_summaries_path) if raptor_summaries_path else {}
 
     lines: list[str] = []
     for e in entries:
@@ -181,38 +220,32 @@ def build_toc_block(
         _TOC_BLOCK_CACHE[cache_key] = block
     return block
 
-
 def build_toc_block_compact(
-    topic_index_path: Path,
+    topic_index_path: Optional[Path] = None,
     *,
     use_cache: bool = True,
 ) -> str:
     """Compact TOC variant — paths + display_labels only, no raptor summaries.
 
-    Per docs/AUDIT_PROMPT_OPTIMIZATION.md (deferred-to-last):
-      ~25K tokens for the full anatomy index → ~5-6K tokens compact.
-      4-5x smaller. Suitable for cached system blocks on per-turn calls
-      where the full TOC's summaries aren't needed (e.g.
-      classifiers.haiku_off_domain — needs to know what's in scope, not
-      the per-leaf summary).
+  ~25K tokens for the full TOC → ~5-6K tokens compact. Suitable for
+  cached system blocks on per-turn calls where the per-leaf summary isn't
+  needed (e.g. classifiers.haiku_off_domain — needs what's in scope, not
+  per-subsection content).
 
-    Format:
-        - <chapter> > <section> > <subsection>: <display_label>
+  Source of truth: SQLite chapters/sections/subsections JOIN. The path
+  argument is kept only for non-migrated domains.
 
-    Caller is expected to wrap this in a cache_control:ephemeral block
-    so the per-turn injection cost amortizes via the Bedrock prompt
-    cache.
-
-    A/B test target (per the audit's Step 2): run scripts/compare_topic_
-    resolvers.py with this variant against the full TOC; if accuracy
-    parity holds, ship as L9 default. Until then, this function exists
-    for opportunistic injection sites only.
-    """
-    cache_key = str(topic_index_path.resolve())
+  Format:
+      - <chapter> > <section> > <subsection>: <display_label>
+  """
+    cache_key = "sql" if topic_index_path is None else str(topic_index_path.resolve())
     if use_cache and cache_key in _TOC_COMPACT_CACHE:
         return _TOC_COMPACT_CACHE[cache_key]
 
-    entries = _load_topic_index(topic_index_path)
+    entries = (
+        _load_curriculum_from_sql() if cache_key == "sql"
+        else _load_topic_index(topic_index_path)
+    )
     lines: list[str] = []
     for e in entries:
         ch = e.get("chapter") or e.get("chapter_title") or ""
@@ -227,48 +260,52 @@ def build_toc_block_compact(
         _TOC_COMPACT_CACHE[cache_key] = block
     return block
 
-
 def build_abbreviations_block(
-    abbrevs_path: Path,
+    abbrevs_path: Optional[Path] = None,
     *,
     use_cache: bool = True,
 ) -> str:
     """Format the curated abbreviation list as prompt text.
 
-    Returns "" if the file is missing or unreadable (the LLM falls back
-    on its own medical knowledge per L9's framing).
-    """
-    cache_key = str(abbrevs_path.resolve())
+  Source of truth: SQLite topic_abbreviations table. The path argument
+  is kept for backward compatibility with non-migrated domains.
+
+  Returns "" if the table is empty (LLM falls back on its own knowledge).
+  """
+    cache_key = "sql" if abbrevs_path is None else str(abbrevs_path.resolve())
     if use_cache and cache_key in _ABBREVS_BLOCK_CACHE:
         return _ABBREVS_BLOCK_CACHE[cache_key]
 
-    if not abbrevs_path.exists():
-        block = ""
-    else:
+    if cache_key == "sql":
+        rows = _load_abbreviations_from_sql()
+        items = rows
+    elif abbrevs_path and abbrevs_path.exists():
         try:
             data = json.loads(abbrevs_path.read_text())
         except (OSError, json.JSONDecodeError):
             data = {}
         items = (data or {}).get("abbreviations", []) or []
-        lines = []
-        for item in items:
-            short = (item.get("short") or "").strip()
-            expansion = (item.get("expansion") or "").strip()
-            context = (item.get("context") or "").strip()
-            if not short or not expansion:
-                continue
-            tag = f" [{context}]" if context else ""
-            lines.append(f"  - {short} = {expansion}{tag}")
-        block = "\n".join(lines)
+    else:
+        items = []
+
+    lines: list[str] = []
+    for item in items:
+        short = (item.get("short") or "").strip()
+        expansion = (item.get("expansion") or "").strip()
+        context = (item.get("context") or "").strip()
+        if not short or not expansion:
+            continue
+        tag = f" [{context}]" if context else ""
+        lines.append(f"  - {short} = {expansion}{tag}")
+    block = "\n".join(lines)
     if use_cache:
         _ABBREVS_BLOCK_CACHE[cache_key] = block
     return block
 
-
 def _resolve_paths_from_cfg() -> tuple[Path, Path, Path]:
     """Resolve (topic_index, raptor_summaries, curated_abbrevs) paths from
-    the active domain's config. Per L78 every path lives in a per-domain
-    slot. Raises if the slots are missing — refuse to silently fall back."""
+ the active domain's config. Per every path lives in a per-domain
+ slot. Raises if the slots are missing — refuse to silently fall back."""
     from config import cfg as _cfg
     domain = _cfg.domain.retrieval_domain
     paths = _cfg.paths
@@ -279,8 +316,8 @@ def _resolve_paths_from_cfg() -> tuple[Path, Path, Path]:
         if not val:
             raise RuntimeError(
                 f"Missing per-domain config slot cfg.paths.{slot_name} "
-                f"(domain={domain!r}). Required by L9 topic_mapper_llm. "
-                "Fix in config/base.yaml per L78."
+                f"(domain={domain!r}). Required by topic_mapper_llm. "
+                "Fix in config/base.yaml."
             )
         p = Path(val)
         if not p.is_absolute():
@@ -288,7 +325,6 @@ def _resolve_paths_from_cfg() -> tuple[Path, Path, Path]:
         return p
 
     return _slot("topic_index"), _slot("raptor_subsection_summaries"), _slot("curated_abbrevs")
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Prompt builder
@@ -339,7 +375,6 @@ Output schema:
 }}
 """
 
-
 def build_prompt(
     query: str,
     *,
@@ -361,17 +396,16 @@ def build_prompt(
         "Output JSON only:"
     )
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Main entry point
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _parse_response_json(text: str) -> dict:
     """Strip markdown fences if any, then json.loads. Raises ValueError on
-    anything that isn't a parseable object."""
+ anything that isn't a parseable object."""
     s = (text or "").strip()
     if s.startswith("```"):
-        # ```json\n{...}\n```  or  ```\n{...}\n```
+        # ```json\n{...}\n``` or ```\n{...}\n```
         lines = s.split("\n")
         if lines[-1].startswith("```"):
             s = "\n".join(lines[1:-1])
@@ -390,10 +424,9 @@ def _parse_response_json(text: str) -> dict:
         raise ValueError(f"Response is not a JSON object: {out!r}")
     return out
 
-
 def _validate_and_coerce(parsed: dict) -> tuple[str, float, list[TopicMatchCandidate]]:
     """Coerce the LLM output into the canonical types. Tolerant of missing
-    fields (defaults to 'none' verdict)."""
+ fields (defaults to 'none' verdict)."""
     verdict = (parsed.get("verdict") or "none").strip().lower()
     if verdict not in {"strong", "borderline", "none"}:
         verdict = "none"
@@ -420,7 +453,6 @@ def _validate_and_coerce(parsed: dict) -> tuple[str, float, list[TopicMatchCandi
         ))
     return verdict, confidence, top_matches
 
-
 def map_topic(
     query: str,
     *,
@@ -438,21 +470,19 @@ def map_topic(
 ) -> TopicMapperResult:
     """Single Haiku call → TopicMapperResult.
 
-    All `*_path` and `domain_*` args default to the active domain's config
-    (per L78), so production callers just pass `client + model + query`.
+ All `*_path` and `domain_*` args default to the active domain's config
+ , so production callers just pass `client + model + query`.
 
-    `use_compact_toc=True` swaps the full TOC (paths + display_label +
-    raptor summary, ~25K tokens) for the compact variant (paths +
-    display_label only, ~5-6K tokens) per
-    docs/AUDIT_PROMPT_OPTIMIZATION.md Step 2. Default False until the
-    A/B test confirms accuracy parity.
-    """
-    if topic_index_path is None or raptor_summaries_path is None or curated_abbrevs_path is None:
-        ti, rs, ca = _resolve_paths_from_cfg()
-        topic_index_path = topic_index_path or ti
-        raptor_summaries_path = raptor_summaries_path or rs
-        curated_abbrevs_path = curated_abbrevs_path or ca
-
+ `use_compact_toc=True` swaps the full TOC (paths + display_label +
+ raptor summary, ~25K tokens) for the compact variant (paths +
+ display_label only, ~5-6K tokens) per
+ docs/AUDIT_PROMPT_OPTIMIZATION.md Step 2. Default False until the
+ A/B test confirms accuracy parity.
+"""
+    # Curriculum, summaries, and abbreviations all live in SQL post-migration
+    # 003+004. The *_path arguments are kept on the signature for backward
+    # compatibility with any caller still passing them (and for non-migrated
+    # domains); when they're None the builders default to the SQL backend.
     if domain_name is None or domain_short is None:
         from config import cfg as _cfg
         domain_name = domain_name or _cfg.domain.name
@@ -486,7 +516,7 @@ def map_topic(
         )
     except Exception as e:
         # Network / API failure — return a "none" result so the caller can
-        # fall back to the L9 refuse-with-starter-cards path. Never raises.
+        # fall back to the refuse-with-starter-cards path. Never raises.
         return TopicMapperResult(
             query=query,
             verdict="none",
@@ -516,7 +546,6 @@ def map_topic(
 
     verdict, confidence, top_matches = _validate_and_coerce(parsed)
     # Defensive belt-and-suspenders: drop any returned matches whose path
-    # was previously rejected. The variable_text already nudges the LLM
     # to avoid them, but filter again in case it ignores the hint.
     if rejected_paths:
         rej_set = set(rejected_paths)
@@ -540,7 +569,6 @@ def map_topic(
         cache_creation_tokens=getattr(usage, "cache_creation_input_tokens", 0) or 0,
     )
 
-
 def clear_caches() -> None:
     """Drop the TOC + abbreviation caches (useful for tests + after corpus rebuild)."""
     _TOC_BLOCK_CACHE.clear()
@@ -558,16 +586,16 @@ def build_cached_message_blocks(
 ) -> list[dict]:
     """Build the message content as cacheable + variable blocks.
 
-    The header + TOC + abbreviations are identical across every call (until
-    the corpus or domain changes), so we mark them with
-    `cache_control: ephemeral` to hit the Bedrock prompt cache (5-min TTL).
-    First call within the window pays full price for the cached blocks;
-    subsequent calls pay ~10x less for the cached portion. Saves ~$0.09 per
-    call on a 100K-token TOC.
+ The header + TOC + abbreviations are identical across every call (until
+ the corpus or domain changes), so we mark them with
+ `cache_control: ephemeral` to hit the Bedrock prompt cache (5-min TTL).
+ First call within the window pays full price for the cached blocks;
+ subsequent calls pay ~10x less for the cached portion. Saves ~$0.09 per
+ call on a 100K-token TOC.
 
-    Returns a list of message-content blocks suitable for
-    `client.messages.create(messages=[{"role": "user", "content": <this>}])`.
-    """
+ Returns a list of message-content blocks suitable for
+ `client.messages.create(messages=[{"role": "user", "content": <this>}])`.
+"""
     header = PROMPT_HEADER.format(domain_name=domain_name, domain_short=domain_short)
 
     # Single cached block: header + TOC + abbreviations. Combined into one

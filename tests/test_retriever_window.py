@@ -20,14 +20,12 @@ import pytest
 
 from retrieval.retriever import Retriever
 
-
 def _bare_retriever(index: dict | None) -> Retriever:
     """Build a Retriever shell that bypasses __init__ (which needs live
     Qdrant + OpenAI). We're only exercising _expand_window."""
     r = Retriever.__new__(Retriever)
     r._chunks_index_cache = index
     return r
-
 
 def _make_chunk(chunk_id: str, prev: str | None = None, nxt: str | None = None,
                 text: str = "x" * 50) -> dict:
@@ -43,7 +41,6 @@ def _make_chunk(chunk_id: str, prev: str | None = None, nxt: str | None = None,
         "page": 1,
         "element_type": "paragraph",
     }
-
 
 class TestWindowExpansion:
     def test_window_zero_passes_through(self):

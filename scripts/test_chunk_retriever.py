@@ -1,12 +1,11 @@
 """
 scripts/test_chunk_retriever.py
--------------------------------
 Quick direct comparison: propositions vs chunks indexing on the two queries
 that failed end-to-end in the e2e simulation.
 
 Runs both Retriever (propositions) and ChunkRetriever (chunks) on:
-  1. "What nerve innervates the deltoid muscle?"
-  2. "Which nerve is damaged in a humeral shaft fracture causing wrist drop?"
+ 1. "What nerve innervates the deltoid muscle?"
+ 2. "Which nerve is damaged in a humeral shaft fracture causing wrist drop?"
 
 Prints the top-5 primaries from each so we can read whether chunks-mode
 recovers the expected sections (Ch11/Ch13 for deltoid; Ch11/Ch6/Ch8 for
@@ -37,7 +36,6 @@ QUERIES = [
     "What does the axillary nerve supply?",
 ]
 
-
 def show(label: str, retriever, query: str) -> None:
     chunks = retriever.retrieve(query)
     primaries = [c for c in chunks if c.get("_window_role", "primary") == "primary"]
@@ -48,7 +46,6 @@ def show(label: str, retriever, query: str) -> None:
               f"{c.get('section_title', '')[:35]} | "
               f"{c.get('subsection_title', '')[:30]}")
         print(f"       {text}")
-
 
 def main():
     print("Loading Retriever (propositions)...", flush=True)
@@ -63,7 +60,6 @@ def main():
         print("=" * 90)
         show("PROPOSITIONS (current)", prop_r, q)
         show("CHUNKS (new)", chunk_r, q)
-
 
 if __name__ == "__main__":
     main()

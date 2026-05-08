@@ -21,7 +21,6 @@ from ingestion.core.cost_tracker import (
     make_progress_printer,
 )
 
-
 # ── Pricing tables ──────────────────────────────────────────────────────────
 
 class TestPricingTables:
@@ -54,7 +53,6 @@ class TestPricingTables:
             assert abs(pricing["cache_read_input_tokens"] - base * 0.10) < 1e-9, (
                 f"{model}: cache_read should be 0.10x input"
             )
-
 
 # ── CostTracker.record ──────────────────────────────────────────────────────
 
@@ -111,7 +109,6 @@ class TestCostTrackerRecord:
         t_haiku.record(usage)
         # Haiku is exactly 1/3 of Sonnet for both rates
         assert t_haiku.total_cost == pytest.approx(t_sonnet.total_cost / 3, abs=1e-9)
-
 
 # ── CostTracker derived metrics ─────────────────────────────────────────────
 
@@ -184,7 +181,6 @@ class TestCostTrackerMetrics:
         assert "cache read tokens:" in summary
         assert "total cost:" in summary
 
-
 # ── EmbeddingCostTracker ────────────────────────────────────────────────────
 
 class TestEmbeddingCostTracker:
@@ -221,7 +217,6 @@ class TestEmbeddingCostTracker:
         assert "total tokens" in s
         assert "total cost" in s
 
-
 # ── MultiTracker ────────────────────────────────────────────────────────────
 
 class TestMultiTracker:
@@ -247,7 +242,6 @@ class TestMultiTracker:
         assert "Cost summary: claude-sonnet-4-5" in s
         assert "GRAND TOTAL:" in s
 
-
 # ── make_progress_printer ───────────────────────────────────────────────────
 
 class TestMakeProgressPrinter:
@@ -271,7 +265,6 @@ class TestMakeProgressPrinter:
         cb(7, 7)  # done == total
         captured = capsys.readouterr()
         assert "7/7" in captured.out
-
 
 # ── End-to-end: integrate with mocked dual-task batch ───────────────────────
 

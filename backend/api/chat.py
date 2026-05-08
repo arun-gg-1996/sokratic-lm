@@ -21,12 +21,11 @@ from conversation.streaming import (
 
 router = APIRouter()
 
-
 def _extract_pending_choice(state: dict) -> dict | None:
     """
-    Return the pending user choice from state, or None.
-    Only graph nodes set pending_user_choice — no fallback derivation here.
-    """
+ Return the pending user choice from state, or None.
+ Only graph nodes set pending_user_choice — no fallback derivation here.
+"""
     pending = state.get("pending_user_choice")
     if isinstance(pending, dict):
         kind = pending.get("kind")
@@ -42,19 +41,17 @@ def _extract_pending_choice(state: dict) -> dict | None:
             return out
     return None
 
-
 def _latest_tutor_message(state: dict) -> str:
     for msg in reversed(state.get("messages", [])):
         if msg.get("role") == "tutor":
             return str(msg.get("content", ""))
     return ""
 
-
 def _append_full_turn_trace(state: dict, student_message: str, tutor_message: str) -> None:
     """
-    Persist full per-turn traces for export/debug while keeping turn_trace scoped
-    to the current student message.
-    """
+ Persist full per-turn traces for export/debug while keeping turn_trace scoped
+ to the current student message.
+"""
     debug = state.setdefault("debug", {})
     all_turn_traces = list(debug.get("all_turn_traces", []))
     turn_trace = list(debug.get("turn_trace", []))
@@ -72,7 +69,6 @@ def _append_full_turn_trace(state: dict, student_message: str, tutor_message: st
         }
     )
     debug["all_turn_traces"] = all_turn_traces
-
 
 @router.websocket("/ws/chat/{thread_id}")
 async def chat_ws(websocket: WebSocket, thread_id: str):
@@ -109,7 +105,7 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
                 )
                 continue
 
-            # M1 — explicit-exit sentinel from frontend ([End session] button
+            # explicit-exit sentinel from frontend ([End session] button
             # OR exit modal confirm). Stamp exit_intent_pending=True and route
             # straight to memory_update so close fires with reason=exit_intent.
             if client_msg.content == "__exit_session__":
@@ -121,7 +117,7 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
                 state.setdefault("debug", {}).setdefault("turn_trace", [])
                 state["debug"]["turn_trace"] = []
             elif client_msg.content == "__cancel_exit__":
-                # BLOCK 9 (S3) — student clicked Cancel on exit modal.
+                # — student clicked Cancel on exit modal.
                 # Clear exit_intent_pending and stamp cancel_modal_pending
                 # so Dean produces a soft_reset bridging message on this
                 # invocation. No student message appended (modal lifecycle
@@ -141,7 +137,7 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
                 state.setdefault("debug", {}).setdefault("turn_trace", [])
                 state["debug"]["turn_trace"] = []
 
-            # D.6a: install a streaming callback before invoking the
+            # : install a streaming callback before invoking the
             # graph. The teacher's draft_socratic checks this contextvar
             # and uses Anthropic's streaming API when set, calling the
             # callback with each text delta as the LLM generates. We
@@ -149,20 +145,18 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
             # the websocket from this coroutine — sending from inside
             # the sync teacher callback would require run_coroutine_
             # threadsafe across loops, which is fragile.
-            #
             # The callback runs on a worker thread (LangGraph schedules
-            # sync nodes on a thread pool when graph.ainvoke is used,
+            # sync nodes on a thread pool when graph.ainvoke is used
             # or directly on the calling thread for graph.invoke). It
             # only enqueues bytes; the WS write happens here in the
             # event loop.
             loop = asyncio.get_running_loop()
             # Queue items are dicts with at minimum a "kind" field. The
             # drain task switches on kind. Possible kinds:
-            #   {"kind":"token","text":"..."}     — streaming partial
-            #   {"kind":"stream_reset"}           — dean rewrote draft
-            #   {"kind":"activity","label":"..."} — backend activity log
-            #   {"kind":"end"}                    — finalize sentinel
-            # Earlier this used (str|None|"") sentinels; the dict shape
+            # {"kind":"token","text":"..."} — streaming partial
+            # {"kind":"stream_reset"} — dean rewrote draft
+            # {"kind":"activity","label":"..."} — backend activity log
+            # {"kind":"end"} — finalize sentinel
             # is clearer and extends without re-meaning conventions.
             token_queue: asyncio.Queue[dict] = asyncio.Queue()
 
@@ -199,8 +193,8 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
 
             async def _drain_tokens() -> None:
                 """Forward each queue item to the WS. Stops on the
-                "end" sentinel. Each kind maps to a distinct WS event
-                type so the frontend can route them independently."""
+ "end" sentinel. Each kind maps to a distinct WS event
+ type so the frontend can route them independently."""
                 while True:
                     item = await token_queue.get()
                     kind = item.get("kind")
@@ -267,27 +261,27 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
             debug_payload["off_topic_threshold"] = int(getattr(cfg.dean, "off_topic_threshold", 4))
             debug_payload["total_low_effort_turns"] = int(new_state.get("total_low_effort_turns", 0) or 0)
             debug_payload["total_off_topic_turns"] = int(new_state.get("total_off_topic_turns", 0) or 0)
-            # F6 — non-resetting help_abuse counter so visibility doesn't
+            # non-resetting help_abuse counter so visibility doesn't
             # drop to 0 the moment the student engages.
             debug_payload["total_help_abuse_turns"] = int(new_state.get("total_help_abuse_turns", 0) or 0)
-            # N2: surface consecutive_low_effort_count for sidebar — was already
+            # : surface consecutive_low_effort_count for sidebar — was already
             # tracked in state but not exposed in the WS payload.
             debug_payload["consecutive_low_effort_count"] = int(new_state.get("consecutive_low_effort_count", 0) or 0)
-            debug_payload["low_effort_threshold"] = 4  # preflight L55 strike-4 force-hint-advance            debug_payload["clinical_low_effort_count"] = int(new_state.get("clinical_low_effort_count", 0) or 0)
+            debug_payload["low_effort_threshold"] = 4  # preflight strike-4 force-hint-advance debug_payload["clinical_low_effort_count"] = int(new_state.get("clinical_low_effort_count", 0) or 0)
             debug_payload["clinical_off_topic_count"] = int(new_state.get("clinical_off_topic_count", 0) or 0)
-            # N3 (POST_DEMO_FIXES.md, 2026-05-06): clinical phase mirror
+            # clinical phase mirror
             # of tutoring's help_abuse + the three non-resetting totals.
             debug_payload["clinical_help_abuse_count"] = int(new_state.get("clinical_help_abuse_count", 0) or 0)
             debug_payload["total_clinical_help_abuse_turns"] = int(new_state.get("total_clinical_help_abuse_turns", 0) or 0)
             debug_payload["total_clinical_low_effort_turns"] = int(new_state.get("total_clinical_low_effort_turns", 0) or 0)
             debug_payload["total_clinical_off_topic_turns"] = int(new_state.get("total_clinical_off_topic_turns", 0) or 0)
             debug_payload["clinical_strike_threshold"] = int(getattr(cfg.dean, "clinical_strike_threshold", 2))
-            # L80.a — clinical phase turn counter (separate from tutoring's
-            # turn_count per L67). Surfaced so the sidebar can render
+            # .a — clinical phase turn counter (separate from tutoring's
+            # turn_count ). Surfaced so the sidebar can render
             # phase-contextual counters during the clinical loop.
             debug_payload["clinical_turn_count"] = int(new_state.get("clinical_turn_count", 0) or 0)
             debug_payload["clinical_max_turns"] = int(new_state.get("clinical_max_turns", 7) or 7)
-            # M1 — surface lifecycle flags so the frontend can pop the
+            # surface lifecycle flags so the frontend can pop the
             # ExitConfirmModal on deflection and render the session-ended
             # banner on close. Without these fields the WS payload would
             # leave the frontend's exitIntentPending/sessionEnded false
@@ -296,7 +290,7 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
             debug_payload["session_ended"] = bool(new_state.get("session_ended", False))
             debug_payload["close_reason"] = str(new_state.get("close_reason", "") or "")
 
-            # Block G (POST_DEMO_FIXES.md, 2026-05-06) — exploration
+            # — exploration
             # meta + diagnostic engagement counters. Always sent;
             # frontend gates rendering by debugMode for the diagnostic
             # ones. EXPLORING sub-badge IS shown to students when
@@ -308,6 +302,23 @@ async def chat_ws(websocket: WebSocket, thread_id: str):
             debug_payload["engaged_wrong_count"] = int(new_state.get("engaged_wrong_count", 0) or 0)
             debug_payload["dean_hint_override_count"] = int(new_state.get("dean_hint_override_count", 0) or 0)
             debug_payload["rule_hint_advance_count"] = int(new_state.get("rule_hint_advance_count", 0) or 0)
+            # Debug-mode-only fields for the sidebar Debug section.
+            # Aliases + full_answer help graders see what the gate is
+            # comparing against; last_preflight_category surfaces the
+            # unified-classifier verdict for the most recent student
+            # turn; exploration_used + exploration_max + urgency_tier
+            # let graders see the budget and pacing pressure.
+            debug_payload["locked_answer_aliases"] = list(new_state.get("locked_answer_aliases", []) or [])
+            debug_payload["full_answer"] = str(new_state.get("full_answer", "") or "")
+            last_preflight = ""
+            for entry in reversed((new_state.get("debug") or {}).get("turn_trace") or []):
+                if isinstance(entry, dict) and entry.get("wrapper") == "preflight":
+                    last_preflight = str(entry.get("category") or "")
+                    break
+            debug_payload["last_preflight_category"] = last_preflight
+            debug_payload["exploration_used"] = int(new_state.get("exploration_used", 0) or 0)
+            debug_payload["exploration_max"] = int(new_state.get("exploration_max", 10) or 10)
+            debug_payload["urgency_tier"] = str(new_state.get("urgency_tier", "") or "")
 
             payload = {
                 "type": "message_complete",

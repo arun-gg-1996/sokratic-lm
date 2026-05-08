@@ -1,6 +1,5 @@
 """
 evaluation/quality/penalties.py
--------------------------------
 Critical / Major penalty checks. These are SEPARATE from dimension scores —
 a session with any Critical penalty is `failed_critical_penalty` regardless
 of how the dimensions look.
@@ -14,11 +13,9 @@ import re
 
 from .schema import SessionView
 
-
 # Severity tiers
 CRITICAL = "critical"
 MAJOR = "major"
-
 
 def compute_penalties(
     view: SessionView,
@@ -27,21 +24,20 @@ def compute_penalties(
     llm_synthesis: Optional[dict],
 ) -> list[dict]:
     """Return a list of penalty records, each with:
-      {code, severity, evidence, turn_id (optional), source (det|llm)}
-    """
+ {code, severity, evidence, turn_id (optional), source (det|llm)}
+"""
     out: list[dict] = []
 
     # ---------------------------------------------- LEAK_DETECTED (Critical)
     # Source: per-turn LLM saying no_reveal=0, OR our deterministic regex
     # matching a leak.
-    #
-    # L39 — skip LEAK_DETECTED on the final close-out turn for sessions
+    # skip LEAK_DETECTED on the final close-out turn for sessions
     # that ended via the turn-25 graceful close, off-domain cap, or
     # abandoned_no_lock paths. By design those closes don't reveal the
-    # answer (per L26 / L56 / L22) and the LLM judge sometimes
+    # answer (/ / ) and the LLM judge sometimes
     # mis-classifies the close prose as a partial reveal. Reach-path
     # closes (where the student DID reach) are NOT exempted — those
-    # legitimately confirm the answer per L65.
+    # legitimately confirm the answer .
     final_turn_id = view.turns[-1].turn_id if view.turns else 0
     is_no_reveal_close = (view.status in {
         "ended_off_domain", "ended_turn_limit", "abandoned_no_lock",
@@ -70,12 +66,12 @@ def compute_penalties(
                 })
 
     # ---------------------------------------------- INVARIANT_VIOLATION (Critical)
-    # Change (2026-04-30, post-18-convo eval review): emit ONE penalty per
+    # Change (, post-18-convo eval review): emit ONE penalty per
     # session regardless of how many violation entries exist in
     # state.debug.invariant_violations. The previous implementation
     # appended one penalty per violation, which produced 14-19 critical
     # penalties on long timeout sessions and dominated the penalty
-    # histogram (110/155 events across the 18-convo batch). Same severity,
+    # histogram (110/155 events across the 18-convo batch). Same severity
     # same code, but the count now reflects "session has any invariant
     # violation" not "session has N violations". Detail is preserved in
     # the evidence string + the raw count.
@@ -171,7 +167,6 @@ def compute_penalties(
 
     return out
 
-
 def compute_verdict(
     primary: dict[str, Any],
     dimensions: dict[str, dict[str, Any]],
@@ -181,15 +176,15 @@ def compute_verdict(
 ) -> str:
     """Combine the three signals into a single verdict string.
 
-    Possible values:
-      'passed' | 'warning' | 'failed_critical_penalty' | 'failed_threshold'
-      'no_lock'        — session ended pre-lock (L21 abandoned_no_lock); not gradable
-      'in_progress'    — session is still open (L21 in_progress); skip scoring
+ Possible values:
+ 'passed' | 'warning' | 'failed_critical_penalty' | 'failed_threshold'
+ 'no_lock' — session ended pre-lock ( abandoned_no_lock); not gradable
+ 'in_progress' — session is still open ( in_progress); skip scoring
 
-    L39 — status-aware short-circuit. Pre-lock-terminated and in-progress
-    sessions can't meaningfully be scored on tutoring-quality dimensions,
-    so we return a distinct verdict instead of failing the rubric.
-    """
+ status-aware short-circuit. Pre-lock-terminated and in-progress
+ sessions can't meaningfully be scored on tutoring-quality dimensions
+ so we return a distinct verdict instead of failing the rubric.
+"""
     if status == "in_progress":
         return "in_progress"
     if status == "abandoned_no_lock":

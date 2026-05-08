@@ -1,21 +1,21 @@
 """
 Finalize data-prep invariants — fixes the 3 residual issues surfaced by
-scripts/validate_data_prep_invariants.py after the L76 + L19 + L38 + reindex pass:
+scripts/validate_data_prep_invariants.py after the + + + reindex pass:
 
-  1. Ch20 chapter rename: chunks with chapter_title="Circulation" need to be
-     rewritten to "The Cardiovascular System: Blood Vessels and Circulation"
-     (the canonical title in textbook_structure.json post-Nidhi's fix).
-  2. Drop chunks with chapter_title="REFERENCES" (bibliography junk that
-     leaked through chunking — not teachable content).
-  3. Append legitimate chunker-extracted subsections (e.g. "Heart Valves",
-     "Heart: Cardiac Tamponade") to textbook_structure.json with
-     source="chunker_extracted" tag. These were always present in chunks but
-     missing from structure because the structure-parser pass dropped them.
+ 1. Ch20 chapter rename: chunks with chapter_title="Circulation" need to be
+ rewritten to "The Cardiovascular System: Blood Vessels and Circulation"
+ (the canonical title in textbook_structure.json post- fix).
+ 2. Drop chunks with chapter_title="REFERENCES" (bibliography junk that
+ leaked through chunking — not teachable content).
+ 3. Append legitimate chunker-extracted subsections (e.g. "Heart Valves"
+ "Heart: Cardiac Tamponade") to textbook_structure.json with
+ source="chunker_extracted" tag. These were always present in chunks but
+ missing from structure because the structure-parser pass dropped them.
 
 After this script runs, the validation gate should be ALL GREEN.
 
 Usage:
-  .venv/bin/python scripts/finalize_data_prep_invariants.py [--dry-run]
+ .venv/bin/python scripts/finalize_data_prep_invariants.py [--dry-run]
 """
 from __future__ import annotations
 
@@ -36,14 +36,11 @@ CH20_NEW = "The Cardiovascular System: Blood Vessels and Circulation"
 
 DROP_CHAPTERS = {"REFERENCES"}
 
-
 def load_chunks() -> list[dict]:
     return [json.loads(l) for l in CHUNKS_PATH.open()]
 
-
 def load_structure() -> dict:
     return json.loads(STRUCT_PATH.read_text())
-
 
 def build_struct_keys(structure: dict) -> set[tuple]:
     out = set()
@@ -60,7 +57,6 @@ def build_struct_keys(structure: dict) -> set[tuple]:
                         out.add((title, sn, sub))
     return out
 
-
 def find_chapter_key(structure: dict, chapter_title: str) -> str | None:
     """Return the structure dict key (e.g. 'Chapter 10: Muscle Tissue') for a chapter title."""
     for k in structure.keys():
@@ -68,7 +64,6 @@ def find_chapter_key(structure: dict, chapter_title: str) -> str | None:
         if ct == chapter_title:
             return k
     return None
-
 
 def main():
     p = argparse.ArgumentParser()
@@ -159,7 +154,6 @@ def main():
     print(f"wrote {STRUCT_PATH}", flush=True)
     print("\nNote: BM25 + Qdrant should be re-indexed (chunks file changed).", flush=True)
     print("Run: .venv/bin/python scripts/reindex_chunks.py", flush=True)
-
 
 if __name__ == "__main__":
     main()

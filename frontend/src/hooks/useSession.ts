@@ -307,7 +307,7 @@ export function useSession() {
     }
   };
 
-  // N1 (2026-05-05): clears the exit_intent_pending flag AND notifies backend.
+  // N1: clears the exit_intent_pending flag AND notifies backend.
   // Old version was frontend-only — the comment claimed "backend will clear on
   // next turn" but the backend's __cancel_exit__ handler at chat.py:118 only
   // fires when it RECEIVES the sentinel. Without sending it, backend state

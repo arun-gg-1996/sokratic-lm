@@ -1,32 +1,16 @@
 """
-memory/observation_extractor.py
-───────────────────────────────
-L4 implementation — single Haiku call at session end extracts misconception
-+ learning_style observations as concrete self-contained sentences. Replaces
-the previous 5-method heuristic stack (_build_misconceptions counted trace
-markers; _build_learning_style counted hedge words / word counts).
+Single Haiku call at session end that extracts narrative
+observations about the student. Two categories are produced:
 
-Per docs/AUDIT_2026-05-02.md L4:
+  * misconception   — factual errors or confusions seen in the session
+  * learning_style  — observable interaction patterns (hedging,
+                      terseness, hint-reliance, exploration tendency)
 
-  Drop the existing 5 _build_* methods in memory/memory_manager.py.
-  Replace with one Haiku call at session end that extracts misconception(s)
-  + learning_style observations as concrete sentences, then writes each as
-  a separate mem0 entry with full metadata.
-
-  Write style: one concrete self-contained sentence per claim. Topic name
-  baked into every claim so mem0's atomization can't strip context.
-
-Categories produced (mem0 only carries these two per L1):
-  * misconception   — observed factual errors / confusions during the session
-  * learning_style  — observable interaction patterns (hedging, terseness,
-                      hint-reliance, exploration tendency, etc.)
-
-What's NOT produced here (now in SQL per L1):
-  * session_summary, open_thread, topics_covered
-
-The function returns a list of (text, category) tuples. The caller wraps
-each with metadata (subsection_path / section_path / session_at / thread_id)
-and writes via safe_mem0_write.
+Each observation is one concrete self-contained sentence. The topic
+name is baked into the sentence so mem0's atomization can't strip
+the context. The function returns a list of `(text, category)`
+tuples; the caller attaches metadata and writes each entry via
+`safe_mem0_write`.
 """
 from __future__ import annotations
 
@@ -35,16 +19,14 @@ import re
 from dataclasses import dataclass
 from typing import Any, Optional
 
-# Categories per L1 (after the SQL split).
+# Categories (after the SQL split).
 ALLOWED_CATEGORIES = {"misconception", "learning_style"}
-
 
 @dataclass
 class Observation:
     text: str          # the concrete self-contained sentence to write
     category: str      # one of ALLOWED_CATEGORIES
     evidence: str = "" # optional excerpt from the transcript (debug only)
-
 
 # Single-shot Haiku prompt. The Haiku model is cheap, so we pay per session
 # rather than per turn. The output is strict JSON; defensive parsing handles
@@ -54,7 +36,6 @@ You are reviewing a student-tutor session and extracting durable
 observations to persist into the student's long-term memory.
 
 {architecture}
-
 
 You will produce TWO categories of observations:
 
@@ -100,7 +81,6 @@ TRANSCRIPT (last {max_turns} student-tutor pairs)
 {transcript}
 """
 
-
 def _format_transcript(messages: list[dict], max_turns: int = 12) -> str:
     """Render the last `max_turns` student / tutor exchanges as plain text."""
     if not messages:
@@ -117,7 +97,6 @@ def _format_transcript(messages: list[dict], max_turns: int = 12) -> str:
         lines.append(f"{prefix}: {content}")
     return "\n\n".join(lines)
 
-
 def _parse_extraction_json(text: str) -> dict:
     """Strip markdown fences and json.loads. Tolerates noisy preamble."""
     s = (text or "").strip()
@@ -132,7 +111,6 @@ def _parse_extraction_json(text: str) -> dict:
             return json.loads(m.group(0))
         raise
 
-
 def extract_observations(
     state: dict,
     *,
@@ -142,14 +120,14 @@ def extract_observations(
     temperature: float = 0.0,
     max_turns: int = 12,
 ) -> list[Observation]:
-    """Single Haiku call → list of Observation per L4.
+    """Single Haiku call → list of Observation .
 
-    Returns [] on any LLM error (caller logs the failure via
-    safe_mem0_write trace, but the session continues normally).
+ Returns on any LLM error (caller logs the failure via
+ safe_mem0_write trace, but the session continues normally).
 
-    Caller is responsible for adding required metadata to each
-    observation before persisting via safe_mem0_write.
-    """
+ Caller is responsible for adding required metadata to each
+ observation before persisting via safe_mem0_write.
+"""
     locked = state.get("locked_topic") or {}
     if not locked:
         locked = (state.get("debug") or {}).get("locked_topic_snapshot") or {}
@@ -168,7 +146,7 @@ def extract_observations(
 
     transcript = _format_transcript(state.get("messages") or [], max_turns=max_turns)
 
-    # M-T2 (POST_DEMO_FIXES.md, 2026-05-06): pull the canonical
+    # M-pull the canonical
     # architecture block from cfg.prompts so this prompt stays in
     # lockstep with all other architecture references. Importing
     # lazily keeps observation_extractor importable without config in

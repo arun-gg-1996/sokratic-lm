@@ -1,14 +1,12 @@
 from pathlib import Path
 import yaml
 
-
 def _load_prompts() -> dict:
     # 2026-05-05: D1/D2 cleanup deleted root config.yaml; prompts moved to config/base.yaml.
     cfg_path = Path(__file__).resolve().parents[1] / "config" / "base.yaml"
     with cfg_path.open("r", encoding="utf-8") as f:
         raw = yaml.safe_load(f)
     return raw["prompts"]
-
 
 def _reconstruct(base: str, delta: str) -> str:
     b = base or ""
@@ -21,7 +19,6 @@ def _reconstruct(base: str, delta: str) -> str:
             return f"{b}{d}".strip()
         return f"{b}\n\n{d}".strip()
     return (b or d).strip()
-
 
 def test_prompt_parity_teacher_and_dean_wrappers():
     import pytest
@@ -47,7 +44,7 @@ def test_prompt_parity_teacher_and_dean_wrappers():
         ("dean_quality_check_assessment_static", "dean_quality_check_assessment_delta"),
         ("dean_clinical_turn_static", "dean_clinical_turn_delta"),
         ("dean_assessment_static", "dean_assessment_delta"),
-        # M-T3 (POST_DEMO_FIXES.md, 2026-05-06): dean_memory_summary +
+        # M-dean_memory_summary +
         # _delta removed from base.yaml. Replaced by the L4 Haiku
         # observation extractor in memory/observation_extractor.py.
     ]

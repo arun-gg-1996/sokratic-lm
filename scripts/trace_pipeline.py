@@ -1,22 +1,21 @@
 """
 scripts/trace_pipeline.py
--------------------------
 Per-query candidate-pool tracer. For each chosen query:
-  1) Resolve the *answer-rich* chunk_ids in the corpus (via content-token
-     overlap with expected_answer >= 0.60).
-  2) Run the retriever's internal stages directly:
-       - dense top-N qdrant  (with full top-N — wider than retrieval default)
-       - BM25 top-N
-       - RRF merge of the two
-       - parent-chunk expansion
-       - cross-encoder rerank
-  3) Report whether/at what rank the answer-rich chunks appear at each stage.
+ 1) Resolve the *answer-rich* chunk_ids in the corpus (via content-token
+ overlap with expected_answer >= 0.60).
+ 2) Run the retriever's internal stages directly:
+dense top-N qdrant (with full top-N — wider than retrieval default)
+BM25 top-N
+RRF merge of the two
+parent-chunk expansion
+cross-encoder rerank
+ 3) Report whether/at what rank the answer-rich chunks appear at each stage.
 
 Output identifies WHERE in the pipeline the right chunk gets lost.
 
 Usage:
-  cd /Users/arun-ghontale/UB/NLP/sokratic
-  .venv/bin/python scripts/trace_pipeline.py --n 10
+ cd /Users/arun-ghontale/UB/NLP/sokratic
+ .venv/bin/python scripts/trace_pipeline.py --n 10
 """
 from __future__ import annotations
 
@@ -48,17 +47,14 @@ them they we us our you your he she his her this can will would should could
 may might must i me my mine
 """.split())
 
-
 def normalize(s):
     s = (s or "").lower()
     s = re.sub(r"[^a-z0-9 ]+", " ", s)
     s = re.sub(r"\s+", " ", s).strip()
     return s
 
-
 def ctok(s):
     return [t for t in normalize(s).split() if t not in _STOP and len(t) > 2]
-
 
 def overlap(answer, text):
     a = ctok(answer)
@@ -67,13 +63,11 @@ def overlap(answer, text):
     t = set(ctok(text))
     return sum(1 for x in a if x in t) / len(a)
 
-
 def parse_legacy_section(s):
     s = re.sub(r"^\d+\.\d+\s+", "", (s or "").strip())
     if " — " in s:
         return s.split(" — ", 1)[0].strip()
     return s
-
 
 def find_rank(items, key_fn, target_check):
     """Return 1-based rank of first item passing target_check, or -1."""
@@ -81,7 +75,6 @@ def find_rank(items, key_fn, target_check):
         if target_check(x):
             return i
     return -1
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -216,7 +209,6 @@ def main():
         else:
             verdict = "RECOVERED at top-5 after rerank? (shouldn't be a failure)"
         print(f"    >> verdict: {verdict}")
-
 
 if __name__ == "__main__":
     main()

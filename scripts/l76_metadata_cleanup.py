@@ -1,31 +1,30 @@
-"""
-L76 — LLM-based chunk metadata cleanup (no orphans, no heuristics).
+"""LLM-based chunk metadata cleanup (no orphans, no heuristics).
 
-Per docs/AUDIT_2026-05-02.md L76:
-  Hard invariant: every chunk in chunks_openstax_anatomy.jsonl MUST have all
-  three hierarchy levels populated (chapter_title, section_title,
-  subsection_title). The validation gate at the end fails the build if any
-  chunk lacks any field.
+Per docs/AUDIT_2026-05-02.md :
+ Hard invariant: every chunk in chunks_openstax_anatomy.jsonl MUST have all
+ three hierarchy levels populated (chapter_title, section_title
+ subsection_title). The validation gate at the end fails the build if any
+ chunk lacks any field.
 
-Algorithm (per L76):
-  For each chunk missing subsection_title:
-    1. Haiku attempt with chunk text + section's TOC neighbors + raptor
-       summaries + neighbor chunks (prev/next 200 chars).
-       Output: { action: "use_existing"|"create_new", chapter, section,
-                 subsection, confidence, rationale }
-       Confidence >= 0.8 (use_existing) OR >= 0.85 (create_new) -> accept
-    2. Sonnet escalation if Haiku confidence below threshold.
-       Confidence >= 0.8 -> accept
-    3. If Sonnet still uncertain -> FORCE create_new at Sonnet's best guess
-       (no drops, no orphans). Tag with low_confidence flag for audit.
+Algorithm :
+ For each chunk missing subsection_title:
+ 1. Haiku attempt with chunk text + section's TOC neighbors + raptor
+ summaries + neighbor chunks (prev/next 200 chars).
+ Output: { action: "use_existing"|"create_new", chapter, section
+ subsection, confidence, rationale }
+ Confidence >= 0.8 (use_existing) OR >= 0.85 (create_new) -> accept
+ 2. Sonnet escalation if Haiku confidence below threshold.
+ Confidence >= 0.8 -> accept
+ 3. If Sonnet still uncertain -> FORCE create_new at Sonnet's best guess
+ (no drops, no orphans). Tag with low_confidence flag for audit.
 
 Outputs:
-  - data/processed/chunks_openstax_anatomy.jsonl  (in-place, with .pre_l76.bak)
-  - data/textbook_structure.json (in-place, with .pre_l76.bak; new subsections appended)
-  - data/artifacts/llm_synthesized_subsections/{date}.json (audit log of create_new decisions)
+data/processed/chunks_openstax_anatomy.jsonl (in-place, with .pre_l76.bak)
+data/textbook_structure.json (in-place, with .pre_l76.bak; new subsections appended)
+ (audit log of create_new decisions)
 
 Usage:
-  .venv/bin/python scripts/l76_metadata_cleanup.py [--dry-run] [--limit N] [--concurrency N]
+ .venv/bin/python scripts/l76_metadata_cleanup.py [--dry-run] [--limit N] [--concurrency N]
 """
 from __future__ import annotations
 
@@ -65,7 +64,6 @@ HAIKU_USE_EXISTING_THRESHOLD = 0.80
 HAIKU_CREATE_NEW_THRESHOLD = 0.85
 SONNET_ACCEPT_THRESHOLD = 0.80
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Loaders
 # ─────────────────────────────────────────────────────────────────────────────
@@ -73,10 +71,8 @@ SONNET_ACCEPT_THRESHOLD = 0.80
 def load_chunks() -> list[dict]:
     return [json.loads(l) for l in CHUNKS_PATH.open()]
 
-
 def load_structure() -> dict:
     return json.loads(STRUCT_PATH.read_text())
-
 
 def load_raptor_summaries() -> dict[tuple, str]:
     out = {}
@@ -90,7 +86,6 @@ def load_raptor_summaries() -> dict[tuple, str]:
         out[k] = s.get("summary") or s.get("text") or ""
     return out
 
-
 def index_chunks_by_section(chunks: list[dict]) -> dict[tuple, list[dict]]:
     """Group all chunks by (chapter_num, section_title) for neighbor lookup."""
     out = defaultdict(list)
@@ -101,22 +96,20 @@ def index_chunks_by_section(chunks: list[dict]) -> dict[tuple, list[dict]]:
         out[k].sort(key=lambda c: c.get("sequence_index", 0))
     return out
 
-
 def find_chapter_node(structure: dict, ch_num: int) -> tuple[str, dict] | tuple[None, None]:
     """Find the textbook_structure entry for a chapter by number.
 
-    Structure shape (nested dict keyed by 'Chapter N: Title'):
-        {
-          "Chapter 10: Muscle Tissue": {"difficulty": ..., "sections": {...}},
-          ...
-        }
-    """
+ Structure shape (nested dict keyed by 'Chapter N: Title'):
+ {
+ "Chapter 10: Muscle Tissue": {"difficulty": ..., "sections": {...}}
+ ...
+ }
+"""
     prefix = f"Chapter {ch_num}:"
     for k, v in structure.items():
         if k.startswith(prefix) and isinstance(v, dict):
             return k, v
     return None, None
-
 
 def get_section_subsections(structure: dict, ch_num: int, section_title: str) -> list[str]:
     """Return existing subsections under this (chapter, section). Empty list if not found."""
@@ -133,7 +126,6 @@ def get_section_subsections(structure: dict, ch_num: int, section_title: str) ->
     if isinstance(subs, list):
         return [(s.get("title") or s.get("name") or "") for s in subs if (s.get("title") or s.get("name"))]
     return []
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Prompt builder
@@ -221,7 +213,6 @@ Return ONLY a JSON object — no prose, no markdown:
 }}
 """
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # LLM calls
 # ─────────────────────────────────────────────────────────────────────────────
@@ -247,7 +238,6 @@ async def call_llm(client, model: str, prompt: str, max_tokens: int = 400) -> di
         if m:
             return json.loads(m.group(0))
         raise
-
 
 async def classify_chunk(
     client,
@@ -310,18 +300,17 @@ async def classify_chunk(
                 "low_confidence": False,
             }
 
-        # Stage 3: forced create_new at Sonnet's best guess (per L76 — no drops)
+        # Stage 3: forced create_new at Sonnet's best guess (— no drops)
         return {
             "chunk_id": chunk.get("chunk_id"),
             "action": "create_new",
             "subsection": sonnet_out.get("subsection") or "Unclassified",
             "confidence": confidence2,
-            "rationale": (sonnet_out.get("rationale", "") or "") + " [FORCED — no orphans per L76 invariant]",
+            "rationale": (sonnet_out.get("rationale", "") or "") + " [FORCED — no orphans invariant]",
             "source": "sonnet_forced_create_new",
             "model": "sonnet",
             "low_confidence": True,
         }
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Orchestration
@@ -506,7 +495,6 @@ async def main_async(args):
     else:
         print("  ✓ all chunks now have full hierarchy (chapter + section + subsection)", flush=True)
 
-
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--dry-run", action="store_true", help="Show what would be classified, don't call APIs")
@@ -514,7 +502,6 @@ def main():
     p.add_argument("--concurrency", type=int, default=10, help="Max concurrent LLM calls")
     args = p.parse_args()
     asyncio.run(main_async(args))
-
 
 if __name__ == "__main__":
     main()

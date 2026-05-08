@@ -3,10 +3,8 @@
 # ------------------------------
 # One-shot VM provisioner for Sokratic on Ubuntu 22.04 / 24.04.
 # Targets the deploy shape documented in docs/DEPLOY_GCP.md.
-#
 # Idempotent — safe to re-run after partial failures. Each step
 # checks for the artifact it produces and skips if already present.
-#
 # What this DOES (gated pipeline — every gate is a hard fail):
 #   1. Installs system packages (python3.11, node, docker, nginx, git)
 #   2. Clones / fast-forwards the repo into /opt/sokratic
@@ -26,21 +24,17 @@
 #       Hard-fail before systemd starts uvicorn.
 #   8. Installs the sokratic-backend systemd unit + nginx site, starts
 #      services, waits for /health = 200.
-#
 # What this does NOT do (left to the operator):
 #   - Write /opt/sokratic/.env (place secrets manually before step 6/7;
 #     the script will refuse to start the backend without it)
 #   - Issue a TLS cert (use certbot once DNS is in place)
 #   - Run scripts/publish_corpus.py (HF push lives off the dev box)
-#
 # Usage (on the VM, as the deploy user):
 #   sudo bash scripts/deploy_vm_bootstrap.sh
-#
 # Or interactively (re-run after fixing .env):
 #   sudo bash scripts/deploy_vm_bootstrap.sh --skip-system   # skip apt
 #   sudo bash scripts/deploy_vm_bootstrap.sh --skip-frontend # skip npm
 #   sudo bash scripts/deploy_vm_bootstrap.sh --restart-only  # only systemctl
-#
 # Prerequisites on the VM (fresh Ubuntu install):
 #   - sudo access for the running user
 #   - SSH-key-based github access for the repo (or use HTTPS clone with PAT)

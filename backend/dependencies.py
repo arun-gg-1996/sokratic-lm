@@ -10,7 +10,6 @@ from conversation.graph import build_graph
 from memory.memory_manager import MemoryManager
 from retrieval.retriever import ChunkRetriever
 
-
 @dataclass
 class SessionRuntime:
     """In-memory session state cache keyed by thread_id."""
@@ -27,19 +26,16 @@ class SessionRuntime:
         with self._lock:
             self._states[thread_id] = dict(state)
 
-
 @lru_cache(maxsize=1)
 def get_memory_manager() -> MemoryManager:
     return MemoryManager()
 
-
 @lru_cache(maxsize=1)
 def get_retriever():
     """
-    Use the single production retriever path only.
-    """
+ Use the single production retriever path only.
+"""
     return ChunkRetriever()
-
 
 @lru_cache(maxsize=1)
 def get_graph():
@@ -47,18 +43,16 @@ def get_graph():
     memory_manager = get_memory_manager()
     return build_graph(retriever, memory_manager)
 
-
 @lru_cache(maxsize=1)
 def get_dean() -> DeanAgent:
     """Direct DeanAgent reference. The graph holds one internally but
-    doesn't expose it; some endpoints (notably the Revisit pre-lock in
-    session.py) need to call dean.* methods imperatively before the
-    graph runs. Reuses the same retriever + memory_client singletons
-    so dean state stays consistent across the two construction sites."""
+ doesn't expose it; some endpoints (notably the Revisit pre-lock in
+ session.py) need to call dean.* methods imperatively before the
+ graph runs. Reuses the same retriever + memory_client singletons
+ so dean state stays consistent across the two construction sites."""
     retriever = get_retriever()
     memory_client = get_memory_manager().persistent
     return DeanAgent(retriever, memory_client)
-
 
 @lru_cache(maxsize=1)
 def get_runtime_store() -> SessionRuntime:

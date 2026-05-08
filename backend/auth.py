@@ -11,11 +11,9 @@ from typing import Any
 from fastapi import HTTPException, Request, WebSocket
 from fastapi.responses import JSONResponse
 
-
 AUTH_USERS_ENV = "SOKRATIC_AUTH_USERS"
 AUTH_SECRET_ENV = "SOKRATIC_AUTH_SECRET"
 TOKEN_TTL_SECONDS = 60 * 60 * 24 * 14
-
 
 def _secret() -> bytes:
     raw = os.environ.get(AUTH_SECRET_ENV, "").strip()
@@ -25,15 +23,12 @@ def _secret() -> bytes:
         raw = "sokratic-local-dev-secret"
     return raw.encode("utf-8")
 
-
 def _b64encode(data: bytes) -> str:
     return base64.urlsafe_b64encode(data).decode("ascii").rstrip("=")
-
 
 def _b64decode(data: str) -> bytes:
     padding = "=" * (-len(data) % 4)
     return base64.urlsafe_b64decode((data + padding).encode("ascii"))
-
 
 def configured_passwords() -> dict[str, str]:
     raw = os.environ.get(AUTH_USERS_ENV, "").strip()
@@ -47,7 +42,6 @@ def configured_passwords() -> dict[str, str]:
         if username and password:
             users[username] = password
     return users
-
 
 def configured_user_ids() -> list[str]:
     raw = os.environ.get(AUTH_USERS_ENV, "").strip()
@@ -63,7 +57,6 @@ def configured_user_ids() -> list[str]:
             seen.add(username)
     return ids
 
-
 def create_token(username: str) -> str:
     payload = {
         "sub": username.lower().strip(),
@@ -73,7 +66,6 @@ def create_token(username: str) -> str:
     body = _b64encode(json.dumps(payload, separators=(",", ":")).encode("utf-8"))
     sig = hmac.new(_secret(), body.encode("ascii"), hashlib.sha256).digest()
     return f"{body}.{_b64encode(sig)}"
-
 
 def verify_token(token: str) -> str | None:
     if not token or "." not in token:
@@ -94,7 +86,6 @@ def verify_token(token: str) -> str | None:
         return None
     return username
 
-
 def authenticate(username: str, password: str) -> str | None:
     users = configured_passwords()
     expected = users.get(username.lower().strip())
@@ -103,7 +94,6 @@ def authenticate(username: str, password: str) -> str | None:
     if not hmac.compare_digest(password, expected):
         return None
     return create_token(username)
-
 
 def bearer_user(request: Request) -> str:
     header = request.headers.get("authorization", "")
@@ -114,7 +104,6 @@ def bearer_user(request: Request) -> str:
     if not username:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
     return username
-
 
 async def require_api_auth(request: Request, call_next):
     if request.method == "OPTIONS":
@@ -147,7 +136,6 @@ async def require_api_auth(request: Request, call_next):
         if forbidden:
             return JSONResponse({"detail": "Forbidden"}, status_code=403)
     return await call_next(request)
-
 
 async def websocket_auth(websocket: WebSocket) -> str | None:
     return verify_token(websocket.query_params.get("token", ""))

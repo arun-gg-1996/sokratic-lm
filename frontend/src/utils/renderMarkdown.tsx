@@ -1,5 +1,5 @@
 /**
- * renderMarkdown.tsx — N5 (POST_DEMO_FIXES.md, 2026-05-06)
+ * renderMarkdown.tsx — N5
  * ========================================================
  * Tiny markdown renderer for tutor messages. Anthropic's models
  * regularly produce **bold**, *italic*, `code`, and bullet lists in

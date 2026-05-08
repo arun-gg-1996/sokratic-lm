@@ -1,31 +1,15 @@
 """
-backend/api/sessions.py
------------------------
-M5 (Analysis View) — per-session detail endpoints.
+Per-session detail endpoints (the analysis view).
 
-Routes:
-  GET  /api/sessions/{thread_id}                    → metadata + key_takeaways
-  GET  /api/sessions/{thread_id}/transcript         → full message log
-  POST /api/sessions/{thread_id}/analysis_chat      → scoped read-only chat
-  POST /api/sessions/{thread_id}/regenerate_takeaways → retry close LLM
+  GET  /api/sessions/{thread_id}                       — metadata + takeaways
+  GET  /api/sessions/{thread_id}/transcript            — full message log
+  POST /api/sessions/{thread_id}/analysis_chat         — scoped read-only chat
+  POST /api/sessions/{thread_id}/regenerate_takeaways  — retry the close LLM
 
-The transcript fetch reads from the JSON artifacts written by
-nodes._log_conversation (data/artifacts/conversations/*.json). Files are
-named `{student_id}_{thread_suffix}_turn_N.json`. We glob by thread_suffix
-so the API doesn't need a name-format migration (per M5 D5).
-
-Analysis chat behavior (per M5 D1):
-  Step 1: Haiku scope check (~$0.0003) — is this question about THIS
-          session's subsection? If NO → refusal, no Sonnet call.
-  Step 2: If YES → Sonnet with (transcript + locked Q/A + chunks +
-          mem0 filtered by subsection_path + this analysis history).
-  Step 3: NO DB writes (read-only meta-discussion). History lives only
-          in the request payload — ephemeral per visit (D2).
-
-Regenerate takeaways: rebuilds the close-LLM input from the transcript
-artifact + sessions row, re-fires Teacher.draft(mode="close"), parses
-the JSON output, UPDATEs sessions.key_takeaways. Same code path as
-memory_update_node._draft_close_message.
+Transcript fetches read the per-turn JSON artifacts. Analysis chat
+runs a Haiku scope check first to ensure questions stay on the locked
+subsection; out-of-scope questions get refused without spending a
+Sonnet call. The chat is read-only — no database writes happen.
 """
 from __future__ import annotations
 
@@ -41,7 +25,6 @@ from config import cfg
 
 router = APIRouter()
 
-
 # ─── Models ─────────────────────────────────────────────────────────────────
 
 class TranscriptMessage(BaseModel):
@@ -50,17 +33,14 @@ class TranscriptMessage(BaseModel):
     phase: Optional[str] = None
     metadata: Optional[dict] = None
 
-
 class TranscriptResponse(BaseModel):
     thread_id: str
     student_id: Optional[str] = None
     messages: list[TranscriptMessage] = []
 
-
 class AnalysisChatRequest(BaseModel):
     message: str
     history: list[dict] = []   # ephemeral [{role, content}, ...]
-
 
 class AnalysisChatResponse(BaseModel):
     thread_id: str
@@ -68,25 +48,23 @@ class AnalysisChatResponse(BaseModel):
     in_scope: bool
     cost_estimate_usd: float = 0.0
 
-
 class RegenerateResponse(BaseModel):
     thread_id: str
     success: bool
     key_takeaways: Optional[dict] = None
     error: Optional[str] = None
 
-
 # ─── Transcript fetch ────────────────────────────────────────────────────────
 
 def _resolve_transcript_path(thread_id: str) -> Optional[Path]:
     """Glob conversations/ for the latest snapshot of this thread.
 
-    Filenames are `{student_id}_{thread_suffix}_turn_N.json` (per
-    nodes._log_conversation) — we don't have the student_id yet when
-    looking up by thread_id, but the thread_id format
-    `{student_id}_{uuid8}` means thread_suffix is the last 8 chars.
-    Glob matches any filename containing the suffix.
-    """
+ Filenames are `{student_id}_{thread_suffix}_turn_N.json` (per
+ nodes._log_conversation) — we don't have the student_id yet when
+ looking up by thread_id, but the thread_id format
+ `{student_id}_{uuid8}` means thread_suffix is the last 8 chars.
+ Glob matches any filename containing the suffix.
+"""
     artifacts_dir = Path(cfg.paths.artifacts) / "conversations"
     if not artifacts_dir.is_absolute():
         artifacts_dir = Path(__file__).resolve().parent.parent.parent / cfg.paths.artifacts / "conversations"
@@ -105,18 +83,40 @@ def _resolve_transcript_path(thread_id: str) -> Optional[Path]:
     matches.sort(key=_turn_num)
     return matches[-1]
 
-
 @router.get("/sessions/{thread_id}/transcript", response_model=TranscriptResponse)
 async def get_session_transcript(thread_id: str) -> TranscriptResponse:
-    """Read the most recent conversation snapshot for this thread."""
+    """Read the persisted conversation transcript for one session.
+
+  Source of truth post-migration 003 is the SQL `messages` table. Falls
+  back to the legacy per-turn JSON snapshot file only when SQL has no
+  rows (older sessions written before chat persistence was wired).
+  """
     tid = (thread_id or "").strip()
     if not tid:
         raise HTTPException(status_code=400, detail="thread_id required")
 
+    # SQL first.
+    from memory.sqlite_store import SQLiteStore
+    store = SQLiteStore()
+    sql_msgs = store.list_messages(tid)
+    if sql_msgs:
+        sess = store.get_session(tid)
+        student_id = (sess or {}).get("student_id")
+        out: list[TranscriptMessage] = [
+            TranscriptMessage(
+                role=str(m.get("role") or ""),
+                content=str(m.get("content") or ""),
+                phase=(m.get("metadata") or {}).get("phase") if isinstance(m.get("metadata"), dict) else None,
+                metadata=m.get("metadata") if isinstance(m.get("metadata"), dict) else None,
+            )
+            for m in sql_msgs
+            if str(m.get("role") or "").strip()
+        ]
+        return TranscriptResponse(thread_id=tid, student_id=student_id, messages=out)
+
+    # Legacy fallback: JSON snapshot files written before migration 003.
     p = _resolve_transcript_path(tid)
     if p is None:
-        # No artifact — session may not have produced one (very short
-        # session, or older session before logging was added).
         return TranscriptResponse(thread_id=tid, messages=[])
 
     try:
@@ -126,37 +126,77 @@ async def get_session_transcript(thread_id: str) -> TranscriptResponse:
 
     student_id = d.get("student_id") or None
     raw_messages = d.get("messages") or []
-    out: list[TranscriptMessage] = []
+    out = []
     for m in raw_messages:
         if not isinstance(m, dict):
             continue
         role = str(m.get("role") or "").strip()
-        content = str(m.get("content") or "")
         if not role:
             continue
         meta = m.get("metadata") if isinstance(m.get("metadata"), dict) else None
         out.append(TranscriptMessage(
-            role=role, content=content,
+            role=role, content=str(m.get("content") or ""),
             phase=str(m.get("phase") or "") or None,
             metadata=meta,
         ))
     return TranscriptResponse(thread_id=tid, student_id=student_id, messages=out)
 
-
 # ─── Analysis chat ───────────────────────────────────────────────────────────
 
 _SCOPE_CHECK_SYSTEM = """\
 You are a scope guard for a session-analysis chat. The student is
-reviewing a PAST tutoring session about a SPECIFIC subsection. They
-should ONLY ask questions about THIS session — what they answered,
-why they got something wrong, what the locked question was, etc.
+reviewing a PAST tutoring session about a SPECIFIC subsection. The
+allowed conversation surface is META-DISCUSSION about that session.
 
-If the question is about THIS session or its subsection content →
-verdict="in_scope".
+The classification principle:
 
-If the question is asking to learn a new topic (e.g. "what is the
-mitochondria?" when the session was about the spleen) →
-verdict="off_scope".
+  in_scope  — the question is ABOUT the past session: what happened,
+              what was scored, what the student missed, why the tutor
+              acted a certain way, what the locked subsection was,
+              where it sits in the textbook, what patterns the tutor
+              observed, how to do better next time, etc. The answer
+              would naturally cite turns or session-level metadata
+              ("on turn 6 you said..." / "your score reflects...").
+
+  off_scope — the student is asking the tutor to TEACH them content
+              from a DIFFERENT subsection, navigate to another part
+              of the app, or do a fresh tutoring exercise. The answer
+              would require leaving the session-review frame.
+
+Default to in_scope. Only mark off_scope when the request clearly
+exits the session-review frame.
+
+A few calibration examples covering categorically different shapes
+(do NOT match these literally — match the underlying intent):
+
+  Student: "I don't understand why I lost points there"
+  → in_scope. Asking about the session's scoring.
+
+  Student: "where does this topic appear in the book?"
+  → in_scope. Asking about THIS session's topic — its location in
+     the curriculum is metadata about THIS subsection. The student
+     is NOT asking you to teach a different chapter.
+
+  Student: "what's your read on how I did?"
+  → in_scope. Asking for the tutor's assessment of THIS session.
+
+  Student: "I noticed you sent that note at the end — what was it?"
+  → in_scope. Asking about a specific message in the transcript.
+
+  Student: "give me a new exercise on the same topic"
+  → off_scope. Asking for a new tutoring session, not analysis.
+
+  Student: "explain photosynthesis to me"
+  → off_scope (assuming the session wasn't about photosynthesis).
+     Asking to be taught a different subject.
+
+  Student: "next lesson please"
+  → off_scope. App navigation, not session analysis.
+
+Edge case: if the student asks a content question about the SAME
+subsection they just studied (e.g. "remind me what hyaline cartilage
+is" after a cartilage session) — that's in_scope, because clarifying
+content from THIS session is part of reviewing it.
 
 Output STRICT JSON only:
 {
@@ -164,7 +204,6 @@ Output STRICT JSON only:
   "rationale": "<1-line explanation>"
 }
 """
-
 
 def _scope_check(student_message: str, locked_subsection: str) -> dict:
     from conversation.classifiers import _haiku_call, _cached_system_block, _extract_json
@@ -185,7 +224,6 @@ def _scope_check(student_message: str, locked_subsection: str) -> dict:
         v = "in_scope"
     return {"verdict": v, "rationale": str(parsed.get("rationale", ""))[:200]}
 
-
 _ANALYSIS_SYSTEM = """\
 You are a Socratic tutor reviewing a PAST session with the student.
 You see the full transcript of that session, the locked question +
@@ -203,7 +241,6 @@ Strict rules:
 - Do NOT teach the wider topic — just analyze THIS session.
 - Do NOT propose a new exercise; this is read-only meta-discussion.
 """
-
 
 @router.post("/sessions/{thread_id}/analysis_chat", response_model=AnalysisChatResponse)
 async def analysis_chat(thread_id: str, req: AnalysisChatRequest) -> AnalysisChatResponse:
@@ -261,6 +298,70 @@ async def analysis_chat(thread_id: str, req: AnalysisChatRequest) -> AnalysisCha
     locked_q = sess.get("locked_question") or ""
     locked_a = sess.get("locked_answer") or sess.get("full_answer") or ""
 
+    # Pull structured per-turn classifier verdicts from the JSON snapshot
+    # so the analysis LLM doesn't have to guess intent/abuse categories
+    # from message text alone (which it gets wrong — e.g. classifying a
+    # legitimate clarifying question as "off-topic"). The snapshot file
+    # carries the actual classifier verdicts the dean recorded at runtime.
+    counters_block = ""
+    snap_path = _resolve_transcript_path(tid)
+    if snap_path is not None:
+        try:
+            snap_data = json.loads(snap_path.read_text())
+            per_turn = (snap_data.get("debug") or {}).get("per_turn_snapshots") or []
+            lines = []
+            for snap in per_turn:
+                if not isinstance(snap, dict):
+                    continue
+                role = snap.get("role")
+                idx = snap.get("turn_index", "?")
+                phase = snap.get("phase", "")
+                if role == "student":
+                    intent = snap.get("intent", "")
+                    evidence = (snap.get("intent_evidence") or "")[:60]
+                    lines.append(
+                        f"  turn {idx} [{phase}] student intent={intent!r}"
+                        + (f" evidence={evidence!r}" if evidence else "")
+                    )
+                elif role == "tutor":
+                    mode = snap.get("mode", "")
+                    tone = snap.get("tone", "")
+                    lines.append(
+                        f"  turn {idx} [{phase}] tutor mode={mode!r} tone={tone!r}"
+                    )
+            # Final session-level totals (derived from latest snapshot or row)
+            totals = []
+            if per_turn:
+                last = per_turn[-1]
+                for k in (
+                    "total_low_effort_turns",
+                    "total_help_abuse_turns",
+                    "total_off_topic_turns",
+                    "total_clinical_help_abuse_turns",
+                    "total_clinical_off_topic_turns",
+                ):
+                    v = last.get(k, 0) or 0
+                    if v:
+                        totals.append(f"{k}={v}")
+            score_line = (
+                f"  core_score={sess.get('core_score')}, "
+                f"clinical_score={sess.get('clinical_score')}, "
+                f"mastery_tier={sess.get('mastery_tier')!r}"
+            )
+            if lines:
+                counters_block = (
+                    "\nSTRUCTURED TURN CLASSIFIER VERDICTS "
+                    "(from runtime — these are FACTS about what happened, "
+                    "not your interpretation of the transcript):\n"
+                    + "\n".join(lines)
+                    + (f"\n  TOTALS: {', '.join(totals)}" if totals else "")
+                    + f"\n{score_line}\n"
+                )
+        except Exception:
+            # Snapshot may not exist for legacy sessions — fall through
+            # without the counters block. The transcript is still usable.
+            counters_block = ""
+
     # Append prior analysis-chat history (D2 ephemeral — caller carries it)
     prior_history = "\n".join(
         f"{(h.get('role') or '').upper()}: {(h.get('content') or '')[:400]}"
@@ -268,15 +369,14 @@ async def analysis_chat(thread_id: str, req: AnalysisChatRequest) -> AnalysisCha
         if isinstance(h, dict) and h.get("content")
     )
 
-    # A4 (POST_DEMO_FIXES.md, 2026-05-06): query mem0 for prior
+    # query mem0 for prior
     # observations on THIS subsection so the analysis chat can answer
     # questions that span multiple sessions on the same topic. The
     # docstring at the top of this module promised this; the code
     # didn't deliver until now.
-    #
     # Filters:
-    #   subsection_path = locked_subsection (exact match)
-    #   category in (misconception, learning_style)
+    # subsection_path = locked_subsection (exact match)
+    # category in (misconception, learning_style)
     # Excludes the current thread_id so this isn't just echoing back
     # the same session's observations.
     student_id = sess.get("student_id") or ""
@@ -335,10 +435,14 @@ async def analysis_chat(thread_id: str, req: AnalysisChatRequest) -> AnalysisCha
         f"LOCKED QUESTION:   {locked_q}\n"
         f"TEXTBOOK ANSWER:   {locked_a}\n\n"
         f"PAST SESSION TRANSCRIPT:\n{transcript_block}\n"
+        + counters_block
         + mem0_block
         + (f"\n\nPRIOR ANALYSIS CHAT:\n{prior_history}" if prior_history else "")
         + f"\n\nSTUDENT'S CURRENT QUESTION:\n{msg}\n\n"
         "Respond in 2-4 sentences. Reference turn numbers when useful. "
+        "When citing intent classifications (off-topic, help-abuse, "
+        "low-effort), use the STRUCTURED TURN CLASSIFIER VERDICTS above "
+        "as ground truth — do NOT re-classify from the transcript. "
         "If cross-session observations above are relevant, weave them "
         "in naturally (e.g. 'in your earlier session you struggled with X')."
     )
@@ -366,15 +470,14 @@ async def analysis_chat(thread_id: str, req: AnalysisChatRequest) -> AnalysisCha
         cost_estimate_usd=0.005,  # rough — Sonnet ~$3/M tokens, ~1.5K tokens
     )
 
-
 # ─── Regenerate takeaways ───────────────────────────────────────────────────
 
 @router.post("/sessions/{thread_id}/regenerate_takeaways", response_model=RegenerateResponse)
 async def regenerate_takeaways(thread_id: str) -> RegenerateResponse:
-    """M5 — re-fire the close LLM for a session whose key_takeaways is null
-    or stale. Reads transcript + sessions row, calls Teacher with mode=close,
-    parses JSON output, UPDATEs the sessions row in place.
-    """
+    """re-fire the close LLM for a session whose key_takeaways is null
+ or stale. Reads transcript + sessions row, calls Teacher with mode=close
+ parses JSON output, UPDATEs the sessions row in place.
+"""
     tid = (thread_id or "").strip()
     if not tid:
         raise HTTPException(status_code=400, detail="thread_id required")
@@ -439,12 +542,10 @@ async def regenerate_takeaways(thread_id: str) -> RegenerateResponse:
         thread_id=tid, success=True, key_takeaways=takeaways,
     )
 
-
-# ─── N8 — Suggest replies (LLM-driven student-profile suggestions) ───────────
+# ─── — Suggest replies (LLM-driven student-profile suggestions) ───────────
 
 class SuggestRepliesRequest(BaseModel):
     profile: Optional[str] = "S2"  # default: Moderate
-
 
 class SuggestionItem(BaseModel):
     text: str
@@ -452,13 +553,11 @@ class SuggestionItem(BaseModel):
     color: str  # CSS class hint (resolved by frontend)
     rationale: Optional[str] = ""
 
-
 class SuggestRepliesResponse(BaseModel):
     thread_id: str
     profile: str
     suggestions: list[SuggestionItem] = []
     error: Optional[str] = None
-
 
 # Profile labels (mirrored from evaluation/simulation/profiles.py for
 # stand-alone fidelity — the suggester uses these as natural-language
@@ -483,7 +582,6 @@ _N8_PROFILES = {
            "knows the answer but adds qualifiers ('I think', 'maybe'), "
            "asks meta-questions about whether they're on track"),
 }
-
 
 _SUGGEST_SYSTEM = """\
 You are a SIMULATOR generating realistic student replies for a
@@ -533,10 +631,9 @@ Output STRICT JSON only:
 }
 """
 
-
 def _color_for_kind(kind: str) -> str:
     """Map intent class → frontend color token. Mirrored in
-    SuggestionBubbles.tsx for consistency."""
+ SuggestionBubbles.tsx for consistency."""
     return {
         "correct": "green",
         "partial": "yellow-green",
@@ -549,16 +646,15 @@ def _color_for_kind(kind: str) -> str:
         "exit_intent": "purple",
     }.get(kind, "muted")
 
-
 @router.post("/sessions/{thread_id}/suggest_replies", response_model=SuggestRepliesResponse)
 async def suggest_replies(thread_id: str, request: SuggestRepliesRequest) -> SuggestRepliesResponse:
-    """N8 (POST_DEMO_FIXES.md, 2026-05-06): student-profile reply
-    suggester for testing.
+    """student-profile reply
+ suggester for testing.
 
-    Pulls the live thread state from the runtime store, builds a
-    context-aware prompt, fires Haiku, returns 4 intent-class-diverse
-    student-reply suggestions. Intended for QA / demo use only — every
-    call is one Haiku request (~$0.001). No DB writes."""
+ Pulls the live thread state from the runtime store, builds a
+ context-aware prompt, fires Haiku, returns 4 intent-class-diverse
+ student-reply suggestions. Intended for QA / demo use only — every
+ call is one Haiku request (~$0.001). No DB writes."""
     tid = (thread_id or "").strip()
     if not tid:
         raise HTTPException(status_code=400, detail="thread_id required")

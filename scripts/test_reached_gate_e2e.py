@@ -1,7 +1,6 @@
 """
 scripts/test_reached_gate_e2e.py
----------------------------------
-End-to-end simulation tests for the new reached_answer_gate (2026-04-29).
+End-to-end simulation tests for the new reached_answer_gate.
 
 Replaces the old `confidence_score >= 0.72` heuristic with a deterministic
 token-overlap step + LLM paraphrase fallback that requires quoting the
@@ -12,18 +11,18 @@ Each test scripts the student's messages — no LLM-driven simulator —
 so we get DETERMINISTIC inputs and can assert on what the gate did.
 
 Tests:
-  T1  Wrong-answer regression       student: "AV node"        → reached=False
-  T2  Positive (overlap, Step A)    student: "the SA node"     → reached=True
-  T3  Positive (paraphrase, Step B) student: "the cells in the upper chamber that fire on their own"
-                                                                → reached=True (LLM)
-  T4  Gravity-style irrelevant word student: "gravity"         → reached=False
+ T1 Wrong-answer regression student: "AV node" → reached=False
+ T2 Positive (overlap, Step A) student: "the SA node" → reached=True
+ T3 Positive (paraphrase, Step B) student: "the cells in the upper chamber that fire on their own"
+ → reached=True (LLM)
+ T4 Gravity-style irrelevant word student: "gravity" → reached=False
 
 Run:
-    .venv/bin/python scripts/test_reached_gate_e2e.py
+ .venv/bin/python scripts/test_reached_gate_e2e.py
 
 Outputs:
-    data/artifacts/gate_e2e/<test>_<timestamp>.json
-    Console summary: PASS/FAIL per test + estimated cost.
+ data/artifacts/gate_e2e/<test>_<timestamp>.json
+ Console summary: PASS/FAIL per test + estimated cost.
 """
 
 from __future__ import annotations
@@ -42,23 +41,20 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from config import cfg
 from conversation.state import initial_state
 
-
 OUTPUT_DIR = Path(cfg.paths.artifacts) / "gate_e2e"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
 
 # Pre-lock the topic via a matcher query so tests are deterministic.
 # Going through dean's free-text topic resolution sometimes returns
 # wildly off-topic option cards (e.g. "DNA Replication" for "Conduction
 # System of the Heart") which makes the lock fail and the gate never
-# fires — defeating the test. We use the same matcher the dean uses,
+# fires — defeating the test. We use the same matcher the dean uses
 # but feed it a precise query and pick the top match directly.
-#
 # Each test specifies:
-#   topic_query    — fed to TopicMatcher.match() to find the path
-#   tutoring_turns — scripted student messages, one per turn
-#   expect_reached — what state["student_reached_answer"] should be at end
-#   expect_no_fabrication_keywords — substrings the last tutor msg must NOT contain
+# topic_query — fed to TopicMatcher.match to find the path
+# tutoring_turns — scripted student messages, one per turn
+# expect_reached — what state["student_reached_answer"] should be at end
+# expect_no_fabrication_keywords — substrings the last tutor msg must NOT contain
 TESTS = {
     "T1_wrong_answer": {
         "description": "Wrong-but-plausible answer (AV node) must not fire reached.",
@@ -78,7 +74,6 @@ TESTS = {
         "description": "Direct SA-node statement should fire reached via Step A overlap.",
         "topic_query": "conduction system of the heart sinoatrial node",
         # Force a known locked_answer so the student's scripted "SA node"
-        # actually targets it. Without this override, the dean's lock LLM
         # picks its own focal point (e.g. Purkinje fibers from the same
         # chapter) and the test goes off the rails.
         "force_locked_answer": "sinoatrial node",
@@ -137,7 +132,7 @@ TESTS = {
     },
 
     # =========================================================================
-    # CHANGE 3 VALIDATION TESTS (added 2026-04-30)
+    # CHANGE 3 VALIDATION TESTS (added )
     # =========================================================================
     # T6 and T7 verify the help_abuse cap and step-vs-reach disambiguation
     # behaviors introduced in Change 3. They use force_locked_answer to
@@ -176,18 +171,18 @@ TESTS = {
     },
 
     # =========================================================================
-    # CHANGE 4 VALIDATION TESTS (added 2026-04-30)
+    # CHANGE 4 VALIDATION TESTS (added )
     # =========================================================================
     # T11: off-domain spam — 4 consecutive off-domain student messages should
-    #      trigger the off-topic threshold and TERMINATE the whole session
-    #      (core_mastery_tier=not_assessed AND clinical_mastery_tier=not_assessed).
+    # trigger the off-topic threshold and TERMINATE the whole session
+    # (core_mastery_tier=not_assessed AND clinical_mastery_tier=not_assessed).
     # T12: mixed domain-tangential + on-topic — should NEVER terminate.
-    #      Domain-tangential questions are category B (handled by exploration_judge),
-    #      not category C (off-domain). Counter must NOT increment for category B.
+    # Domain-tangential questions are category B (handled by exploration_judge)
+    # not category C (off-domain). Counter must NOT increment for category B.
     # =========================================================================
 
     # =========================================================================
-    # T5 + T8: Phase 1 Change 3C / Change 4 deeper validation (added 2026-04-30)
+    # T5 + T8: Phase 1 Change 3C / Change 4 deeper validation (added )
     # =========================================================================
 
     "T5_rapport_off_topic_deflection": {
@@ -341,7 +336,6 @@ TESTS = {
     },
 }
 
-
 def prelock_topic(
     state: dict,
     query: str,
@@ -351,17 +345,17 @@ def prelock_topic(
     force_locked_question: str | None = None,
 ) -> dict:
     """Use the matcher's top hit for `query` to pre-fill locked_topic and
-    run the dean's retrieval + lock pipeline manually. Mirrors the prelock
-    path in backend/api/session.py:_apply_prelock without the FastAPI
-    dependencies. Mutates state in place; returns the matcher's TopicMatch
-    dict for telemetry.
+ run the dean's retrieval + lock pipeline manually. Mirrors the prelock
+ path in backend/api/session.py:_apply_prelock without the FastAPI
+ dependencies. Mutates state in place; returns the matcher's TopicMatch
+ dict for telemetry.
 
-    For deterministic gate testing, callers can supply
-    `force_locked_answer` / `force_aliases` / `force_locked_question`
-    to override the dean's LLM lock. This guarantees the student's
-    scripted messages line up with a KNOWN locked_answer, which is the
-    only way to test specific gate paths (Step A vs Step B).
-    """
+ For deterministic gate testing, callers can supply
+ `force_locked_answer` / `force_aliases` / `force_locked_question`
+ to override the dean's LLM lock. This guarantees the student's
+ scripted messages line up with a KNOWN locked_answer, which is the
+ only way to test specific gate paths (Step A vs Step B).
+"""
     from retrieval.topic_matcher import get_topic_matcher
     matcher = get_topic_matcher()
     res = matcher.match(query, k=3)
@@ -392,7 +386,7 @@ def prelock_topic(
         # fibers vs SA node) makes the scripted-student tests flaky.
         state["locked_answer"] = force_locked_answer.strip()
         state["locked_answer_aliases"] = list(force_aliases or [])
-        # Two-tier (Change 2026-04-30): force_locked_answer is the gate
+        # Two-tier (Change ): force_locked_answer is the gate
         # anchor; full_answer mirrors it in test mode so mastery scorer
         # has something to read. Real production lock would have a
         # richer full_answer.
@@ -432,29 +426,27 @@ def prelock_topic(
         "lock_source": "forced" if force_locked_answer is not None else "llm",
     }
 
-
 def _last_tutor_message(state) -> str:
     for m in reversed(state.get("messages", [])):
         if m.get("role") == "tutor":
             return str(m.get("content", "") or "")
     return ""
 
-
 def _dump_state_for_scorer(state) -> dict:
     """Return a JSON-safe snapshot of `state` for the quality scorer.
 
-    Includes everything the scorer needs:
-      - messages, locked_topic, locked_question, locked_answer, aliases
-      - retrieved_chunks (full payload)
-      - debug.* (turn_trace, all_turn_traces, counters)
-      - student_reached_answer, hint_level, etc.
+ Includes everything the scorer needs:
+messages, locked_topic, locked_question, locked_answer, aliases
+retrieved_chunks (full payload)
+debug.* (turn_trace, all_turn_traces, counters)
+student_reached_answer, hint_level, etc.
 
-    Skips noisy fields the scorer doesn't use (e.g. internal callbacks).
-    """
+ Skips noisy fields the scorer doesn't use (e.g. internal callbacks).
+"""
     keep_top = (
         "student_id", "phase", "messages", "retrieved_chunks",
         "locked_question", "locked_answer", "locked_answer_aliases",
-        "full_answer",  # Change 2026-04-30: two-tier anchor design
+        "full_answer",  # Change : two-tier anchor design
         "locked_topic", "topic_confirmed", "topic_selection",
         "topic_just_locked", "hint_level", "max_hints", "max_turns",
         "turn_count", "student_state", "student_reached_answer",
@@ -490,18 +482,16 @@ def _dump_state_for_scorer(state) -> dict:
     out["debug"] = safe_debug
     return out
 
-
 def _all_tutor_messages(state) -> list[str]:
     return [str(m.get("content", "") or "") for m in state.get("messages", []) if m.get("role") == "tutor"]
-
 
 def _gate_decisions_in_trace(state) -> list[dict]:
     """Pull every dean.confidence_score / reached_answer_gate trace entry.
 
-    Defensive: trace structures contain mixed types — lists-of-dicts
-    nested in lists, sometimes plain strings. Skip anything that isn't
-    a dict so the harness never blows up while inspecting traces.
-    """
+ Defensive: trace structures contain mixed types — lists-of-dicts
+ nested in lists, sometimes plain strings. Skip anything that isn't
+ a dict so the harness never blows up while inspecting traces.
+"""
     out = []
     debug = state.get("debug", {}) or {}
     # all_turn_traces is a list of per-turn trace lists.
@@ -523,15 +513,14 @@ def _gate_decisions_in_trace(state) -> list[dict]:
             out.append(entry)
     return out
 
-
 async def run_test(name: str, spec: dict, graph, dean) -> dict:
     """Drive the graph through one scripted conversation and capture state.
 
-    We pre-lock the topic deterministically via the matcher's top hit so
-    the gate is ALWAYS exercised against a real locked_answer + aliases.
-    Free-text resolution sometimes returns off-topic option cards which
-    masks gate behavior — see the 2026-04-29 refactor notes.
-    """
+ We pre-lock the topic deterministically via the matcher's top hit so
+ the gate is ALWAYS exercised against a real locked_answer + aliases.
+ Free-text resolution sometimes returns off-topic option cards which
+ masks gate behavior — see the refactor notes.
+"""
     conv_id = str(uuid.uuid4())[:8]
     student_id = f"gate_test_{name}_{conv_id}"
     state = initial_state(student_id, cfg)
@@ -639,7 +628,7 @@ async def run_test(name: str, spec: dict, graph, dean) -> dict:
 
     overall_pass = reached_pass and fabrication_pass
 
-    # Phase 1a-6 (2026-04-30): also dump the full final state so the
+    # Phase 1a-6: also dump the full final state so the
     # quality scorer (evaluation/quality/runner.py) can read all
     # turn_trace entries, retrieved_chunks, hint_progress, etc. The
     # `final_state` block is what the scorer's _load_from_test_harness
@@ -685,14 +674,12 @@ async def run_test(name: str, spec: dict, graph, dean) -> dict:
         },
     }
 
-
 def save_result(result: dict) -> Path:
     fname = f"{result['name']}_{result['conv_id']}_{datetime.now().strftime('%H%M%S')}.json"
     p = OUTPUT_DIR / fname
     with open(p, "w") as f:
         json.dump(result, f, indent=2, default=str)
     return p
-
 
 async def main():
     only = sys.argv[1:] or None  # let user run a single test by name
@@ -746,7 +733,6 @@ async def main():
         sys.exit(1)
     else:
         print(f"  ALL {len(summaries)} PASSED.")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

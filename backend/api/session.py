@@ -26,45 +26,44 @@ from retrieval.topic_matcher import get_topic_matcher
 
 router = APIRouter()
 
-
 def _apply_prelock(state: dict, path: str) -> None:
     """Pre-fill state with a TOC-locked topic, skipping the dean's
-    free-text topic resolution. Called at session-start when the
-    frontend's Revisit button knows the exact subsection.
+ free-text topic resolution. Called at session-start when the
+ frontend's Revisit button knows the exact subsection.
 
-    The path is the SAME format the dean writes to
-    state["locked_topic"]["path"] and the mastery store uses:
-        "Ch{N}|{section_title}|{subsection_title}"
-    So we parse it directly here rather than looking up via the
-    topic matcher (which uses a different "Chapter N: ... > ..."
-    path format derived from textbook_structure.json).
+ The path is the SAME format the dean writes to
+ state["locked_topic"]["path"] and the mastery store uses:
+ "Ch{N}|{section_title}|{subsection_title}"
+ So we parse it directly here rather than looking up via the
+ topic matcher (which uses a different "Chapter N: ... > ..."
+ path format derived from textbook_structure.json).
 
-    Steps:
-      1. Parse the path → chapter_num, section, subsection.
-      2. Reject if the format is wrong (raises — caller falls
-         back to normal flow).
-      3. Populate state["locked_topic"] / topic_confirmed /
-         topic_selection in the same shape post-resolution does.
-      4. Eagerly run dean._retrieve_on_topic_lock(state) so
-         retrieved_chunks is populated. If the subsection has no
-         chunks (bad path), this fails the coverage gate
-         downstream — caller's except block catches and falls
-         back to free-text resolution.
-      5. Eagerly run dean._lock_anchors_call(state) so
-         locked_question + locked_answer are set before the first
-         student message.
-      6. Stamp state["debug"]["locked_topic_snapshot"] — the sticky
-         record memory_update_node + memory_manager fall back to
-         when state["locked_topic"] gets cleared by partial-merge
-         artifacts later.
+ Steps:
+ 1. Parse the path → chapter_num, section, subsection.
+ 2. Reject if the format is wrong (raises — caller falls
+ back to normal flow).
+ 3. Populate state["locked_topic"] / topic_confirmed /
+ topic_selection in the same shape post-resolution does.
+ 4. Eagerly run dean._retrieve_on_topic_lock(state) so
+ retrieved_chunks is populated. If the subsection has no
+ chunks (bad path), this fails the coverage gate
+ downstream — caller's except block catches and falls
+ back to free-text resolution.
+ 5. Eagerly run dean._lock_anchors_call(state) so
+ locked_question + locked_answer are set before the first
+ student message.
+ 6. Stamp state["debug"]["locked_topic_snapshot"] — the sticky
+ record memory_update_node + memory_manager fall back to
+ when state["locked_topic"] gets cleared by partial-merge
+ artifacts later.
 
-    Raises any error encountered. The caller in start_session
-    catches and falls back to the normal free-text flow.
-    """
+ Raises any error encountered. The caller in start_session
+ catches and falls back to the normal free-text flow.
+"""
     # Accept BOTH path formats:
-    #   1. Canonical "Chapter Title > Section > Subsection" (MasteryView's
-    #      sub.path — what comes back from mastery_tree)
-    #   2. Legacy "Ch{N}|Section|Subsection" (pre-L4 mastery store format)
+    # 1. Canonical "Chapter Title > Section > Subsection" (MasteryView's
+    # sub.path — what comes back from mastery_tree)
+    # 2. Legacy "Ch{N}|Section|Subsection" (pre- mastery store format)
     chapter_num: int = 0
     section = ""
     subsection = ""
@@ -127,7 +126,7 @@ def _apply_prelock(state: dict, path: str) -> None:
             f"prelocked_topic {path!r} returned 0 chunks — bad path or corpus mismatch"
         )
 
-    # M4 — instead of auto-locking ONE anchor, generate 3 variations and
+    # instead of auto-locking ONE anchor, generate 3 variations and
     # present them as a pending_user_choice. The student picks which
     # angle they want to work on. Each variation carries its own
     # locked_question + locked_answer + aliases + full_answer.
@@ -172,7 +171,7 @@ def _apply_prelock(state: dict, path: str) -> None:
         "anchor_variation_count": len(variations),
         "chunk_count": len(state.get("retrieved_chunks") or []),
     })
-    # BLOCK 5 (REAL-Q5) — log anchor_pick_shown event so LLM sees on
+    # log anchor_pick_shown event so LLM sees on
     # the first turn that the student is choosing from cards. payload
     # is non-sensitive (count + subsection only).
     from conversation.snapshots import log_system_event
@@ -182,13 +181,11 @@ def _apply_prelock(state: dict, path: str) -> None:
         subsection=subsection[:120],
     )
 
-
 def _latest_tutor_message(state: dict) -> str:
     for msg in reversed(state.get("messages", [])):
         if msg.get("role") == "tutor":
             return str(msg.get("content", ""))
     return ""
-
 
 def _strip_internal(value: Any) -> Any:
     """Recursively drop underscore-prefixed internal debug/runtime fields."""
@@ -203,12 +200,11 @@ def _strip_internal(value: Any) -> Any:
         return [_strip_internal(v) for v in value]
     return value
 
-
 @router.post("/session/start", response_model=StartSessionResponse)
 async def start_session(req: StartSessionRequest, request: Request):
     # Defensive: reject empty / whitespace / unknown student_ids before
     # they reach mem0 and create a dangling namespace. The frontend
-    # always sets student_id from listUsers().id, so a value here that
+    # always sets student_id from listUsers.id, so a value here that
     # isn't in USERS means a client bug or a tampered request — both
     # worth a 400 rather than silently mingling memory under a bogus key.
     sid = (req.student_id or "").strip()
@@ -227,7 +223,7 @@ async def start_session(req: StartSessionRequest, request: Request):
         raise HTTPException(status_code=403, detail="Cannot start a session for another user")
 
     thread_id = f"{sid}_{uuid.uuid4().hex[:8]}"
-    # L21: insert session row at session start (status='in_progress',
+    # : insert session row at session start (status='in_progress'
     # ended_at=NULL). Best-effort — never block session creation on a
     # SQLite failure. The row gets UPDATEd at session end by
     # memory_update_node with the final status + mastery breakdown.
@@ -242,7 +238,7 @@ async def start_session(req: StartSessionRequest, request: Request):
 
     state = initial_state(sid, cfg)
     # Stash thread_id on state so downstream nodes (memory_update_node)
-    # can update the L21 SQLite session row at end without needing the
+    # can update the SQLite session row at end without needing the
     # LangGraph RunnableConfig threaded through.
     state["thread_id"] = thread_id
 
@@ -250,7 +246,7 @@ async def start_session(req: StartSessionRequest, request: Request):
     # by initial_state; we only override when the client passes False so
     # demo mode can show fresh-student behavior on demand.
     state["memory_enabled"] = bool(req.memory_enabled)
-    # D.6b-5: stash the client's local hour on state so rapport_node can
+    # : stash the client's local hour on state so rapport_node can
     # pass it to draft_rapport. None falls through to server-time.
     state["client_hour"] = req.client_hour if req.client_hour is not None else None
 
@@ -266,7 +262,7 @@ async def start_session(req: StartSessionRequest, request: Request):
         try:
             _apply_prelock(state, prelocked)
         except Exception:
-            # Defensive: if prelock fails (bad path, retrieval error,
+            # Defensive: if prelock fails (bad path, retrieval error
             # anchor LLM failure), wipe the half-applied state and
             # fall back. The user just gets a normal session.
             state["topic_confirmed"] = False
@@ -275,10 +271,10 @@ async def start_session(req: StartSessionRequest, request: Request):
             state["locked_question"] = ""
             state["locked_answer"] = ""
 
-    # L77 — image-initiated session. The client uploaded an image first
+    # image-initiated session. The client uploaded an image first
     # via /api/vlm/upload and is now starting a session with the VLM
     # JSON attached. We stash it on state so v2 nodes (Dean, Teacher)
-    # can ground responses in identified structures + the description,
+    # can ground responses in identified structures + the description
     # and we synthesize a kickoff student message from best_topic_guess
     # / description so the v2 topic mapper resolves to the right TOC
     # node on the first student turn — no extra typing required.
@@ -320,7 +316,7 @@ async def start_session(req: StartSessionRequest, request: Request):
             }
         )
 
-    # Change 2 (2026-04-29): for prelocked sessions, build the dean's
+    # Change 2: for prelocked sessions, build the dean's
     # topic-acknowledgement message inline and send it back to the
     # client as a second tutor message. This avoids the prior workaround
     # of having the frontend auto-send "Let's begin..." just to trigger
@@ -379,11 +375,34 @@ async def start_session(req: StartSessionRequest, request: Request):
     debug_payload["prelock_loop_count"] = int(state.get("prelock_loop_count", 0) or 0)
     debug_payload["topic_selection"] = str(state.get("topic_selection", "") or "")
     # Send the full locked_topic dict so the sidebar can show chapter +
-    # section + subsection in the collapsible details (Phase 1, 2026-04-30).
+    # section + subsection in the collapsible details (Phase 1).
     debug_payload["locked_topic"] = state.get("locked_topic") or None
     debug_payload["locked_question"] = str(state.get("locked_question", "") or "")
     debug_payload["locked_answer"] = state.get("locked_answer", "")
     debug_payload["answer_locked"] = bool(str(state.get("locked_answer", "") or "").strip())
+    # Debug-mode-only fields surfaced for the sidebar Debug section.
+    # These let a grader see exactly what the gate is comparing against
+    # without needing to crack open the full state export.
+    debug_payload["locked_answer_aliases"] = list(state.get("locked_answer_aliases", []) or [])
+    debug_payload["full_answer"] = str(state.get("full_answer", "") or "")
+    # Latest preflight verdict for the most recent student turn — read
+    # by the Debug card so graders can verify the unified intent
+    # classifier picked the right category. Walks the latest trace.
+    last_preflight = ""
+    for entry in reversed((state.get("debug") or {}).get("turn_trace") or []):
+        if isinstance(entry, dict) and entry.get("wrapper") == "preflight":
+            last_preflight = str(entry.get("category") or "")
+            break
+    debug_payload["last_preflight_category"] = last_preflight
+    # Exploration budget — runaway-protection cap, not a behavior gate.
+    # Pacing pressure comes from urgency_tier (below).
+    debug_payload["exploration_count"] = int(state.get("exploration_count", 0) or 0)
+    debug_payload["exploration_used"] = int(state.get("exploration_used", 0) or 0)
+    debug_payload["exploration_max"] = int(state.get("exploration_max", 10) or 10)
+    # Urgency tier — derived from turn_count / max_turns at Dean plan
+    # time. Surfaces to the Debug card so graders can see when the
+    # tutor's pacing should be shifting.
+    debug_payload["urgency_tier"] = str(state.get("urgency_tier", "") or "")
     debug_payload["domain"] = getattr(getattr(cfg, "domain", object()), "short", "")
     # Change 4 / 5.1: surface counters for sidebar debug pills
     debug_payload["help_abuse_count"] = int(state.get("help_abuse_count", 0) or 0)
@@ -392,24 +411,24 @@ async def start_session(req: StartSessionRequest, request: Request):
     debug_payload["off_topic_threshold"] = int(getattr(cfg.dean, "off_topic_threshold", 4))
     debug_payload["total_low_effort_turns"] = int(state.get("total_low_effort_turns", 0) or 0)
     debug_payload["total_off_topic_turns"] = int(state.get("total_off_topic_turns", 0) or 0)
-    # F6 (POST_DEMO_FIXES.md, 2026-05-06): non-resetting help_abuse counter.
+    # non-resetting help_abuse counter.
     debug_payload["total_help_abuse_turns"] = int(state.get("total_help_abuse_turns", 0) or 0)
     debug_payload["clinical_low_effort_count"] = int(state.get("clinical_low_effort_count", 0) or 0)
     debug_payload["clinical_off_topic_count"] = int(state.get("clinical_off_topic_count", 0) or 0)
-    # N3 (POST_DEMO_FIXES.md, 2026-05-06): clinical phase mirror of
+    # clinical phase mirror of
     # tutoring's help_abuse + the three non-resetting totals.
     debug_payload["clinical_help_abuse_count"] = int(state.get("clinical_help_abuse_count", 0) or 0)
     debug_payload["total_clinical_help_abuse_turns"] = int(state.get("total_clinical_help_abuse_turns", 0) or 0)
     debug_payload["total_clinical_low_effort_turns"] = int(state.get("total_clinical_low_effort_turns", 0) or 0)
     debug_payload["total_clinical_off_topic_turns"] = int(state.get("total_clinical_off_topic_turns", 0) or 0)
     debug_payload["clinical_strike_threshold"] = int(getattr(cfg.dean, "clinical_strike_threshold", 2))
-    # M1 — same lifecycle flags as chat.py debug_payload so the frontend
+    # same lifecycle flags as chat.py debug_payload so the frontend
     # can read them consistently from session-start AND from per-turn
     # WS message_complete events.
     debug_payload["exit_intent_pending"] = bool(state.get("exit_intent_pending", False))
     debug_payload["session_ended"] = bool(state.get("session_ended", False))
     debug_payload["close_reason"] = str(state.get("close_reason", "") or "")
-    # M4 — surface anchor_pick cards (or other initial pending choice) so
+    # surface anchor_pick cards (or other initial pending choice) so
     # the frontend can render them right after the rapport greeting.
     initial_pending: dict | None = None
     pc = state.get("pending_user_choice") or {}
@@ -424,7 +443,6 @@ async def start_session(req: StartSessionRequest, request: Request):
         initial_pending_choice=initial_pending,
     )
 
-
 @router.get("/session/{thread_id}/state")
 async def get_state(thread_id: str):
     runtime = get_runtime_store()
@@ -432,7 +450,6 @@ async def get_state(thread_id: str):
     if state is None:
         raise HTTPException(status_code=404, detail="Unknown thread_id")
     return {"values": jsonable_encoder(state)}
-
 
 @router.get("/session/{thread_id}/export")
 async def export_state(thread_id: str):
@@ -468,7 +485,6 @@ async def export_state(thread_id: str):
         "session_memory_summary": state.get("session_memory_summary", ""),
     }
     return jsonable_encoder(payload)
-
 
 @router.get("/students/{student_id}/overview", response_model=StudentOverviewResponse)
 async def get_student_overview(student_id: str):

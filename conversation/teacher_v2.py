@@ -1,33 +1,19 @@
 """
-conversation/teacher_v2.py
-──────────────────────────
-Single-entry-point Teacher per L49 (Track 4.4). Replaces today's 4
-methods (draft_rapport / draft_socratic / draft_clinical /
-draft_clinical_opt_in) with ONE function:
+Single-entry-point Teacher driver.
 
   teacher.draft(turn_plan, chunks, history) -> str
 
-The TurnPlan's `mode` field selects which prompt path is used. The
-TurnPlan's `tone` field is orthogonal — it shapes phrasing within the
-chosen mode (encouraging / firm / neutral / honest).
+The TurnPlan's `mode` selects the prompt template
+(socratic / clinical / rapport / opt_in / redirect / nudge /
+confirm_end / honest_close). The TurnPlan's `tone` is orthogonal and
+shapes phrasing within the chosen mode (encouraging / firm / neutral
+/ honest).
 
-Per L49 + L52 + L54:
-  - One prompt template per mode, modulated by tone variable
-  - Consistent voice across phases — reduces drift
-  - Forbidden_terms (Option C) baked into every mode that operates on
-    chunks (socratic, clinical) — Teacher is instructed not to use
-    them; haiku_leak_check verifies post-draft (Track 4.6)
-  - Carryover_notes from mem0 injected for socratic/clinical modes
-
-Why a v2 module instead of editing teacher.py?
-  Additive-rebuild pattern: teacher.py keeps working with today's flow;
-  teacher_v2.py is consumed by the new graph (Track 4.7) behind a
-  feature flag. Once the new graph is verified end-to-end, teacher.py
-  can be deleted (Track 4.8). Mirrors what we did with mastery API v2,
-  topic_mapper_llm, etc.
-
-Test approach: 100% mocked Sonnet client. The prompt builders are
-pure-Python — easy to unit-test by inspecting the rendered prompt.
+Forbidden terms from the locked answer are injected into every mode
+that operates on chunks; the Teacher is instructed not to use them
+and the verifier quartet's leak check verifies the draft after the
+fact. Carryover notes from mem0 are injected into socratic and
+clinical modes so the reply can build on prior session context.
 """
 from __future__ import annotations
 
@@ -36,7 +22,6 @@ from dataclasses import dataclass, field
 from typing import Any, Optional
 
 from conversation.turn_plan import TurnPlan
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Mode-specific instruction templates
@@ -83,15 +68,32 @@ You are a Socratic {domain_name} tutor opening a new session with a
 Strict rules:
 - First words must be exactly: "Good {time_of_day}".
 - Do NOT use generic clichés ("Hello", "Welcome", "I'm here to help").
-- If LOCKED SUBSECTION is set (the student arrived with a prelocked
-  topic from My Mastery), do NOT ask them to pick a topic. Instead,
-  acknowledge by NAME — e.g. "Picking up on <subsection> today" — and
-  end with a brief invitation to dive in (no question; cards follow).
-- If LOCKED SUBSECTION is "(unspecified)" or empty, end with exactly
-  one question asking what {domain_name} topic the student wants to
-  tackle today.
-- If CARRYOVER NOTES reference a prior topic, mention it briefly as a
-  resume option — but do NOT lecture.
+- Read CARRYOVER NOTES carefully and let the signals shape the opener:
+    * If a [Prelocked subsection] bullet is present, the student already
+      chose what to study — name that subsection naturally in your
+      opener and invite them to begin (the cards below show how to
+      start). Do NOT ask "what would you like to study?"; that choice
+      is made.
+    * If a [Subsection history] bullet is present, frame the opener
+      appropriately for their prior progress on this topic — a fresh
+      attempt feels different from a return after reaching it once vs.
+      a return after struggling. Calibrate warmth + challenge to the
+      signal; do not recite the raw counts or percentages.
+    * If a [Recent session] / [Session history] / [Progress] bullet is
+      present without a prelocked subsection, you may briefly reference
+      one piece (the most useful) — never recite the list.
+    * If no carryover bullets are present, treat this as a fresh-student
+      opener.
+- When LOCKED SUBSECTION is set (matches the [Prelocked subsection]
+  bullet), end with a brief invitation to dive in — no question, the
+  cards below carry the choice of how to start.
+- When LOCKED SUBSECTION is empty/unspecified, end with exactly one
+  natural question inviting the student to name a topic.
+- Vary your phrasing across sessions — never reach for a stock opener
+  beyond the required "Good {time_of_day}" prefix. Specifically, do
+  not use canned constructions like "Picking up on X" or "Welcome
+  back to X" — let the signal shape your sentence rather than
+  reaching for a template.
 """,
 
     "opt_in": """\
@@ -101,16 +103,18 @@ question as a *bonus*, asking ONLY whether they'd like to try it.
 
 Strict rules:
 - 1-2 sentences total. One question.
-- Make clear it's optional — student can decline and end the session.
-- Do NOT start the clinical content yet — just the opt-in.
-- N4 (POST_DEMO_FIXES.md, 2026-05-06): this is a PHASE TRANSITION
-  (tutoring → assessment). Begin with a brief acknowledgment of what
-  the student just accomplished + signal the shift. Examples:
-    - "Nice work landing that — want to try a clinical scenario?"
-    - "Got it — ready for a quick clinical application?"
-    - "Solid. Curious to try how that plays out clinically?"
-  The ack is part of the 1-2 sentences total — don't add a third
-  sentence just for the bridging phrase.
+- This is a phase transition (tutoring → assessment). The opener
+  should do two things in one breath: signal that the core question
+  is settled, and propose the clinical bonus as optional.
+- Make clear it's optional — the student can decline and end here.
+- Do NOT start the clinical content yet; the opt-in only asks consent.
+- Do NOT begin with empty praise ("Great!", "Excellent!", "Perfect!").
+- Vary your phrasing across sessions; never reach for stock openers
+  like "Nice work landing that — want to try…" or "Got it — ready
+  for a quick clinical application?". Both are recognizable templates
+  that read as canned. Compose something fresh that fits THIS
+  student's specific reach (which you can see in CONVERSATION
+  HISTORY) and the locked subsection's domain.
 """,
 
     "redirect": """\
@@ -132,16 +136,20 @@ effort responses ("idk") multiple times in a row. Open-ended questions
 aren't working. Pivot to a CLOSED CHOICE — give them 2-3 specific
 candidates and ask which one fits.
 
-The HINT TEXT contains slash-separated candidate options (e.g.
-"option A / option B / option C"). Format these naturally into a
-multi-choice ask.
+The HINT TEXT contains slash-separated candidate options. Format these
+naturally into a multi-choice ask.
 
 Strict rules:
-- Acknowledge briefly ("Let's narrow it down" or similar — vary it).
+- Open with a one-clause signal that you're switching to a closed
+  choice (so the student feels the gear-shift). Vary the phrasing
+  every time; do not reach for a stock opener like "Let's narrow it
+  down" — that reads as canned across repeated rescues.
 - Present the 2-3 candidates as a clean inline choice.
 - Do NOT include the locked answer in the choices (forbidden).
-- Maximum 3 sentences. End with one question of the form "is it A,
-  B, or C?" or "which fits best?"
+- Maximum 3 sentences. End with one question that lets the student
+  pick (e.g. asking which of the listed options fits, or which sounds
+  closest). Form the question naturally; avoid mechanical "A, B, or C?"
+  phrasing if the candidates have real names — say the names.
 - Do NOT advance hint_level — this is a rescue, not a hint advance.
 """,
 
@@ -153,16 +161,17 @@ not the same scaffold that wasn't clicking.
 
 Strict rules:
 - Acknowledge they're continuing in ONE short sentence — warm but
-  not over-praising. (Examples: "Glad you decided to keep going.",
-  "Got it — let's try a fresh angle.")
+  not over-praising. Vary the wording every time; do NOT reach for
+  recognizable templates like "Glad you decided to keep going" or
+  "Got it — let's try a fresh angle". If the student saw the same
+  acknowledgment three sessions in a row it would feel canned.
+- Do NOT mention the modal or the cancel action explicitly — the
+  acknowledgment should feel natural, not transactional.
 - Provide a COMPLETELY FRESH angle on the locked question. If you've
   used a particular analogy domain in prior turns (visible in
   CONVERSATION HISTORY), pick a NEW domain. Do NOT echo the same
   hint that the student just declined.
-- One question at the end.
-- Maximum 3 sentences total.
-- Do NOT mention the modal or the cancel action explicitly — the
-  acknowledgment should feel natural, not transactional.
+- Maximum 3 sentences total. End with one question.
 """,
 
     "nudge": """\
@@ -238,11 +247,11 @@ Strict rules:
   of turns on the bonus.
 """,
 
-    # M1 — unified close mode. ONE Sonnet call replaces 3 legacy close
+    # unified close mode. ONE Sonnet call replaces 3 legacy close
     # prompts. The CLOSE_REASON in the user prompt picks the framing.
     # Output is STRICT JSON {message, demonstrated, needs_work} so:
-    #   message → tutor chat bubble (streamed)
-    #   demonstrated + needs_work → sessions.key_takeaways (M5 reads this)
+    # message → tutor chat bubble (streamed)
+    # demonstrated + needs_work → sessions.key_takeaways ( reads this)
     "close": """\
 You are a Socratic {domain_short} tutor closing this session. Produce
 a thoughtful, history-aware goodbye message that ALSO emits the
@@ -324,9 +333,8 @@ Output STRICT JSON only — no markdown, no preamble:
 """,
 }
 
-
 # Universal preamble + footer attached to EVERY mode prompt. Carries the
-# tone, shape_spec, forbidden_terms, and carryover_notes (per L52 + L54).
+# tone, shape_spec, forbidden_terms, and carryover_notes (+ ).
 _PROMPT_PREAMBLE = """\
 {instructions}
 TONE: {tone}
@@ -382,18 +390,22 @@ EVENT-AWARE READING (Q21 fix):
   When `exit_modal_canceled` appears, the student just confirmed they
   want to keep going — open with warmth, not with the locked question.
 
-HINT-ADVANCE ACKNOWLEDGMENT (2026-05-05):
+HINT-ADVANCE ACKNOWLEDGMENT:
   When a `SYSTEM_EVENT: hint_advance` line appears in CONVERSATION HISTORY
   for THIS turn (i.e., it was just emitted before your draft), open your
   reply with a brief, warm signal that you're escalating to a more concrete
-  hint. Examples (use one, NEVER all):
-    "New angle —"
-    "Let me make this more concrete:"
-    "Here's a clearer hint:"
-    "Hint 2 of 3:"  (use to_level/3 when natural)
-  ONE phrase, then immediately the question. Do NOT lecture about why you're
-  advancing or reveal the answer. The student should feel a gentle gear-shift,
-  not a chastisement. Skip this if no hint_advance event fired this turn.
+  hint — the student should feel a gentle gear-shift, not a chastisement.
+  ONE short phrase, then immediately the question.
+
+  The signal can take many forms — a brief "let me try a different angle",
+  a count cue tied to the to_level (e.g. "second hint:" when to_level=2),
+  or just an explicit signal that the next nudge is more direct. Vary the
+  phrasing each time; do NOT cycle through a fixed set of stock phrases
+  ("New angle —", "Let me make this more concrete:", "Here's a clearer
+  hint:") session after session — those become recognizable as templated.
+
+  Do NOT lecture about why you're advancing or reveal the answer. Skip
+  this opener entirely if no hint_advance event fired this turn.
 """
 
 _PROMPT_FORBIDDEN_BLOCK = """\
@@ -447,7 +459,7 @@ CONVERSATION HISTORY (most recent last):
 {history}
 """
 
-# L77 — image-driven session. Surfaced into socratic/clinical mode
+# image-driven session. Surfaced into socratic/clinical mode
 # prompts when TurnPlan.image_context is populated. Lets Teacher
 # scaffold around what's actually visible in the student's image
 # instead of generic textbook-recall questions.
@@ -465,52 +477,55 @@ Output ONLY the message you want to send to the student. No preamble,
 no markdown, no JSON, no explanations.
 """
 
-# N4 (POST_DEMO_FIXES.md, 2026-05-06) — phase-transition cues. Surfaced
+# phase-transition cues. Surfaced
 # only on the FIRST turn of a new phase so the student feels a smooth
 # bridge instead of an abrupt subject change.
 _PROMPT_RAPPORT_TO_TUTORING_BLOCK = """\
 
 PHASE TRANSITION (rapport → tutoring): this is the FIRST turn after
 locking onto LOCKED SUBSECTION. Open with a brief one-clause
-acknowledgment of the locked topic before your Socratic question
-(e.g. "Great — let's dig into LOCKED SUBSECTION." or
-"Got it — starting with LOCKED SUBSECTION."). The acknowledgment is
-PART of the response budget; do NOT exceed the SHAPE max_sentences.
+acknowledgment of the locked topic before your Socratic question.
+Vary the phrasing across sessions; do NOT reach for stock openers
+like "Great — let's dig into LOCKED SUBSECTION" or "Got it —
+starting with LOCKED SUBSECTION" — those read as canned when the
+student sees them on every topic-lock. Compose one that fits the
+specific subsection. The acknowledgment is PART of the response
+budget; do NOT exceed the SHAPE max_sentences.
 """
 
 _PROMPT_FIRST_CLINICAL_BLOCK = """\
 
 PHASE TRANSITION (assessment → clinical): the student JUST said yes
 to the clinical-application offer. Open with a brief bridging phrase
-that frames the clinical scenario (e.g. "Here's the scenario:" or
-"Picture this clinical case:") before presenting the scenario itself.
+that frames the clinical scenario before presenting the scenario
+itself. Vary the bridge across sessions; do NOT reach for stock
+openers like "Here's the scenario:" or "Picture this clinical case:"
+every time — repeated literal phrasing makes the tutor feel scripted.
 The bridge is PART of the response budget; do NOT exceed the SHAPE
 max_sentences.
 """
 
-
 # Modes that use chunks (other modes don't need them — saves tokens).
 _MODES_USING_CHUNKS = {"socratic", "clinical"}
 
-# Modes that use history. M1: close modes added so the LLM goodbye sees
+# Modes that use history. : close modes added so the LLM goodbye sees
 # what actually happened (was generic before — produced near-identical
 # closes for very different conversations).
 _MODES_USING_HISTORY = {
     "socratic", "clinical", "redirect", "nudge", "confirm_end",
     "honest_close", "reach_close", "clinical_natural_close", "close",
-    "soft_reset",  # BLOCK 9 (S3) — needs history to forbid prior analogy
-    "multichoice_rescue",  # BLOCK 11 (REAL-Q4) — same need
+    "soft_reset",  # — needs history to forbid prior analogy
+    "multichoice_rescue",  # same need
 }
 
-# Modes that need locked-topic context fields. M4: rapport added so
+# Modes that need locked-topic context fields. : rapport added so
 # prelock from My Mastery → Start surfaces the subsection name in the
 # greeting instead of asking "what topic do you want to study?"
 _MODES_USING_LOCKED = {"socratic", "clinical", "redirect", "opt_in",
                        "confirm_end", "honest_close", "reach_close",
                        "clinical_natural_close", "close", "rapport",
-                       "soft_reset",          # BLOCK 9 (S3)
-                       "multichoice_rescue"}  # BLOCK 11 (REAL-Q4)
-
+                       "soft_reset",          # 
+                       "multichoice_rescue"}  # 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Prompt builder
@@ -520,10 +535,10 @@ _MODES_USING_LOCKED = {"socratic", "clinical", "redirect", "opt_in",
 class TeacherPromptInputs:
     """Everything the prompt needs that isn't on the TurnPlan itself.
 
-    Kept as a dataclass (not buried as kwargs) so callers + tests can
-    construct it explicitly — and so missing fields surface at boundary
-    rather than mid-prompt.
-    """
+ Kept as a dataclass (not buried as kwargs) so callers + tests can
+ construct it explicitly — and so missing fields surface at boundary
+ rather than mid-prompt.
+"""
     chunks: list[dict]                # retrieved chunks (subsection-anchor)
     history: list[dict]               # conversation messages (newest last)
     locked_subsection: str = ""
@@ -532,12 +547,12 @@ class TeacherPromptInputs:
     domain_short: str = "subject"
     student_descriptor: str = "student"
     time_of_day: str = "afternoon"    # for rapport mode greeting
-    # BLOCK 5 (REAL-Q5) — system provenance for enriched history
+    # system provenance for enriched history
     # rendering. Both lists default empty (renderer falls back to plain
     # history if absent).
     snapshots: list[dict] = field(default_factory=list)
     system_events: list[dict] = field(default_factory=list)
-    # N4 (POST_DEMO_FIXES.md, 2026-05-06) — phase-transition signals.
+    # phase-transition signals.
     # `topic_just_locked` = first turn after the topic-lock retrieval
     # fired (rapport → tutoring transition). `is_first_clinical_turn` =
     # first clinical-mode turn after opt-in YES (assessment → clinical
@@ -547,13 +562,12 @@ class TeacherPromptInputs:
     topic_just_locked: bool = False
     is_first_clinical_turn: bool = False
 
-
 def build_teacher_prompt(turn_plan: TurnPlan, inputs: TeacherPromptInputs) -> str:
     """Assemble the full Teacher prompt from TurnPlan + inputs.
 
-    Pure function — no LLM call. Easy to unit-test by inspecting the
-    returned string.
-    """
+ Pure function — no LLM call. Easy to unit-test by inspecting the
+ returned string.
+"""
     if turn_plan.mode not in _MODE_INSTRUCTIONS:
         raise ValueError(f"Unknown TurnPlan mode: {turn_plan.mode!r}")
 
@@ -599,7 +613,7 @@ def build_teacher_prompt(turn_plan: TurnPlan, inputs: TeacherPromptInputs) -> st
             clinical_scenario=turn_plan.clinical_scenario,
             clinical_target=turn_plan.clinical_target or "(unspecified)",
         ))
-    # N4 — phase-transition cues. Append AFTER the topic/scenario blocks
+    # phase-transition cues. Append AFTER the topic/scenario blocks
     # so the LLM has full context before the bridging instruction.
     if turn_plan.mode == "socratic" and inputs.topic_just_locked:
         parts.append(_PROMPT_RAPPORT_TO_TUTORING_BLOCK)
@@ -610,7 +624,7 @@ def build_teacher_prompt(turn_plan: TurnPlan, inputs: TeacherPromptInputs) -> st
             chunks=_format_chunks(inputs.chunks),
         ))
     if turn_plan.mode in _MODES_USING_HISTORY and inputs.history:
-        # BLOCK 5 (REAL-Q5) — pass snapshots + events so history is
+        # pass snapshots + events so history is
         # rendered with system-state annotations
         parts.append(_PROMPT_HISTORY_BLOCK.format(
             history=_format_history(
@@ -619,7 +633,7 @@ def build_teacher_prompt(turn_plan: TurnPlan, inputs: TeacherPromptInputs) -> st
                 events=inputs.system_events,
             ),
         ))
-    # L77 — surface image context when present and the mode is one that
+    # surface image context when present and the mode is one that
     # benefits from grounding in visual structures (socratic + clinical).
     if (turn_plan.image_context
             and turn_plan.mode in {"socratic", "clinical"}):
@@ -638,7 +652,6 @@ def build_teacher_prompt(turn_plan: TurnPlan, inputs: TeacherPromptInputs) -> st
     parts.append(_PROMPT_FOOTER)
     return "".join(parts)
 
-
 def _format_chunks(chunks: list[dict], max_chunks: int = 7) -> str:
     """Render up to N retrieved chunks as a numbered list."""
     out = []
@@ -652,7 +665,6 @@ def _format_chunks(chunks: list[dict], max_chunks: int = 7) -> str:
         out.append(prefix + text[:1200])
     return "\n\n".join(out) or "(no chunks)"
 
-
 def _format_history(
     history: list[dict],
     *,
@@ -662,27 +674,25 @@ def _format_history(
 ) -> str:
     """Render conversation history with optional system-state annotations.
 
-    BLOCK 5 (REAL-Q5): delegates to `history_render.render_history()`
-    which weaves snapshots + events with messages. Falls back to plain
-    history when snapshots/events are empty (legacy state, early turns).
+ : delegates to `history_render.render_history`
+ which weaves snapshots + events with messages. Falls back to plain
+ history when snapshots/events are empty (legacy state, early turns).
 
-    BLOCK 4 (REAL-Q8): cap default raised 8→50.
-    """
+ : cap default raised 8→50.
+"""
     from conversation.history_render import render_history
     return render_history(history, snapshots=snapshots, events=events, max_turns=max_turns)
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Single entry point
 # ─────────────────────────────────────────────────────────────────────────────
 
-
 @dataclass
 class TeacherDraftResult:
-    """Result of one teacher.draft() call.
+    """Result of one teacher.draft call.
 
-    Carries the rendered text plus diagnostics for trace.
-    """
+ Carries the rendered text plus diagnostics for trace.
+"""
     text: str
     mode: str
     tone: str
@@ -692,15 +702,14 @@ class TeacherDraftResult:
     cache_read_tokens: int = 0
     error: Optional[str] = None
 
-
 class TeacherV2:
-    """Single-entry-point Teacher per L49.
+    """Single-entry-point Teacher .
 
-    Construction:
-      teacher = TeacherV2(client, model="claude-sonnet-4-6")
-      result = teacher.draft(turn_plan, inputs)
-      print(result.text)
-    """
+ Construction:
+ teacher = TeacherV2(client, model="claude-sonnet-4-6")
+ result = teacher.draft(turn_plan, inputs)
+ print(result.text)
+"""
 
     def __init__(
         self,
@@ -708,7 +717,7 @@ class TeacherV2:
         *,
         model: str = "claude-sonnet-4-6",
         max_tokens: int = 800,
-        temperature: float = 0.7,  # Q19/B3: was 0.4 — caused verbatim regen on Cancel/soft_reset turns. 0.7 gives variation without harming coherence.
+        temperature: float = 0.7,  #: was 0.4 — caused verbatim regen on Cancel/soft_reset turns. 0.7 gives variation without harming coherence.
     ):
         self.client = client
         self.model = model
@@ -725,26 +734,24 @@ class TeacherV2:
     ) -> TeacherDraftResult:
         """Render Teacher's message via mode-dispatched prompt.
 
-        `prior_attempts` and `prior_failures` are used by the L62 retry
-        feedback loop (Track 4.6) — empty on first attempt; populated
-        when a check failed and we're retrying with the failure detail.
-        """
-        # BLOCK 3 (REAL-Q7) — multi-tier cache. Two cache_control markers:
-        #   Tier 1 (master + vocab): caches across SESSIONS (5-min TTL).
-        #     ~2200 tokens. Identical for every Teacher call regardless
-        #     of domain (well, varies by domain_name, but same per-domain).
-        #   Tier 2 (mode + locked + chunks + hint + forbidden): caches
-        #     within a turn's retries. Tier 2 changes turn-to-turn but
-        #     stable across attempts 1-4 within a single turn.
-        #   UNCACHED (after Tier 2): variable_tail (retry feedback) which
-        #     changes per attempt.
-        #
-        # NOTE: history is currently part of build_teacher_prompt() output
+ `prior_attempts` and `prior_failures` are used by the retry
+ feedback loop — empty on first attempt; populated
+ when a check failed and we're retrying with the failure detail.
+"""
+        # multi-tier cache. Two cache_control markers:
+        # Tier 1 (master + vocab): caches across SESSIONS (5-min TTL).
+        # ~2200 tokens. Identical for every Teacher call regardless
+        # of domain (well, varies by domain_name, but same per-domain).
+        # Tier 2 (mode + locked + chunks + hint + forbidden): caches
+        # within a turn's retries. Tier 2 changes turn-to-turn but
+        # stable across attempts 1-4 within a single turn.
+        # UNCACHED (after Tier 2): variable_tail (retry feedback) which
+        # changes per attempt.
+        # NOTE: history is currently part of build_teacher_prompt output
         # (Tier 2). It's stable across retries within a turn (history doesn't
-        # grow during retries) so cache hits within turns. BLOCK 5 may
+        # grow during retries) so cache hits within turns. may
         # restructure if we want history outside Tier 2 to enable
         # cross-turn cache hits on Tier 2.
-        #
         # Bedrock minimum cache block size is ~2048 tokens. Tier 1 alone
         # ~2200 tokens meets minimum. Tier 1 + Tier 2 always ≥4000 tokens
         # so the cumulative prefix at marker 2 always exceeds minimum.

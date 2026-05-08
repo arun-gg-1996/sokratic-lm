@@ -1,10 +1,8 @@
 """
 scripts/reindex_chunks.py
--------------------------
 Re-index the corpus at the CHUNK level (drop the proposition layer).
 
 Why this exists
----------------
 The Dense X Retrieval / propositions-as-retrieval-units architecture was
 adopted on faith from the Wikipedia-trained EMNLP 2024 result. End-to-end
 testing against canonical anatomy questions ("which nerve innervates the
@@ -16,25 +14,22 @@ result has not been validated on biomedical / textbook corpora, and the
 chunks with optional ColBERT rerank.
 
 What this does
---------------
-  - Reads data/processed/chunks_openstax_anatomy.jsonl (7,574 chunks)
-  - Embeds each chunk's `text` field via OpenAI text-embedding-3-large
-  - Upserts to a NEW Qdrant collection `sokratic_kb_chunks`
-  - Builds a NEW BM25 index at data/indexes/bm25_chunks_openstax_anatomy.pkl
-  - Leaves the existing `sokratic_kb` (propositions) collection untouched
-    so we can A/B compare and roll back instantly if needed.
+Reads data/processed/chunks_openstax_anatomy.jsonl (7,574 chunks)
+Embeds each chunk's `text` field via OpenAI text-embedding-3-large
+Upserts to a NEW Qdrant collection `sokratic_kb_chunks`
+Builds a NEW BM25 index at data/indexes/bm25_chunks_openstax_anatomy.pkl
+Leaves the existing `sokratic_kb` (propositions) collection untouched
+ so we can A/B compare and roll back instantly if needed.
 
 Cost
-----
-  - ~7,500 embeddings × ~100 tokens each = ~750k input tokens
-    @ $0.13 per 1M for text-embedding-3-large = ~$0.10
-  - ~10 minutes wall on a stable network
+~7,500 embeddings × ~100 tokens each = ~750k input tokens
+ @ $0.13 per 1M for text-embedding-3-large = ~$0.10
+~10 minutes wall on a stable network
 
 Usage
------
-  cd /Users/arun-ghontale/UB/NLP/sokratic
-  .venv/bin/python scripts/reindex_chunks.py
-  .venv/bin/python scripts/reindex_chunks.py --collection sokratic_kb_chunks --fresh
+cd /Users/arun-ghontale/UB/NLP/sokratic
+ .venv/bin/python scripts/reindex_chunks.py
+ .venv/bin/python scripts/reindex_chunks.py --collection sokratic_kb_chunks --fresh
 """
 from __future__ import annotations
 
@@ -70,7 +65,6 @@ EMBED_BATCH_SIZE = 100
 UPSERT_BATCH_SIZE = 100
 VECTOR_SIZE = 3072  # text-embedding-3-large
 
-
 def load_chunks(path: Path) -> list[dict]:
     out: list[dict] = []
     with open(path) as f:
@@ -79,7 +73,6 @@ def load_chunks(path: Path) -> list[dict]:
             if line:
                 out.append(json.loads(line))
     return out
-
 
 def ensure_fresh_collection(client: QdrantClient, name: str) -> None:
     if client.collection_exists(name):
@@ -91,12 +84,11 @@ def ensure_fresh_collection(client: QdrantClient, name: str) -> None:
     )
     print(f"  Created fresh collection {name!r} (size={VECTOR_SIZE}, cosine)")
 
-
 def chunk_to_payload(chunk: dict, domain: str) -> dict:
     """Build the Qdrant payload for a chunk. Preserves all the metadata the
-    retriever already reads (chunk_id, prev/next links for window expansion,
-    chapter/section/subsection for filtering, page + element_type for
-    multimodal hooks)."""
+ retriever already reads (chunk_id, prev/next links for window expansion
+ chapter/section/subsection for filtering, page + element_type for
+ multimodal hooks)."""
     return {
         "chunk_id": chunk.get("chunk_id", ""),
         "text": chunk.get("text", ""),
@@ -115,7 +107,6 @@ def chunk_to_payload(chunk: dict, domain: str) -> dict:
         # is a chunk-indexed point, not a proposition-indexed one.
         "indexing_unit": "chunk",
     }
-
 
 def main() -> None:
     ap = argparse.ArgumentParser()
@@ -210,7 +201,6 @@ def main() -> None:
     print(f"  BM25 index file   : {BM25_OUT_PATH.relative_to(ROOT)}")
     print(f"  To use, point retriever at this collection + BM25 path "
           f"(see retriever wiring; cfg.memory.kb_collection / cfg.paths).")
-
 
 if __name__ == "__main__":
     main()

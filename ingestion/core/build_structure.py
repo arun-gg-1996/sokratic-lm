@@ -1,10 +1,9 @@
 """
 ingestion/build_structure.py
------------------------------
 Build data/textbook_structure.json from extracted raw elements.
 
 Output hierarchy:
-  Chapter -> Section -> Subsection
+ Chapter -> Section -> Subsection
 with a difficulty label on each node.
 """
 
@@ -15,18 +14,16 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
-
 def _clean_title(text: str) -> str:
     t = (text or "").strip()
     t = re.sub(r"\s+", " ", t)
     return t
 
-
 def _difficulty_for_title(title: str, level: str) -> str:
     """
-    Deterministic difficulty heuristic.
-    We keep this local/fast so structure generation remains lightweight.
-    """
+ Deterministic difficulty heuristic.
+ We keep this local/fast so structure generation remains lightweight.
+"""
     t = title.lower()
     hard_terms = (
         "peripheral nervous system",
@@ -55,11 +52,10 @@ def _difficulty_for_title(title: str, level: str) -> str:
         return "moderate"
     return "moderate"
 
-
 def build_structure(elements: list[dict]) -> dict:
     """
-    Build chapter/section/subsection hierarchy from raw extracted elements.
-    """
+ Build chapter/section/subsection hierarchy from raw extracted elements.
+"""
     chapter_sections: dict[str, dict[str, set[str]]] = defaultdict(
         lambda: defaultdict(set)
     )
@@ -100,14 +96,12 @@ def build_structure(elements: list[dict]) -> dict:
 
     return structure
 
-
 def assign_difficulty(structure: dict) -> dict:
     """
-    Kept for API compatibility with architecture docs.
-    build_structure() already assigns difficulty labels.
-    """
+ Kept for API compatibility with architecture docs.
+ build_structure already assigns difficulty labels.
+"""
     return structure
-
 
 def save_structure(structure: dict, output_path: str) -> None:
     """Save final structure dict to JSON."""
@@ -115,7 +109,6 @@ def save_structure(structure: dict, output_path: str) -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     with open(out, "w", encoding="utf-8") as f:
         json.dump(structure, f, ensure_ascii=False, indent=2)
-
 
 def _load_cached_elements(path: Path) -> list[dict]:
     if not path.exists():
@@ -128,7 +121,6 @@ def _load_cached_elements(path: Path) -> list[dict]:
                 continue
             items.append(json.loads(line))
     return items
-
 
 if __name__ == "__main__":
     from config import cfg

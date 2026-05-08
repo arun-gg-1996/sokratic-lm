@@ -1,13 +1,11 @@
 """
 scripts/build_raptor_summaries.py
----------------------------------
 Build mid-level summaries (subsection + section level) and add them to the
 Qdrant chunks index, so aggregation queries ("list the X", "what are the
 types of Y") have a retrievable handle that matches their conceptual
 granularity.
 
 Why
----
 Chunks-mode retrieval (see reindex_chunks.py) recovers most relational
 queries that the proposition pipeline broke. But "list-the-Xs" / aggregation
 queries still need an item that explicitly aggregates the X1..Xn — a single
@@ -17,33 +15,30 @@ has explicit (chapter, section, subsection) hierarchy — so we summarize
 along that hierarchy directly.
 
 What this does
---------------
-  1. Group chunks_openstax_anatomy.jsonl by (chapter, section, subsection).
-  2. For each group, ask Claude Haiku 4.5 to produce a 4-6 sentence
-     subsection summary that mentions the key entities/concepts the textbook
-     introduces in that subsection.
-  3. Same at (chapter, section) level — coarser handle for "give me an
-     overview of section X" queries.
-  4. Embed each summary via OpenAI text-embedding-3-large.
-  5. Upsert into the SAME Qdrant collection as chunks (sokratic_kb_chunks),
-     payload-marked with indexing_unit="subsection_summary" or
-     "section_summary" so the retriever can blend or filter.
-  6. Append summaries to the chunks BM25 pickle so the BM25 leg sees them
-     too (retriever's BM25 is keyed by index, not chunk_id, so order is
-     stable).
+1. Group chunks_openstax_anatomy.jsonl by (chapter, section, subsection).
+ 2. For each group, ask Claude Haiku 4.5 to produce a 4-6 sentence
+ subsection summary that mentions the key entities/concepts the textbook
+ introduces in that subsection.
+ 3. Same at (chapter, section) level — coarser handle for "give me an
+ overview of section X" queries.
+ 4. Embed each summary via OpenAI text-embedding-3-large.
+ 5. Upsert into the SAME Qdrant collection as chunks (sokratic_kb_chunks)
+ payload-marked with indexing_unit="subsection_summary" or
+ "section_summary" so the retriever can blend or filter.
+ 6. Append summaries to the chunks BM25 pickle so the BM25 leg sees them
+ too (retriever's BM25 is keyed by index, not chunk_id, so order is
+ stable).
 
 Cost
-----
-  - 549 subsection + 170 section = ~720 Haiku calls (~$0.30-1.00 in tokens)
-  - 720 OpenAI embeddings (~$0.10)
-  - ~5-10 min wall with concurrency=8
+549 subsection + 170 section = ~720 Haiku calls (~$0.30-1.00 in tokens)
+720 OpenAI embeddings (~$0.10)
+~5-10 min wall with concurrency=8
 
 Usage
------
-  cd /Users/arun-ghontale/UB/NLP/sokratic
-  .venv/bin/python scripts/build_raptor_summaries.py
-  .venv/bin/python scripts/build_raptor_summaries.py --limit 5  # smoke test
-  .venv/bin/python scripts/build_raptor_summaries.py --section-only
+cd /Users/arun-ghontale/UB/NLP/sokratic
+ .venv/bin/python scripts/build_raptor_summaries.py
+ .venv/bin/python scripts/build_raptor_summaries.py --limit 5 # smoke test
+ .venv/bin/python scripts/build_raptor_summaries.py --section-only
 """
 from __future__ import annotations
 
@@ -124,7 +119,6 @@ SOURCE (subsection summaries already produced for this section):
 
 Write only the summary, no preamble."""
 
-
 def load_chunks(path: Path) -> list[dict]:
     out = []
     with open(path) as f:
@@ -134,20 +128,17 @@ def load_chunks(path: Path) -> list[dict]:
                 out.append(json.loads(line))
     return out
 
-
 def group_by_subsection(chunks: list[dict]) -> dict[tuple, list[dict]]:
     g: dict[tuple, list[dict]] = defaultdict(list)
     for c in chunks:
         g[(c.get("chapter_num"), c.get("section_title", ""), c.get("subsection_title", ""))].append(c)
     return g
 
-
 def group_by_section(chunks: list[dict]) -> dict[tuple, list[dict]]:
     g: dict[tuple, list[dict]] = defaultdict(list)
     for c in chunks:
         g[(c.get("chapter_num"), c.get("section_title", ""))].append(c)
     return g
-
 
 async def summarize_one(
     sem: asyncio.Semaphore,
@@ -172,22 +163,20 @@ async def summarize_one(
         except Exception as e:
             return label, f"[ERROR: {type(e).__name__}: {e}]"
 
-
 def truncate_tokens_approx(text: str, max_chars: int = 320_000) -> str:
     """Very rough — Haiku 4-5 has 200k context, ~4 chars/token. Cap at
-    320k chars (~80k tokens) to leave room for prompt + output."""
+ 320k chars (~80k tokens) to leave room for prompt + output."""
     if len(text) <= max_chars:
         return text
     return text[:max_chars] + "\n[... TRUNCATED ...]"
-
 
 async def build_subsection_summaries(
     groups: dict[tuple, list[dict]],
     *,
     limit: int | None = None,
 ) -> list[dict]:
-    """Returns list of summary dicts: {chapter_num, section_title,
-    subsection_title, summary, n_source_chunks, group_chunk_ids}."""
+    """Returns list of summary dicts: {chapter_num, section_title
+ subsection_title, summary, n_source_chunks, group_chunk_ids}."""
     items = list(groups.items())
     if limit:
         items = items[:limit]
@@ -236,7 +225,6 @@ async def build_subsection_summaries(
                 results.append({**m, "summary": text})
                 break
     return results
-
 
 async def build_section_summaries(
     section_groups: dict[tuple, list[dict]],
@@ -297,7 +285,6 @@ async def build_section_summaries(
                 break
     return results
 
-
 def upsert_summaries(qdrant: QdrantClient, openai: OpenAI,
                      summaries: list[dict], unit_label: str) -> int:
     if not summaries:
@@ -341,11 +328,10 @@ def upsert_summaries(qdrant: QdrantClient, openai: OpenAI,
         upserted += len(batch)
     return upserted
 
-
 def append_to_bm25(summaries: list[dict], unit_label: str) -> None:
     """Append summaries to the chunks BM25 pickle. The pickle's key
-    'propositions' is a list whose order matches BM25 indices; we add new
-    rows at the end and rebuild BM25Okapi."""
+ 'propositions' is a list whose order matches BM25 indices; we add new
+ rows at the end and rebuild BM25Okapi."""
     if not summaries:
         return
     with open(BM25_PATH, "rb") as f:
@@ -374,7 +360,6 @@ def append_to_bm25(summaries: list[dict], unit_label: str) -> None:
     with open(BM25_PATH, "wb") as f:
         pickle.dump({"bm25": bm25, "propositions": chunks_list}, f)
     print(f"  BM25 rebuilt with {len(chunks_list)} total entries.")
-
 
 async def main_async(args):
     chunks = load_chunks(CHUNKS_PATH)
@@ -418,7 +403,6 @@ async def main_async(args):
 
     print("\nALL DONE.")
 
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=None,
@@ -429,7 +413,6 @@ def main():
                     help="only section-level (skip subsection)")
     args = ap.parse_args()
     asyncio.run(main_async(args))
-
 
 if __name__ == "__main__":
     main()

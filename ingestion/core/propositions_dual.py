@@ -1,37 +1,36 @@
 """
 ingestion/core/propositions_dual.py
------------------------------------
 Dual-task proposition extraction (B.5).
 
 One Sonnet 4.5 call per chunk does TWO things and returns JSON:
-  (a) cleans the chunk text — strips URLs, INTERACTIVE LINK markers,
-      LEARNING OBJECTIVES preambles, decorative figure/table refs, page
-      numbers, attribution lines — preserves all factual content using
-      source terminology.
-  (b) decomposes the cleaned text into atomic propositions (≤ 20 per chunk),
-      faithful to the source.
+ (a) cleans the chunk text — strips URLs, INTERACTIVE LINK markers
+ LEARNING OBJECTIVES preambles, decorative figure/table refs, page
+ numbers, attribution lines — preserves all factual content using
+ source terminology.
+ (b) decomposes the cleaned text into atomic propositions (≤ 20 per chunk)
+ faithful to the source.
 
 Why dual-task in one prompt:
-  - Single API round-trip per chunk — cheaper and cuts wall time roughly in half
-    versus two sequential calls.
-  - Sonnet sees both the source text AND the cleaned version it just produced
-    when extracting propositions, so the propositions stay aligned with what
-    actually survives cleaning.
-  - The system prompt body is identical across all chunks, so prompt caching
-    pays for itself after the first call (~80% input-token cost reduction
-    once cached).
+Single API round-trip per chunk — cheaper and cuts wall time roughly in half
+ versus two sequential calls.
+Sonnet sees both the source text AND the cleaned version it just produced
+ when extracting propositions, so the propositions stay aligned with what
+ actually survives cleaning.
+The system prompt body is identical across all chunks, so prompt caching
+ pays for itself after the first call (~80% input-token cost reduction
+ once cached).
 
 Architecture notes:
-  - The system prompt body is source-agnostic; describes noise patterns
-    generically so the same module works for the second textbook in Phase C.
-  - Optional source-specific suffix (from sources/X/prompt_overrides.py) is
-    appended to the cached system block.
-  - Async parallel via AsyncAnthropic + asyncio.gather, capped by a semaphore.
-  - Per-call cost tracking: each call emits a usage dict; B.6 cost_tracker
-    aggregates these for live "$X.XX so far" readouts during long runs.
-  - JSON parse failures are isolated — a single malformed response doesn't
-    crash the batch; the affected chunk gets an empty proposition list and
-    `error` populated for B.8 pilot validation.
+The system prompt body is source-agnostic; describes noise patterns
+ generically so the same module works for the second textbook in Phase C.
+Optional source-specific suffix (from sources/X/prompt_overrides.py) is
+ appended to the cached system block.
+Async parallel via AsyncAnthropic + asyncio.gather, capped by a semaphore.
+Per-call cost tracking: each call emits a usage dict; B.6 cost_tracker
+ aggregates these for live "$X.XX so far" readouts during long runs.
+JSON parse failures are isolated — a single malformed response doesn't
+ crash the batch; the affected chunk gets an empty proposition list and
+ `error` populated for B.8 pilot validation.
 
 The legacy synchronous core/propositions.py (single-task, anthropic.Anthropic)
 is left untouched for backwards compat with the existing build_indexes path
@@ -48,31 +47,29 @@ from typing import Callable
 
 from anthropic import AsyncAnthropic
 
-
 # ── Constants ────────────────────────────────────────────────────────────────
 
-# Haiku 4-5 chosen for v1 ingestion (revised 2026-04-28 after smoke testing).
-#
+# Haiku 4-5 chosen for v1 ingestion (revised after smoke testing).
 # History of this decision:
-#   - First picked Sonnet 4-5 because empirically Sonnet 4-6 silently ignores
-#     cache_control in our environment (verified with serial back-to-back calls).
-#   - Then verified via Anthropic docs that Sonnet 4-6 has a 2048-token cache
-#     minimum, and Haiku 4-5 has a 4096-token cache minimum. Our original
-#     1659-token system prompt was below both thresholds for those models, but
-#     above Sonnet 4-5's 1024-token threshold — that's why only Sonnet 4-5
-#     appeared to "honor" caching.
-#   - Expanded the system prompt to 4488 tokens with 6 additional few-shot
-#     examples covering edge cases. Now Haiku 4-5 (4096 threshold) caches.
-#   - 10-chunk side-by-side smoke test (same chunks, both models): Haiku 4-5
-#     matches or beats Sonnet 4-5 on 5/10 chunks (better pronoun resolution,
-#     stricter atomicity, preserved chemical equation notation), ties on 4,
-#     loses slightly on 1. JSON parse rate 100% on both. Same cleaning fidelity.
-#   - Cost on 7570 chunks: Haiku ~$29 vs Sonnet ~$86. Haiku wins on cost AND
-#     on adherence to the prompt's atomicity / faithfulness rules.
+# - First picked Sonnet 4-5 because empirically Sonnet 4-6 silently ignores
+# cache_control in our environment (verified with serial back-to-back calls).
+# - Then verified via Anthropic docs that Sonnet 4-6 has a 2048-token cache
+# minimum, and Haiku 4-5 has a 4096-token cache minimum. Our original
+# 1659-token system prompt was below both thresholds for those models, but
+# above Sonnet 4-5's 1024-token threshold — that's why only Sonnet 4-5
+# appeared to "honor" caching.
+# - Expanded the system prompt to 4488 tokens with 6 additional few-shot
+# examples covering edge cases. Now Haiku 4-5 (4096 threshold) caches.
+# - 10-chunk side-by-side smoke test (same chunks, both models): Haiku 4-5
+# matches or beats Sonnet 4-5 on 5/10 chunks (better pronoun resolution
+# stricter atomicity, preserved chemical equation notation), ties on 4
+# loses slightly on 1. JSON parse rate 100% on both. Same cleaning fidelity.
+# - Cost on 7570 chunks: Haiku ~$29 vs Sonnet ~$86. Haiku wins on cost AND
+# on adherence to the prompt's atomicity / faithfulness rules.
 DEFAULT_MODEL = "claude-haiku-4-5"
 DEFAULT_PROMPT_VERSION = "v1"
 DEFAULT_CONCURRENCY = 20
-# Bumped 2048 → 8192 on 2026-04-28 after diagnosing B.9: ~18% of chunks errored
+# Bumped 2048 → 8192 on after diagnosing B.9: ~18% of chunks errored
 # because Haiku's response (cleaned_text repeating the chunk + 10-15 propositions
 # of ~60-80 tokens each + JSON syntax) was hitting the 2048 cap mid-output and
 # leaving JSON unclosed. The diagnostic showed pathological responses topped out
@@ -82,9 +79,8 @@ DEFAULT_CONCURRENCY = 20
 DEFAULT_MAX_OUTPUT_TOKENS = 8192
 PROPOSITION_CAP = 20  # max propositions per chunk
 
-
 # Source-agnostic prompt body. The single example demonstrates the noise
-# patterns we expect (LEARNING OBJECTIVES preamble, INTERACTIVE LINK marker,
+# patterns we expect (LEARNING OBJECTIVES preamble, INTERACTIVE LINK marker
 # inline URL, decorative parenthetical figure ref) and the desired output
 # (clean prose + atomic propositions in source terminology).
 SYSTEM_PROMPT_BODY = """\
@@ -314,7 +310,6 @@ Expected output:
 {"cleaned_text": "Diabetes mellitus is a chronic metabolic disorder characterized by hyperglycemia. There are two main forms of the disease. Type 1 diabetes is an autoimmune condition in which the immune system destroys the insulin-producing beta cells of the pancreas, resulting in an absolute deficiency of insulin. It typically begins in childhood or adolescence and requires lifelong insulin replacement therapy. Type 2 diabetes, in contrast, results from a combination of insulin resistance in peripheral tissues and a relative deficiency of insulin secretion. It is most often associated with obesity, physical inactivity, and a family history of the disease, and is usually managed initially with lifestyle modification and oral hypoglycemic agents.", "propositions": ["Diabetes mellitus is a chronic metabolic disorder.", "Diabetes mellitus is characterized by hyperglycemia.", "There are two main forms of diabetes mellitus.", "Type 1 diabetes is an autoimmune condition.", "In type 1 diabetes, the immune system destroys the insulin-producing beta cells of the pancreas.", "Type 1 diabetes results in an absolute deficiency of insulin.", "Type 1 diabetes typically begins in childhood or adolescence.", "Type 1 diabetes requires lifelong insulin replacement therapy.", "Type 2 diabetes results from a combination of insulin resistance in peripheral tissues and a relative deficiency of insulin secretion.", "Type 2 diabetes is most often associated with obesity.", "Type 2 diabetes is most often associated with physical inactivity.", "Type 2 diabetes is most often associated with a family history of the disease.", "Type 2 diabetes is usually managed initially with lifestyle modification and oral hypoglycemic agents."]}
 """
 
-
 # ── Result type ──────────────────────────────────────────────────────────────
 
 @dataclass
@@ -326,19 +321,18 @@ class DualTaskResult:
     usage: dict | None = None         # raw token usage if API responded
     error: str | None = None          # None on success
 
-
 # ── Prompt assembly ──────────────────────────────────────────────────────────
 
 def build_cached_system(extra_suffix: str = "") -> list[dict]:
     """Build the `system=` blocks for messages.create with the body cached.
 
-    The single text block carries the entire instruction body + few-shot
-    example + optional source-specific suffix. The cache_control: ephemeral
-    marker makes Anthropic's prompt cache treat this prefix as cacheable;
-    after the first request in a 5-minute window, subsequent calls hit the
-    cache for ~10× faster processing on the cached portion and ~10% input-
-    token cost.
-    """
+ The single text block carries the entire instruction body + few-shot
+ example + optional source-specific suffix. The cache_control: ephemeral
+ marker makes Anthropic's prompt cache treat this prefix as cacheable;
+ after the first request in a 5-minute window, subsequent calls hit the
+ cache for ~10× faster processing on the cached portion and ~10% input-
+ token cost.
+"""
     body = SYSTEM_PROMPT_BODY
     if extra_suffix and extra_suffix.strip():
         body = (
@@ -347,20 +341,19 @@ def build_cached_system(extra_suffix: str = "") -> list[dict]:
         )
     return [{"type": "text", "text": body, "cache_control": {"type": "ephemeral"}}]
 
-
 # ── Response parsing ─────────────────────────────────────────────────────────
 
 def parse_response(text: str) -> tuple[str | None, list[str], str | None]:
     """Parse the LLM's JSON response.
 
-    Returns (cleaned_text, propositions, error). `error` is None on success.
+ Returns (cleaned_text, propositions, error). `error` is None on success.
 
-    Robust to:
-      - markdown code fences (```json ... ```)
-      - extra prose before the JSON object
-      - propositions over the cap (truncated)
-      - non-string entries in the propositions list (filtered out)
-    """
+ Robust to:
+markdown code fences (```json ... ```)
+extra prose before the JSON object
+propositions over the cap (truncated)
+non-string entries in the propositions list (filtered out)
+"""
     if not text:
         return None, [], "empty response"
 
@@ -400,7 +393,6 @@ def parse_response(text: str) -> tuple[str | None, list[str], str | None]:
 
     return cleaned, props, None
 
-
 # ── Single-chunk extraction ──────────────────────────────────────────────────
 
 async def extract_dual_task(
@@ -415,12 +407,12 @@ async def extract_dual_task(
     abort_event: asyncio.Event | None = None,
 ) -> DualTaskResult:
     """Run dual-task extraction on one chunk. Never raises; returns a
-    DualTaskResult whose `error` field is non-None on failure.
+ DualTaskResult whose `error` field is non-None on failure.
 
-    abort_event: optional asyncio.Event. If set when this coroutine runs,
-    the API call is skipped and an error result is returned. Used by the
-    pipeline orchestrator to short-circuit remaining calls once the cost
-    cap is reached."""
+ abort_event: optional asyncio.Event. If set when this coroutine runs
+ the API call is skipped and an error result is returned. Used by the
+ pipeline orchestrator to short-circuit remaining calls once the cost
+ cap is reached."""
     chunk_id = chunk.get("chunk_id", "unknown")
     chunk_text = (chunk.get("text") or "").strip()
     if not chunk_text:
@@ -501,7 +493,6 @@ async def extract_dual_task(
         error=None,
     )
 
-
 # ── Batch orchestration ──────────────────────────────────────────────────────
 
 async def run_dual_task_batch(
@@ -517,27 +508,27 @@ async def run_dual_task_batch(
     abort_event: asyncio.Event | None = None,
 ) -> list[DualTaskResult]:
     """
-    Run dual-task extraction across a list of chunks in parallel.
+ Run dual-task extraction across a list of chunks in parallel.
 
-    Args:
-        chunks               input list (chunk_id, text required; rest ignored).
-        client               optional AsyncAnthropic to inject for tests; if
-                             None, constructs a fresh client.
-        model                model identifier; defaults to Sonnet 4.5.
-        extra_system_suffix  optional source-specific instructions appended to
-                             the cached system body (from
-                             sources/X/prompt_overrides.py).
-        concurrency          max in-flight requests; defaults to 20.
-        usage_callback       called once per response with the raw usage dict;
-                             B.6 cost_tracker uses this to maintain a live
-                             running cost estimate.
-        progress_callback    called as (done, total) after each chunk
-                             completes. Order is non-deterministic (parallel),
-                             so this is for "X of Y done" UI only.
+ Args:
+ chunks input list (chunk_id, text required; rest ignored).
+ client optional AsyncAnthropic to inject for tests; if
+ None, constructs a fresh client.
+ model model identifier; defaults to Sonnet 4.5.
+ extra_system_suffix optional source-specific instructions appended to
+ the cached system body (from
+ sources/X/prompt_overrides.py).
+ concurrency max in-flight requests; defaults to 20.
+ usage_callback called once per response with the raw usage dict;
+ B.6 cost_tracker uses this to maintain a live
+ running cost estimate.
+ progress_callback called as (done, total) after each chunk
+ completes. Order is non-deterministic (parallel)
+ so this is for "X of Y done" UI only.
 
-    Returns:
-        list of DualTaskResult preserving the input chunk order.
-    """
+ Returns:
+ list of DualTaskResult preserving the input chunk order.
+"""
     if not chunks:
         return []
     if client is None:

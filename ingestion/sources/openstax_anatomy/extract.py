@@ -1,11 +1,10 @@
 """
 ingestion/extract.py
---------------------
 Extraction foundation switched to ingestion.parse_pdf.parse_pdf
 (font-size heading parser for OpenStax PDFs).
 
 This module now:
-1) runs parse_pdf() to get structured sections (L1 + L2)
+1) runs parse_pdf to get structured sections ( + )
 2) maps sections into our ChunkSchema-compatible pre-chunk records
 3) saves mapped records to data/processed/raw_sections_ot.jsonl
 
@@ -28,12 +27,11 @@ load_dotenv()
 RAW_SECTIONS_PATH = cfg.domain_path("raw_sections")
 RAW_SECTIONS_DIR = "data/processed/chunks/raw_sections"
 
-
 def _sanitize_section_title(section_title: str, chapter_title: str, section_num: str) -> str:
     """
-    Normalize section titles for indexing.
-    Never allow 1-2 character section titles (e.g., 'A', 'B').
-    """
+ Normalize section titles for indexing.
+ Never allow 1-2 character section titles (e.g., 'A', 'B').
+"""
     title = (section_title or "").strip()
     if len(title) <= 2:
         sec = (section_num or "").strip()
@@ -42,17 +40,16 @@ def _sanitize_section_title(section_title: str, chapter_title: str, section_num:
         return chapter_title
     return title
 
-
 def _map_section_to_seed_chunk(section: dict) -> dict:
     """Map parse_pdf section schema to our pre-chunk schema.
 
-    parse.py emits clean fields after the 2026-04-28 fix:
-      - section_title is the canonical L1 name (no section_num prefix,
-        no em-dash mash). L2 sections inherit the parent L1 title here.
-      - subsection_title is the L2 heading text (or "" for L1).
-      - section_num is the dotted number ("6.7") in its own field.
-    No de-mashing is needed at the extract layer anymore.
-    """
+ parse.py emits clean fields after the fix:
+section_title is the canonical name (no section_num prefix
+ no em-dash mash). sections inherit the parent title here.
+subsection_title is the heading text (or "" for ).
+section_num is the dotted number ("6.7") in its own field.
+ No de-mashing is needed at the extract layer anymore.
+"""
     level = int(section.get("level", 1))
     chapter_title = section["chapter"]
     section_num = section.get("section_num", "") or ""
@@ -85,7 +82,6 @@ def _map_section_to_seed_chunk(section: dict) -> dict:
     }
     return mapped
 
-
 def sections_to_seed_chunks(sections: list[dict]) -> list[dict]:
     """Convert parse_pdf sections to pre-chunk seed records."""
     seeds: list[dict] = []
@@ -96,7 +92,6 @@ def sections_to_seed_chunks(sections: list[dict]) -> list[dict]:
         seeds.append(_map_section_to_seed_chunk(s))
     return seeds
 
-
 def save_jsonl(rows: list[dict], out_path: str) -> None:
     """Save list of dicts as JSONL."""
     out = Path(out_path)
@@ -105,7 +100,6 @@ def save_jsonl(rows: list[dict], out_path: str) -> None:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
 
-
 def extract_pdf(
     pdf_path: str,
     domain: str = "OT_anatomy",
@@ -113,17 +107,17 @@ def extract_pdf(
     out_jsonl: str = RAW_SECTIONS_PATH,
 ) -> list[dict]:
     """
-    Run parse_pdf and return mapped section-seed chunks.
+ Run parse_pdf and return mapped section-seed chunks.
 
-    Args:
-        pdf_path: Source PDF path.
-        domain: parse_pdf domain label.
-        out_dir: parse_pdf output dir for per-chapter JSON.
-        out_jsonl: JSONL output path for mapped seeds.
+ Args:
+ pdf_path: Source PDF path.
+ domain: parse_pdf domain label.
+ out_dir: parse_pdf output dir for per-chapter JSON.
+ out_jsonl: JSONL output path for mapped seeds.
 
-    Returns:
-        List of mapped seed chunk dicts.
-    """
+ Returns:
+ List of mapped seed chunk dicts.
+"""
     sections = parse_pdf(
         pdf_path=pdf_path,
         domain=domain,
@@ -134,7 +128,6 @@ def extract_pdf(
     seeds = sections_to_seed_chunks(sections)
     save_jsonl(seeds, out_jsonl)
     return seeds
-
 
 def _report_section_stats(sections: list[dict]) -> None:
     total_sections = len(sections)
@@ -161,7 +154,6 @@ def _report_section_stats(sections: list[dict]) -> None:
                 f"[{s.get('page_start')}-{s.get('page_end')}] {s.get('section_title','')[:90]}"
             )
 
-
 def _load_sections_from_saved_dir(out_dir: str, domain: str) -> list[dict]:
     """Load combined parse_pdf output if available."""
     combined = Path(out_dir) / f"all_sections_{domain}.json"
@@ -169,7 +161,6 @@ def _load_sections_from_saved_dir(out_dir: str, domain: str) -> list[dict]:
         return []
     with combined.open("r", encoding="utf-8") as f:
         return json.load(f)
-
 
 if __name__ == "__main__":
     pdf_path = cfg.paths.raw_ot_pdf

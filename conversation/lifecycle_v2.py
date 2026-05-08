@@ -1,36 +1,16 @@
 """
-conversation/lifecycle_v2.py
-─────────────────────────────
-Session-lifecycle graph nodes that V2 inherits from V1 (rapport opener,
-memory-update close) plus the routing edges that wire the LangGraph.
-
-Origin: ported from V1 conversation/nodes.py + conversation/edges.py
-during D1 (V1 → V2 consolidation). V1 nodes that V2 has its own
-implementation of (`dean_node` → `dean_node_v2`, `assessment_node` →
-`assessment_node_v2`) are NOT here — they were deleted during the port.
-The remaining nodes have no V2 equivalent and are needed by graph.py.
+Session-lifecycle nodes and routing edges for the tutoring graph.
 
 Nodes:
-  rapport_node        — greet student, load cross-session memory, suggest topics
-  memory_update_node  — flush session to mem0/SQLite, run close-LLM, clear state
+  rapport_node        — greet the student, load cross-session memory,
+                        suggest topics if no prior context exists.
+  memory_update_node  — flush session highlights to mem0 + SQLite,
+                        run the closing LLM draft, clear runtime state.
 
-Edges (routing logic):
-  after_rapport       — rapport → dean / assessment / memory_update
-  after_dean          — dean → assessment / memory_update / END
+Edges:
+  after_rapport       — rapport  → dean / assessment / memory_update
+  after_dean          — dean     → assessment / memory_update / END
   after_assessment    — assessment → memory_update / END
-
-Helpers retained because rapport_node / memory_update_node use them:
-  _derive_close_reason       — picks close_reason from state signals
-  _draft_close_message       — runs Teacher draft in mode="close" (uses TeacherV2)
-  _persist_session_end_to_sqlite — L21 SQLiteStore session row + mastery upsert
-  _session_topic_name, _upsert_weak_topic, _latest_student_message — utilities
-
-V1 callsites that have been refactored away during the port:
-  - rapport_node previously called V1 `teacher.draft_rapport(...)`; now
-    builds a `TurnPlan(mode="rapport")` and calls `TeacherV2.draft(...)`.
-  - `from conversation.teacher import fire_activity` callsites were
-    redirected to `conversation.streaming.fire_activity` (callback
-    registry now lives in `conversation/streaming.py`).
 """
 
 import json
@@ -44,41 +24,38 @@ from config import cfg
 
 _topic_suggester = TopicSuggester()
 
-
 def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
     """
-    Phase 1 — Rapport.
+ Phase 1 — Rapport.
+Loads cross-session memory via memory_manager.load(student_id) (mem0/Qdrant).
+ Returning students get a brief reference to one prior topic; new students
+ get a fresh greeting.
+weak_topics is still empty here (legacy slot reserved for future
+ knowledge-tracing-derived weak concepts).
+TopicSuggester provides initial topic suggestions from textbook_structure.json.
+Teacher generates personalized greeting.
+Transition phase to "tutoring".
 
-    - Loads cross-session memory via memory_manager.load(student_id) (mem0/Qdrant).
-      Returning students get a brief reference to one prior topic; new students
-      get a fresh greeting.
-    - weak_topics is still empty here (legacy slot reserved for future
-      knowledge-tracing-derived weak concepts).
-    - TopicSuggester provides initial topic suggestions from textbook_structure.json.
-    - Teacher generates personalized greeting.
-    - Transition phase to "tutoring".
-
-    Note: teacher not dean — rapport never uses Dean.
-    """
+ Note: teacher not dean — rapport never uses Dean.
+"""
     # Only run once — skip if already past rapport phase
     if state.get("phase") != "rapport":
         return {}
 
-    # Legacy slot — kept for knowledge-tracing wiring (D.3).
+    # Legacy slot — kept for knowledge-tracing wiring .
     weak_topics: list[dict] = []
 
-    # Pull cross-session context from SQL (per L1 — session_summary +
+    # Pull cross-session context from SQL (— session_summary +
     # open_thread now live in the sessions table, not mem0).
-    #
     # Two derived signals fold into past_memories for the rapport prompt:
-    #   1. "recent_summary" — most recent COMPLETED session's locked topic
-    #      (sessions.ended_at IS NOT NULL AND status='completed')
-    #   2. "open_thread"    — any session left unresolved
-    #      (ended_at IS NULL OR status IN
-    #         ('abandoned_no_lock','ended_off_domain','ended_turn_limit'))
+    # 1. "recent_summary" — most recent COMPLETED session's locked topic
+    # (sessions.ended_at IS NOT NULL AND status='completed')
+    # 2. "open_thread" — any session left unresolved
+    # (ended_at IS NULL OR status IN
+    # ('abandoned_no_lock','ended_off_domain','ended_turn_limit'))
     # Both are formatted as memory-shaped dicts so draft_rapport treats
     # them identically to a mem0 entry. Misconception + learning_style
-    # narratives stay in mem0 (per L1) — those are tutor-internal,
+    # narratives stay in mem0 — those are tutor-internal
     # NOT material for an opener.
     student_id = state.get("student_id", "") or ""
     memory_enabled = bool(state.get("memory_enabled", True))
@@ -97,7 +74,7 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
         try:
             from memory.sqlite_store import SQLiteStore
             store = SQLiteStore()
-            # A2 (POST_DEMO_FIXES.md, 2026-05-06): pull up to 3 recent
+            # pull up to 3 recent
             # completed sessions instead of just 1 so the rapport LLM can
             # reference recency naturally and prioritize the most recent
             # subtopic (per the user's priority: same subtopic > parent
@@ -119,7 +96,7 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
                 # The most-recent session gets the canonical "[Recent session]"
                 # prefix so the rapport prompt's "reference ONE specific
                 # past topic" instruction can latch onto it deterministically
-                # (per F11). Older completed sessions get a softer
+                # . Older completed sessions get a softer
                 # "[Earlier session]" prefix — the LLM can mention them
                 # only as alternatives ("...or something we touched earlier").
                 prefix = "[Recent session]" if idx == 0 else "[Earlier session]"
@@ -130,7 +107,7 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
                         f"Reach: {'yes' if s.get('reach_status') else 'partial/no'}."
                     )
                 })
-            # A2: also expose a count cue so the LLM can naturally scale
+            # : also expose a count cue so the LLM can naturally scale
             # the language ("you've worked through 5 topics" vs "you've
             # got one prior session"). Pull total completed count, not
             # just the recent 3.
@@ -145,10 +122,38 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
                             f"{'s' if total_completed != 1 else ''}."
                         )
                     })
+
+                # Progress signal: how many distinct subsections the
+                # student has touched vs. how many exist in the curriculum.
+                # Lets the rapport LLM say things like "you've covered 12
+                # of 355 — nice start" or "you're 80% of the way through"
+                # naturally, without it inventing the numbers.
+                conn = store._conn()
+                touched = conn.execute(
+                    "SELECT COUNT(DISTINCT subsection_id) AS n "
+                    "FROM subsection_mastery WHERE student_id = ?",
+                    (student_id,),
+                ).fetchone()["n"] or 0
+                total_subs = conn.execute(
+                    "SELECT COUNT(*) AS n FROM subsections"
+                ).fetchone()["n"] or 0
+                if touched > 0 and total_subs > 0:
+                    pct = int(round(100.0 * touched / total_subs))
+                    past_memories.append({
+                        "memory": (
+                            f"[Progress] Student has explored {touched} of "
+                            f"{total_subs} subsections in the curriculum "
+                            f"(~{pct}%). Use this only to acknowledge progress "
+                            f"naturally if relevant — do NOT recite the "
+                            f"raw numbers verbatim, just frame the scale "
+                            f"(e.g. 'you're a few topics in', 'about a "
+                            f"quarter of the way', 'most of the way through')."
+                        )
+                    })
             except Exception:
                 pass
             # Open threads — sessions with no ended_at OR unresolved-status.
-            # F11 (POST_DEMO_FIXES.md, 2026-05-06): added `ended_by_student`
+            # added `ended_by_student`
             # so a student who clicks End session mid-tutoring also surfaces
             # as an open thread on the next rapport. Without it, the
             # rapport opener fell back to generic "what topic?" because
@@ -183,7 +188,7 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
             # SQL unreachable — degrade silently. Cold-start opener still works.
             pass
 
-        # D.3: pull the student's weakest subsections so the rapport
+        # : pull the student's weakest subsections so the rapport
         # opener can reference one *quantitatively* (not just "we worked
         # on X last time" but "X is at 32% mastery, want to revisit?").
         # Synthesize as additional bullets in past_session_memories so
@@ -215,9 +220,9 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
         except Exception:
             weak_subsections = []
 
-    # Initial suggestions: weak topics first for returning students,
+    # Initial suggestions: weak topics first for returning students
     # explore picks for fresh students. suggest_for_student gracefully
-    # falls back to plain suggest() when there's no mastery data.
+    # falls back to plain suggest when there's no mastery data.
     if student_id and memory_enabled:
         try:
             from memory.mastery_store import MasteryStore
@@ -229,109 +234,154 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
     else:
         initial_suggestions = _topic_suggester.suggest(n=6)
 
-    # M4 (B6) — when the session was prelocked from My Mastery, the rapport
-    # opener should ACKNOWLEDGE the subsection by name instead of asking
-    # "what topic?" and then auto-injecting one. Skip the generic LLM
-    # rapport call entirely (saves 1 Sonnet call) and emit a short
-    # deterministic acknowledgment. This is interface chrome (the cards
-    # below carry the user's choice) — not a templated tutor reply per M-FB.
+    # If the session was prelocked from My Mastery, fold per-subsection
+    # context into past_memories as additional bullets. The rapport LLM
+    # then phrases the greeting naturally — same draft path as the cold
+    # entry. We DON'T render a fixed template here: previous attempts at
+    # a deterministic prelocked greeting (literal "First time on this
+    # one — let's dig in" etc.) read as templated tutor copy, which is
+    # the exact pattern we've been removing across the codebase.
     locked_for_rapport = state.get("locked_topic") or {}
     prelocked_sub = str(locked_for_rapport.get("subsection") or "").strip()
-    if prelocked_sub:
-        client_hour_val = state.get("client_hour")
+    if prelocked_sub and student_id:
         try:
-            hr = int(client_hour_val) if client_hour_val is not None else datetime.now().hour
-        except (TypeError, ValueError):
-            hr = datetime.now().hour
-        if hr < 12:
-            tod = "morning"
-        elif hr < 17:
-            tod = "afternoon"
-        else:
-            tod = "evening"
-        greeting = (
-            f"Good {tod}. Picking up on {prelocked_sub} — "
-            f"pick how you'd like to start below."
-        )
+            from memory.sqlite_store import SQLiteStore
+            _store_h = SQLiteStore()
+            locked_path = str(locked_for_rapport.get("path") or "").strip()
+
+            # Always tell the LLM that the student picked this subsection
+            # from My Mastery — that's a strong signal it should be
+            # acknowledged by name rather than the LLM offering a topic
+            # menu.
+            past_memories.insert(0, {
+                "memory": (
+                    f"[Prelocked subsection] Student selected "
+                    f"\"{prelocked_sub}\" from the My Mastery page. "
+                    f"Acknowledge this subsection in the greeting; do "
+                    f"NOT ask 'what would you like to study?' or offer a "
+                    f"topic menu — that's already been chosen."
+                ),
+            })
+
+            # Per-subsection history cue: structured facts only. Let the
+            # LLM phrase it.
+            m = (
+                _store_h.get_subsection_mastery(student_id, locked_path)
+                if locked_path else None
+            )
+            if m and int(m.get("attempt_count") or 0) > 0:
+                n = int(m["attempt_count"])
+                last_outcome = str(m.get("last_outcome") or "unknown").strip()
+                pct = int(round(float(m.get("ewma_score") or 0.0) * 100))
+                past_memories.insert(1, {
+                    "memory": (
+                        f"[Subsection history] On \"{prelocked_sub}\" the "
+                        f"student has {n} prior attempt(s); last outcome: "
+                        f"{last_outcome}; current mastery: ~{pct}%. Use "
+                        f"this to frame the opener appropriately (revisit "
+                        f"vs. fresh attempt vs. push deeper) — do not "
+                        f"recite the raw numbers verbatim."
+                    ),
+                })
+            else:
+                past_memories.insert(1, {
+                    "memory": (
+                        f"[Subsection history] On \"{prelocked_sub}\" this "
+                        f"is the student's first attempt — no prior "
+                        f"mastery row exists for this subsection."
+                    ),
+                })
+        except Exception:
+            # SQL unreachable mid-rapport — degrade silently. The
+            # [Prelocked subsection] bullet is the most important piece;
+            # if even that fails, fall through to cold rapport.
+            pass
+
+    # V2 rapport draft via TeacherV2(mode="rapport"). The V2 prompt
+    # template (teacher_v2.py:79) reads time_of_day from
+    # TeacherPromptInputs and prior-topic context from
+    # TurnPlan.carryover_notes — the past_memories list is flattened
+    # into a bulleted string. Same path for prelocked and free-entry
+    # sessions; the [Prelocked subsection] bullet (when present) tells
+    # the LLM to acknowledge the chosen subsection rather than offer a
+    # topic menu.
+    from conversation.teacher_v2 import TeacherV2, TeacherPromptInputs
+    from conversation.turn_plan import TurnPlan
+    from conversation.llm_client import make_anthropic_client, resolve_model
+    from config import cfg as _cfg
+
+    # Resolve time_of_day from client_hour (frontend) with server-time fallback.
+    client_hour_val = state.get("client_hour")
+    try:
+        hr = int(client_hour_val) if client_hour_val is not None else datetime.now().hour
+    except (TypeError, ValueError):
+        hr = datetime.now().hour
+    if hr < 12:
+        tod = "morning"
+    elif hr < 17:
+        tod = "afternoon"
     else:
-        # V2 rapport draft via TeacherV2(mode="rapport"). Replaces the V1
-        # `teacher.draft_rapport(...)` call. The V2 prompt template
-        # (teacher_v2.py:79) reads time_of_day from TeacherPromptInputs and
-        # prior-topic context from TurnPlan.carryover_notes, so V1's
-        # past_session_memories list is flattened into a bulleted string.
-        from conversation.teacher_v2 import TeacherV2, TeacherPromptInputs
-        from conversation.turn_plan import TurnPlan
-        from conversation.llm_client import make_anthropic_client, resolve_model
-        from config import cfg as _cfg
+        tod = "evening"
 
-        # Resolve time_of_day from client_hour (frontend) with server-time fallback.
-        client_hour_val = state.get("client_hour")
-        try:
-            hr = int(client_hour_val) if client_hour_val is not None else datetime.now().hour
-        except (TypeError, ValueError):
-            hr = datetime.now().hour
-        if hr < 12:
-            tod = "morning"
-        elif hr < 17:
-            tod = "afternoon"
-        else:
-            tod = "evening"
+    # Flatten past_session_memories list → a bulleted string for
+    # carryover_notes. Cap at 10 entries to keep the prompt compact
+    # (was 8; bumped because the prelocked path adds 2 leading bullets
+    # and we don't want them crowding out mastery / progress cues).
+    if past_memories:
+        bullets: list[str] = []
+        for m in past_memories[:10]:
+            if isinstance(m, dict):
+                text = (
+                    m.get("memory")
+                    or m.get("data")
+                    or m.get("text")
+                    or ""
+                )
+            else:
+                text = str(m)
+            text = str(text).strip()
+            if text:
+                bullets.append(f"  - {text}")
+        carryover_notes = "\n".join(bullets) if bullets else "No previous history — new student."
+    else:
+        carryover_notes = "No previous history — new student."
 
-        # Flatten past_session_memories list → a bulleted string for
-        # carryover_notes. Cap at 8 entries to keep the prompt compact.
-        if past_memories:
-            bullets: list[str] = []
-            for m in past_memories[:8]:
-                if isinstance(m, dict):
-                    text = (
-                        m.get("memory")
-                        or m.get("data")
-                        or m.get("text")
-                        or ""
-                    )
-                else:
-                    text = str(m)
-                text = str(text).strip()
-                if text:
-                    bullets.append(f"  - {text}")
-            carryover_notes = "\n".join(bullets) if bullets else "No previous history — new student."
-        else:
-            carryover_notes = "No previous history — new student."
-
-        plan = TurnPlan(
-            scenario="rapport_open",
-            hint_text="",
-            mode="rapport",
-            tone="encouraging",  # closest TONES value to "warm" for the rapport opener
-            forbidden_terms=[],
-            permitted_terms=[],
-            shape_spec={"max_sentences": 4, "exactly_one_question": False},
-            carryover_notes=carryover_notes,
-        )
-        inputs = TeacherPromptInputs(
-            chunks=[],
-            history=state.get("messages", []),
-            locked_subsection="",
-            locked_question="",
-            domain_name=getattr(_cfg.domain, "name", "this subject"),
-            domain_short=getattr(_cfg.domain, "short", "subject"),
-            student_descriptor=getattr(_cfg.domain, "student_descriptor", "student"),
-            time_of_day=tod,
-        )
-        client = make_anthropic_client()
-        teacher_v2 = TeacherV2(client, model=resolve_model(_cfg.models.teacher))
-        from conversation.streaming import fire_activity as _fa_greet
-        _fa_greet(
-            "Drafting your greeting",
-            detail=(
-                f"Teacher generating a warm rapport opener "
-                f"(mode=rapport, time_of_day={tod}). Streaming via Sonnet. "
-                + (f"Carrying {len(past_memories)} prior-session memory item(s)."
-                   if past_memories else "Cold-start (no prior memory).")
-            ),
-        )
-        draft = teacher_v2.draft(plan, inputs)
-        greeting = (draft.text or "").strip()
+    plan = TurnPlan(
+        scenario="rapport_open",
+        hint_text="",
+        mode="rapport",
+        tone="encouraging",  # closest TONES value to "warm" for the rapport opener
+        forbidden_terms=[],
+        permitted_terms=[],
+        shape_spec={"max_sentences": 4, "exactly_one_question": False},
+        carryover_notes=carryover_notes,
+    )
+    inputs = TeacherPromptInputs(
+        chunks=[],
+        history=state.get("messages", []),
+        locked_subsection=prelocked_sub or "",
+        locked_question="",
+        domain_name=getattr(_cfg.domain, "name", "this subject"),
+        domain_short=getattr(_cfg.domain, "short", "subject"),
+        student_descriptor=getattr(_cfg.domain, "student_descriptor", "student"),
+        time_of_day=tod,
+    )
+    client = make_anthropic_client()
+    teacher_v2 = TeacherV2(client, model=resolve_model(_cfg.models.teacher))
+    from conversation.streaming import fire_activity as _fa_greet
+    _fa_greet(
+        "Drafting your greeting",
+        detail=(
+            f"Teacher generating a warm rapport opener "
+            f"(mode=rapport, time_of_day={tod}). Streaming via Sonnet. "
+            + (f"Carrying {len(past_memories)} prior-session memory item(s)."
+               if past_memories else "Cold-start (no prior memory).")
+            + (f" Prelocked subsection: {prelocked_sub!r}."
+               if prelocked_sub else "")
+        ),
+    )
+    draft = teacher_v2.draft(plan, inputs)
+    greeting = (draft.text or "").strip()
 
     messages = list(state.get("messages", []))
     messages.append({"role": "tutor", "content": greeting, "phase": "rapport"})
@@ -343,12 +393,7 @@ def rapport_node(state: TutorState, teacher, memory_manager) -> dict:
         "phase": "tutoring",
     }
 
-
-
-
-
-
-# M1 — close-reason buckets. Drives both the close-LLM tone AND the
+# close-reason buckets. Drives both the close-LLM tone AND the
 # save/no-save decision at memory_update_node.
 _NO_SAVE_REASONS = {"exit_intent", "off_domain_strike"}
 _VALID_CLOSE_REASONS = {
@@ -357,19 +402,18 @@ _VALID_CLOSE_REASONS = {
     "off_domain_strike", "exit_intent",
 }
 
-
 def _derive_close_reason(state: TutorState) -> str:
-    """M1 — pick the close reason from state signals at session end.
+    """pick the close reason from state signals at session end.
 
-    Priority order:
-      1. exit_intent_pending or session_ended_off_domain → explicit triggers
-      2. clinical_completed + clinical reach → reach_full
-      3. clinical_completed + cap hit → clinical_cap
-      4. tutoring student_reached_answer + opt_in_no → reach_skipped
-      5. hint_level > max_hints → hints_exhausted
-      6. turn_count >= max_turns → tutoring_cap
-      7. else → tutoring_cap (defensive)
-    """
+ Priority order:
+ 1. exit_intent_pending or session_ended_off_domain → explicit triggers
+ 2. clinical_completed + clinical reach → reach_full
+ 3. clinical_completed + cap hit → clinical_cap
+ 4. tutoring student_reached_answer + opt_in_no → reach_skipped
+ 5. hint_level > max_hints → hints_exhausted
+ 6. turn_count >= max_turns → tutoring_cap
+ 7. else → tutoring_cap (defensive)
+"""
     # Explicit triggers from upstream
     if state.get("exit_intent_pending"):
         return "exit_intent"
@@ -399,19 +443,18 @@ def _derive_close_reason(state: TutorState) -> str:
 
     return "tutoring_cap"
 
-
 def _draft_close_message(state: TutorState, close_reason: str) -> dict:
-    """M1 — single Sonnet close call. Returns dict with message + takeaways.
+    """single Sonnet close call. Returns dict with message + takeaways.
 
-    Output shape (from the close-mode prompt JSON):
-      {
-        "message":      "<tutor goodbye>",
-        "demonstrated": "<short>",
-        "needs_work":   "<short>",
-      }
+ Output shape (from the close-mode prompt JSON):
+ {
+ "message": "<tutor goodbye>"
+ "demonstrated": "<short>"
+ "needs_work": "<short>"
+ }
 
-    Empty fields on LLM failure (no templated tutor text per M-FB).
-    """
+ Empty fields on LLM failure (no templated tutor text per ).
+"""
     import json as _json
     from conversation.teacher_v2 import TeacherV2, TeacherPromptInputs
     from conversation.turn_plan import TurnPlan
@@ -430,8 +473,7 @@ def _draft_close_message(state: TutorState, close_reason: str) -> dict:
     )
 
     locked = state.get("locked_topic") or (state.get("debug") or {}).get("locked_topic_snapshot") or {}
-    # 2026-05-05: build an engagement-metrics line so the close-LLM has hard
-    # signals alongside the history. Without this, it mines patterns from raw
+    # : build an engagement-metrics line so the close-LLM has hard
     # messages and over-credits the student for tutor scaffolding text.
     _debug_for_metrics = state.get("debug") or {}
     _events = _debug_for_metrics.get("system_events") or []
@@ -444,7 +486,7 @@ def _draft_close_message(state: TutorState, close_reason: str) -> dict:
         m for m in (state.get("messages") or [])
         if (m or {}).get("role") == "student"
     ]
-    # F5b (POST_DEMO_FIXES.md, 2026-05-06): include clinical_target +
+    # F5b: include clinical_target +
     # locked_answer in the close-LLM context. The PROMPT decides whether
     # to surface them: clinical_target IS revealed on clinical_cap (per
     # design); locked_answer is NOT revealed on tutoring no-reach
@@ -477,7 +519,7 @@ def _draft_close_message(state: TutorState, close_reason: str) -> dict:
         shape_spec={"max_sentences": 6, "exactly_one_question": False},
         carryover_notes=metrics_line,
     )
-    # 2026-05-05: pass snapshots + system_events so the close-LLM sees
+    # : pass snapshots + system_events so the close-LLM sees
     # help_abuse_count / consecutive_low_effort / hint_advance events
     # and can ground demonstrated/needs_work in actual engagement signals
     # rather than hallucinating credit from tutor scaffolding text.
@@ -496,7 +538,7 @@ def _draft_close_message(state: TutorState, close_reason: str) -> dict:
     client = make_anthropic_client()
     teacher_v2 = TeacherV2(client, model=resolve_model(_cfg.models.teacher))
 
-    # Single attempt with internal silent retry — M-FB pattern.
+    # Single attempt with internal silent retry — pattern.
     text = ""
     error = ""
     for attempt in (1, 2):
@@ -553,22 +595,21 @@ def _draft_close_message(state: TutorState, close_reason: str) -> dict:
         "_error": "",
     }
 
-
 def _write_transcript_snapshot(state: TutorState) -> str:
     """Persist the session's full message log as a per-turn JSON file.
 
-    2026-05-05: D1 cleanup deleted conversation/nodes.py which contained
-    _log_conversation — the function that wrote per-turn snapshot files
-    at data/artifacts/conversations/{student_id}_{thread_suffix}_turn_N.json.
-    Without it, the V2 stack never persists transcripts and the
-    /api/sessions/{thread_id}/transcript endpoint always returns empty,
-    even though the session metadata (mastery, takeaways) saves correctly.
+ : D1 cleanup deleted conversation/nodes.py which contained
+ _log_conversation — the function that wrote per-turn snapshot files
+ at
+ Without it, the V2 stack never persists transcripts and the
+api/sessions/{thread_id}/transcript endpoint always returns empty
+ even though the session metadata (mastery, takeaways) saves correctly.
 
-    Re-implements the same naming convention so the existing endpoint
-    keeps working without further changes.
+ Re-implements the same naming convention so the existing endpoint
+ keeps working without further changes.
 
-    Returns a status string for turn_trace.
-    """
+ Returns a status string for turn_trace.
+"""
     import json
     from pathlib import Path
     try:
@@ -615,32 +656,42 @@ def _write_transcript_snapshot(state: TutorState) -> str:
     }
     try:
         out_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2))
-        return f"wrote {out_path.name} ({len(messages)} msgs)"
+        file_status = f"wrote {out_path.name} ({len(messages)} msgs)"
     except Exception as e:
-        return f"write_error: {type(e).__name__}: {str(e)[:80]}"
+        file_status = f"write_error: {type(e).__name__}: {str(e)[:80]}"
 
+    # Mirror the messages into the canonical SQL table. The JSON snapshot
+    # is kept around as a debugging artifact; SQL is the queryable source
+    # of truth that powers the transcript endpoint.
+    try:
+        from memory.sqlite_store import SQLiteStore
+        n = SQLiteStore().record_messages(thread_id, messages)
+        sql_status = f"sql_inserted={n}"
+    except Exception as e:
+        sql_status = f"sql_error: {type(e).__name__}: {str(e)[:80]}"
 
+    return f"{file_status}; {sql_status}"
 
 def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
     """
-    Phase 4 — Memory Update + Close.
+ Phase 4 — Memory Update + Close.
 
-    M1 redesign:
-      1. Determine close_reason from state signals
-      2. Draft the LLM close message (structured JSON)
-      3. Append close message to chat history
-      4. If close_reason is no-save (exit_intent, off_domain_strike):
-         skip mem0 / mastery / sqlite writes
-      5. Otherwise: full save + record key_takeaways from the close JSON
-      6. Stamp session_ended=True so frontend disables input
+ redesign:
+ 1. Determine close_reason from state signals
+ 2. Draft the LLM close message (structured JSON)
+ 3. Append close message to chat history
+ 4. If close_reason is no-save (exit_intent, off_domain_strike):
+ skip mem0 / mastery / sqlite writes
+ 5. Otherwise: full save + record key_takeaways from the close JSON
+ 6. Stamp session_ended=True so frontend disables input
 
-    No templated tutor fallbacks (M-FB). On close-LLM failure, the message
-    is empty (frontend renders an error card).
-    """
+ No templated tutor fallbacks . On close-LLM failure, the message
+ is empty (frontend renders an error card).
+"""
     state["debug"]["current_node"] = "memory_update_node"
     from conversation.streaming import fire_activity
 
-    # ── M1: derive close reason + draft close message ─────────────────────
+    # ── : derive close reason + draft close message ─────────────────────
     close_reason = state.get("close_reason") or _derive_close_reason(state)
     state["close_reason"] = close_reason
     close_payload = _draft_close_message(state, close_reason)
@@ -666,7 +717,7 @@ def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
             },
         })
     else:
-        # M-FB: surface error card payload — frontend renders distinct UI
+        # : surface error card payload — frontend renders distinct UI
         new_messages.append({
             "role": "system",
             "content": "",
@@ -680,7 +731,7 @@ def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
             },
         })
 
-    # 2026-05-05: persist the transcript regardless of save/no-save bucket.
+    # : persist the transcript regardless of save/no-save bucket.
     # The mastery/mem0/sqlite writes are conditional on close_reason, but the
     # student should always be able to review what was said in the session.
     state["messages"] = new_messages  # ensure close message is in the snapshot
@@ -690,14 +741,12 @@ def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
         "result": transcript_status,
     })
 
-    # ── M1: no-save bucket → skip mem0 / mastery, but STILL terminate SQLite ──
-    # Codex Sim 7 fix: previously we returned without writing ended_at, leaving
+    # ── : no-save bucket → skip mem0 / mastery, but STILL terminate SQLite ──
     # the session row at status=in_progress with a dangling ended_at. The
     # transcript snapshot was already written above (line 635), so analysis
     # pages can still render, but the session was never marked terminal in
     # SQLite — which polluted /sessions lists and broke the
     # "no in_progress rows after a closed thread" invariant.
-    #
     # Fix: write a minimal end_session call with the appropriate terminal
     # status (no mastery score, no key_takeaways — those belong to the save
     # bucket). The transcript already lives in the snapshot file.
@@ -716,11 +765,11 @@ def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
                     normalize_subsection_path,
                 )
                 store = SQLiteStore()
-                # F9 (POST_DEMO_FIXES.md): preserve locked_topic metadata
-                # on no-save closes so the analysis page (M5) and the
-                # repeat-topic detector (F11/A2) can still find these
+                # : preserve locked_topic metadata
+                # on no-save closes so the analysis page and the
+                # repeat-topic detector (/) can still find these
                 # sessions by subsection. Mastery score + key_takeaways
-                # remain skipped per M1 — only the WHAT-AND-WHERE
+                # remain skipped — only the WHAT-AND-WHERE
                 # metadata gets persisted, not the HOW-IT-WENT signal.
                 _locked = state.get("locked_topic") or {}
                 if not _locked:
@@ -793,13 +842,12 @@ def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
         "flushed": flushed,
     })
 
-    # D.3: per-concept knowledge tracing via LLM-based scoring.
+    # : per-concept knowledge tracing via LLM-based scoring.
     # Updates two signals per session for the locked subsection:
-    #   mastery     — point estimate (BKT-style P(L))
-    #   confidence  — coverage estimate (how thoroughly probed)
+    # mastery — point estimate (BKT-style P(L))
+    # confidence — coverage estimate (how thoroughly probed)
     # See memory/mastery_store.py module docstring for the literature
     # grounding (extends Corbett & Anderson 1995 BKT).
-    #
     # No heuristic fallback by design: the LLM is the model. If the
     # call fails after retries, this session's mastery simply doesn't
     # update (logged in turn_trace) — degrades visibly rather than
@@ -868,11 +916,11 @@ def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
         "result": mastery_status,
     })
 
-    # L21 + L1/L2/L3: dual-write the session-end row + subsection_mastery
+    # +: dual-write the session-end row + subsection_mastery
     # into the per-domain SQLite store. This populates the new data layer
     # alongside the legacy JSON MasteryStore. Reads switch to SQLite in
-    # the next commit (track 1.9). Best-effort — never blocks return.
-    # M1 — also writes key_takeaways from the close-LLM JSON.
+    # the next commit . Best-effort — never blocks return.
+    # also writes key_takeaways from the close-LLM JSON.
     state["_close_takeaways_pending"] = takeaways
     sqlite_status = _persist_session_end_to_sqlite(state, judgment)
     state.pop("_close_takeaways_pending", None)
@@ -892,17 +940,11 @@ def memory_update_node(state: TutorState, dean, memory_manager) -> dict:
         "debug": state["debug"],
     }
 
-
-
-
-
-
 def _latest_student_message(messages: list[dict]) -> str:
     for msg in reversed(messages):
         if msg.get("role") == "student":
             return str(msg.get("content", "")).strip()
     return ""
-
 
 _OPT_IN_YES_PREFIXES = (
     "yes", "yeah", "yep", "yup", "sure", "ok ", "okay", "alright",
@@ -914,26 +956,20 @@ _OPT_IN_NO_PREFIXES = (
     "i'm good", "im good", "not really", "not today",
 )
 
-
 _BANNED_LEAD_PREFIXES = (
     "i can see", "i notice", "i hear you", "that's okay", "that is okay",
     "i understand", "i see that", "it sounds like", "i hear that",
 )
 
-
-
-
-
-
 def _session_topic_name(state: TutorState) -> str:
     """
-    Canonical TOC-node name for this session — used for weak_topics and
-    memory write-back. Prefers the locked TOC entry (set by dean.run_turn
-    after TopicMatcher resolves the student's request) so we never persist
-    a raw free-text selection or a menu-option label.
-    Returns "" when the session was never grounded to a TOC node; callers
-    should skip weak-topic updates in that case (P0.6 grading guard).
-    """
+ Canonical TOC-node name for this session — used for weak_topics and
+ memory write-back. Prefers the locked TOC entry (set by dean.run_turn
+ after TopicMatcher resolves the student's request) so we never persist
+ a raw free-text selection or a menu-option label.
+ Returns "" when the session was never grounded to a TOC node; callers
+ should skip weak-topic updates in that case (P0.6 grading guard).
+"""
     locked = state.get("locked_topic") or {}
     node = (locked.get("subsection") or locked.get("section") or locked.get("chapter") or "").strip()
     if node:
@@ -945,7 +981,6 @@ def _session_topic_name(state: TutorState) -> str:
     if selected and len(selected.split()) <= 10 and not selected[:1].isdigit():
         return selected[:120]
     return ""
-
 
 def _upsert_weak_topic(weak_topics: list[dict], topic_name: str, difficulty: str = "moderate", bump: int = 1) -> list[dict]:
     if not topic_name:
@@ -970,13 +1005,13 @@ def _persist_session_end_to_sqlite(
     state: TutorState,
     judgment: dict | None,
 ) -> str:
-    """Update the L21 SQLite session row + upsert subsection_mastery (per L1, L2, L3).
+    """Update the SQLite session row + upsert subsection_mastery .
 
-    Coexists with the legacy MasteryStore JSON write — dual-write phase. The
-    next commit (track 1.9) flips reads to SQLite and drops the JSON path.
+ Coexists with the legacy MasteryStore JSON write — dual-write phase. The
+ next commit flips reads to SQLite and drops the JSON path.
 
-    Returns a short status string for turn_trace.
-    """
+ Returns a short status string for turn_trace.
+"""
     thread_id = state.get("thread_id") or ""
     student_id = state.get("student_id") or ""
     if not thread_id or not student_id:
@@ -1001,7 +1036,7 @@ def _persist_session_end_to_sqlite(
     locked_answer = state.get("locked_answer") or None
     full_answer = state.get("full_answer") or None
 
-    # Determine status (per L21 enum). Heuristics — L43-L62 tutor refactor
+    # Determine status (enum). Heuristics — - tutor refactor
     # will tighten these with explicit termination signals.
     reach = state.get("student_reached_answer")
     turn_count = len([m for m in (state.get("messages") or []) if m.get("role") == "student"])
@@ -1022,15 +1057,14 @@ def _persist_session_end_to_sqlite(
     score = float(judgment["mastery"]) if judgment and "mastery" in judgment else None
     tier = score_to_tier(score) if score is not None else "not_assessed"
 
-    # F4 (POST_DEMO_FIXES.md, 2026-05-06): derive clinical_mastery_tier
-    # + clinical_score from clinical_state. Previously these were
+    # derive clinical_mastery_tier
     # hardcoded "not_assessed" / None below, which meant a successful
     # clinical bonus didn't surface in the analysis page or mastery
     # rollup. Score derivation:
-    #   clinical_completed=False  → not_assessed, None (no clinical ran)
-    #   clinical_state="correct"           → 0.85, proficient
-    #   clinical_state="partial_correct"   → 0.55, developing
-    #   clinical_state="incorrect"         → 0.20, needs_review
+    # clinical_completed=False → not_assessed, None (no clinical ran)
+    # clinical_state="correct" → 0.85, proficient
+    # clinical_state="partial_correct" → 0.55, developing
+    # clinical_state="incorrect" → 0.20, needs_review
     # Independent of judgment["mastery"] (which is the overall score
     # for the locked subsection — clinical is a per-attempt signal).
     clinical_completed = bool(state.get("clinical_completed", False))
@@ -1060,7 +1094,7 @@ def _persist_session_end_to_sqlite(
             thread_id,
             ended_at=None and None,  # sentinel: end_session sets ended_at via utc_now
         )
-        # M1 — pull takeaways from the close LLM JSON (set by memory_update_node)
+        # pull takeaways from the close LLM JSON (set by memory_update_node)
         takeaways_payload = state.get("_close_takeaways_pending") or {}
         end_kwargs = dict(
             status=status,
@@ -1097,44 +1131,40 @@ def _persist_session_end_to_sqlite(
     except Exception as e:
         return f"sqlite_write_error: {type(e).__name__}: {str(e)[:120]}"
 
-
-
 # ─────────────────────────────────────────────────────────────────────
 # Routing edges (ported from V1 conversation/edges.py during D1).
 # Pure logic — no agent calls. Each takes TutorState and returns the
 # next node name (or langgraph.END).
 # ─────────────────────────────────────────────────────────────────────
 
-
 def after_rapport(state: TutorState) -> str:
     """Route after rapport_node (which skips if phase != 'rapport').
-    - If phase already memory_update (M1 explicit-exit fired between turns) →
-      memory_update_node so close fires immediately, no Dean call.
-    - If in assessment phase waiting for student input (opt-in or clinical) → assessment_node
-    - Otherwise → dean_node
-    """
+If phase already memory_update ( explicit-exit fired between turns) →
+ memory_update_node so close fires immediately, no Dean call.
+If in assessment phase waiting for student input (opt-in or clinical) → assessment_node
+Otherwise → dean_node
+"""
     if state.get("phase") == "memory_update":
         return "memory_update_node"
     if state.get("phase") == "assessment" and state.get("assessment_turn") in (1, 2):
         return "assessment_node"
     return "dean_node"
 
-
 def after_dean(state: TutorState) -> str:
     """
-    After Dean delivers a response:
-    - Move to assessment if student answered, hints exhausted, or turn limit hit.
-    - When assessment_style == "none", skip assessment entirely and go
-      straight to memory update.
-    - Otherwise END — Streamlit will call invoke() again on next student message.
+ After Dean delivers a response:
+Move to assessment if student answered, hints exhausted, or turn limit hit.
+When assessment_style == "none", skip assessment entirely and go
+ straight to memory update.
+Otherwise END — Streamlit will call invoke again on next student message.
 
-    IMPORTANT (revised 2026-05-01): hint_level > max_hints DOES route to
-    assessment. The earlier attempt to let tutoring continue past hint 3
-    failed because the Dean's early-exit at hint-exhaustion (dean.py:~1792)
-    skips Teacher draft entirely — so the session would loop with no new
-    tutor message. The architecture assumes hint exhaustion = session-end
-    trigger; honour that.
-    """
+ IMPORTANT (revised ): hint_level > max_hints DOES route to
+ assessment. The earlier attempt to let tutoring continue past hint 3
+ failed because the Dean's early-exit at hint-exhaustion (dean.py:~1792)
+ skips Teacher draft entirely — so the session would loop with no new
+ tutor message. The architecture assumes hint exhaustion = session-end
+ trigger; honour that.
+"""
     assessment_style = getattr(cfg.session, "assessment_style", "clinical")
 
     if state.get("phase") == "memory_update":
@@ -1143,7 +1173,7 @@ def after_dean(state: TutorState) -> str:
         if assessment_style == "none":
             return "memory_update_node"
         return "assessment_node"
-    # M1 — hint-exhausted goes STRAIGHT to memory_update with honest_close
+    # hint-exhausted goes STRAIGHT to memory_update with honest_close
     # tone. Asking opt_in for a clinical bonus when the student didn't even
     # reach the core answer is bad UX (and produced wrong reach_close text).
     if int(state.get("hint_level", 0) or 0) > int(state.get("max_hints", 0) or 0):
@@ -1152,13 +1182,12 @@ def after_dean(state: TutorState) -> str:
         return "assessment_node"
     return END
 
-
 def after_assessment(state: TutorState) -> str:
     """
-    After assessment_node runs:
-    - assessment_turn in (1, 2): waiting for student's answer (END).
-    - assessment_turn == 3: assessment complete — move to memory update.
-    """
+ After assessment_node runs:
+assessment_turn in (1, 2): waiting for student's answer (END).
+assessment_turn == 3: assessment complete — move to memory update.
+"""
     if int(state.get("assessment_turn", 0) or 0) == 3:
         return "memory_update_node"
     return END

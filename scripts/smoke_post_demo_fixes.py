@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """scripts/smoke_post_demo_fixes.py
 ─────────────────────────────────
-Post-demo-fixes smoke test (2026-05-06 session).
+Post-demo-fixes smoke test ( session).
 
 Runs offline (no Bedrock, no live backend) and checks that every code
-change shipped during the F4–F14 / N3–N8 / A1–A6 / M-T1–M-T3 work
+change shipped during the – / – / – / – work
 landed correctly. Designed to run in <1 second so it can fire as a
 pre-commit guard or pre-demo health check.
 
 Usage:
-    python scripts/smoke_post_demo_fixes.py
+ python scripts/smoke_post_demo_fixes.py
 
 Exit code 0 = all checks pass. Non-zero = at least one check failed
 (printed to stderr). Each check prints a 1-line PASS/FAIL summary so
 diff-against-output is easy.
 
-Companion to `docs/POST_DEMO_FIXES.md` — every DONE item should have a
+Companion to `docs/` — every DONE item should have a
 corresponding check here so regressions surface fast.
 """
 from __future__ import annotations
@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Callable
 
 # Ensure repo root is on sys.path so this script runs the same way
-# whether invoked via `python scripts/...` or `.venv/bin/python scripts/...`.
+# whether invoked via `python scripts...` or `.venv/bin/python scripts...`.
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
@@ -34,7 +34,6 @@ PASS, FAIL = "PASS", "FAIL"
 
 CHECKS: list[tuple[str, Callable[[], tuple[str, str]]]] = []
 
-
 def check(label: str):
     """Decorator — register a function as a smoke check."""
     def deco(fn: Callable[[], tuple[str, str]]) -> Callable[[], tuple[str, str]]:
@@ -42,11 +41,9 @@ def check(label: str):
         return fn
     return deco
 
-
 # ─────────────────────────────────────────────────────────────────────
 # Checks
 # ─────────────────────────────────────────────────────────────────────
-
 
 @check("F1 — session_ended_off_domain in TutorState schema")
 def _f1():
@@ -54,7 +51,6 @@ def _f1():
     if "session_ended_off_domain" in TutorState.__annotations__:
         return PASS, "field present"
     return FAIL, "field missing from schema"
-
 
 @check("F6 — total_help_abuse_turns + total_low_effort_turns + total_off_topic_turns in state")
 def _f6():
@@ -69,14 +65,12 @@ def _f6():
         return PASS, "all 3 totals present"
     return FAIL, f"missing: {sorted(missing)}"
 
-
 @check("F13 — PRELOCK_CAP = 10")
 def _f13():
     from conversation.topic_lock_v2 import PRELOCK_CAP
     if PRELOCK_CAP == 10:
         return PASS, f"PRELOCK_CAP={PRELOCK_CAP}"
     return FAIL, f"expected 10, got {PRELOCK_CAP}"
-
 
 @check("F14 — sqlite_store EWMA alpha default = 0.7")
 def _f14():
@@ -88,7 +82,6 @@ def _f14():
         return FAIL, f"alpha default = {alpha.default if alpha else 'missing'}"
     return PASS, "alpha=0.7"
 
-
 @check("F5c — haiku_hint_leak_check accepts locked_question kwarg")
 def _f5c():
     import inspect
@@ -98,7 +91,6 @@ def _f5c():
         return PASS, "locked_question kwarg present"
     return FAIL, "locked_question kwarg missing"
 
-
 @check("F7 — anchor_history.fetch_prior_locked_questions importable")
 def _f7():
     try:
@@ -107,7 +99,6 @@ def _f7():
     except Exception as e:
         return FAIL, f"{type(e).__name__}: {e}"
 
-
 @check("F11 — rapport prompt says 'SHOULD' (deterministic prior reference)")
 def _f11():
     from config import cfg
@@ -115,7 +106,6 @@ def _f11():
     if "SHOULD" in rapport and "MAY (but are not required" not in rapport:
         return PASS, "prompt tightened to SHOULD"
     return FAIL, "still using MAY-style language"
-
 
 @check("N3 — clinical counters in TutorState + CLINICAL_TURN_CAP=15")
 def _n3():
@@ -134,7 +124,6 @@ def _n3():
         return FAIL, f"CLINICAL_TURN_CAP={CLINICAL_TURN_CAP}, expected 15"
     return PASS, f"4 fields present + cap={CLINICAL_TURN_CAP} + helper importable"
 
-
 @check("N4 — opt_in teacher prompt has phase-transition ack instruction")
 def _n4():
     from conversation.teacher_v2 import _MODE_INSTRUCTIONS
@@ -142,7 +131,6 @@ def _n4():
     if "phase transition" in opt_in.lower() or "PHASE TRANSITION" in opt_in:
         return PASS, "transition instruction present"
     return FAIL, "transition instruction missing from opt_in prompt"
-
 
 @check("N5 — renderMarkdown.tsx exists + MessageBubble wires it")
 def _n5():
@@ -154,7 +142,6 @@ def _n5():
     if "renderMarkdown" not in mb.read_text():
         return FAIL, "MessageBubble doesn't import renderMarkdown"
     return PASS, "renderer wired"
-
 
 @check("N8 — suggest_replies endpoint registered")
 def _n8():
@@ -170,7 +157,6 @@ def _n8():
     except Exception as e:
         return FAIL, f"{type(e).__name__}: {e}"
 
-
 @check("M-T2 — architecture_block defined + substituted into dean_base")
 def _mt2():
     from config import cfg
@@ -183,7 +169,6 @@ def _mt2():
     if "Phase machine" not in dean_base:
         return FAIL, "architecture content not substituted into dean_base"
     return PASS, f"architecture_block={len(arch)}ch, dean_base substituted"
-
 
 @check("M-T2 wave 2 — teacher_base + 3 high-leverage Dean prompts opt in")
 def _mt2_wave2():
@@ -201,7 +186,6 @@ def _mt2_wave2():
         return FAIL, "; ".join(failures)
     return PASS, f"all {len(targets)} prompts substituted"
 
-
 @check("N4 wave 2 — TeacherPromptInputs has topic_just_locked + is_first_clinical_turn")
 def _n4_wave2():
     import dataclasses
@@ -213,14 +197,12 @@ def _n4_wave2():
         return FAIL, f"missing: {sorted(missing)}"
     return PASS, "both transition fields present"
 
-
 @check("M-T3 — dean_memory_summary deleted from base.yaml")
 def _mt3():
     from config import cfg
     if getattr(cfg.prompts, "dean_memory_summary", None):
         return FAIL, "dean_memory_summary still present (should be deleted)"
     return PASS, "deleted"
-
 
 @check("A2 — lifecycle pulls 3 recent + total session count")
 def _a2():
@@ -232,7 +214,6 @@ def _a2():
         return FAIL, "session count cue missing"
     return PASS, "3 recent + count cue"
 
-
 @check("A4 — analysis_chat queries mem0 via safe_mem0_read")
 def _a4():
     from pathlib import Path
@@ -240,7 +221,6 @@ def _a4():
     if "safe_mem0_read" not in src:
         return FAIL, "safe_mem0_read not called from analysis_chat"
     return PASS, "mem0 read wired"
-
 
 @check("A6 — SessionAnalysis transcript uses MessageBubble-like styling")
 def _a6():
@@ -252,11 +232,9 @@ def _a6():
         return FAIL, "tutor icon styling missing"
     return PASS, "icon + bubble + markdown wired"
 
-
 # ─────────────────────────────────────────────────────────────────────
 # Runner
 # ─────────────────────────────────────────────────────────────────────
-
 
 def main() -> int:
     fails = 0
@@ -279,7 +257,6 @@ def main() -> int:
         return 0
     print(f"  \033[31m✗ {fails}/{len(CHECKS)} checks failed.\033[0m\n")
     return 1
-
 
 if __name__ == "__main__":
     sys.exit(main())

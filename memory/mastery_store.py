@@ -1,88 +1,34 @@
 """
-memory/mastery_store.py
+Per-concept knowledge tracing.
+
+Tracks numeric mastery for every (student_id, subsection_path)
+tuple. The store is updated at session end (the locked subsection's
+score is blended with the prior via EWMA) and read at session start
+plus on demand by the /mastery dashboard. The narrative companion
+to this numeric store is mem0 — same student, same subsection_path,
+different question (numbers vs reasons).
+
+Storage: one JSON file per student under `data/student_state/`.
+Writes are atomic via tmp + `os.replace`.
+
+Two-signal mastery model
 ------------------------
-Per-concept knowledge tracing — D.3.
+Classical Bayesian Knowledge Tracing collapses uncertainty into a
+single P(mastered). That overshoots when a "skill" actually contains
+several concepts but only one is probed in a session. We track two
+numbers:
 
-Tracks numeric mastery per (student_id, subsection_path) tuple. The
-store is updated at the end of every session (one entry moves —
-the locked subsection's score is blended with the prior via EWMA)
-and read at the start of every session (rapport opener + topic
-suggester) plus on-demand for the /mastery dashboard.
+  mastery     — point estimate of P(student has mastered subsection)
+  confidence  — coverage estimate of how thoroughly the subsection
+                has been probed (one-anchor session ≈ 0.20,
+                three sessions on different anchors ≈ 0.60)
 
-Why a separate store from mem0
-------------------------------
-mem0 carries narrative facts ("student confused musculocutaneous with
-median nerve") with metadata tags. Aggregating numeric scores out of
-free-text fragments is fragile, slow, and doesn't compose well — by
-the time you've LLM-parsed all 20+ fact strings to recover a single
-mastery number, you've spent more compute and got less reliability
-than just storing the number directly. The two stores complement:
-
-  mem0           → narrative ("why was this hard?")
-  MasteryStore   → quantitative ("how strong is the student here?")
-
-The /mastery page reads BOTH: numeric mastery from this store, and
-the narrative reason from mem0 (filtered to the same subsection_path).
-
-Storage shape
--------------
-One JSON file per student at `data/student_state/{student_id}.json`:
-
-  {
-    "concepts": {
-      "Ch13|Anatomy of the Nervous System|Brachial Plexus": {
-        "mastery": 0.62,
-        "confidence": 0.45,
-        "sessions": 3,
-        "last_seen": "2026-04-29",
-        "last_outcome": "reached",
-        "last_rationale": "Student demonstrated motor branch identification but ..."
-      },
-      ...
-    }
-  }
-
-Atomic writes via tmp + os.replace so a crash mid-flush can't corrupt.
-For thesis scale (~10 students × ~50 sessions each, dozens of unique
-subsections per student) one JSON file per student is well-sized; if
-the corpus grows we can swap the backend to SQLite without changing
-the public API.
-
-Two-signal mastery model — extension of BKT
---------------------------------------------
-Classical Bayesian Knowledge Tracing (Corbett & Anderson 1995) collapses
-uncertainty into a single posterior P(student has mastered skill k).
-That works when each "skill" is small enough to be probed by a single
-question. Our subsections (e.g. "Conduction System of the Heart")
-contain MULTIPLE concepts that the textbook structure doesn't enumerate
-as separate skills, and one tutoring session typically probes only one
-or two of them via the anchor question. A perfect single-question
-session under naive BKT lifts P(L) toward 0.95 — overconfident.
-
-We extend BKT with a second signal:
-
-  mastery     — point estimate of P(student has mastered the subsection),
-                analogous to BKT's P(L)
-  confidence  — coverage estimate: how thoroughly has this subsection
-                been probed across sessions? Single-anchor session ≈ 0.20;
-                3 sessions on different anchors ≈ 0.60.
-
-Both are LLM-derived (see score_session_llm). EWMA-blended across
-sessions (0.6 new / 0.4 prior). The "mastered" badge applies the
-conjunction:
-
-  mastered  iff  mastery >= 0.80 AND confidence >= 0.60
-
-Thresholds chosen from modern adaptive tutoring practice (Khan Academy,
-ASSISTments use 0.80 mastery; original BKT used 0.95). The 0.60
-confidence floor is empirically calibrated — single-session perfect
-answers stay below it; multi-session multi-concept exposure clears it.
-
-The LLM scorer is the only path. If the Anthropic call fails after
-retries, the session simply does not update mastery (logged in
-turn_trace). No heuristic fallback — heuristics on outcome+hints+turns
-cannot reason about subsection scope, which is the entire point of
-the two-signal model.
+Both come from a Haiku scorer (`score_session_llm`) and are EWMA-
+blended (0.6 new / 0.4 prior). A subsection counts as "mastered"
+only when `mastery >= 0.80 AND confidence >= 0.60`. If the LLM call
+fails the session simply does not update mastery; no heuristic
+fallback — heuristics on outcome + hints + turn count can't reason
+about subsection scope, which is the entire point of the model.
 """
 from __future__ import annotations
 
@@ -102,17 +48,14 @@ _STORE_DIR = (
     Path(__file__).parent.parent / "data" / "student_state"
 )
 
-
 def _ensure_dir() -> None:
     _STORE_DIR.mkdir(parents=True, exist_ok=True)
-
 
 def _student_path(student_id: str) -> Path:
     # student_id is validated by the API layer (backend/api/users.py).
     # Defensive: also strip any path separators in case a bypass happens.
     safe = student_id.replace("/", "_").replace("\\", "_").strip()
     return _STORE_DIR / f"{safe}.json"
-
 
 # Module-level lock guarding atomic read-modify-write under concurrent
 # session_end events. Cheap (per-process) — sufficient for the thesis
@@ -122,10 +65,9 @@ def _student_path(student_id: str) -> Path:
 # lock; not a concern today.
 _LOCK = RLock()
 
-
 def _format_transcript(messages: list[dict], max_messages: int = 8) -> str:
     """Render the last N messages for the LLM scorer prompt. Trimmed
-    so we don't blow the context budget on long sessions."""
+ so we don't blow the context budget on long sessions."""
     out: list[str] = []
     for m in (messages or [])[-max_messages:]:
         role = str(m.get("role", "?"))
@@ -134,13 +76,11 @@ def _format_transcript(messages: list[dict], max_messages: int = 8) -> str:
             out.append(f"{role}: {content[:600]}")
     return "\n".join(out) if out else "(no transcript available)"
 
-
 def _format_prior_rationales(rationales: list[str]) -> str:
     """Format past rationales into a bullet list for the prompt."""
     if not rationales:
         return "(none — this is the first session on this subsection)"
     return "\n".join(f"  - {r.strip()}" for r in rationales if r and r.strip())
-
 
 def _llm_call_with_retry(
     client: Any,
@@ -150,11 +90,11 @@ def _llm_call_with_retry(
     max_attempts: int = 3,
 ) -> str:
     """Call Anthropic with exponential backoff. Returns response text on
-    success, raises the final exception on hard failure.
+ success, raises the final exception on hard failure.
 
-    No fallback is attempted by the caller — per design, mastery scoring
-    skips updates entirely when the LLM is unavailable. Retries here
-    are for transient network errors (rate limit, timeout) only."""
+ No fallback is attempted by the caller — per design, mastery scoring
+ skips updates entirely when the LLM is unavailable. Retries here
+ are for transient network errors (rate limit, timeout) only."""
     import time as _time
     last_exc: Exception | None = None
     for attempt in range(max_attempts):
@@ -176,15 +116,14 @@ def _llm_call_with_retry(
         raise last_exc
     raise RuntimeError("LLM scorer: no response after retries")
 
-
 def _extract_json_object(text: str) -> dict | None:
     """Pull the first valid {...} JSON object from a string.
 
-    Tolerates Anthropic's tendency to wrap JSON in markdown code
-    fences (```json ... ```) or trailing commentary even when told
-    to return strict JSON. We don't try to parse the fences — we
-    just locate the first '{' and matching '}' span and parse that.
-    """
+ Tolerates Anthropic's tendency to wrap JSON in markdown code
+ fences (```json ... ```) or trailing commentary even when told
+ to return strict JSON. We don't try to parse the fences — we
+ just locate the first '{' and matching '}' span and parse that.
+"""
     if not text:
         return None
     # The simplest and most robust approach: scan for the first '{'
@@ -201,7 +140,6 @@ def _extract_json_object(text: str) -> dict | None:
     except Exception:
         return None
 
-
 def score_session_llm(
     state: dict,
     *,
@@ -211,32 +149,32 @@ def score_session_llm(
 ) -> Optional[dict]:
     """LLM-based session scorer.
 
-    Returns a dict with keys (mastery, confidence, rationale) on success,
-    or None if scoring failed (LLM unavailable, malformed JSON after
-    retries). Caller treats None as "skip the update for this session."
+ Returns a dict with keys (mastery, confidence, rationale) on success
+ or None if scoring failed (LLM unavailable, malformed JSON after
+ retries). Caller treats None as "skip the update for this session."
 
-    Why no heuristic fallback: heuristic scoring on outcome+hints+turns
-    cannot reason about subsection scope vs what was probed — the
-    central insight from Corbett & Anderson 1995 (BKT extensions) and
-    the reason we adopted LLM-as-evaluator. A fallback would silently
-    paper over what should be visible degradation.
+ Why no heuristic fallback: heuristic scoring on outcome+hints+turns
+ cannot reason about subsection scope vs what was probed — the
+ central insight from Corbett & Anderson 1995 (BKT extensions) and
+ the reason we adopted LLM-as-evaluator. A fallback would silently
+ paper over what should be visible degradation.
 
-    Args:
-        state:            full TutorState dict
-        prior_rationales: up to 3 most-recent rationales for this same
-                          subsection from this student
-        client:           Anthropic client instance
-        model:            model id from cfg.models (the dean's model
-                          works fine — same Sonnet tier)
+ Args:
+ state: full TutorState dict
+ prior_rationales: up to 3 most-recent rationales for this same
+ subsection from this student
+ client: Anthropic client instance
+ model: model id from cfg.models (the dean's model
+ works fine — same Sonnet tier)
 
-    Returns:
-        {mastery: float, confidence: float, rationale: str} OR None.
-    """
+ Returns:
+ {mastery: float, confidence: float, rationale: str} OR None.
+"""
     locked = state.get("locked_topic") or {}
     subsection = str(locked.get("subsection", "") or "")
     chapter = str(locked.get("chapter", "") or "")
     locked_q = str(state.get("locked_question", "") or "")
-    # Two-tier (Change 2026-04-30): prefer full_answer (the complete
+    # Two-tier (Change ): prefer full_answer (the complete
     # textbook answer — may be a list/sentence) for grading. Fall back
     # to locked_answer (the short concept anchor used by the gate) if
     # full_answer wasn't set on this session.
@@ -255,7 +193,7 @@ def score_session_llm(
         # gets noticed rather than silently downgrading.
         return None
 
-    # Change 4.7 (2026-04-30): pass session-wide telemetry counters so the
+    # Change 4.7: pass session-wide telemetry counters so the
     # scorer can see patterns across the whole session, not just the
     # final state. Stonewalling and off-domain drift correctly lower
     # mastery even when no individual chain hit threshold.
@@ -289,7 +227,7 @@ def score_session_llm(
     else:
         clinical_str = "(no clinical phase)"
 
-    # K-of-N partial reach coverage (Tier 1 #1.3). 1.0 on full reach,
+    # K-of-N partial reach coverage (Tier 1 #1.3). 1.0 on full reach
     # K/N on partial-reach for multi-component answers (e.g. student
     # said "LCA" on a "left and right coronary arteries" lock → 0.5).
     # The scorer can use this to award partial credit on multi-component
@@ -346,17 +284,16 @@ def score_session_llm(
         "rationale": rationale,
     }
 
-
 class MasteryStore:
     """File-backed per-student mastery tracker.
 
-    Public API:
-      load(student_id)        -> dict[path, ConceptRecord]
-      get(student_id, path)   -> ConceptRecord | None
-      update(student_id, path, score, outcome)
-      weak_subsections(student_id, threshold=0.5, limit=3) -> list
-      delete_student(student_id) -> int   # for "forget me"
-    """
+ Public API:
+ load(student_id) -> dict[path, ConceptRecord]
+ get(student_id, path) -> ConceptRecord | None
+ update(student_id, path, score, outcome)
+ weak_subsections(student_id, threshold=0.5, limit=3) -> list
+ delete_student(student_id) -> int # for "forget me"
+"""
 
     EWMA_NEW = 0.6   # weight on new session's score
     EWMA_OLD = 0.4   # weight on prior stored mastery
@@ -365,9 +302,9 @@ class MasteryStore:
     # would mark any clean 1-session reach as mastered, ignoring that
     # the session probed only one concept of the subsection. The
     # conjunction with confidence prevents that. Calibration:
-    #   - First session, perfect answer: mastery ~0.50, confidence ~0.25 → not mastered
-    #   - 2 sessions, both clean, different anchors: mastery ~0.75, confidence ~0.50 → not mastered
-    #   - 3 sessions, comprehensive: mastery ~0.85, confidence ~0.65 → MASTERED
+    # - First session, perfect answer: mastery ~0.50, confidence ~0.25 → not mastered
+    # - 2 sessions, both clean, different anchors: mastery ~0.75, confidence ~0.50 → not mastered
+    # - 3 sessions, comprehensive: mastery ~0.85, confidence ~0.65 → MASTERED
     # See module docstring for citations.
     MASTERED_THRESHOLD = 0.80
     CONFIDENCE_THRESHOLD = 0.60
@@ -382,10 +319,10 @@ class MasteryStore:
     def load(self, student_id: str) -> dict:
         """Return the full concepts dict for a student.
 
-        Returns {} for a student with no prior data (file doesn't exist).
-        Returns {} on parse error too — better to treat a corrupted file
-        as "no data" than crash a session start.
-        """
+ Returns {} for a student with no prior data (file doesn't exist).
+ Returns {} on parse error too — better to treat a corrupted file
+ as "no data" than crash a session start.
+"""
         with _LOCK:
             path = _student_path(student_id)
             if not path.exists():
@@ -407,18 +344,18 @@ class MasteryStore:
         threshold: float | None = None,
         limit: int = 3,
     ) -> list[dict]:
-        """Return up to `limit` subsections with mastery < threshold,
-        sorted ascending by mastery (weakest first).
+        """Return up to `limit` subsections with mastery < threshold
+ sorted ascending by mastery (weakest first).
 
-        threshold defaults to WEAK_THRESHOLD (0.50). The threshold is
-        on mastery only — confidence is included in the returned dict
-        so callers can show a "low confidence" badge in the UI.
+ threshold defaults to WEAK_THRESHOLD (0.50). The threshold is
+ on mastery only — confidence is included in the returned dict
+ so callers can show a "low confidence" badge in the UI.
 
-        Each entry is a dict with keys:
-          path, mastery, confidence, sessions, last_seen, last_outcome,
-          last_rationale, chapter_num, chapter_title, section_title,
-          subsection_title
-        """
+ Each entry is a dict with keys:
+ path, mastery, confidence, sessions, last_seen, last_outcome
+ last_rationale, chapter_num, chapter_title, section_title
+ subsection_title
+"""
         thresh = self.WEAK_THRESHOLD if threshold is None else float(threshold)
         rows: list[dict] = []
         for path, rec in self.load(student_id).items():
@@ -450,15 +387,15 @@ class MasteryStore:
         self, student_id: str, subsection_path: str, limit: int = 3
     ) -> list[str]:
         """Return up to `limit` most-recent rationales for one
-        subsection. Used by the LLM scorer to avoid re-rewarding the
-        same concept across consecutive sessions.
+ subsection. Used by the LLM scorer to avoid re-rewarding the
+ same concept across consecutive sessions.
 
-        The store currently keeps only `last_rationale` per subsection
-        (one slot, overwritten each session). For thesis-scale this is
-        sufficient — sessions are rare enough that the most-recent one
-        is the relevant prior context. If we ever need a longer history
-        we extend the schema with a `rationale_log` array per concept.
-        """
+ The store currently keeps only `last_rationale` per subsection
+ (one slot, overwritten each session). For thesis-scale this is
+ sufficient — sessions are rare enough that the most-recent one
+ is the relevant prior context. If we ever need a longer history
+ we extend the schema with a `rationale_log` array per concept.
+"""
         rec = self.get(student_id, subsection_path)
         if not isinstance(rec, dict):
             return []
@@ -468,14 +405,14 @@ class MasteryStore:
     def stats(self, student_id: str) -> dict:
         """Aggregate counters for the /mastery dashboard's header.
 
-        Returns:
-            {
-              "touched": int,        # subsections with at least one session
-              "mastered": int,       # mastery >= 0.80 AND confidence >= 0.60
-              "avg_mastery": float,  # mean across touched subsections, 0-1
-              "avg_confidence": float, # mean confidence
-            }
-        """
+ Returns:
+ {
+ "touched": int, # subsections with at least one session
+ "mastered": int, # mastery >= 0.80 AND confidence >= 0.60
+ "avg_mastery": float, # mean across touched subsections, 0-1
+ "avg_confidence": float, # mean confidence
+ }
+"""
         concepts = self.load(student_id)
         if not concepts:
             return {
@@ -502,7 +439,7 @@ class MasteryStore:
                 "avg_confidence": 0.0,
             }
         # "Mastered" applies the conjunction: mastery >= MASTERED_THRESHOLD
-        # AND confidence >= CONFIDENCE_THRESHOLD. Iterating concepts.values()
+        # AND confidence >= CONFIDENCE_THRESHOLD. Iterating concepts.values
         # fresh here so the count uses the SAME record for both checks
         # (zip(masteries, confidences) would also work since both come from
         # the same iteration — but explicit is clearer).
@@ -537,26 +474,26 @@ class MasteryStore:
         session_date: Optional[str] = None,
     ) -> dict:
         """Apply an EWMA update to a subsection's mastery + confidence
-        and persist.
+ and persist.
 
-        First observation: stored = session value (no prior to blend).
-        Subsequent observations: stored = 0.6 * new + 0.4 * old (both
-        signals).
+ First observation: stored = session value (no prior to blend).
+ Subsequent observations: stored = 0.6 * new + 0.4 * old (both
+ signals).
 
-        Args:
-            student_id:        validated student id
-            subsection_path:   "ChN|section|subsection" from
-                               state['locked_topic']['path']
-            mastery_score:     0.0-1.0 from score_session_llm
-            confidence_score:  0.0-1.0 from score_session_llm
-            outcome:           "reached" | "not_reached"
-            rationale:         LLM's 1-2 sentence explanation; saved as
-                               last_rationale and shown in the dashboard
-            session_date:      ISO date; defaults to today
+ Args:
+ student_id: validated student id
+ subsection_path: "ChN|section|subsection" from
+ state['locked_topic']['path']
+ mastery_score: 0.0-1.0 from score_session_llm
+ confidence_score: 0.0-1.0 from score_session_llm
+ outcome: "reached" | "not_reached"
+ rationale: LLM's 1-2 sentence explanation; saved as
+ last_rationale and shown in the dashboard
+ session_date: ISO date; defaults to today
 
-        Returns:
-            The updated record dict (also persisted to disk).
-        """
+ Returns:
+ The updated record dict (also persisted to disk).
+"""
         if not subsection_path or "|" not in subsection_path:
             # Sessions that never locked a topic produce no mastery update.
             return {}
@@ -611,12 +548,12 @@ class MasteryStore:
 
     def delete_student(self, student_id: str) -> int:
         """Remove the student's mastery file. Used by the "forget me"
-        action so a per-student wipe affects ALL stores (mem0 +
-        mastery), not just one.
+ action so a per-student wipe affects ALL stores (mem0 +
+ mastery), not just one.
 
-        Returns:
-            1 if a file was deleted, 0 if there was nothing to delete.
-        """
+ Returns:
+ 1 if a file was deleted, 0 if there was nothing to delete.
+"""
         with _LOCK:
             path = _student_path(student_id)
             if path.exists():
@@ -644,16 +581,15 @@ class MasteryStore:
             tmp_name = tmp.name
         os.replace(tmp_name, path)
 
-
 def _parse_path(path: str) -> tuple[int, str, str, str]:
     """Parse a topic path 'Ch20|Circulatory Pathways|Overview of Systemic Veins'
-    into (chapter_num, chapter_title, section_title, subsection_title).
+ into (chapter_num, chapter_title, section_title, subsection_title).
 
-    chapter_title is empty here because the path stores chapter as a
-    number prefix only — the human-readable title lives on
-    state['locked_topic']['chapter']. Callers that need the title
-    should pass it through directly (the API layer does this).
-    """
+ chapter_title is empty here because the path stores chapter as a
+ number prefix only — the human-readable title lives on
+ state['locked_topic']['chapter']. Callers that need the title
+ should pass it through directly (the API layer does this).
+"""
     parts = (path or "").split("|", 2)
     chapter_num = 0
     chapter_title = ""

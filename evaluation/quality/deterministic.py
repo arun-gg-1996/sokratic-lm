@@ -1,6 +1,5 @@
 """
 evaluation/quality/deterministic.py
------------------------------------
 Pure-Python computations from session trace fields. No API calls.
 
 Produces a dict of named scalar metrics that are then combined with LLM
@@ -14,7 +13,6 @@ from __future__ import annotations
 import re
 from typing import Any
 from .schema import SessionView, TutorTurn
-
 
 # =============================================================================
 # Helpers
@@ -45,15 +43,12 @@ _OFF_TOPIC_INDICATORS = (
     "shit", "fuck", "damn",  # profanity often signals frustration off-topic
 )
 
-
 def _normalize(s: str) -> str:
     return re.sub(r"\s+", " ", (s or "").strip().lower())
-
 
 def _content_tokens(s: str, stopwords: set[str]) -> set[str]:
     norm = re.sub(r"[^a-z0-9\s]+", " ", _normalize(s))
     return {t for t in norm.split() if t and t not in stopwords and len(t) > 1}
-
 
 _OVERLAP_STOPS = {
     "a", "an", "the", "of", "is", "are", "and", "or", "to",
@@ -61,10 +56,9 @@ _OVERLAP_STOPS = {
     "that", "it", "its", "as", "be",
 }
 
-
 def _student_token_overlap_with_answer(student_msg: str, locked_answer: str, aliases: list[str]) -> bool:
     """Mirror of dean.reached_answer_gate Step A. Returns True if the
-    student message contains all content-tokens of locked_answer or any alias."""
+ student message contains all content-tokens of locked_answer or any alias."""
     msg_tokens = _content_tokens(student_msg, _OVERLAP_STOPS)
     if not msg_tokens:
         return False
@@ -74,14 +68,11 @@ def _student_token_overlap_with_answer(student_msg: str, locked_answer: str, ali
             return True
     return False
 
-
 def _safe_div(num: float, den: float, default: float = 1.0) -> float:
     return num / den if den > 0 else default
 
-
 def _clamp01(x: float) -> float:
     return max(0.0, min(1.0, x))
-
 
 # =============================================================================
 # Main entry point
@@ -89,7 +80,7 @@ def _clamp01(x: float) -> float:
 
 def compute_all(view: SessionView) -> dict[str, Any]:
     """Run all deterministic sub-metrics. Returns a flat dict with keys
-    organized by family. Higher-level dimension assembly happens later."""
+ organized by family. Higher-level dimension assembly happens later."""
     out: dict[str, Any] = {}
 
     # Pre-computed lists used by multiple families
@@ -110,14 +101,13 @@ def compute_all(view: SessionView) -> dict[str, Any]:
     out.update(_compute_msc(view))
     return out
 
-
 # =============================================================================
 # Pre-computed signal lists
 # =============================================================================
 
 def _intermediate_turns(view: SessionView) -> list[int]:
     """Turn IDs where student_state == 'correct' but reached == False — the
-    'mine goes lower' pattern. These are the at-risk turns for ARC."""
+ 'mine goes lower' pattern. These are the at-risk turns for ARC."""
     out = []
     for t in view.turns:
         if (t.student_state == "correct"
@@ -126,19 +116,18 @@ def _intermediate_turns(view: SessionView) -> list[int]:
             out.append(t.turn_id)
     return out
 
-
 def _fabrication_turns(view: SessionView) -> list[dict]:
     """Turns where the tutor message contains a fabrication keyword AND
-    the gate said reached=False. These are critical-penalty candidates.
+ the gate said reached=False. These are critical-penalty candidates.
 
-    L39 #6 — uses session-level reach in addition to per-turn reach.
-    The reach-path close turn (L65) legitimately confirms the textbook
-    answer + Teacher's wrap prose can naturally include fabrication
-    keywords ("the answer is…"). We only flag fabrication when the
-    student NEVER reached the answer in the session AND the per-turn
-    reach gate said False. Sessions that reached in any turn get a
-    free pass on the very last turn.
-    """
+ #6 — uses session-level reach in addition to per-turn reach.
+ The reach-path close turn legitimately confirms the textbook
+ answer + Teacher's wrap prose can naturally include fabrication
+ keywords ("the answer is…"). We only flag fabrication when the
+ student NEVER reached the answer in the session AND the per-turn
+ reach gate said False. Sessions that reached in any turn get a
+ free pass on the very last turn.
+"""
     out = []
     final_turn_id = view.turns[-1].turn_id if view.turns else 0
     session_reached = bool(view.final_student_reached_answer)
@@ -146,7 +135,7 @@ def _fabrication_turns(view: SessionView) -> list[dict]:
         if t.student_reached_answer:
             # Confirmation when student actually reached is fine.
             continue
-        # L39 #6 — session-level pass on the final turn for sessions
+        # #6 — session-level pass on the final turn for sessions
         # where reach happened in any earlier turn (close-out prose).
         if session_reached and t.turn_id == final_turn_id:
             continue
@@ -160,7 +149,6 @@ def _fabrication_turns(view: SessionView) -> list[dict]:
             })
     return out
 
-
 def _off_topic_turns(view: SessionView) -> list[int]:
     """Turns where the student message contains off-topic indicators."""
     out = []
@@ -170,17 +158,16 @@ def _off_topic_turns(view: SessionView) -> list[int]:
             out.append(t.turn_id)
     return out
 
-
 # =============================================================================
 # TLQ — Topic Lock Quality
 # =============================================================================
 
 def _compute_tlq(view: SessionView) -> dict[str, Any]:
     """Reads:
-      - locked_topic (presence + score)
-      - all_turn_traces for dean.topic_match, dean.topic_vote, anchors_locked vs anchor_extraction_failed
-      - debug.coverage_gap_events
-    """
+locked_topic (presence + score)
+all_turn_traces for dean.topic_match, dean.topic_vote, anchors_locked vs anchor_extraction_failed
+debug.coverage_gap_events
+"""
     topic_match_score = 0.0
     vote_consensus = 1.0
     anchor_success = 0.0
@@ -244,7 +231,6 @@ def _compute_tlq(view: SessionView) -> dict[str, Any]:
         "det_tlq_repair_invoked": repair_invoked,
     }
 
-
 # =============================================================================
 # RRQ — RAG Retrieval Quality
 # =============================================================================
@@ -297,7 +283,6 @@ def _compute_rrq(view: SessionView) -> dict[str, Any]:
         "det_rrq_chunk_count": chunk_count,
         "det_rrq_retrieval_calls": rcalls,
     }
-
 
 # =============================================================================
 # AQ — Anchor Quality
@@ -359,7 +344,6 @@ def _compute_aq(view: SessionView) -> dict[str, Any]:
         "det_aq_locked_answer_word_count": word_count,
     }
 
-
 # =============================================================================
 # TRQ — Tutor Response Quality (deterministic part; EULER comes from LLM)
 # =============================================================================
@@ -400,18 +384,17 @@ def _compute_trq(view: SessionView) -> dict[str, Any]:
         "det_trq_n_tutoring_turns": n,
     }
 
-
 # =============================================================================
 # RGC — Reached-Gate Correctness
 # =============================================================================
 
 def _compute_rgc(view: SessionView) -> dict[str, Any]:
     """For each turn with a gate decision recorded, classify:
-      - true positive: reached=True ∧ student msg overlaps locked_answer/aliases OR has a verbatim quote.
-      - false positive: reached=True ∧ no overlap ∧ no quote evidence.
-      - true negative: reached=False ∧ no overlap.
-      - false negative: reached=False ∧ overlap (likely missed positive).
-    """
+true positive: reached=True ∧ student msg overlaps locked_answer/aliases OR has a verbatim quote.
+false positive: reached=True ∧ no overlap ∧ no quote evidence.
+true negative: reached=False ∧ no overlap.
+false negative: reached=False ∧ overlap (likely missed positive).
+"""
     aliases = view.locked_answer_aliases or []
     locked = view.locked_answer or ""
     fp = 0
@@ -470,17 +453,14 @@ def _compute_rgc(view: SessionView) -> dict[str, Any]:
         "det_rgc_tp": tp, "det_rgc_fp": fp, "det_rgc_tn": tn, "det_rgc_fn": fn,
     }
 
-
 _HEDGE_RE = re.compile(
     r"\b(i\s+don'?t\s+know|no\s+idea|not\s+sure|i'?m\s+lost|idk|"
     r"i\s+forget|no\s+clue|i\s+can'?t\s+remember)\b",
     re.IGNORECASE,
 )
 
-
 def _hedge_detected(msg: str) -> bool:
     return bool(_HEDGE_RE.search(msg or ""))
-
 
 # =============================================================================
 # PP — Pedagogical Progression
@@ -534,7 +514,6 @@ def _compute_pp(view: SessionView) -> dict[str, Any]:
         "det_pp_state_trajectory_score": _clamp01(trajectory_score),
     }
 
-
 def _slope_score(values: list[float]) -> float:
     """Simple least-squares slope, normalized to [0, 1]. Positive slope = good."""
     n = len(values)
@@ -552,14 +531,13 @@ def _slope_score(values: list[float]) -> float:
     target = 1.0 / max(1, n - 1)
     return _clamp01(0.5 + (slope / max(target, 0.01)) * 0.5)
 
-
 # =============================================================================
 # ARC — Answer-Reach vs Step-Correctness (deterministic part)
 # =============================================================================
 
 def _compute_arc(view: SessionView, prior: dict[str, Any]) -> dict[str, Any]:
     """Deterministic ARC pieces. The mastery_attribution_grounding sub-score
-    requires LLM judgment and is added later from llm_judges output."""
+ requires LLM judgment and is added later from llm_judges output."""
     intermediate = prior.get("intermediate_turns") or []
     fabrications = prior.get("fabrication_turns") or []
 
@@ -590,7 +568,6 @@ def _compute_arc(view: SessionView, prior: dict[str, Any]) -> dict[str, Any]:
         "det_arc_n_intermediate_turns": len(intermediate),
         "det_arc_n_fabrication_turns": len(fabrications),
     }
-
 
 # =============================================================================
 # CC — Conversation Continuity
@@ -644,7 +621,6 @@ def _compute_cc(view: SessionView) -> dict[str, Any]:
         "det_cc_invariant_score": _clamp01(iv_score),
     }
 
-
 # =============================================================================
 # CE — Cost & Efficiency
 # =============================================================================
@@ -678,14 +654,13 @@ def _compute_ce(view: SessionView) -> dict[str, Any]:
         "det_ce_latency_score": latency_score,
     }
 
-
 # =============================================================================
 # MSC — Mastery Scoring Calibration (deterministic part)
 # =============================================================================
 
 def _compute_msc(view: SessionView) -> dict[str, Any]:
     """The grounding sub-metric is LLM-judged elsewhere. Here we compute
-    confidence appropriateness and EWMA movement."""
+ confidence appropriateness and EWMA movement."""
     mastery = view.mastery_score
     confidence = view.mastery_confidence
     reached = view.final_student_reached_answer

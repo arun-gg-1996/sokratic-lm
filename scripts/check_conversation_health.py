@@ -6,39 +6,39 @@ takes per-turn snapshots, then asserts expected invariants for every
 phase (rapport → tutoring → clinical → memory_update).
 
 What it captures per turn:
-  - phase, locked_topic, hint_level, turn_count, exploration_count
-  - assessment_turn, student_reached_answer, close_reason, session_ended
-  - LLM-call counts by wrapper (preflight, plan, draft, verifiers)
-  - per-call elapsed_ms (latency profile)
-  - new mem0/sqlite/close trace entries since last snapshot
-  - last tutor message length + metadata (mode, close_reason, etc.)
+phase, locked_topic, hint_level, turn_count, exploration_count
+assessment_turn, student_reached_answer, close_reason, session_ended
+LLM-call counts by wrapper (preflight, plan, draft, verifiers)
+per-call elapsed_ms (latency profile)
+new mem0/sqlite/close trace entries since last snapshot
+last tutor message length + metadata (mode, close_reason, etc.)
 
 What it asserts (per phase):
-  RAPPORT:
-    * Initial state has no locked_topic
-    * Greeting message > 50 chars (real LLM, not empty/error)
-  TUTORING:
-    * locked_topic, locked_question, locked_answer all set after lock turn
-    * turn_count monotonic non-decreasing on engaged turns
-    * hint_level monotonic non-decreasing (advances on dean signal)
-    * trace shows reused_lock_time_chunks (NOT unconditional retrieve)
-    * exploration_count present in state (B2 schema)
-    * No tutor message has metadata.kind=="error_card"
-    * No mem0_write entries fire mid-tutoring
-  CLINICAL (only if reach + opt_in_yes):
-    * assessment_turn progresses 0 → 1 → 2 → 3
-    * clinical_history populated
-  MEMORY_UPDATE:
-    * close LLM fired (teacher_v2.close_draft trace entry)
-    * close_reason set + valid
-    * last tutor message has metadata.mode == "close"
-    * If reason in NO_SAVE_REASONS: no mem0/sqlite writes
-    * Else: mem0 wrote_N_failed_0 + sqlite session_end ok
-    * session_ended=True after close
+ RAPPORT:
+ * Initial state has no locked_topic
+ * Greeting message > 50 chars (real LLM, not empty/error)
+ TUTORING:
+ * locked_topic, locked_question, locked_answer all set after lock turn
+ * turn_count monotonic non-decreasing on engaged turns
+ * hint_level monotonic non-decreasing (advances on dean signal)
+ * trace shows reused_lock_time_chunks (NOT unconditional retrieve)
+ * exploration_count present in state ( schema)
+ * No tutor message has metadata.kind=="error_card"
+ * No mem0_write entries fire mid-tutoring
+ CLINICAL (only if reach + opt_in_yes):
+ * assessment_turn progresses 0 → 1 → 2 → 3
+ * clinical_history populated
+ MEMORY_UPDATE:
+ * close LLM fired (teacher_v2.close_draft trace entry)
+ * close_reason set + valid
+ * last tutor message has metadata.mode == "close"
+ * If reason in NO_SAVE_REASONS: no mem0/sqlite writes
+ * Else: mem0 wrote_N_failed_0 + sqlite session_end ok
+ * session_ended=True after close
 
 Usage:
-  SOKRATIC_USE_V2_FLOW=1 SOKRATIC_RETRIEVER=chunks \
-    .venv/bin/python scripts/check_conversation_health.py [student_id]
+ SOKRATIC_USE_V2_FLOW=1 SOKRATIC_RETRIEVER=chunks \
+ .venv/bin/python scripts/check_conversation_health.py [student_id]
 
 Defaults to eval18_solo1_S1. Prints a streaming per-turn report and a
 final PASS/FAIL summary.
@@ -61,7 +61,6 @@ sys.path.insert(0, str(REPO))
 from dotenv import load_dotenv
 load_dotenv(REPO / ".env", override=True)
 
-
 # ─── Constants ─────────────────────────────────────────────────────────────
 
 NO_SAVE_REASONS = {"exit_intent", "off_domain_strike"}
@@ -73,22 +72,21 @@ VALID_CLOSE_REASONS = {
 
 # Trace wrapper keys we care about for per-turn counting
 LLM_WRAPPERS = {
-    "haiku_intent_classify",       # M7 unified preflight
+    "haiku_intent_classify",       # unified preflight
     "preflight",                   # legacy preflight summary
     "dean_v2.plan",                # Dean Sonnet
     "teacher_v2.draft",            # Teacher Sonnet
     "retry_orchestrator.run_turn", # retry summary (contains attempts)
     "dean.reached_answer_gate",
     "topic_lock_v2.map_topic",     # lock-time Haiku
-    "exploration_retrieval",       # M6 tangent retrieval
-    "retriever.reused_lock_time_chunks",  # M6 reuse signal
-    "teacher_v2.close_draft",      # M1 close LLM
+    "exploration_retrieval",       # tangent retrieval
+    "retriever.reused_lock_time_chunks",  # reuse signal
+    "teacher_v2.close_draft",      # close LLM
     "mem0_write",
     "memory_manager.flush",
     "mastery_store.update",
     "sqlite_store.session_end",
 }
-
 
 # ─── State snapshot ────────────────────────────────────────────────────────
 
@@ -123,7 +121,6 @@ def snapshot(state: dict, turn_idx: int, label: str) -> dict:
         "all_turns_archived": len(debug.get("all_turn_traces", []) or []),
     }
 
-
 def _last_tutor_summary(state: dict) -> dict:
     msgs = state.get("messages") or []
     for m in reversed(msgs):
@@ -133,7 +130,7 @@ def _last_tutor_summary(state: dict) -> dict:
                 "len": len(m.get("content") or ""),
                 "mode": md.get("mode"),
                 "close_reason": md.get("close_reason"),
-                "kind": md.get("kind"),  # "error_card" if M-FB fallback fired
+                "kind": md.get("kind"),  # "error_card" if fallback fired
                 "preview": (m.get("content") or "")[:120],
             }
         if (m or {}).get("role") == "system":
@@ -147,7 +144,6 @@ def _last_tutor_summary(state: dict) -> dict:
                     "error_class": md.get("error_class"),
                 }
     return {"len": 0, "mode": None}
-
 
 def trace_summary(state: dict) -> dict:
     """Count LLM-call wrappers + capture latencies in current turn_trace."""
@@ -173,7 +169,6 @@ def trace_summary(state: dict) -> dict:
         "errors": errors,
     }
 
-
 # ─── Per-phase invariant assertions ────────────────────────────────────────
 
 class HealthReport:
@@ -198,7 +193,6 @@ class HealthReport:
             lines.append(f"  [{c['phase']:14s}] {mark} {c['name']}{d}")
         return "\n".join(lines)
 
-
 def assert_rapport(snap0: dict, report: HealthReport) -> None:
     p = "RAPPORT"
     report.add(p, "initial phase set", bool(snap0["phase"]), f"phase={snap0['phase']}")
@@ -213,7 +207,6 @@ def assert_rapport(snap0: dict, report: HealthReport) -> None:
     report.add(p, "no error_card on rapport",
                last.get("kind") != "error_card",
                f"kind={last.get('kind')}")
-
 
 def assert_tutoring_progression(snaps: list[dict], traces: list[dict],
                                 report: HealthReport) -> None:
@@ -236,26 +229,26 @@ def assert_tutoring_progression(snaps: list[dict], traces: list[dict],
     monotonic = all(counts[i] <= counts[i+1] for i in range(len(counts)-1))
     report.add(p, "turn_count monotonic", monotonic, f"{counts}")
 
-    # hint_level monotonic non-decreasing (M1+ fix: advances on Dean signal)
+    # hint_level monotonic non-decreasing (+ fix: advances on Dean signal)
     hints = [s["hint_level"] for s in tutoring_snaps]
     hint_monotonic = all(hints[i] <= hints[i+1] for i in range(len(hints)-1))
     report.add(p, "hint_level monotonic", hint_monotonic, f"{hints}")
 
-    # B2: per-turn retrieve replaced by reuse — check at least one
+    # : per-turn retrieve replaced by reuse — check at least one
     # reused_lock_time_chunks entry across tutoring trace.
     n_reused = sum(1 for t in traces
                    if str(t.get("wrapper", "")) == "retriever.reused_lock_time_chunks")
     report.add(p, "lock-time chunks reused (B2)", n_reused >= 1,
                f"reused_lock_time_chunks={n_reused}")
 
-    # M7: unified intent classifier should appear (or legacy preflight summary)
+    # : unified intent classifier should appear (or legacy preflight summary)
     n_unified = sum(1 for t in traces if "haiku_intent_classify" in str(t.get("wrapper", "")))
     n_preflight_summary = sum(1 for t in traces if str(t.get("wrapper", "")) == "preflight")
     report.add(p, "intent classifier ran (M7 unified)",
                n_unified >= 1 or n_preflight_summary >= 1,
                f"unified={n_unified} legacy={n_preflight_summary}")
 
-    # No error_card during tutoring (M-FB no-fallback principle worked OR LLMs didn't fail)
+    # No error_card during tutoring ( no-fallback principle worked OR LLMs didn't fail)
     error_cards = sum(1 for s in tutoring_snaps
                       if s.get("last_tutor", {}).get("kind") == "error_card")
     report.add(p, "no error_card mid-tutoring",
@@ -271,7 +264,6 @@ def assert_tutoring_progression(snaps: list[dict], traces: list[dict],
     report.add(p, "no mem0_write mid-tutoring",
                n_mem0_in_tutoring == 0, f"writes_during_tutoring={n_mem0_in_tutoring}")
 
-
 def assert_clinical(snaps: list[dict], report: HealthReport) -> None:
     p = "CLINICAL"
     clinical_snaps = [s for s in snaps if s["phase"] == "assessment"]
@@ -284,7 +276,6 @@ def assert_clinical(snaps: list[dict], report: HealthReport) -> None:
     has_progression = any(t >= 1 for t in asmt_turns)
     report.add(p, "assessment_turn progressed", has_progression,
                f"sequence={asmt_turns}")
-
 
 def assert_memory_update(snaps: list[dict], traces: list[dict],
                          report: HealthReport) -> None:
@@ -316,7 +307,7 @@ def assert_memory_update(snaps: list[dict], traces: list[dict],
                mode == "close" or is_error,
                f"mode={mode!r} kind={last.get('kind')!r}")
 
-    # Save bucket logic (per M1 D4)
+    # Save bucket logic (D4)
     no_save = reason in NO_SAVE_REASONS
     n_mem0 = sum(1 for t in traces
                  if str(t.get("wrapper", "")) == "mem0_write")
@@ -337,7 +328,6 @@ def assert_memory_update(snaps: list[dict], traces: list[dict],
     report.add(p, "session_ended flag set",
                final["session_ended"] is True,
                f"session_ended={final['session_ended']}")
-
 
 # ─── Driver ─────────────────────────────────────────────────────────────────
 
@@ -563,7 +553,6 @@ async def run_check(student_id: str) -> int:
     print(f"\nFull report → {out_path.relative_to(REPO)}")
 
     return 0 if s["fail"] == 0 else 1
-
 
 if __name__ == "__main__":
     sid = sys.argv[1] if len(sys.argv) >= 2 else "eval18_solo1_S1"

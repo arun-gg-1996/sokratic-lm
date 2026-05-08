@@ -1,26 +1,25 @@
 """
 scripts/grade_sweep.py
------------------------
 Grade a sweep.json artifact produced by sweep_post_demo_sims.py.
 
 Two layers of grading:
-  1. Deterministic checks — telemetry counter monotonicity, phase
-     transitions, hint-level escalation, latency bounds, no-leak heuristic
-     (locked_answer ngram presence in tutor text).
-  2. LLM rubric — Haiku grader scores each tutor message 1-5 on:
-       grounded:    on-topic and grounded in the locked concept
-       no_leak:     does not reveal the locked answer prematurely
-       quality:     pedagogically sound (right hint level, no fake praise)
-       ack_at_xfer: at phase transitions, briefly acknowledges what just
-                    happened before pivoting (N4)
+ 1. Deterministic checks — telemetry counter monotonicity, phase
+ transitions, hint-level escalation, latency bounds, no-leak heuristic
+ (locked_answer ngram presence in tutor text).
+ 2. LLM rubric — Haiku grader scores each tutor message 1-5 on:
+ grounded: on-topic and grounded in the locked concept
+ no_leak: does not reveal the locked answer prematurely
+ quality: pedagogically sound (right hint level, no fake praise)
+ ack_at_xfer: at phase transitions, briefly acknowledges what just
+ happened before pivoting
 
 Run:
-    source .venv/bin/activate
-    python scripts/grade_sweep.py data/artifacts/sweep_<ts>/sweep.json
+ source .venv/bin/activate
+ python scripts/grade_sweep.py data/artifacts/sweep_<ts>/sweep.json
 
 Output:
-    data/artifacts/sweep_<ts>/grade.json
-    data/artifacts/sweep_<ts>/grade.md   (human-readable report)
+ data/artifacts/sweep_<ts>/grade.json
+ data/artifacts/sweep_<ts>/grade.md (human-readable report)
 """
 from __future__ import annotations
 
@@ -41,22 +40,19 @@ sys.path.insert(0, str(ROOT))
 
 LOCKED_ANSWER_LEAK_NGRAM = 4  # n-gram length for naive answer-leak detection
 
-
 def ngrams(text: str, n: int) -> set[str]:
     toks = re.findall(r"[a-z]+", (text or "").lower())
     return {" ".join(toks[i : i + n]) for i in range(0, max(0, len(toks) - n + 1))}
 
-
 def naive_leak_score(tutor_text: str, locked_answer: str) -> dict:
     """Heuristic: count answer n-grams in tutor text. Not authoritative -- the
-    real F5c gate is the haiku_hint_leak_check at runtime; this is just a
-    cheap sanity check."""
+ real F5c gate is the haiku_hint_leak_check at runtime; this is just a
+ cheap sanity check."""
     if not locked_answer:
         return {"checked": False, "ngram_overlap": 0}
     a = ngrams(locked_answer, LOCKED_ANSWER_LEAK_NGRAM)
     t = ngrams(tutor_text, LOCKED_ANSWER_LEAK_NGRAM)
     return {"checked": True, "ngram_overlap": len(a & t)}
-
 
 def telemetry_check(sim: dict) -> dict:
     """Counter monotonicity + sane phase transitions + no zombie counters."""
@@ -87,7 +83,6 @@ def telemetry_check(sim: dict) -> dict:
             phases_seen.append(ph)
     return {"issues": issues, "phase_path": phases_seen, "final_counters": last}
 
-
 def latency_check(sim: dict, threshold_s: float = 30.0) -> dict:
     slow = []
     for t in sim.get("turns", []):
@@ -97,7 +92,6 @@ def latency_check(sim: dict, threshold_s: float = 30.0) -> dict:
         if lat >= threshold_s:
             slow.append({"turn": t["turn"], "latency_s": lat})
     return {"threshold_s": threshold_s, "slow_turns": slow}
-
 
 # --- LLM rubric --------------------------------------------------------------
 
@@ -128,7 +122,6 @@ Also output a short note (under 25 words) describing the tutor's move.
 
 Return strict JSON: {{"grounded": int|null, "no_leak": int|null,
 "quality": int|null, "ack_at_xfer": int|null, "note": str}}"""
-
 
 def grade_with_haiku(turns_with_prev_phase: list[dict]) -> list[dict]:
     """Call Haiku to grade each turn. Returns parallel list of grade dicts."""
@@ -171,7 +164,6 @@ def grade_with_haiku(turns_with_prev_phase: list[dict]) -> list[dict]:
             flush=True,
         )
     return out
-
 
 def grade_sim(sim: dict) -> dict:
     turns = sim.get("turns", [])
@@ -219,7 +211,6 @@ def grade_sim(sim: dict) -> dict:
         },
     }
 
-
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("sweep_json", help="Path to sweep.json")
@@ -240,7 +231,6 @@ def main() -> int:
     out_json.write_text(json.dumps({"graded": graded}, indent=2))
     print(f"[grade] wrote {out_json}", flush=True)
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

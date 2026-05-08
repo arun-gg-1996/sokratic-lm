@@ -38,7 +38,6 @@ from ingestion.core.propositions_dual import (
     run_dual_task_batch,
 )
 
-
 # ── build_cached_system ─────────────────────────────────────────────────────
 
 class TestBuildCachedSystem:
@@ -62,7 +61,6 @@ class TestBuildCachedSystem:
     def test_empty_suffix_no_extra_section(self):
         blocks = build_cached_system("   ")
         assert "ADDITIONAL DOMAIN-SPECIFIC INSTRUCTIONS" not in blocks[0]["text"]
-
 
 # ── parse_response ──────────────────────────────────────────────────────────
 
@@ -130,7 +128,6 @@ class TestParseResponse:
         _, _, err = parse_response("")
         assert err == "empty response"
 
-
 # ── Mocking infrastructure ──────────────────────────────────────────────────
 
 def _make_mock_response(text: str, *, in_tok=120, out_tok=80, cache_read=0, cache_create=0):
@@ -146,7 +143,6 @@ def _make_mock_response(text: str, *, in_tok=120, out_tok=80, cache_read=0, cach
         ),
     )
 
-
 def _make_mock_client(response_or_responses):
     """Build a mock AsyncAnthropic. response_or_responses can be a single
     response (every call returns it) or a list (one per call, in order)."""
@@ -158,7 +154,6 @@ def _make_mock_client(response_or_responses):
         client.messages = MagicMock()
         client.messages.create = AsyncMock(return_value=response_or_responses)
     return client
-
 
 # ── extract_dual_task ───────────────────────────────────────────────────────
 
@@ -266,7 +261,6 @@ class TestExtractDualTask:
         )
         # Result is still successful
         assert result.error is None
-
 
 # ── run_dual_task_batch ─────────────────────────────────────────────────────
 

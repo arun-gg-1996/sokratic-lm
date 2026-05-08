@@ -1,14 +1,13 @@
 """
 ingestion/propositions.py
---------------------------
 Extract atomic propositions from base chunks.
 
 Key behavior:
-- Processes base chunks only (is_overlap=False)
-- Skips paragraph_overlap chunks entirely
-- Supports resume from existing propositions file
-- Uses parallel workers with a shared sliding-window rate limiter
-- Appends checkpoint output after every completed chunk
+Processes base chunks only (is_overlap=False)
+Skips paragraph_overlap chunks entirely
+Supports resume from existing propositions file
+Uses parallel workers with a shared sliding-window rate limiter
+Appends checkpoint output after every completed chunk
 """
 
 from __future__ import annotations
@@ -32,7 +31,6 @@ load_dotenv()
 
 PROPOSITIONS_MODEL = "claude-sonnet-4-6"
 MIN_PROP_CHARS = 10
-
 
 def _parse_proposition_lines(raw_text: str) -> list[str]:
     """Parse model output into cleaned proposition lines."""
@@ -58,7 +56,6 @@ def _parse_proposition_lines(raw_text: str) -> list[str]:
 
     return cleaned
 
-
 def _load_jsonl(path: str) -> list[dict]:
     p = Path(path)
     if not p.exists():
@@ -71,7 +68,6 @@ def _load_jsonl(path: str) -> list[dict]:
                 out.append(json.loads(line))
     return out
 
-
 def _load_base_chunks(chunks_path: str) -> list[dict]:
     chunks = _load_jsonl(chunks_path)
     return [
@@ -80,7 +76,6 @@ def _load_base_chunks(chunks_path: str) -> list[dict]:
         if c.get("is_overlap") is False
         and c.get("element_type") != "paragraph_overlap"
     ]
-
 
 def _build_proposition(chunk: dict, text: str) -> dict:
     """Create proposition dict conforming to PropositionSchema."""
@@ -100,13 +95,12 @@ def _build_proposition(chunk: dict, text: str) -> dict:
         "image_filename": "",
     }
 
-
 class SlidingWindowRateLimiter:
     """
-    Thread-safe sliding-window limiter for:
-    - requests/minute
-    - output_tokens/minute
-    """
+ Thread-safe sliding-window limiter for:
+requests/minute
+output_tokens/minute
+"""
 
     def __init__(
         self,
@@ -156,7 +150,6 @@ class SlidingWindowRateLimiter:
             self._prune(now)
             self._out_events.append((now, max(0, int(output_tokens))))
 
-
 class CheckpointAppender:
     """Thread-safe append writer for proposition JSONL checkpoints."""
 
@@ -170,9 +163,9 @@ class CheckpointAppender:
 
     def append(self, propositions: list[dict]) -> int:
         """
-        Append propositions and return running total count.
-        Called after every completed chunk.
-        """
+ Append propositions and return running total count.
+ Called after every completed chunk.
+"""
         with self._lock:
             if propositions:
                 with open(self.path, "a", encoding="utf-8") as f:
@@ -186,9 +179,7 @@ class CheckpointAppender:
         with self._lock:
             return self._total_count
 
-
 _thread_local = threading.local()
-
 
 def _get_thread_client() -> anthropic.Anthropic:
     if not hasattr(_thread_local, "client"):
@@ -197,16 +188,15 @@ def _get_thread_client() -> anthropic.Anthropic:
         )
     return _thread_local.client
 
-
 def _extract_chunk_lines(
     chunk_text: str,
     prompt_template: str,
     limiter: SlidingWindowRateLimiter,
 ) -> tuple[list[str], bool]:
     """
-    Extract proposition lines for one chunk.
-    Returns (lines, had_api_error).
-    """
+ Extract proposition lines for one chunk.
+ Returns (lines, had_api_error).
+"""
     prompt = prompt_template.format(chunk_text=chunk_text)
 
     while True:
@@ -238,19 +228,18 @@ def _extract_chunk_lines(
             print(f"API error on chunk; skipping chunk. Error: {exc}")
             return [], True
 
-
 def _process_one_chunk(
     chunk: dict,
     prompt_template: str,
     limiter: SlidingWindowRateLimiter,
 ) -> dict:
     """
-    Worker for one chunk.
-    Returns:
-      {
-        chunk_id, chapter_num, propositions, count, api_error
-      }
-    """
+ Worker for one chunk.
+ Returns:
+ {
+ chunk_id, chapter_num, propositions, count, api_error
+ }
+"""
     chunk_id = chunk["chunk_id"]
     etype = chunk.get("element_type", "paragraph")
     lines: list[str] = []
@@ -279,7 +268,6 @@ def _process_one_chunk(
         "count": len(propositions),
         "api_error": had_error,
     }
-
 
 def run_propositions(
     out_path: str,
@@ -411,7 +399,6 @@ def run_propositions(
         "bottom5_chapters": bottom5,
         "final_chunk_count_map": dict(final_chunk_count),
     }
-
 
 if __name__ == "__main__":
     import argparse

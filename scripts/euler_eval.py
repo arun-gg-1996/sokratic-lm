@@ -41,7 +41,6 @@ BASE = Path('/Users/arun-ghontale/UB/NLP/sokratic/data/artifacts/final_convo')
 OUT = Path('/Users/arun-ghontale/UB/NLP/sokratic/data/artifacts/euler_scores')
 OUT.mkdir(parents=True, exist_ok=True)
 
-
 def score_turn(phase, locked_answer, last_student_msg, tutor_content):
     user_msg = f"""Phase: {phase}
 Locked answer (must NOT appear in tutoring responses): {locked_answer or "(not set)"}
@@ -62,11 +61,9 @@ Tutor response: {tutor_content}"""
         print(f"    [WARN] parse fail: {e}")
         return dict(FALLBACK)
 
-
 def bar(val, width=20):
     filled = int(round(val * width))
     return "█" * filled + "░" * (width - filled)
-
 
 all_results = []
 
@@ -127,7 +124,6 @@ for idx, fname in enumerate(CONV_FILES, 1):
 
     # Save individual
     (OUT / f"{conv_id}_euler.json").write_text(json.dumps(result, indent=2))
-
 
 # Aggregate
 all_tutoring_turns = [t for r in all_results for t in r["turn_scores"]]

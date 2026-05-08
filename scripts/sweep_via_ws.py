@@ -1,35 +1,34 @@
 """
 scripts/sweep_via_ws.py
-------------------------
-Selenium-style fast harness — drives the LIVE backend over HTTP+WS,
+Selenium-style fast harness — drives the LIVE backend over HTTP+WS
 exactly the way the React frontend would. Boots NOTHING in-process —
 all conversation logic, retrieval, langgraph, mem0 happens in the
 running uvicorn server. Same WS payload the sidebar reads.
 
 Why this beats browser-sim:
-  * No Chrome, no Playwright, no DOM rendering work.
-  * Asserts on the WS debug_payload directly (single source of truth
-    for telemetry: phase, hint_level, *_count, locked_question, ...).
-  * Records full transcripts in metric-friendly JSONL — ready for
-    RAGAS (faithfulness, answer_relevance, context_precision),
-    EULER (per-domain knowledge accuracy), verbosity scoring,
-    latency percentiles, and any custom rubric.
-  * Per-sim wall time is reported live so you can see drift.
+ * No Chrome, no Playwright, no DOM rendering work.
+ * Asserts on the WS debug_payload directly (single source of truth
+ for telemetry: phase, hint_level, *_count, locked_question, ...).
+ * Records full transcripts in metric-friendly JSONL — ready for
+ RAGAS (faithfulness, answer_relevance, context_precision)
+ EULER (per-domain knowledge accuracy), verbosity scoring
+ latency percentiles, and any custom rubric.
+ * Per-sim wall time is reported live so you can see drift.
 
 Prerequisites:
-  * uvicorn running on :8000   (`uvicorn backend.main:app --port 8000`)
-  * qdrant up (already running per docker ps)
+ * uvicorn running on :8000 (`uvicorn backend.main:app --port 8000`)
+ * qdrant up (already running per docker ps)
 
 Run:
-  source .venv/bin/activate
-  python scripts/sweep_via_ws.py                         # all sims
-  python scripts/sweep_via_ws.py --only happy_path       # one sim
-  python scripts/sweep_via_ws.py --user nidhi            # use seeded user
+ source .venv/bin/activate
+ python scripts/sweep_via_ws.py # all sims
+ python scripts/sweep_via_ws.py --only happy_path # one sim
+ python scripts/sweep_via_ws.py --user nidhi # use seeded user
 
 Output:
-  data/artifacts/sweep_ws_<ts>/sweep.json   — per-turn state + tutor + debug payload
-  data/artifacts/sweep_ws_<ts>/transcripts/<sim>.jsonl  — RAGAS/EULER-ready
-  data/artifacts/sweep_ws_<ts>/findings.md  — issues to file in POST_DEMO_FIXES.md
+ data/artifacts/sweep_ws_<ts>/sweep.json — per-turn state + tutor + debug payload
+ data/artifacts/sweep_ws_<ts>/transcripts/<sim>.jsonl — RAGAS/EULER-ready
+ data/artifacts/sweep_ws_<ts>/findings.md — issues to file in
 """
 from __future__ import annotations
 
@@ -191,12 +190,11 @@ SIMS: dict[str, dict] = {
 # topic OR the domain anchor when student went off-topic.
 DOMAIN_ANCHORS = ["anatomy", "body", "structure", "subject", "topic"]
 
-
 # --- Backend interaction --------------------------------------------------
 
 async def wait_backend_ready(timeout_s: float = 240.0) -> bool:
     """Poll /health until 200 or timeout. Backend warmup loads spacy +
-    chunks JSONL + cross-encoder; can take 60-220s cold."""
+ chunks JSONL + cross-encoder; can take 60-220s cold."""
     deadline = time.time() + timeout_s
     async with httpx.AsyncClient() as client:
         while time.time() < deadline:
@@ -209,14 +207,13 @@ async def wait_backend_ready(timeout_s: float = 240.0) -> bool:
             await asyncio.sleep(2.0)
     return False
 
-
 async def login(username: str, password: str) -> str:
-    """POST /api/auth/login → bearer token (Codex demo-auth, 2026-05-06).
+    """POST /api/auth/login → bearer token ( demo-auth).
 
-    Token is HMAC-signed with SOKRATIC_AUTH_SECRET; used as
-    `Authorization: Bearer <token>` for HTTP calls and as `?token=<...>`
-    for the WS handshake.
-    """
+ Token is HMAC-signed with SOKRATIC_AUTH_SECRET; used as
+ `Authorization: Bearer <token>` for HTTP calls and as `?token=<...>`
+ for the WS handshake.
+"""
     async with httpx.AsyncClient(timeout=15.0) as client:
         r = await client.post(
             f"{BACKEND}/api/auth/login",
@@ -225,7 +222,6 @@ async def login(username: str, password: str) -> str:
         if r.status_code != 200:
             raise RuntimeError(f"login failed ({r.status_code}): {r.text}")
         return r.json()["token"]
-
 
 async def start_session(student_id: str, token: str,
                         memory_enabled: bool = True) -> dict:
@@ -242,10 +238,9 @@ async def start_session(student_id: str, token: str,
         r.raise_for_status()
         return r.json()
 
-
 async def send_turn(ws, text: str, turn_timeout_s: float = 90.0) -> dict:
     """Send one student message; collect the next message_complete frame.
-    Tokens, activities, and stream_resets are also collected for analysis."""
+ Tokens, activities, and stream_resets are also collected for analysis."""
     await ws.send(json.dumps({"type": "student_message", "content": text}))
     tokens: list[str] = []
     activities: list[dict] = []
@@ -292,7 +287,6 @@ async def send_turn(ws, text: str, turn_timeout_s: float = 90.0) -> dict:
         "activities": activities,
         "stream_resets": stream_resets,
     }
-
 
 # --- Assertions -----------------------------------------------------------
 
@@ -351,13 +345,11 @@ def evaluate_expectations(turn_idx: int, expect: dict, frame: dict,
 
     return failures
 
-
 def _ngram_overlap(a: str, b: str, n: int = 4) -> int:
     def grams(s: str) -> set[str]:
         toks = re.findall(r"[a-z]+", s.lower())
         return {" ".join(toks[i : i + n]) for i in range(0, max(0, len(toks) - n + 1))}
     return len(grams(a) & grams(b))
-
 
 # --- Verbosity / metric helpers (RAGAS-/EULER-friendly) -----------------
 
@@ -391,7 +383,6 @@ def turn_metrics(student: str, tutor: str, latency_s: float,
         "currently_exploring": debug.get("currently_exploring"),
         "student_reached_answer": debug.get("student_reached_answer"),
     }
-
 
 # --- Sim runner ----------------------------------------------------------
 
@@ -495,7 +486,6 @@ async def run_sim(name: str, sim: dict, student_id: str, token: str,
         "failures": failures_all,
     }
 
-
 # --- Main ----------------------------------------------------------------
 
 async def main():
@@ -594,7 +584,7 @@ async def main():
     }
     (out_dir / "sweep.json").write_text(json.dumps(summary, indent=2))
 
-    # Findings markdown — POST_DEMO_FIXES.md-friendly
+    # Findings markdown —-friendly
     findings_md = render_findings(summary)
     (out_dir / "findings.md").write_text(findings_md)
 
@@ -605,7 +595,6 @@ async def main():
     print(f"[sweep] artifacts: {out_dir}")
     print("=" * 70)
     return 0
-
 
 def render_findings(summary: dict) -> str:
     out = []
@@ -629,7 +618,6 @@ def render_findings(summary: dict) -> str:
         out.append(f"- `{run['sim']}` → {run.get('wall_time_s', '?')}s "
                    f"({max(0, len(run.get('turns') or []) - 1)} turns)")
     return "\n".join(out)
-
 
 if __name__ == "__main__":
     sys.exit(asyncio.run(main()) or 0)

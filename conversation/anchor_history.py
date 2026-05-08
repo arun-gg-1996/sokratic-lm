@@ -1,22 +1,12 @@
 """
-conversation/anchor_history.py
-==============================
-Per F7 (POST_DEMO_FIXES.md): fetch prior locked_questions for
-(student_id × subsection_path) so the lock-anchor LLM can avoid
-re-asking the same question on repeat visits.
+Helper for fetching the locked questions a student has already worked
+through on a given subsection. The Dean uses the result to vary the
+anchor question on repeat visits instead of re-asking the same thing.
 
-Single public helper:
-    fetch_prior_locked_questions(student_id, subsection_path) -> list[str]
+  fetch_prior_locked_questions(student_id, subsection_path) -> list[str]
 
-Returns the most-recent-first list of distinct locked_questions the
-student has already worked through on this subsection. Empty list
-on first visit (or any error — never raises).
-
-The LLM-facing call site (dean._lock_anchors_call) decides what to do
-with the list:
-  * empty  → temperature=0, no avoid block (today's behavior)
-  * 1-3    → temperature=0.5 + AVOID block
-  * 4+     → reframe-with-different-lens fallback (still uses AVOID)
+Returns most-recent first. Empty list on first visit or on any error
+(this helper never raises).
 """
 
 from __future__ import annotations
@@ -28,36 +18,33 @@ from typing import Optional
 # is in the reframe fallback anyway.
 _MAX_PRIOR_QUESTIONS = 8
 
-
 def fetch_prior_locked_questions(
     student_id: str,
     subsection_path: str,
     *,
     store: Optional[object] = None,
 ) -> list[str]:
-    """Return distinct locked_questions for this student × subsection,
-    newest-first.
+    """Return distinct locked_questions for this student × subsection
+ newest-first.
 
-    Never raises. Returns [] on any error or when the inputs are
-    missing.
+ Never raises. Returns on any error or when the inputs are
+ missing.
 
-    Parameters
-    ----------
-    student_id : str
-        Required. Empty/None → return [].
-    subsection_path : str
-        Required. The canonical "Chapter X > Section > Subsection"
-        path. Empty/None → return [].
-    store : optional
-        Optional SQLiteStore instance for tests. Defaults to the
-        module-level singleton via fresh import.
+ Parameters
+student_id : str
+ Required. Empty/None → return .
+ subsection_path : str
+ Required. The canonical "Chapter X > Section > Subsection"
+ path. Empty/None → return .
+ store : optional
+ Optional SQLiteStore instance for tests. Defaults to the
+ module-level singleton via fresh import.
 
-    Returns
-    -------
-    list[str]
-        Distinct locked_questions, most-recent-first. Capped at
-        _MAX_PRIOR_QUESTIONS. Empty list if no prior history.
-    """
+ Returns
+list[str]
+ Distinct locked_questions, most-recent-first. Capped at
+ _MAX_PRIOR_QUESTIONS. Empty list if no prior history.
+"""
     sid = (student_id or "").strip()
     path = (subsection_path or "").strip()
     if not sid or not path:

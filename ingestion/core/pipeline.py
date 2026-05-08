@@ -1,6 +1,5 @@
 """
 ingestion/core/pipeline.py
---------------------------
 Orchestrator for the rebuilt ingestion pipeline (B.7).
 
 Wires the source-specific layer (sources/X/) and the reusable core stages
@@ -9,18 +8,18 @@ into a single CLI-driven flow. Stage-level resumability: each stage writes
 an intermediate JSONL artifact so a re-run can skip stages already done.
 
 Architecture seam between core and sources:
-  core/pipeline.py never imports a specific textbook's parse.py. It calls
-  `load_source(name)` which does a dynamic import of the matching module
-  in `ingestion/sources/<name>/`. Adding a new textbook in Phase C means
-  writing one source module — this orchestrator does not change.
+ core/pipeline.py never imports a specific textbook's parse.py. It calls
+ `load_source(name)` which does a dynamic import of the matching module
+ in `ingestion/sources/<name>/`. Adding a new textbook in Phase C means
+ writing one source module — this orchestrator does not change.
 
 Cache warmup:
-  Anthropic's prompt cache only activates after the first call writes the
-  cached prefix. With async concurrency, the first ~N parallel calls all
-  race the cache write. To avoid that, stage_dual_task does ONE serial
-  call as a warmup, waits for it to complete, then launches the rest in
-  parallel — every parallel call gets a cache_read hit. Saves ~$15-20 on
-  the full-corpus run.
+ Anthropic's prompt cache only activates after the first call writes the
+ cached prefix. With async concurrency, the first ~N parallel calls all
+ race the cache write. To avoid that, stage_dual_task does ONE serial
+ call as a warmup, waits for it to complete, then launches the rest in
+ parallel — every parallel call gets a cache_read hit. Saves ~$15-20 on
+ the full-corpus run.
 
 CLI is in ingestion/run.py (kept separate so import-time side effects do
 not pollute callers that just want to compose stages programmatically).
@@ -53,32 +52,30 @@ from ingestion.core.qdrant import (
     enrich_chunks_with_window_nav,
 )
 
-
 # ── Source module loading ────────────────────────────────────────────────────
 
 @dataclass
 class SourceModule:
     """A bundle of the textbook-specific callables and config.
 
-    Loaded dynamically by `load_source(name)`. Each source module exposes:
-      - parse_pdf(pdf_path, ...) -> raw section dicts (parse.py)
-      - to_chunk_schema(sections) -> chunker-ready seed records (extract.py)
-        Maps the source-specific section schema (e.g. OpenStax: chapter,
-        parent_section, level, ...) to the schema the core chunker expects
-        (chapter_title, section_title, subsection_title, chunk_id, page,
-        element_type, domain, source_section_id, source_level, page_end).
-        Without this bridge step, the chunker would crash on KeyError for
-        fields the source-specific parser doesn't emit by name.
-      - prompt_overrides (optional, may be empty stubs)
-      - config.yaml with source-level config
-    """
+ Loaded dynamically by `load_source(name)`. Each source module exposes:
+parse_pdf(pdf_path, ...) -> raw section dicts (parse.py)
+to_chunk_schema(sections) -> chunker-ready seed records (extract.py)
+ Maps the source-specific section schema (e.g. OpenStax: chapter
+ parent_section, level, ...) to the schema the core chunker expects
+ (chapter_title, section_title, subsection_title, chunk_id, page
+ element_type, domain, source_section_id, source_level, page_end).
+ Without this bridge step, the chunker would crash on KeyError for
+ fields the source-specific parser doesn't emit by name.
+prompt_overrides (optional, may be empty stubs)
+config.yaml with source-level config
+"""
     name: str
     parse_pdf: Callable[..., list[dict]]
     to_chunk_schema: Callable[[list[dict]], list[dict]]
     proposition_prompt_suffix: str = ""
     summary_prompt_suffix: str = ""
     config: dict[str, Any] = field(default_factory=dict)
-
 
 def load_source(name: str) -> SourceModule:
     """Dynamically import sources/<name>/ and bundle its surface."""
@@ -125,15 +122,14 @@ def load_source(name: str) -> SourceModule:
         config=config,
     )
 
-
 # ── Pipeline options ─────────────────────────────────────────────────────────
 
 @dataclass
 class PipelineOptions:
     """Knobs for one pipeline run.
 
-    Stages are: parse, chunk, enrich, dual_task, embed, bm25, upsert.
-    """
+ Stages are: parse, chunk, enrich, dual_task, embed, bm25, upsert.
+"""
     source_name: str = "openstax_anatomy"
     pdf_path: str = "data/raw/Anatomy_and_Physiology_2e_-_WEB_c9nD9QL.pdf"
     output_dir: str = "data/processed"
@@ -171,7 +167,6 @@ class PipelineOptions:
             return False
         return True
 
-
 @dataclass
 class StageResult:
     name: str
@@ -181,29 +176,24 @@ class StageResult:
     skipped: bool = False
     notes: list[str] = field(default_factory=list)
 
-
 # ── Artifact helpers ─────────────────────────────────────────────────────────
 
 def _artifact_path(opts: PipelineOptions, stem: str) -> Path:
     """Where stage output gets written."""
     return Path(opts.output_dir) / f"{stem}_{opts.source_name}.jsonl"
 
-
 def _bm25_path(opts: PipelineOptions) -> Path:
     return Path(opts.bm25_dir) / f"bm25_{opts.source_name}.pkl"
-
 
 def _read_jsonl(path: Path) -> list[dict]:
     with path.open() as f:
         return [json.loads(line) for line in f if line.strip()]
-
 
 def _write_jsonl(path: Path, rows: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
-
 
 # ── Cache warmup ─────────────────────────────────────────────────────────────
 
@@ -214,11 +204,11 @@ async def warmup_cache(
     cached_system: list[dict],
     tracker: CostTracker | None = None,
 ) -> dict | None:
-    """Run ONE serial dual-task call to populate Anthropic's prompt cache,
-    so subsequent parallel calls all hit cache_read.
+    """Run ONE serial dual-task call to populate Anthropic's prompt cache
+ so subsequent parallel calls all hit cache_read.
 
-    Returns the warmup call's usage dict (also recorded by tracker if given).
-    """
+ Returns the warmup call's usage dict (also recorded by tracker if given).
+"""
     if not chunks:
         return None
     from anthropic import AsyncAnthropic
@@ -247,7 +237,6 @@ async def warmup_cache(
             print(f"  [pipeline] WARN: warmup produced no cache_create — "
                   f"either cache is disabled for {model!r} or prompt is below 1024 tokens")
     return result.usage
-
 
 # ── Stages ───────────────────────────────────────────────────────────────────
 
@@ -279,14 +268,13 @@ def stage_parse(source: SourceModule, opts: PipelineOptions) -> StageResult:
                        elapsed_s=time.time() - t0,
                        notes=[f"{len(sections)} raw sections → {len(seeds)} chunker seeds"])
 
-
 def stage_chunk(
     source: SourceModule,
     opts: PipelineOptions,
     sections: list[dict] | None = None,
 ) -> StageResult:
     """Semantic-split sections into chunks; add overlap chunks; populate
-    chunk_type for downstream qdrant payload."""
+ chunk_type for downstream qdrant payload."""
     name = "chunk"
     out = _artifact_path(opts, "chunks")
 
@@ -327,7 +315,6 @@ def stage_chunk(
     return StageResult(name=name, artifact_path=out, count=len(chunks),
                        elapsed_s=time.time() - t0)
 
-
 def stage_enrich(
     opts: PipelineOptions,
     chunks: list[dict] | None = None,
@@ -360,7 +347,6 @@ def stage_enrich(
     return StageResult(name=name, artifact_path=out, count=len(chunks),
                        elapsed_s=time.time() - t0)
 
-
 async def stage_dual_task(
     source: SourceModule,
     opts: PipelineOptions,
@@ -368,8 +354,8 @@ async def stage_dual_task(
     tracker: CostTracker | None = None,
 ) -> StageResult:
     """Run the dual-task LLM pass: clean chunk text + extract propositions.
-    Writes propositions_<source>.jsonl and back-fills cleaned_text into
-    chunks_<source>.jsonl."""
+ Writes propositions_<source>.jsonl and back-fills cleaned_text into
+ chunks_<source>.jsonl."""
     name = "dual_task"
     chunks_out = _artifact_path(opts, "chunks")
     props_out = _artifact_path(opts, "propositions")
@@ -430,7 +416,7 @@ async def stage_dual_task(
 
         # Wrap tracker.record so it ALSO checks the cap after each accounting.
         # progress_callback only fires every print_every=20, which would let
-        # cost overshoot by ~20 calls; checking on every record() is tighter.
+        # cost overshoot by ~20 calls; checking on every record is tighter.
         original_record = tracker.record
         def _record_with_cap(usage: dict) -> float:
             cost = original_record(usage)
@@ -494,7 +480,6 @@ async def stage_dual_task(
     return StageResult(name=name, artifact_path=props_out, count=len(propositions),
                        elapsed_s=elapsed, notes=notes)
 
-
 def stage_embed_and_bm25(
     opts: PipelineOptions,
     propositions: list[dict] | None = None,
@@ -541,7 +526,6 @@ def stage_embed_and_bm25(
     return StageResult(name=name, artifact_path=bm25_path, count=len(propositions),
                        elapsed_s=time.time() - t0,
                        notes=[f"bm25 -> {bm25_path}"])
-
 
 def stage_upsert(
     opts: PipelineOptions,
@@ -641,7 +625,6 @@ def stage_upsert(
                f"embed_cost=${embed_tracker.total_cost:.4f}"],
     )
 
-
 # ── Top-level orchestration ──────────────────────────────────────────────────
 
 async def run_pipeline(opts: PipelineOptions) -> list[StageResult]:
@@ -684,7 +667,6 @@ async def run_pipeline(opts: PipelineOptions) -> list[StageResult]:
         print(multi.summary())
 
     return results
-
 
 def _print_stage(r: StageResult) -> None:
     flag = "[skip]" if r.skipped else "[done]"

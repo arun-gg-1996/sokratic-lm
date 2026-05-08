@@ -1,23 +1,22 @@
 """
 scripts/validate_topic_index.py
---------------------------------
 Post-process `data/topic_index.json` by running real retrieval against every
 TOC entry and stamping a `teachable` flag. A card shown to the student is a
 promise we can teach — `teachable=False` entries are removed from the card
 sampler so we don't surface dead-ends mid-session.
 
 Validation rule (mirrors `conversation.dean._coverage_gate`):
-  1. Retrieve with hard section/subsection filter (as run_turn does at lock).
-  2. Retrieval must return at least one chunk.
-  3. Top chunk score must be >= cfg.retrieval.ood_cosine_threshold.
+ 1. Retrieve with hard section/subsection filter (as run_turn does at lock).
+ 2. Retrieval must return at least one chunk.
+ 3. Top chunk score must be >= cfg.retrieval.ood_cosine_threshold.
 
 Query used for each entry: the most specific label (subsection → section →
 chapter). This matches the query `_build_retrieval_query` produces when a
 student types that exact label.
 
 Run:
-    .venv/bin/python -m scripts.validate_topic_index
-    .venv/bin/python -m scripts.validate_topic_index --limit 10   # dry smoke test
+ .venv/bin/python -m scripts.validate_topic_index
+ .venv/bin/python -m scripts.validate_topic_index --limit 10 # dry smoke test
 
 The script updates `data/topic_index.json` in place, adding/refreshing the
 `teachable` field on every entry.
@@ -42,14 +41,12 @@ from retrieval.retriever import ChunkRetriever  # noqa: E402
 
 OUT_PATH = ROOT / "data" / "topic_index.json"
 
-
 def _label_for(entry: dict) -> str:
     return (
         (entry.get("subsection") or "").strip()
         or (entry.get("section") or "").strip()
         or (entry.get("chapter") or "").strip()
     )
-
 
 def _is_teachable(chunks: list[dict], threshold: float) -> bool:
     if not chunks:
@@ -58,7 +55,6 @@ def _is_teachable(chunks: list[dict], threshold: float) -> bool:
     if isinstance(top_score, (int, float)) and float(top_score) < threshold:
         return False
     return True
-
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -116,7 +112,6 @@ def main() -> None:
         f"  rejected:   {total - teachable_count}\n"
         f"  threshold:  CE score >= {threshold}"
     )
-
 
 if __name__ == "__main__":
     main()

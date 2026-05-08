@@ -1,15 +1,14 @@
 """
 evaluation/generate_rag_qa_edge_cases.py
-----------------------------------------
 Generate 50 edge-case Q&A pairs for retrieval stress testing:
-  1) Rare topics (10)
-  2) Cross-chapter dependencies (10)
-  3) Informal language queries (10)
-  4) Clinical OT scenarios (10)
-  5) Single-occurrence terms (10)
+ 1) Rare topics (10)
+ 2) Cross-chapter dependencies (10)
+ 3) Informal language queries (10)
+ 4) Clinical OT scenarios (10)
+ 5) Single-occurrence terms (10)
 
 Output:
-  data/eval/rag_qa_edge_cases.jsonl
+ data/eval/rag_qa_edge_cases.jsonl
 """
 
 from __future__ import annotations
@@ -24,7 +23,6 @@ from config import cfg
 
 SEED = 42
 OUT_PATH = Path("data/eval/rag_qa_edge_cases.jsonl")
-
 
 def load_base_chunks(path: str) -> list[dict]:
     chunks = []
@@ -44,7 +42,6 @@ def load_base_chunks(path: str) -> list[dict]:
             chunks.append(c)
     return chunks
 
-
 def split_sentences(text: str) -> list[str]:
     text = re.sub(r"\s+", " ", (text or "").strip())
     if not text:
@@ -52,10 +49,8 @@ def split_sentences(text: str) -> list[str]:
     parts = re.split(r"(?<=[.!?])\s+", text)
     return [p.strip() for p in parts if len(p.strip()) >= 30]
 
-
 def clean_sentence(s: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
-
 
 def pick_answer_sentence(chunk_text: str, terms: list[str]) -> str | None:
     sentences = split_sentences(chunk_text)
@@ -74,13 +69,11 @@ def pick_answer_sentence(chunk_text: str, terms: list[str]) -> str | None:
             return clean_sentence(s)
     return clean_sentence(sentences[0])
 
-
 def chunk_matches(chunk: dict, terms: list[str], chapter: int | None = None) -> bool:
     if chapter is not None and int(chunk.get("chapter_num", 0)) != chapter:
         return False
     text = chunk.get("text", "").lower()
     return any(t.lower() in text for t in terms)
-
 
 def choose_chunk(chunks: list[dict], terms: list[str], chapter: int | None = None) -> dict:
     matches = [c for c in chunks if chunk_matches(c, terms, chapter)]
@@ -95,7 +88,6 @@ def choose_chunk(chunks: list[dict], terms: list[str], chapter: int | None = Non
     # prefer medium-sized chunks (better sentence quality)
     matches.sort(key=lambda c: abs(len(c.get("text", "")) - 550))
     return matches[0]
-
 
 def make_record(
     *,
@@ -119,7 +111,6 @@ def make_record(
     if extra:
         rec.update(extra)
     return rec
-
 
 def generate_rare_topics(chunks: list[dict]) -> list[dict]:
     anatomy_terms = [
@@ -177,7 +168,6 @@ def generate_rare_topics(chunks: list[dict]) -> list[dict]:
     if len(out) != 10:
         raise RuntimeError(f"Rare topics generation produced {len(out)} records, expected 10.")
     return out
-
 
 def generate_cross_chapter(chunks: list[dict]) -> list[dict]:
     spec = [
@@ -263,7 +253,6 @@ def generate_cross_chapter(chunks: list[dict]) -> list[dict]:
         )
     return out
 
-
 def generate_informal(chunks: list[dict]) -> list[dict]:
     spec = [
         ("that bump on your shoulder where the muscle attaches", ["deltoid tuberosity", "humerus"]),
@@ -293,7 +282,6 @@ def generate_informal(chunks: list[dict]) -> list[dict]:
             )
         )
     return out
-
 
 def generate_clinical_ot(chunks: list[dict]) -> list[dict]:
     spec = [
@@ -353,7 +341,6 @@ def generate_clinical_ot(chunks: list[dict]) -> list[dict]:
             )
         )
     return out
-
 
 def generate_single_occurrence(chunks: list[dict]) -> list[dict]:
     specific_terms = [
@@ -431,7 +418,6 @@ def generate_single_occurrence(chunks: list[dict]) -> list[dict]:
         )
     return out
 
-
 def main() -> None:
     random.seed(SEED)
     chunks = load_base_chunks(cfg.domain_path("chunks"))
@@ -464,7 +450,6 @@ def main() -> None:
     counts = Counter(r["edge_case_category"] for r in records)
     print(f"Wrote {len(records)} edge-case records -> {OUT_PATH}")
     print(f"Category counts: {dict(counts)}")
-
 
 if __name__ == "__main__":
     main()

@@ -1,7 +1,7 @@
 """
 tests/test_teacher_v2.py
 ────────────────────────
-Tests for conversation/teacher_v2.py — single Teacher entry point per L49.
+Tests for conversation/teacher_v2.py — single Teacher entry point .
 
 Coverage:
   * build_teacher_prompt: every mode renders correctly with the right blocks
@@ -26,7 +26,6 @@ from conversation.teacher_v2 import (
 )
 from conversation.turn_plan import TurnPlan
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Fixtures
 # ─────────────────────────────────────────────────────────────────────────────
@@ -45,7 +44,6 @@ def _socratic_plan(**overrides) -> TurnPlan:
     base.update(overrides)
     return TurnPlan(**base)
 
-
 def _clinical_plan(**overrides) -> TurnPlan:
     base = dict(
         scenario="clinical phase ready",
@@ -58,7 +56,6 @@ def _clinical_plan(**overrides) -> TurnPlan:
     )
     base.update(overrides)
     return TurnPlan(**base)
-
 
 def _inputs(**overrides) -> TeacherPromptInputs:
     base = dict(
@@ -83,16 +80,13 @@ def _inputs(**overrides) -> TeacherPromptInputs:
     base.update(overrides)
     return TeacherPromptInputs(**base)
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Mock Anthropic client
 # ─────────────────────────────────────────────────────────────────────────────
 
-
 @dataclass
 class _MockContent:
     text: str
-
 
 @dataclass
 class _MockUsage:
@@ -100,12 +94,10 @@ class _MockUsage:
     output_tokens: int = 60
     cache_read_input_tokens: int = 0
 
-
 @dataclass
 class _MockResponse:
     content: list
     usage: _MockUsage
-
 
 class MockClient:
     def __init__(self, response_text: str = "What kind of cells initiate the heartbeat?",
@@ -127,11 +119,9 @@ class MockClient:
             usage=_MockUsage(),
         )
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # build_teacher_prompt — pure function, every mode
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_socratic_prompt_includes_all_required_blocks():
     p = build_teacher_prompt(_socratic_plan(), _inputs())
@@ -156,7 +146,6 @@ def test_socratic_prompt_includes_all_required_blocks():
     # Output instruction at end
     assert p.rstrip().endswith("explanations.")
 
-
 def test_socratic_prompt_omits_blocks_when_fields_empty():
     """Note: the mode instructions themselves mention "FORBIDDEN TERMS"
     in prose ("Do NOT reveal the FORBIDDEN TERMS"). The block-specific
@@ -176,7 +165,6 @@ def test_socratic_prompt_omits_blocks_when_fields_empty():
     assert "RETRIEVED CHUNKS (ground every claim" not in p
     assert "CONVERSATION HISTORY (most recent last)" not in p
 
-
 def test_clinical_prompt_includes_scenario_and_target():
     p = build_teacher_prompt(_clinical_plan(), _inputs())
     assert "CLINICAL SCENARIO" in p
@@ -184,7 +172,6 @@ def test_clinical_prompt_includes_scenario_and_target():
     assert "CLINICAL TARGET" in p
     assert "SA node dysfunction" in p
     assert "TONE: neutral" in p
-
 
 def test_clinical_prompt_omits_clinical_block_when_fields_empty():
     """Same as the socratic test — instructions reference CLINICAL
@@ -198,9 +185,8 @@ def test_clinical_prompt_omits_clinical_block_when_fields_empty():
     # Block-specific suffix only present when block is rendered
     assert "CLINICAL TARGET (do not reveal — this is what student must reach)" not in p
 
-
 def test_rapport_prompt_uses_time_of_day():
-    """F8/full-sweep (POST_DEMO_FIXES.md, 2026-05-06): the universal
+    """F8/full-sweep: the universal
     `_PROMPT_PREAMBLE` instructional text mentions "CONVERSATION HISTORY"
     in a natural-language note ("...visible in CONVERSATION HISTORY..."),
     so the literal string appears in every mode's prompt. The structural
@@ -213,7 +199,6 @@ def test_rapport_prompt_uses_time_of_day():
     assert "RETRIEVED CHUNKS (ground every claim" not in p  # rapport doesn't use chunks
     assert "CONVERSATION HISTORY (most recent last)" not in p  # nor history
 
-
 def test_opt_in_prompt_short_and_no_chunks():
     """F8/full-sweep: same pattern — assert SECTION HEADER absence, not
     just any occurrence of the string."""
@@ -224,7 +209,6 @@ def test_opt_in_prompt_short_and_no_chunks():
     assert "CONVERSATION HISTORY (most recent last)" not in p
     # Opt-in still surfaces the locked subsection so question is anchored
     assert "LOCKED SUBSECTION" in p
-
 
 def test_redirect_prompt_omits_chunks_includes_hint():
     plan = TurnPlan(
@@ -238,13 +222,11 @@ def test_redirect_prompt_omits_chunks_includes_hint():
     assert "FORBIDDEN TERMS" in p
     assert "RETRIEVED CHUNKS" not in p
 
-
 def test_nudge_prompt_off_domain():
     plan = TurnPlan(scenario="off topic", hint_text="", mode="nudge", tone="firm")
     p = build_teacher_prompt(plan, _inputs())
     assert "OFF-DOMAIN" in p
     assert "TONE: firm" in p
-
 
 def test_confirm_end_prompt_yes_no():
     plan = TurnPlan(scenario="deflect", hint_text="", mode="confirm_end", tone="neutral")
@@ -252,7 +234,6 @@ def test_confirm_end_prompt_yes_no():
     assert "wrap up" in p
     assert "yes/no question" in p
     assert "LOCKED SUBSECTION" in p
-
 
 def test_honest_close_prompt_no_question():
     plan = TurnPlan(scenario="ended off domain", hint_text="", mode="honest_close",
@@ -265,7 +246,6 @@ def test_honest_close_prompt_no_question():
     # never gets reused for the success path again
     assert "did NOT reach" in p
     assert "Do NOT congratulate" in p
-
 
 def test_reach_close_prompt_celebrates_reach():
     """B2 fix: reach_close is the success-path close — must explicitly
@@ -285,7 +265,6 @@ def test_reach_close_prompt_celebrates_reach():
     assert "didn't fully engage" not in p
     assert "didn't engage" not in p
 
-
 def test_clinical_natural_close_prompt_acknowledges_engagement():
     """B2 fix: clinical_natural_close is for clinical-phase turn-cap;
     student DID engage.
@@ -303,7 +282,6 @@ def test_clinical_natural_close_prompt_acknowledges_engagement():
     # top-line framing.
     assert "Do NOT say they" in p
 
-
 def test_unknown_mode_raises():
     """Constructing a TurnPlan with bad mode is rejected at TurnPlan
     validation time. But guard the prompt builder too in case enum changes."""
@@ -312,11 +290,9 @@ def test_unknown_mode_raises():
     with pytest.raises(ValueError, match="Unknown TurnPlan mode"):
         build_teacher_prompt(plan, _inputs())
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # TeacherV2.draft — happy path + diagnostics
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_draft_happy_path_returns_text_and_diagnostics():
     client = MockClient(response_text="What kind of cells start the heartbeat?")
@@ -330,9 +306,8 @@ def test_draft_happy_path_returns_text_and_diagnostics():
     assert out.output_tokens == 60
     assert out.error is None
 
-
 def test_draft_passes_prompt_to_client():
-    """F8/full-sweep (POST_DEMO_FIXES.md, 2026-05-06): post-cache-block
+    """F8/full-sweep: post-cache-block
     refactor, the message content is a list of cached blocks (each a
     dict with `text` + `cache_control`) instead of a single string.
     Assert against the joined text payload.
@@ -351,7 +326,6 @@ def test_draft_passes_prompt_to_client():
     assert "FORBIDDEN TERMS" in sent_text
     assert "Socratic anatomy tutor" in sent_text
 
-
 def test_draft_handles_llm_exception_gracefully():
     client = MockClient(raise_exc=ConnectionError("Bedrock 503"))
     teacher = TeacherV2(client, model="sonnet")
@@ -360,11 +334,9 @@ def test_draft_handles_llm_exception_gracefully():
     assert "ConnectionError" in out.error
     assert out.mode == "socratic"
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Retry feedback loop (L62 — preview, full retry orchestration in Track 4.6)
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_draft_appends_prior_attempts_to_prompt():
     client = MockClient()
@@ -391,7 +363,6 @@ def test_draft_appends_prior_attempts_to_prompt():
     assert "Attempt 1: What's the SA node?" in sent_text
     assert "leaked SA node" in sent_text
 
-
 def test_draft_no_prior_attempts_no_addendum():
     client = MockClient()
     teacher = TeacherV2(client, model="sonnet")
@@ -399,18 +370,15 @@ def test_draft_no_prior_attempts_no_addendum():
     sent = client.last_messages[0]["content"]
     assert "PRIOR ATTEMPTS" not in sent
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Tone orthogonality — Codex round-2 fix #3
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 @pytest.mark.parametrize("tone", ["encouraging", "firm", "neutral", "honest"])
 def test_each_tone_renders_in_prompt(tone):
     plan = TurnPlan(scenario="x", hint_text="y", mode="socratic", tone=tone)
     p = build_teacher_prompt(plan, _inputs())
     assert f"TONE: {tone}" in p
-
 
 @pytest.mark.parametrize("mode", ["socratic", "clinical", "rapport", "opt_in",
                                     "redirect", "nudge", "confirm_end", "honest_close"])

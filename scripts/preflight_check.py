@@ -1,43 +1,39 @@
 """
 scripts/preflight_check.py
----------------------------
 Verify that the runtime environment is *prepared to pull data* before
 the bootstrap script touches any remote artifact.
 
 This is the FIRST gate in the deploy sequence:
 
-    preflight  →  bootstrap_corpus  →  postflight  →  start backend
+ preflight → bootstrap_corpus → postflight → start backend
 
 Failing preflight is cheap — it short-circuits before any HuggingFace
 download, before any qdrant restore, before npm install runs.
 
 Checks performed
-----------------
-  * System binaries: python (>=3.11), pip, node, npm, docker, curl
-  * docker daemon running and reachable
-  * data/MANIFEST.json present and parseable (lists every artifact
-    the corpus expects)
-  * .env present at repo root with the required keys (only key NAMES
-    are checked — values are never read, only their non-empty length)
-  * Disk free space >= 5 GiB (chunks + bm25 + qdrant snapshot +
-    scispacy UMLS easily total 4 GiB; 5 GiB minimum buffer)
-  * Outbound network reachability:
-      - https://huggingface.co (HF artifact host)
-      - https://api.anthropic.com (LLM provider)
-      - https://api.openai.com (embeddings + assist LLM)
-  * Optional: qdrant http port reachable if container already started
+* System binaries: python (>=3.11), pip, node, npm, docker, curl
+ * docker daemon running and reachable
+ * data/MANIFEST.json present and parseable (lists every artifact
+ the corpus expects)
+ * .env present at repo root with the required keys (only key NAMES
+ are checked — values are never read, only their non-empty length)
+ * Disk free space >= 5 GiB (chunks + bm25 + qdrant snapshot +
+ scispacy UMLS easily total 4 GiB; 5 GiB minimum buffer)
+ * Outbound network reachability:
+https://huggingface.co (HF artifact host)
+https://api.anthropic.com (LLM provider)
+https://api.openai.com (embeddings + assist LLM)
+ * Optional: qdrant http port reachable if container already started
 
 Exit codes
-----------
-  0 — all required checks passed (warnings allowed)
-  1 — one or more required checks failed; do NOT proceed
-  2 — invocation error (bad CLI / unreadable repo)
+0 — all required checks passed (warnings allowed)
+ 1 — one or more required checks failed; do NOT proceed
+ 2 — invocation error (bad CLI / unreadable repo)
 
 Usage
------
-  .venv/bin/python scripts/preflight_check.py
-  .venv/bin/python scripts/preflight_check.py --json   # machine-readable
-  .venv/bin/python scripts/preflight_check.py --strict # fail on warnings too
+.venv/bin/python scripts/preflight_check.py
+ .venv/bin/python scripts/preflight_check.py --json # machine-readable
+ .venv/bin/python scripts/preflight_check.py --strict # fail on warnings too
 
 Safe to run repeatedly. Writes nothing to disk.
 """
@@ -91,7 +87,6 @@ MIN_FREE_GIB = 5
 # 3.11-only syntax features.
 MIN_PYTHON = (3, 10)
 
-
 # ── Result accumulator ───────────────────────────────────────────────────
 
 class Result:
@@ -121,7 +116,6 @@ class Result:
             },
         }
 
-
 # ── Individual check helpers ─────────────────────────────────────────────
 
 def check_python_version(r: Result) -> None:
@@ -133,7 +127,6 @@ def check_python_version(r: Result) -> None:
             "python_version",
             f"need >={MIN_PYTHON[0]}.{MIN_PYTHON[1]}, got {v.major}.{v.minor}",
         )
-
 
 def check_binary(r: Result, name: str, *, required: bool = True,
                  version_arg: str = "--version") -> None:
@@ -152,7 +145,6 @@ def check_binary(r: Result, name: str, *, required: bool = True,
         r.ok(f"binary:{name}", f"{path}  {ver[:60]}")
     except Exception as e:
         r.warn(f"binary:{name}", f"present but failed to query: {e}")
-
 
 def check_docker_daemon(r: Result) -> None:
     if not shutil.which("docker"):
@@ -174,7 +166,6 @@ def check_docker_daemon(r: Result) -> None:
     except Exception as e:
         r.fail("docker_daemon", f"unreachable: {e}")
 
-
 def check_disk_space(r: Result) -> None:
     try:
         usage = shutil.disk_usage(str(ROOT))
@@ -189,13 +180,12 @@ def check_disk_space(r: Result) -> None:
     except Exception as e:
         r.warn("disk_space", f"could not stat: {e}")
 
-
 def _parse_env_keys(env_path: Path) -> dict[str, bool]:
     """Return {key: has_nonempty_value}.
 
-    Only the boolean is exposed — values are never returned to the
-    caller and never logged. Comments and blank lines are ignored.
-    """
+ Only the boolean is exposed — values are never returned to the
+ caller and never logged. Comments and blank lines are ignored.
+"""
     out: dict[str, bool] = {}
     pattern = re.compile(r"^\s*([A-Z][A-Z0-9_]*)\s*=(.*)$")
     for raw in env_path.read_text(encoding="utf-8", errors="replace").splitlines():
@@ -208,12 +198,11 @@ def _parse_env_keys(env_path: Path) -> dict[str, bool]:
         key = m.group(1)
         val = m.group(2).strip()
         # Strip optional quoting
-        if (val.startswith('"') and val.endswith('"')) or \
+        if (val.startswith('"') and val.endswith('"')) or\
            (val.startswith("'") and val.endswith("'")):
             val = val[1:-1].strip()
         out[key] = bool(val)
     return out
-
 
 def check_env_file(r: Result) -> None:
     env_path = ROOT / ".env"
@@ -248,7 +237,6 @@ def check_env_file(r: Result) -> None:
     # check the env_file lists this key as set (already done above).
     # The actual user list is parsed at runtime by backend/auth.py.
 
-
 def check_manifest(r: Result) -> None:
     manifest = ROOT / "data" / "MANIFEST.json"
     if not manifest.exists():
@@ -264,27 +252,24 @@ def check_manifest(r: Result) -> None:
     except Exception as e:
         r.fail("data_manifest", f"parse failed: {e}")
 
-
 def check_network(r: Result) -> None:
     for host, port in NETWORK_PROBES:
         try:
             with socket.create_connection((host, port), timeout=5):
                 r.ok(f"network:{host}", f"reachable :{port}")
         except Exception as e:
-            # Network is treated as required — without HF/LLM endpoints,
+            # Network is treated as required — without HF/LLM endpoints
             # the deploy can't pull data or serve traffic.
             r.fail(f"network:{host}", f"unreachable: {e}")
 
-
 def check_qdrant_optional(r: Result) -> None:
-    """If qdrant is already running locally, that's fine; if it isn't,
-    that's also fine — the bootstrap script starts it."""
+    """If qdrant is already running locally, that's fine; if it isn't
+ that's also fine — the bootstrap script starts it."""
     try:
         with socket.create_connection(("127.0.0.1", 6333), timeout=2):
             r.ok("qdrant_optional", "qdrant http port 6333 already open")
     except Exception:
         r.warn("qdrant_optional", "qdrant not running yet (bootstrap will start it)")
-
 
 def check_writable(r: Result) -> None:
     """Verify we can write to data/ and the project root."""
@@ -298,7 +283,6 @@ def check_writable(r: Result) -> None:
             r.ok(f"writable:{sub}", f"{p}")
         except Exception as e:
             r.fail(f"writable:{sub}", f"cannot write under {p}: {e}")
-
 
 # ── Reporting ────────────────────────────────────────────────────────────
 
@@ -317,7 +301,6 @@ def render_text(r: Result) -> str:
     )
     lines.append("=" * 72)
     return "\n".join(lines)
-
 
 def main() -> int:
     ap = argparse.ArgumentParser()
@@ -353,7 +336,6 @@ def main() -> int:
     if args.strict and r.warnings:
         return 1
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

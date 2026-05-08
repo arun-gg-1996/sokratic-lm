@@ -1,49 +1,45 @@
 """
 scripts/postflight_check.py
-----------------------------
 Verify that the pulled data + running services are *safe to serve from*
 before the systemd backend unit is started.
 
 This is the SECOND gate in the deploy sequence:
 
-    preflight  →  bootstrap_corpus  →  postflight  →  start backend
+ preflight → bootstrap_corpus → postflight → start backend
 
-Failing postflight means the pull was partial / corrupt / mis-versioned,
+Failing postflight means the pull was partial / corrupt / mis-versioned
 or qdrant doesn't have the embeddings, or the retriever can't actually
 retrieve. Starting uvicorn in any of those states produces a backend
 that crashes on the first user message — fail loudly and early instead.
 
 Checks performed
-----------------
-  * Manifest completeness:    every file in data/MANIFEST.json exists
-                              locally with the matching sha256.
-  * Topic index integrity:    data/topic_index.json parseable, has the
-                              minimum number of topics expected.
-  * BM25 index loadable:      pickle deserializes without error.
-  * Qdrant reachability:      http://127.0.0.1:6333 accepts requests.
-  * Qdrant collection:        sokratic_kb_chunks exists and has
-                              points_count >= MIN_POINTS_COUNT.
-  * Live retrieval probe:     ChunkRetriever().retrieve() on a known
-                              corpus subsection returns >= 1 chunk
-                              with non-empty text and a populated
-                              section_title / subsection_title.
-  * LLM connectivity:         single-token Anthropic + OpenAI calls
-                              succeed (skipped with --no-llm-probe to
-                              save a few cents in CI).
-  * Smoke harness:            scripts/smoke_post_demo_fixes.py passes.
+* Manifest completeness: every file in data/MANIFEST.json exists
+ locally with the matching sha256.
+ * Topic index integrity: data/topic_index.json parseable, has the
+ minimum number of topics expected.
+ * BM25 index loadable: pickle deserializes without error.
+ * Qdrant reachability: http://127.0.0.1:6333 accepts requests.
+ * Qdrant collection: sokratic_kb_chunks exists and has
+ points_count >= MIN_POINTS_COUNT.
+ * Live retrieval probe: ChunkRetriever.retrieve on a known
+ corpus subsection returns >= 1 chunk
+ with non-empty text and a populated
+ section_title / subsection_title.
+ * LLM connectivity: single-token Anthropic + OpenAI calls
+ succeed (skipped with --no-llm-probe to
+ save a few cents in CI).
+ * Smoke harness: scripts/smoke_post_demo_fixes.py passes.
 
 Exit codes
-----------
-  0 — safe to start the backend
-  1 — one or more required checks failed; do NOT start
-  2 — invocation error
+0 — safe to start the backend
+ 1 — one or more required checks failed; do NOT start
+ 2 — invocation error
 
 Usage
------
-  .venv/bin/python scripts/postflight_check.py
-  .venv/bin/python scripts/postflight_check.py --json
-  .venv/bin/python scripts/postflight_check.py --no-llm-probe
-  .venv/bin/python scripts/postflight_check.py --skip-smoke
+.venv/bin/python scripts/postflight_check.py
+ .venv/bin/python scripts/postflight_check.py --json
+ .venv/bin/python scripts/postflight_check.py --no-llm-probe
+ .venv/bin/python scripts/postflight_check.py --skip-smoke
 
 Run after `bootstrap_corpus.py` and `qdrant_up.sh`. Safe to re-run.
 """
@@ -72,7 +68,6 @@ RETRIEVAL_PROBES = [
     ("compact and spongy bone", "Compact and Spongy Bone"),
     ("directional terms", "Directional Terms"),
 ]
-
 
 # ── Result accumulator ───────────────────────────────────────────────────
 
@@ -103,7 +98,6 @@ class Result:
             },
         }
 
-
 # ── Individual check helpers ─────────────────────────────────────────────
 
 def _sha256(path: Path) -> str:
@@ -112,7 +106,6 @@ def _sha256(path: Path) -> str:
         for chunk in iter(lambda: fp.read(1 << 20), b""):
             h.update(chunk)
     return h.hexdigest()
-
 
 def check_manifest_files(r: Result) -> None:
     manifest = ROOT / "data" / "MANIFEST.json"
@@ -150,7 +143,6 @@ def check_manifest_files(r: Result) -> None:
     if n_ok == len(files):
         r.ok("manifest", f"all {n_ok} artifacts present + sha-correct")
 
-
 def check_topic_index(r: Result) -> None:
     p = ROOT / "data" / "topic_index.json"
     if not p.exists():
@@ -166,7 +158,6 @@ def check_topic_index(r: Result) -> None:
         r.fail("topic_index", f"only {n} topics — looks truncated")
     else:
         r.ok("topic_index", f"{n} topics loaded")
-
 
 def check_bm25_loadable(r: Result) -> None:
     p = ROOT / "data" / "indexes" / "bm25_chunks_openstax_anatomy.pkl"
@@ -184,14 +175,12 @@ def check_bm25_loadable(r: Result) -> None:
     except Exception as e:
         r.fail("bm25_pickle", f"unpickle failed: {e}")
 
-
 def check_qdrant_reachable(r: Result) -> None:
     try:
         with socket.create_connection((QDRANT_HOST, QDRANT_PORT), timeout=3):
             r.ok("qdrant_socket", f"{QDRANT_HOST}:{QDRANT_PORT} open")
     except Exception as e:
         r.fail("qdrant_socket", f"unreachable: {e}")
-
 
 def check_qdrant_collection(r: Result) -> None:
     """HTTP probe — avoid importing the qdrant client if not available."""
@@ -215,7 +204,6 @@ def check_qdrant_collection(r: Result) -> None:
             f"{QDRANT_COLLECTION}: only {points} points "
             f"(expected >= {MIN_POINTS_COUNT}; was the snapshot restored?)",
         )
-
 
 def check_retrieval_probe(r: Result) -> None:
     """Live retrieval — exercises the same path the runtime uses."""
@@ -249,7 +237,6 @@ def check_retrieval_probe(r: Result) -> None:
             r.ok(f"retrieve:{q!r}",
                  f"{len(chunks)} chunks, top subsection={top_sub!r}, "
                  f"text={len(text)} chars")
-
 
 def check_llm_probe(r: Result) -> None:
     """Single 1-token call to each LLM provider (cheap)."""
@@ -288,7 +275,6 @@ def check_llm_probe(r: Result) -> None:
     except Exception as e:
         r.fail("llm:openai", f"{type(e).__name__}: {str(e)[:120]}")
 
-
 def check_smoke_harness(r: Result) -> None:
     smoke = ROOT / "scripts" / "smoke_post_demo_fixes.py"
     if not smoke.exists():
@@ -308,7 +294,6 @@ def check_smoke_harness(r: Result) -> None:
     except Exception as e:
         r.fail("smoke", f"failed to run: {e}")
 
-
 # ── Reporting ────────────────────────────────────────────────────────────
 
 def render_text(r: Result) -> str:
@@ -326,7 +311,6 @@ def render_text(r: Result) -> str:
     )
     lines.append("=" * 72)
     return "\n".join(lines)
-
 
 def main() -> int:
     ap = argparse.ArgumentParser()
@@ -362,7 +346,6 @@ def main() -> int:
     if args.strict and r.warnings:
         return 1
     return 0
-
 
 if __name__ == "__main__":
     sys.exit(main())

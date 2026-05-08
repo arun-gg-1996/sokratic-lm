@@ -4,16 +4,15 @@ drop_disorders_callout_chunks_2026_05_01.py — finishes X2 cleanup.
 The previous fix (fix_corpus_metadata_2026_05_01.py) renamed the 6
 truncated 'Diseases of the…' / 'Disorders of the...' chunks to a
 placeholder 'Disorders of the Cardiovascular System'. But:
-
-- The textbook_structure.json has 46 'Disorders of the...' /
-  'Aging and the...' callout-box entries marked as junk patterns
-  (config/domains/ot.yaml:60-66 — `DISORDERS OF THE`, `AGING AND THE`
-  are explicit junk-pattern substrings).
-- These callout boxes are pedagogical sidebars in OpenStax (clinical
-  imbalances / age-related changes), not core teachable content.
-- Renaming our 6 chunks to a similar string still keeps them outside
-  the teachable surface AND clutters retrieval with non-teachable
-  content the topic-index can't reference.
+The textbook_structure.json has 46 'Disorders of the...' /
+ 'Aging and the...' callout-box entries marked as junk patterns
+ (config/domains/ot.yaml:60-66 — `DISORDERS OF THE`, `AGING AND THE`
+ are explicit junk-pattern substrings).
+These callout boxes are pedagogical sidebars in OpenStax (clinical
+ imbalances / age-related changes), not core teachable content.
+Renaming our 6 chunks to a similar string still keeps them outside
+ the teachable surface AND clutters retrieval with non-teachable
+ content the topic-index can't reference.
 
 Cleanest fix: drop them outright. Qdrant + JSONL.
 6 chunks affected, all with subsection_title 'Disorders of the
@@ -38,7 +37,7 @@ load_dotenv(ROOT / ".env", override=True)
 
 CHUNKS_PATH = ROOT / "data" / "processed" / "chunks_openstax_anatomy.jsonl"
 # Original target (X2 round): the 6 chunks renamed from "Diseases of the…"
-# Extended (Tier 1 #1.4 e2e bug A1.2): also drop callout chunks whose
+# Extended (Tier 1 #1.4 e2e bug .2): also drop callout chunks whose
 # subsection_title matches OpenStax's pedagogical-sidebar patterns. The
 # topic_index junk filter keeps these out of the teachable surface, but
 # they were still in JSONL+Qdrant and could be picked up by dean.py's
@@ -54,13 +53,11 @@ JUNK_SUBSECTION_PATTERNS = (
     "homeostatic imbalances",     # "Cancer Arises from Homeostatic Imbalances"
 )
 
-
 def _is_junk_subsection(sub: str) -> bool:
     if not sub:
         return False
     s = sub.lower()
     return any(p in s for p in JUNK_SUBSECTION_PATTERNS)
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -152,7 +149,6 @@ def main():
         print("nothing to drop (idempotent — already clean)")
 
     print(f"\n=== Done ===")
-
 
 if __name__ == "__main__":
     main()

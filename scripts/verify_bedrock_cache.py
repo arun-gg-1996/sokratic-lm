@@ -1,27 +1,27 @@
 """
 scripts/verify_bedrock_cache.py
 ================================
-BLOCK 0 — verify Bedrock honors multi-block cache_control before we
+verify Bedrock honors multi-block cache_control before we
 commit to a 4-tier prompt cache architecture.
 
 Tests three scenarios:
-  T1: Single cache_control block (current sokratic pattern)
-  T2: Two cache_control blocks (proposed REAL-Q7 minimum)
-  T3: Three cache_control blocks (proposed REAL-Q7 typical)
+ T1: Single cache_control block (current sokratic pattern)
+ T2: Two cache_control blocks (proposed minimum)
+ T3: Three cache_control blocks (proposed typical)
 
 Each test makes 2 sequential calls. Reports cache_read_input_tokens
 on call 2 to confirm cache actually hit.
 
 Run:
-    cd /Users/arun-ghontale/UB/NLP/sokratic
-    python scripts/verify_bedrock_cache.py
+ cd /Users/arun-ghontale/UB/NLP/sokratic
+ python scripts/verify_bedrock_cache.py
 
 Expected (if Bedrock supports multi-block):
-  T1: call 2 cache_read_input_tokens > 0 (single-block works today)
-  T2: call 2 cache_read_input_tokens > 0 (multi-block works)
-  T3: call 2 cache_read_input_tokens > 0 (full multi-block works)
+ T1: call 2 cache_read_input_tokens > 0 (single-block works today)
+ T2: call 2 cache_read_input_tokens > 0 (multi-block works)
+ T3: call 2 cache_read_input_tokens > 0 (full multi-block works)
 
-If T2 or T3 fail → fall back to single-block in BLOCK 3, structure
+If T2 or T3 fail → fall back to single-block in , structure
 prompt to maximize the static prefix.
 """
 from __future__ import annotations
@@ -47,7 +47,6 @@ STATIC_BLOCK_1 = f"BLOCK_1_STATIC: {PADDING}"
 STATIC_BLOCK_2 = f"BLOCK_2_STATIC: {PADDING}"
 STATIC_BLOCK_3 = f"BLOCK_3_STATIC: {PADDING}"
 
-
 def call(client, model: str, blocks: list[dict]) -> dict:
     """Make a Bedrock call with the given content blocks. Return usage."""
     resp = client.messages.create(
@@ -64,12 +63,11 @@ def call(client, model: str, blocks: list[dict]) -> dict:
         "cache_read_input_tokens": getattr(usage, "cache_read_input_tokens", 0) or 0,
     }
 
-
 def test_n_blocks(client, model: str, n_cache_blocks: int) -> dict:
     """Run a test with N cached blocks + 1 variable block.
 
-    Make 2 calls, return delta usage on call 2 (which should hit cache).
-    """
+ Make 2 calls, return delta usage on call 2 (which should hit cache).
+"""
     static_blocks = [STATIC_BLOCK_1, STATIC_BLOCK_2, STATIC_BLOCK_3][:n_cache_blocks]
     blocks_call_1: list[dict] = []
     for sb in static_blocks:
@@ -105,7 +103,6 @@ def test_n_blocks(client, model: str, n_cache_blocks: int) -> dict:
     print(f"  → SUCCESS: {success}")
     return {"n_blocks": n_cache_blocks, "success": success, "cache_read_call2": u2['cache_read_input_tokens']}
 
-
 def main():
     client = make_anthropic_client()
     # Use the Sonnet model the system uses for Teacher
@@ -129,7 +126,7 @@ def main():
         mark = "✓" if r.get("success") else "✗"
         print(f"  {mark} {r['n_blocks']}-block cache: cache_read={r.get('cache_read_call2', 'N/A')}")
 
-    # Decide BLOCK 3 strategy
+    # Decide strategy
     multi_works = all(r.get("success") for r in results if r["n_blocks"] >= 2)
     print()
     if multi_works:
@@ -138,7 +135,6 @@ def main():
     else:
         print("→ Bedrock does NOT support multi-block cache_control reliably.")
         print("→ BLOCK 3 strategy: single-block, maximize static prefix.")
-
 
 if __name__ == "__main__":
     main()

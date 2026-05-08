@@ -39,13 +39,48 @@ export function AccountPopover({ studentId }: { studentId: string | null }) {
     downloadJson(payload, `sokratic_${studentId}_${stamp}.json`);
   };
 
+  // Pull initials for the avatar bubble. Falls back to "?" for the
+  // logged-out / no-user state so the visual layout is stable.
+  const displayName = studentId ?? "Select user";
+  const initials = studentId
+    ? studentId.trim().slice(0, 2).toUpperCase()
+    : "?";
+
   return (
     <div ref={rootRef} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="w-full rounded-card border border-border bg-bg px-3 py-2 text-left hover:border-accent transition"
+        className="w-full rounded-card border border-border bg-bg px-3 py-2 text-left hover:border-accent transition flex items-center gap-2.5 group"
+        aria-haspopup="menu"
+        aria-expanded={open}
       >
-        {studentId ?? "Select user"}
+        <span
+          className="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-full bg-accent/15 text-accent text-xs font-semibold tracking-wide"
+          aria-hidden="true"
+        >
+          {initials}
+        </span>
+        <span className="flex-1 min-w-0">
+          <span className="block text-[10px] uppercase tracking-wider text-muted/70 leading-tight">
+            Signed in as
+          </span>
+          <span className="block text-sm font-medium truncate" title={displayName}>
+            {displayName}
+          </span>
+        </span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={1.5}
+          stroke="currentColor"
+          className={`w-4 h-4 shrink-0 text-muted/60 group-hover:text-accent transition-transform ${
+            open ? "rotate-180" : ""
+          }`}
+          aria-hidden="true"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+        </svg>
       </button>
 
       {open && (

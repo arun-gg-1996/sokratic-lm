@@ -6,12 +6,12 @@ Each classifier has ~30 hand-curated test cases (~half positive, half
 negative). Runs every case, computes precision / recall / latency
 percentiles, and writes a markdown report.
 
-Goal: confirm Haiku ≥95% precision and ≥95% recall on each category,
+Goal: confirm Haiku ≥95% precision and ≥95% recall on each category
 ≤800 ms p95 latency. If it hits those, we ship and replace the regex.
 
 Usage:
-    SOKRATIC_RETRIEVER=chunks .venv/bin/python scripts/validate_classifiers.py
-    SOKRATIC_RETRIEVER=chunks .venv/bin/python scripts/validate_classifiers.py --only hint_leak
+ SOKRATIC_RETRIEVER=chunks .venv/bin/python scripts/validate_classifiers.py
+ SOKRATIC_RETRIEVER=chunks .venv/bin/python scripts/validate_classifiers.py --only hint_leak
 """
 from __future__ import annotations
 
@@ -35,15 +35,13 @@ from conversation.verifier_quartet import (  # noqa: E402
 )
 from conversation.preflight_classifier import haiku_off_domain_check  # noqa: E402
 
-
 # ─────────────────────────────────────────────────────────────────────
-#                       TEST CASES
+# TEST CASES
 # Format: (label, input_args, expected_verdict)
 # label is a short human-readable id for the case.
 # input_args is a dict matching the classifier's signature.
 # expected_verdict is the canonical answer ("leak" / "clean" / etc.).
 # ─────────────────────────────────────────────────────────────────────
-
 
 # Hint-3 leak detector: 18 leaks + 12 cleans
 HINT_LEAK_CASES: list[tuple[str, dict, str]] = [
@@ -143,7 +141,6 @@ HINT_LEAK_CASES: list[tuple[str, dict, str]] = [
       "locked_answer": "SA node", "aliases": ["sinoatrial node"]}, "clean"),
 ]
 
-
 # Sycophancy detector: 15 sycophantic + 12 cleans
 SYCOPHANCY_CASES: list[tuple[str, dict, str]] = [
     # ─── POSITIVES — sycophantic ───
@@ -232,7 +229,6 @@ SYCOPHANCY_CASES: list[tuple[str, dict, str]] = [
       "student_state": "incorrect", "reach_fired": False}, "clean"),
 ]
 
-
 # Off-domain detector: 15 off-domain + 12 cleans
 OFF_DOMAIN_CASES: list[tuple[str, dict, str]] = [
     # ─── POSITIVES — off_domain ───
@@ -294,11 +290,9 @@ OFF_DOMAIN_CASES: list[tuple[str, dict, str]] = [
      {"student_msg": "What changes happen to the uterus during pregnancy?"}, "clean"),
 ]
 
-
 # ─────────────────────────────────────────────────────────────────────
-#                       RUNNER
+# RUNNER
 # ─────────────────────────────────────────────────────────────────────
-
 
 @dataclass
 class CaseResult:
@@ -313,7 +307,6 @@ class CaseResult:
     @property
     def correct(self) -> bool:
         return self.expected == self.got
-
 
 def _run_classifier(name: str, fn, cases: list, dynamic_args: list[str]) -> dict:
     """Run a classifier across its test cases. Returns aggregate stats."""
@@ -361,7 +354,6 @@ def _run_classifier(name: str, fn, cases: list, dynamic_args: list[str]) -> dict
         "results": results,
     }
 
-
 def _render_report(suites: list[dict], out: Path, started: str) -> None:
     lines: list[str] = [f"# Haiku classifier validation — {started}", ""]
     for s in suites:
@@ -393,7 +385,6 @@ def _render_report(suites: list[dict], out: Path, started: str) -> None:
         lines.append("---")
         lines.append("")
     out.write_text("\n".join(lines))
-
 
 def main(args) -> int:
     started = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%S")
@@ -436,7 +427,6 @@ def main(args) -> int:
     print(f"\nReport: {out_md}")
     print(f"Per-classifier raw JSONs: {out_dir}")
     return 0
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

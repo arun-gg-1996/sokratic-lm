@@ -3,28 +3,28 @@ scripts/compare_topic_resolvers.py
 ──────────────────────────────────
 Side-by-side comparison of the legacy 3-stage topic resolver
 (retrieval/topic_matcher.TopicMatcher.match — RapidFuzz-driven) and the
-new L9 single-Haiku-call resolver (retrieval/topic_mapper_llm.map_topic).
+new single-Haiku-call resolver (retrieval/topic_mapper_llm.map_topic).
 
 Goal: produce evidence to justify (or block) the dean.py wire-over in
-track 2.3. The deciding question is "does L9 agree with the legacy
+. The deciding question is "does agree with the legacy
 resolver on the cases it's tuned for, AND handle the cases where the
 legacy resolver fails?"
 
 Reports for each query:
-  * legacy: tier + top match path + score
-  * L9:     verdict + top match path + confidence + route_decision
-  * agreement: same path / different path / one is empty
+ * legacy: tier + top match path + score
+ * : verdict + top match path + confidence + route_decision
+ * agreement: same path / different path / one is empty
 
 Usage:
-  .venv/bin/python scripts/compare_topic_resolvers.py [--queries-file FILE.txt]
-                                                       [--save report.json]
+ .venv/bin/python scripts/compare_topic_resolvers.py [--queries-file FILE.txt]
+ [--save report.json]
 
 Default fixture set covers:
-  * exact-match queries the legacy resolver should ace
-  * abbreviations the legacy can't expand without aliases
-  * vague queries that should surface multiple options
-  * off-topic queries that should refuse
-  * paraphrased questions where rank-vote tends to drift
+ * exact-match queries the legacy resolver should ace
+ * abbreviations the legacy can't expand without aliases
+ * vague queries that should surface multiple options
+ * off-topic queries that should refuse
+ * paraphrased questions where rank-vote tends to drift
 
 Costs ~$0.10 + 6 cached calls × ~$0.04 = ~$0.30 for the default run.
 """
@@ -54,11 +54,11 @@ DEFAULT_QUERIES = [
     "rotator cuff",
     "what is glycolysis",
     "ATP and muscle contraction",
-    # Abbreviations (legacy needs aliases; L9 should generalize)
+    # Abbreviations (legacy needs aliases; should generalize)
     "ADH",
     "CN VII",
     "GFR",
-    # Vague single-word (legacy fuzzy gives noise; L9 should refuse / borderline)
+    # Vague single-word (legacy fuzzy gives noise; should refuse / borderline)
     "muscle",
     "joints",
     "brain",
@@ -73,13 +73,11 @@ DEFAULT_QUERIES = [
     "vaping policy",
 ]
 
-
 def normalize_legacy_path_to_canonical(legacy_path: str) -> str:
     """'Ch20|Section|Subsection' → 'Full Title > Section > Subsection' for
-    side-by-side comparison with L9 output."""
+ side-by-side comparison with output."""
     from memory.sqlite_store import normalize_subsection_path
     return normalize_subsection_path(legacy_path)
-
 
 def run_legacy(query: str) -> dict:
     matcher = get_topic_matcher()
@@ -98,7 +96,6 @@ def run_legacy(query: str) -> dict:
         "top_score": float(top.score) if top else 0.0,
         "elapsed_ms": elapsed_ms,
     }
-
 
 def run_l9(query: str, *, client, model, use_compact_toc: bool = False) -> dict:
     t0 = time.time()
@@ -120,7 +117,6 @@ def run_l9(query: str, *, client, model, use_compact_toc: bool = False) -> dict:
         "tokens_out": r.output_tokens,
     }
 
-
 def classify_agreement(legacy: dict, l9: dict) -> str:
     """Categorize the comparison: same / different / both refused / disagree on refuse."""
     legacy_path = legacy.get("top_path", "")
@@ -140,7 +136,6 @@ def classify_agreement(legacy: dict, l9: dict) -> str:
     if legacy_path == l9_path and legacy_path:
         return "agree_same_path"
     return "disagree_different_paths"
-
 
 def main():
     ap = argparse.ArgumentParser()
@@ -229,7 +224,6 @@ def main():
             "cost_estimate": cost,
         }, indent=2))
         print(f"\nFull report saved to {args.save}", flush=True)
-
 
 if __name__ == "__main__":
     main()

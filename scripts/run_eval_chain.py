@@ -9,7 +9,7 @@ in parallel from the shell, each gets its own ChunkRetriever +
 in-process state. No shared CrossEncoder, no thread-safety surprise.
 
 Usage:
-  .venv/bin/python scripts/run_eval_chain.py <student_id>
+ .venv/bin/python scripts/run_eval_chain.py <student_id>
 
 Outputs to data/artifacts/eval_run_18/<student_id>_session{N}.json
 (same paths as run_eval_18_convos.py so the existing scorer/aggregator
@@ -30,7 +30,6 @@ sys.path.insert(0, str(REPO))
 
 from dotenv import load_dotenv
 load_dotenv(REPO / ".env", override=True)
-
 
 async def main(student_id: str) -> int:
     from config import cfg                                    # noqa: E402
@@ -93,7 +92,6 @@ async def main(student_id: str) -> int:
 
     print(f"[chain] {student_id} chain complete", flush=True)
     return 0
-
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

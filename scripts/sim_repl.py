@@ -3,9 +3,9 @@ Interactive sim driver. Polls /tmp/sim_in.txt for commands, writes tutor
 reply + diagnostics to /tmp/sim_out.txt. Graph + retriever stay warm.
 
 Commands (one per /tmp/sim_in.txt write):
-  NEW                  -> fresh session, runs rapport, returns tutor msg
-  MSG <text>           -> append student msg, invoke graph, return tutor msg
-  EXIT                 -> stop driver
+ NEW -> fresh session, runs rapport, returns tutor msg
+ MSG <text> -> append student msg, invoke graph, return tutor msg
+ EXIT -> stop driver
 """
 import json
 import sys
@@ -37,13 +37,11 @@ READY.write_text("ready")
 
 session = {"state": None, "thread_cfg": None}
 
-
 def _last_tutor(state):
     for m in reversed(state.get("messages", [])):
         if m.get("role") == "tutor":
             return m.get("content", "")
     return ""
-
 
 def _diag(state):
     return {
@@ -62,7 +60,6 @@ def _diag(state):
         "locked_topic": state.get("locked_topic"),
     }
 
-
 def _write_out(tutor_msg, state, extra=None):
     payload = {
         "tutor": tutor_msg,
@@ -71,7 +68,6 @@ def _write_out(tutor_msg, state, extra=None):
     if extra:
         payload.update(extra)
     OUT.write_text(json.dumps(payload, indent=2, default=str))
-
 
 def handle(cmd: str) -> bool:
     cmd = cmd.strip()
@@ -115,7 +111,6 @@ def handle(cmd: str) -> bool:
         return True
     _write_out(f"ERR: unknown command: {cmd}", session["state"] or {})
     return True
-
 
 IN.write_text("")
 OUT.write_text("")

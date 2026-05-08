@@ -9,8 +9,7 @@ Coverage:
   * dean_node_v2 routes unlocked-topic turns through topic_lock_v2
   * dean_node_v2 whitespace-input guard (no LLM call on empty messages)
   * Pre-flight FIRES → Dean SKIPPED, Teacher renders redirect, counters
-    update, hint_level forced advance at strike 4 per L55
-  * Pre-flight FIRES with should_end_session → phase transitions to
+    update, hint_level forced advance at strike 4 * Pre-flight FIRES with should_end_session → phase transitions to
     memory_update + last message tagged is_closing
   * Pre-flight passes → Dean.plan + retry orchestrator run; final text
     appended; turn_count increments
@@ -27,22 +26,13 @@ from conversation import nodes_v2 as N
 from conversation.preflight import PreflightResult
 from conversation.turn_plan import TurnPlan
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Feature flag
 # ─────────────────────────────────────────────────────────────────────────────
 
-
-
-
-
-
-
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def _state(**overrides):
     base = {
@@ -71,11 +61,9 @@ def _state(**overrides):
     base.update(overrides)
     return base
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Topic-not-locked → v2 topic lock
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_dean_node_v2_routes_to_topic_lock_v2_when_topic_unlocked():
     """When state.locked_topic is empty/missing, use Track 4.7d v2 lock flow."""
@@ -88,11 +76,9 @@ def test_dean_node_v2_routes_to_topic_lock_v2_when_topic_unlocked():
         mock_lock.assert_called_once()
         assert result["messages"] == ["topic_lock_v2"]
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Whitespace input guard
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_dean_node_v2_whitespace_guard_skips_llm():
     """Empty/whitespace-only student messages get a templated nudge —
@@ -111,11 +97,9 @@ def test_dean_node_v2_whitespace_guard_skips_llm():
     assert last["role"] == "tutor"
     assert "empty" in last["content"]
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Pre-flight fires → Teacher renders redirect/nudge/confirm_end
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def _mock_preflight_fires(category="help_abuse", suggested_mode="redirect",
                            suggested_tone="neutral",
@@ -135,7 +119,6 @@ def _mock_preflight_fires(category="help_abuse", suggested_mode="redirect",
         should_end_session=should_end_session,
         elapsed_s=0.5,
     )
-
 
 def test_dean_node_v2_preflight_help_abuse_renders_redirect(monkeypatch):
     """Help-abuse fired → teacher_v2 writes redirect; Dean SKIPPED."""
@@ -171,7 +154,6 @@ def test_dean_node_v2_preflight_help_abuse_renders_redirect(monkeypatch):
     assert result["help_abuse_count"] == 1
     assert result["hint_level"] == 1  # unchanged
 
-
 def test_dean_node_v2_preflight_strike_4_forces_hint_advance(monkeypatch):
     state = _state(hint_level=1, help_abuse_count=3)
     monkeypatch.setattr(
@@ -193,7 +175,6 @@ def test_dean_node_v2_preflight_strike_4_forces_hint_advance(monkeypatch):
             state, dean=MagicMock(), teacher=MagicMock(), retriever=MagicMock(),
         )
     assert result["hint_level"] == 2  # advanced from 1 to 2
-
 
 def test_dean_node_v2_preflight_off_domain_strike_4_ends_session(monkeypatch):
     state = _state(off_topic_count=3)
@@ -219,11 +200,9 @@ def test_dean_node_v2_preflight_off_domain_strike_4_ends_session(monkeypatch):
     assert result["phase"] == "memory_update"
     assert result["messages"][-1]["metadata"]["is_closing"] is True
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Pre-flight passes → Dean.plan + retry orchestrator
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def _mock_preflight_passes():
     return PreflightResult(
@@ -231,7 +210,6 @@ def _mock_preflight_passes():
         new_help_abuse_count=0, new_off_topic_count=0,
         elapsed_s=0.5,
     )
-
 
 def test_dean_node_v2_normal_path_runs_retry_orchestrator(monkeypatch):
     """All pre-flight checks pass → Dean.plan → retry orchestrator → ship."""
@@ -281,7 +259,6 @@ def test_dean_node_v2_normal_path_runs_retry_orchestrator(monkeypatch):
     assert last["metadata"]["final_attempt"] == 1
     assert result["turn_count"] == 6  # 5 + 1
     assert result["help_abuse_count"] == 0  # reset on engagement
-
 
 def test_dean_node_v2_writes_to_turn_trace(monkeypatch):
     """Trace consumers can see preflight + dean.plan + retry orchestrator

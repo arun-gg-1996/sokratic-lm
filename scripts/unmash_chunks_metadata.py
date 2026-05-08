@@ -1,21 +1,20 @@
 """
 scripts/unmash_chunks_metadata.py
----------------------------------
 Phase B.1 — Un-mash `section_title` and `subsection_title` in chunks_ot.jsonl.
 
-Current state: section_title is mashed like "1.2 Title — Subsection",
+Current state: section_title is mashed like "1.2 Title — Subsection"
 and subsection_title duplicates the section_num + section_title prefix.
 
-Target state: section_title is the canonical clean section name (no number,
+Target state: section_title is the canonical clean section name (no number
 no em-dash); subsection_title is the actual subsection heading (the part
 after the em-dash).
 
-Verified deterministic on 2026-04-28: same section_num always maps to the
+Verified deterministic on : same section_num always maps to the
 same clean section_title across all chunks (0 ambiguities).
 
 Usage:
-  python scripts/unmash_chunks_metadata.py --dry-run    # preview changes
-  python scripts/unmash_chunks_metadata.py              # apply in place
+ python scripts/unmash_chunks_metadata.py --dry-run # preview changes
+ python scripts/unmash_chunks_metadata.py # apply in place
 """
 from __future__ import annotations
 
@@ -30,13 +29,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 CHUNKS_PATH = ROOT / "data/processed/chunks_openstax_anatomy.jsonl"
 
-
 def unmash(section_title: str, section_num: str) -> tuple[str, str]:
     """Return (clean_section_title, subsection_title).
-
-    - Always strip leading "<section_num> " from prefix if present.
-    - Split on " — " when present; everything after becomes subsection.
-    """
+Always strip leading "<section_num> " from prefix if present.
+Split on " — " when present; everything after becomes subsection.
+"""
     section_title = section_title or ""
     section_num = section_num or ""
     if " — " in section_title:
@@ -46,7 +43,6 @@ def unmash(section_title: str, section_num: str) -> tuple[str, str]:
     if section_num and prefix.startswith(section_num + " "):
         prefix = prefix[len(section_num) + 1 :]
     return prefix.strip(), subheading.strip()
-
 
 def main() -> int:
     ap = argparse.ArgumentParser()
@@ -165,7 +161,6 @@ def main() -> int:
         print("  WARNING: some em-dashes survived. Investigate.", file=sys.stderr)
         return 1
     return 0
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

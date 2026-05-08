@@ -6,18 +6,18 @@ Pre-seed 5 historical sessions for student `nidhi` so the My Mastery
 page has visible progression for the live demo.
 
 Each session gets:
-  * sessions row (status=completed/ended_turn_limit, locked_question,
-    locked_answer, mastery_tier, score, key_takeaways)
-  * subsection_mastery row (EWMA score, attempt_count)
-  * transcript snapshot at data/artifacts/conversations/...
-    (so the analyze page renders real-looking content)
+ * sessions row (status=completed/ended_turn_limit, locked_question
+ locked_answer, mastery_tier, score, key_takeaways)
+ * subsection_mastery row (EWMA score, attempt_count)
+ * transcript snapshot at data/artifacts/conversations...
+ (so the analyze page renders real-looking content)
 
 Run:
-    python scripts/demo_seed_nidhi.py [--dry-run] [--reset]
+ python scripts/demo_seed_nidhi.py [--dry-run] [--reset]
 
 Flags:
-    --dry-run  print what would be inserted, don't write
-    --reset    delete prior demo seeds for nidhi before inserting
+dry-run print what would be inserted, don't write
+reset delete prior demo seeds for nidhi before inserting
 """
 from __future__ import annotations
 
@@ -38,9 +38,7 @@ load_dotenv(REPO / ".env", override=True)
 from config import cfg
 from memory.sqlite_store import SQLiteStore, score_to_tier
 
-
 STUDENT_ID = "nidhi"
-
 
 # ─────────────────────────────────────────────────────────────────────
 # 5 hand-crafted demo sessions — varied mastery tiers to show
@@ -49,20 +47,20 @@ STUDENT_ID = "nidhi"
 # ─────────────────────────────────────────────────────────────────────
 
 # ─────────────────────────────────────────────────────────────────────
-# Mem0 entries — what the system "learned" about Nidhi from each
+# Mem0 entries — what the system "learned" about from each
 # session. Categories per memory_manager.flush:
-#   * misconception   — observed factual errors / confusions
-#   * learning_style  — observable interaction patterns
-# Each entry is 1 sentence with the topic baked in (per L4 write-style).
+# * misconception — observed factual errors / confusions
+# * learning_style — observable interaction patterns
+# Each entry is 1 sentence with the topic baked in (write-style).
 # ─────────────────────────────────────────────────────────────────────
 MEM0_ENTRIES: list[dict] = [
-    # S1 — Compact and Spongy Bone (mastered)
+    # Compact and Spongy Bone (mastered)
     {
         "session_label": "S1_compact_spongy_mastered",
         "category": "learning_style",
         "text": "Nidhi connects structural form to functional purpose quickly when given concrete spatial examples (e.g., femur shaft vs. femur head) — works well with 'where it sits in the body' framing.",
     },
-    # S2 — Blood and Nerve Supply (partial)
+    # Blood and Nerve Supply (partial)
     {
         "session_label": "S2_blood_nerve_supply_solid",
         "category": "learning_style",
@@ -73,13 +71,13 @@ MEM0_ENTRIES: list[dict] = [
         "category": "misconception",
         "text": "Nidhi initially treated nerves in bone as pain-signal-only, missing the vasomotor and bone-remodeling coordination roles — required scaffolding to recognize nerves regulate blood supply, not just sense it.",
     },
-    # S3 — Directional Terms (partial)
+    # Directional Terms (partial)
     {
         "session_label": "S3_directional_terms_developing",
         "category": "misconception",
         "text": "Nidhi conflates anatomical directional axes — knows superior/inferior describes vertical position but mixes up anterior/posterior with the up-down pair rather than recognizing it as the front-back axis.",
     },
-    # S4 — Connective Tissue (struggling)
+    # Connective Tissue (struggling)
     {
         "session_label": "S4_connective_tissue_needs_review",
         "category": "misconception",
@@ -90,14 +88,13 @@ MEM0_ENTRIES: list[dict] = [
         "category": "learning_style",
         "text": "Nidhi tends to ask for direct answers when stuck rather than reasoning through scaffolding — benefits from step-by-step decomposition into smaller sub-questions she can attempt one at a time.",
     },
-    # S5 — Body Cavities (ended at turn cap)
+    # Body Cavities (ended at turn cap)
     {
         "session_label": "S5_body_cavities_partial",
         "category": "misconception",
         "text": "Nidhi knows the heart and lungs sit in the thoracic cavity but didn't recognize 'mediastinum' as a named subdivision of the thoracic cavity — the central column between the lungs is the missing label, not the spatial intuition.",
     },
 ]
-
 
 SESSIONS: list[dict] = [
     # ─── Session 1: STRONG mastery (mastered example) ───────────────
@@ -234,15 +231,12 @@ SESSIONS: list[dict] = [
     },
 ]
 
-
 def now_utc() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
 
 def shifted(days_ago: int) -> str:
     dt = datetime.now(timezone.utc) - timedelta(days=days_ago, hours=2)
     return dt.strftime("%Y-%m-%dT%H:%M:%SZ")
-
 
 def write_transcript_file(student_id: str, thread_id: str, turn_count: int, payload: dict) -> Path:
     """Mirror conversation/lifecycle_v2.py::_write_transcript_snapshot naming."""
@@ -253,20 +247,19 @@ def write_transcript_file(student_id: str, thread_id: str, turn_count: int, payl
     out.write_text(json.dumps(payload, ensure_ascii=False, indent=2))
     return out
 
-
 def seed_mem0(student_id: str, session_metadata_by_label: dict) -> dict:
     """Write the curated mem0 entries for the demo sessions.
 
-    Each entry carries metadata matching what memory_manager.flush() writes:
-      * category  — 'misconception' / 'learning_style'
-      * subsection_path / subsection_title / chapter_num — topic anchors
-        used by mem0 filtered retrieval (rapport greeting + tutoring
-        carryover injection points).
+ Each entry carries metadata matching what memory_manager.flush writes:
+ * category — 'misconception' / 'learning_style'
+ * subsection_path / subsection_title / chapter_num — topic anchors
+ used by mem0 filtered retrieval (rapport greeting + tutoring
+ carryover injection points).
 
-    Mem0 unavailable (no Qdrant / no OPENAI_API_KEY) → returns
-    skipped/0/0; the script still completes so SQLite-backed seeds
-    are usable on their own.
-    """
+ Mem0 unavailable (no Qdrant / no OPENAI_API_KEY) → returns
+ skipped/0/0; the script still completes so SQLite-backed seeds
+ are usable on their own.
+"""
     from memory.persistent_memory import PersistentMemory
     pm = PersistentMemory()
     if not pm.available:
@@ -321,33 +314,31 @@ def seed_mem0(student_id: str, session_metadata_by_label: dict) -> dict:
             failed += 1
     return {"available": True, "written": written, "failed": failed, "total": len(MEM0_ENTRIES)}
 
-
 def reset_mem0(student_id: str) -> int:
     """Wipe ALL mem0 entries for this student (demo cleanup).
 
-    Intentionally aggressive — for demo prep we want a clean slate. If
-    you need to preserve real entries, comment this out or scope it to
-    metadata.session_label LIKE 'demo_seed_%'.
-    """
+ Intentionally aggressive — for demo prep we want a clean slate. If
+ you need to preserve real entries, comment this out or scope it to
+ metadata.session_label LIKE 'demo_seed_%'.
+"""
     from memory.persistent_memory import PersistentMemory
     pm = PersistentMemory()
     if not pm.available:
         return 0
     return pm.delete_user(student_id)
 
-
 def reset_demo_seeds(store: SQLiteStore, student_id: str) -> int:
     """Drop existing demo-seed sessions for this student.
 
-    SAFE deletion — only touches:
-      * sessions rows where thread_id starts with 'demo_seed_'
-      * subsection_mastery rows where the path matches one of the
-        demo subsections (preserves any pre-existing real mastery)
-      * transcript files matching the demo thread_id pattern
+ SAFE deletion — only touches:
+ * sessions rows where thread_id starts with 'demo_seed_'
+ * subsection_mastery rows where the path matches one of the
+ demo subsections (preserves any pre-existing real mastery)
+ * transcript files matching the demo thread_id pattern
 
-    Real sessions (with thread_id like 'nidhi_<hex8>') and any mastery
-    rows for non-demo subsections are NOT touched.
-    """
+ Real sessions (with thread_id like 'nidhi_<hex8>') and any mastery
+ rows for non-demo subsections are NOT touched.
+"""
     conn = store._conn()
 
     # 1. Find all demo-seed session thread_ids
@@ -365,7 +356,7 @@ def reset_demo_seeds(store: SQLiteStore, student_id: str) -> int:
             (student_id,),
         )
         # 3. Delete ONLY the subsection_mastery rows whose paths match
-        #    our demo set — preserves any pre-existing real mastery.
+        # our demo set — preserves any pre-existing real mastery.
         demo_paths = [s["subsection_path"] for s in SESSIONS]
         if demo_paths:
             placeholders = ",".join("?" * len(demo_paths))
@@ -386,7 +377,6 @@ def reset_demo_seeds(store: SQLiteStore, student_id: str) -> int:
                 except OSError:
                     pass
     return n
-
 
 def seed_one(store: SQLiteStore, sess: dict, *, dry_run: bool) -> dict:
     """Insert ONE pre-seeded session row + mastery row + transcript file."""
@@ -487,7 +477,6 @@ def seed_one(store: SQLiteStore, sess: dict, *, dry_run: bool) -> dict:
         "messages_count": len(sess["messages"]),
     }
 
-
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="show what would be inserted")
@@ -538,7 +527,6 @@ def main() -> None:
             print("        just without cross-session misconception/learning_style hints)")
         print()
         print("Done. Open My Mastery to verify all 5 sessions appear with correct tiers.")
-
 
 if __name__ == "__main__":
     main()

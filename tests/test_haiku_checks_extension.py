@@ -16,11 +16,9 @@ import pytest
 
 from conversation import verifier_quartet as C
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Helpers — patch _haiku_call for hermetic tests
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 @pytest.fixture
 def mock_haiku(monkeypatch):
@@ -43,11 +41,9 @@ def mock_haiku(monkeypatch):
 
     return Setter()
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # haiku_shape_check
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def _shape_response(passed: bool, **overrides) -> str:
     payload = {
@@ -63,7 +59,6 @@ def _shape_response(passed: bool, **overrides) -> str:
     payload.update(overrides)
     return json.dumps(payload)
 
-
 def test_shape_check_pass(mock_haiku):
     mock_haiku.set_response(_shape_response(True))
     out = C.haiku_shape_check(
@@ -78,7 +73,6 @@ def test_shape_check_pass(mock_haiku):
     assert out["evidence"] == ""
     assert out["checks"]["single_question"] is True
 
-
 def test_shape_check_fail_two_questions(mock_haiku):
     draft = "What is X? And what is Y?"
     payload = json.loads(_shape_response(False))
@@ -88,7 +82,6 @@ def test_shape_check_fail_two_questions(mock_haiku):
     assert out["pass"] is False
     assert "2 questions" in out["reason"]
     assert out["checks"]["single_question"] is False
-
 
 def test_shape_check_evidence_validation_downgrades_hallucination(mock_haiku):
     """If LLM cites evidence that's NOT in the draft, downgrade to pass
@@ -101,12 +94,10 @@ def test_shape_check_evidence_validation_downgrades_hallucination(mock_haiku):
     assert out["pass"] is True
     assert out["_error"] == "evidence_invalid"
 
-
 def test_shape_check_handles_empty_draft(mock_haiku):
     out = C.haiku_shape_check("")
     assert out["pass"] is True
     assert out["_error"] == "empty_draft"
-
 
 def test_shape_check_handles_haiku_exception(mock_haiku):
     mock_haiku.raise_exception(RuntimeError("Bedrock 503"))
@@ -114,13 +105,11 @@ def test_shape_check_handles_haiku_exception(mock_haiku):
     assert out["pass"] is True  # safe default
     assert "haiku_error" in out["_error"]
 
-
 def test_shape_check_handles_garbage_response(mock_haiku):
     mock_haiku.set_response("totally not json")
     out = C.haiku_shape_check("What is X?")
     assert out["pass"] is True
     assert out["_error"] == "parse_fail"
-
 
 def test_shape_check_passes_shape_spec_to_prompt(mock_haiku, monkeypatch):
     """Verify shape_spec.max_sentences ends up in the user prompt
@@ -139,11 +128,9 @@ def test_shape_check_passes_shape_spec_to_prompt(mock_haiku, monkeypatch):
     assert "max_sentences: 7" in captured["user"]
     assert "hint_level: 2" in captured["user"]
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # haiku_pedagogy_check
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def _pedagogy_response(passed: bool, **overrides) -> str:
     payload = {
@@ -154,7 +141,6 @@ def _pedagogy_response(passed: bool, **overrides) -> str:
     }
     payload.update(overrides)
     return json.dumps(payload)
-
 
 def test_pedagogy_check_pass(mock_haiku):
     mock_haiku.set_response(_pedagogy_response(True))
@@ -167,7 +153,6 @@ def test_pedagogy_check_pass(mock_haiku):
     assert out["checks"]["relevance"] is True
     assert out["checks"]["helpful"] is True
 
-
 def test_pedagogy_check_fail_unhelpful(mock_haiku):
     draft = "what is the SA node?"
     fail = json.loads(_pedagogy_response(False))
@@ -177,24 +162,20 @@ def test_pedagogy_check_fail_unhelpful(mock_haiku):
     assert out["pass"] is False
     assert "restates" in out["reason"]
 
-
 def test_pedagogy_check_handles_haiku_exception(mock_haiku):
     mock_haiku.raise_exception(RuntimeError("network"))
     out = C.haiku_pedagogy_check("anything", locked_subsection="x", locked_question="x")
     assert out["pass"] is True
     assert "haiku_error" in out["_error"]
 
-
 def test_pedagogy_check_handles_empty_draft(mock_haiku):
     out = C.haiku_pedagogy_check("", locked_subsection="x", locked_question="x")
     assert out["pass"] is True
     assert out["_error"] == "empty_draft"
 
-
 # ─────────────────────────────────────────────────────────────────────────────
 # to_universal_check_result — L61 adapter
 # ─────────────────────────────────────────────────────────────────────────────
-
 
 def test_adapter_passthrough_for_universal_shape():
     """haiku_shape_check / haiku_pedagogy_check already emit the universal
@@ -207,7 +188,6 @@ def test_adapter_passthrough_for_universal_shape():
     assert out["reason"] == "two questions"
     assert out["checks"]["single_question"] is False
 
-
 def test_adapter_maps_leak_verdict_to_fail():
     """haiku_hint_leak_check returns verdict='leak' on failure."""
     raw = {"verdict": "leak", "rationale": "starts with letter A", "evidence": "A...",
@@ -218,7 +198,6 @@ def test_adapter_maps_leak_verdict_to_fail():
     assert out["evidence"] == "A..."
     assert out["_verdict"] == "leak"
 
-
 def test_adapter_maps_clean_verdict_to_pass():
     raw = {"verdict": "clean", "rationale": "", "evidence": ""}
     out = C.to_universal_check_result(raw, check_name="haiku_leak_check")
@@ -226,14 +205,12 @@ def test_adapter_maps_clean_verdict_to_pass():
     assert out["reason"] == ""
     assert out["evidence"] == ""
 
-
 def test_adapter_maps_sycophancy_verdict():
     raw = {"verdict": "sycophantic", "rationale": "starts with 'Excellent!'",
            "evidence": "Excellent!"}
     out = C.to_universal_check_result(raw, check_name="haiku_sycophancy_check")
     assert out["pass"] is False
     assert "Excellent" in out["reason"]
-
 
 def test_adapter_maps_off_domain_verdicts():
     """off_domain has 4 fail verdicts; all of them must map to fail."""
@@ -243,12 +220,10 @@ def test_adapter_maps_off_domain_verdicts():
         assert out["pass"] is False, f"verdict={v} should map to fail"
         assert out["_verdict"] == v
 
-
 def test_adapter_maps_in_domain_to_pass():
     raw = {"verdict": "in_domain", "rationale": "", "evidence": ""}
     out = C.to_universal_check_result(raw, check_name="haiku_off_domain_check")
     assert out["pass"] is True
-
 
 def test_adapter_preserves_diagnostics():
     raw = {"pass": True, "reason": "", "evidence": "",
@@ -256,7 +231,6 @@ def test_adapter_preserves_diagnostics():
     out = C.to_universal_check_result(raw, check_name="haiku_shape_check")
     assert out["_elapsed_s"] == 0.42
     assert out["_error"] == ""
-
 
 def test_adapter_handles_truncated_strings():
     """Long reason/evidence shouldn't blow up trace serialization."""

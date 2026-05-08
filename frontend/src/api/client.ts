@@ -227,7 +227,7 @@ export async function regenerateTakeaways(threadId: string): Promise<RegenerateR
   return res.json();
 }
 
-// N8 (POST_DEMO_FIXES.md, 2026-05-06) — student-profile reply suggestions
+// N8 — student-profile reply suggestions
 export interface SuggestionItem {
   text: string;
   kind: string;   // intent class — see backend _color_for_kind for mapping
