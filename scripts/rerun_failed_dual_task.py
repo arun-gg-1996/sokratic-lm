@@ -67,9 +67,22 @@ async def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", required=True)
     ap.add_argument("--model", default=DEFAULT_MODEL)
-    ap.add_argument("--concurrency", type=int, default=20)
+    ap.add_argument(
+        "--concurrency", type=int, default=4,
+        help="Parallel in-flight calls. Bedrock cross-region inference "
+             "throttles harder than direct Anthropic; 4 is a safe floor "
+             "that lets the cache settle without 429 storms.",
+    )
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--max-cost", type=float, default=10.0)
+    ap.add_argument(
+        "--warmup-sleep", type=float, default=20.0,
+        help="Seconds to sleep BETWEEN the warmup call and the parallel "
+             "batch. Bedrock's prompt cache needs a brief settling window "
+             "after the first cache_create before the second-and-onward "
+             "calls reliably hit cache_read; without this delay the "
+             "ramp-up generates 429s. Default 20s.",
+    )
     args = ap.parse_args()
 
     chunks_path = ROOT / cfg.domain_path("chunks")
@@ -133,7 +146,11 @@ async def main() -> int:
             abort_event.set()
         return cost
 
-    # Warmup
+    # Warmup + settling sleep. Bedrock's prompt cache needs the first
+    # cache_create response to land AND a brief propagation window before
+    # subsequent calls reliably hit cache_read. Without the sleep, a
+    # parallel batch fired immediately after warmup races with cache
+    # population and gets 429-throttled.
     if len(failed_chunks) > 1:
         print("  cache warmup (1 serial call)...")
         warm = await extract_dual_task(
@@ -143,6 +160,14 @@ async def main() -> int:
         )
         if warm.error:
             print(f"  warmup ERR: {warm.error}")
+        else:
+            usage = warm.usage or {}
+            cw = usage.get("cache_creation_input_tokens", 0)
+            cr = usage.get("cache_read_input_tokens", 0)
+            print(f"  warmup ok (cache_create={cw}, cache_read={cr})")
+        if args.warmup_sleep > 0:
+            print(f"  sleeping {args.warmup_sleep}s for Bedrock cache to settle...")
+            await asyncio.sleep(args.warmup_sleep)
 
     print(f"\nre-running {len(failed_chunks)} chunks @ concurrency={args.concurrency}...")
     t0 = time.time()

@@ -211,9 +211,13 @@ async def warmup_cache(
 """
     if not chunks:
         return None
-    from anthropic import AsyncAnthropic
+    # Match propositions_dual.py: route through the Bedrock-aware factory
+    # so SOKRATIC_USE_BEDROCK=1 in .env steers warmup + parallel batch
+    # through the same provider (avoids inconsistent cache behavior + the
+    # direct-Anthropic credit-balance trap).
+    from conversation.llm_client import make_async_anthropic_client
 
-    client = AsyncAnthropic()
+    client = make_async_anthropic_client()
     sem = asyncio.Semaphore(1)
     print("  [pipeline] cache warmup: 1 serial call to prime the cache...")
     t0 = time.time()

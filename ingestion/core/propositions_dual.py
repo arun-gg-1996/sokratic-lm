@@ -434,24 +434,50 @@ async def extract_dual_task(
                 chunk_id=chunk_id, cleaned_text=chunk_text,
                 error="aborted by cost cap before API call",
             )
-        try:
-            # resolve_model maps short model names ("claude-haiku-4-5") to
-            # their Bedrock cross-region inference profile IDs
-            # ("us.anthropic.claude-haiku-4-5-20251001-v1:0") when running
-            # against Bedrock; pass-through unchanged on direct Anthropic.
-            from conversation.llm_client import resolve_model
-            resp = await client.messages.create(
-                model=resolve_model(model),
-                max_tokens=max_output_tokens,
-                temperature=0,
-                system=cached_system,
-                messages=[{"role": "user", "content": chunk_text}],
-            )
-        except Exception as exc:
+        # resolve_model maps short model names ("claude-haiku-4-5") to
+        # their Bedrock cross-region inference profile IDs
+        # ("us.anthropic.claude-haiku-4-5-20251001-v1:0") when running
+        # against Bedrock; pass-through unchanged on direct Anthropic.
+        from conversation.llm_client import resolve_model
+        # Retry-on-429 with exponential backoff. Bedrock has tighter
+        # per-second throttles than direct Anthropic, especially on the
+        # cross-region inference profiles. Without this loop, a batch at
+        # concurrency >= 5 gets a wall of RateLimitErrors and the run
+        # records ~100% failure even though the prompt + creds are fine.
+        delay = 2.0
+        resp = None
+        last_exc: Exception | None = None
+        for attempt in range(6):
+            try:
+                resp = await client.messages.create(
+                    model=resolve_model(model),
+                    max_tokens=max_output_tokens,
+                    temperature=0,
+                    system=cached_system,
+                    messages=[{"role": "user", "content": chunk_text}],
+                )
+                last_exc = None
+                break
+            except Exception as exc:  # noqa: BLE001 — narrow check below
+                last_exc = exc
+                # Anthropic SDK exposes RateLimitError; bedrock raises a
+                # different shape, so we string-match on the message too.
+                msg = str(exc).lower()
+                is_rate_limit = (
+                    type(exc).__name__ == "RateLimitError"
+                    or "429" in msg
+                    or "throttling" in msg
+                    or "too many requests" in msg
+                )
+                if not is_rate_limit or attempt == 5:
+                    break
+                await asyncio.sleep(delay)
+                delay *= 2
+        if resp is None:
             return DualTaskResult(
                 chunk_id=chunk_id,
                 cleaned_text=chunk_text,
-                error=f"api error: {type(exc).__name__}: {exc}",
+                error=f"api error: {type(last_exc).__name__}: {last_exc}",
             )
 
     # Capture usage even on parse failure — billable regardless.

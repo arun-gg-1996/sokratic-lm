@@ -58,8 +58,8 @@ from rank_bm25 import BM25Okapi  # noqa: E402
 from config import cfg  # noqa: E402
 from ingestion.core.index import stem_tokenize  # noqa: E402
 
-CHUNKS_PATH = ROOT / "data/processed/chunks_openstax_anatomy.jsonl"
-BM25_OUT_PATH = ROOT / "data/indexes/bm25_chunks_openstax_anatomy.pkl"
+CHUNKS_PATH = ROOT / cfg.domain_path("chunks")
+BM25_OUT_PATH = ROOT / cfg.domain_path("bm25")
 EMBED_MODEL = "text-embedding-3-large"
 EMBED_BATCH_SIZE = 100
 UPSERT_BATCH_SIZE = 100
@@ -110,16 +110,24 @@ def chunk_to_payload(chunk: dict, domain: str) -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--collection", default="sokratic_kb_chunks",
-                    help="Qdrant collection name (default: sokratic_kb_chunks; "
-                         "kept separate from propositions collection sokratic_kb).")
-    ap.add_argument("--domain", default="openstax_anatomy",
-                    help="Payload `domain` value (default: openstax_anatomy).")
+    ap.add_argument("--collection", default=None,
+                    help="Qdrant collection name (default: cfg.domain.kb_collection)")
+    ap.add_argument("--domain", default=None,
+                    help="Payload `domain` value (default: cfg.domain.short)")
     ap.add_argument("--fresh", action="store_true", default=True,
                     help="Wipe + recreate the collection before upsert (default: yes).")
     ap.add_argument("--limit", type=int, default=None,
                     help="Smoke-test mode: only embed the first N chunks.")
+    ap.add_argument("--bm25-only", action="store_true",
+                    help="Build BM25 over chunks and skip OpenAI embedding "
+                         "+ qdrant upsert. Use when prepping a fresh domain "
+                         "where the qdrant collection doesn't exist yet "
+                         "(or when you want lexical retrieval without "
+                         "spending on embeddings).")
     args = ap.parse_args()
+
+    collection = args.collection or cfg.domain.kb_collection
+    domain_stamp = args.domain or getattr(cfg.domain, "short", "")
 
     print(f"Loading chunks from {CHUNKS_PATH.relative_to(ROOT)}", flush=True)
     chunks = load_chunks(CHUNKS_PATH)
@@ -127,15 +135,29 @@ def main() -> None:
         chunks = chunks[: args.limit]
     print(f"  {len(chunks)} chunks", flush=True)
 
+    if args.bm25_only:
+        print("\n[BM25-only mode] skipping OpenAI embeddings + qdrant upsert", flush=True)
+        # Jump straight to BM25 build.
+        print(f"\nBuilding BM25 over chunks → {BM25_OUT_PATH.relative_to(ROOT)}", flush=True)
+        texts = [(c.get("text", "") or "") for c in chunks]
+        tokenized = [stem_tokenize(t) for t in texts]
+        bm25 = BM25Okapi(tokenized)
+        BM25_OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        with open(BM25_OUT_PATH, "wb") as f:
+            pickle.dump({"bm25": bm25, "propositions": chunks}, f)
+        print(f"  BM25 saved ({len(chunks)} chunks).")
+        print("\nALL DONE (BM25 only).")
+        return
+
     openai = OpenAI()
     qdrant = QdrantClient(host=cfg.memory.qdrant_host, port=cfg.memory.qdrant_port)
 
     if args.fresh:
-        ensure_fresh_collection(qdrant, args.collection)
+        ensure_fresh_collection(qdrant, collection)
     else:
-        if not qdrant.collection_exists(args.collection):
+        if not qdrant.collection_exists(collection):
             qdrant.create_collection(
-                collection_name=args.collection,
+                collection_name=collection,
                 vectors_config=VectorParams(size=VECTOR_SIZE, distance=Distance.COSINE),
             )
 
@@ -160,11 +182,11 @@ def main() -> None:
                 PointStruct(
                     id=chunk["chunk_id"],
                     vector=vec,
-                    payload=chunk_to_payload(chunk, args.domain),
+                    payload=chunk_to_payload(chunk, domain_stamp),
                 )
             )
             if len(points_buffer) >= UPSERT_BATCH_SIZE:
-                qdrant.upsert(collection_name=args.collection, points=points_buffer)
+                qdrant.upsert(collection_name=collection, points=points_buffer)
                 upserted += len(points_buffer)
                 points_buffer = []
 
@@ -175,7 +197,7 @@ def main() -> None:
               f"{elapsed}s elapsed | ETA ~{eta}s", flush=True)
 
     if points_buffer:
-        qdrant.upsert(collection_name=args.collection, points=points_buffer)
+        qdrant.upsert(collection_name=collection, points=points_buffer)
         upserted += len(points_buffer)
         points_buffer = []
 
@@ -197,7 +219,7 @@ def main() -> None:
     print(f"  BM25 saved ({len(chunks)} chunks).")
 
     print("\nALL DONE.")
-    print(f"  Qdrant collection : {args.collection}  ({upserted} points)")
+    print(f"  Qdrant collection : {collection}  ({upserted} points)")
     print(f"  BM25 index file   : {BM25_OUT_PATH.relative_to(ROOT)}")
     print(f"  To use, point retriever at this collection + BM25 path "
           f"(see retriever wiring; cfg.memory.kb_collection / cfg.paths).")
