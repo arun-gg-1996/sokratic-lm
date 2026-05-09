@@ -34,14 +34,16 @@ from dotenv import load_dotenv  # noqa: E402
 
 load_dotenv(REPO / ".env", override=True)
 
-CHUNKS_PATH = REPO / "data" / "processed" / "chunks_openstax_anatomy.jsonl"
-TOPIC_INDEX_PATH = REPO / "data" / "topic_index.json"
-RAPTOR_PATH = REPO / "data" / "artifacts" / "raptor_subsection_summaries.jsonl"
-TEXTBOOK_STRUCT_PATH = REPO / "data" / "textbook_structure.json"
-BM25_PATH = REPO / "data" / "indexes" / "bm25_chunks_openstax_anatomy.pkl"
-CURATED_ABBREVS_PATH = REPO / "data" / "curated_abbrevs_ot.json"
+from config import cfg as _cfg  # noqa: E402
 
-QDRANT_COLLECTION = "sokratic_kb_chunks"
+CHUNKS_PATH = REPO / _cfg.domain_path("chunks")
+TOPIC_INDEX_PATH = REPO / _cfg.domain_path("topic_index")
+RAPTOR_PATH = REPO / _cfg.domain_path("raptor_subsection_summaries")
+TEXTBOOK_STRUCT_PATH = REPO / _cfg.domain_path("textbook_structure")
+BM25_PATH = REPO / _cfg.domain_path("bm25")
+CURATED_ABBREVS_PATH = REPO / _cfg.domain_path("curated_abbrevs")
+
+QDRANT_COLLECTION = _cfg.domain.kb_collection
 
 CANONICAL_RAG_QUERIES = [
     "What does the suprascapular nerve supply?",
