@@ -1,0 +1,1853 @@
+{
+  "Chapter 10: Fixed-Axis Rotation": {
+    "difficulty": "moderate",
+    "sections": {
+      "Calculating Moments of Inertia": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Moment of Inertia": {
+            "difficulty": "moderate"
+          },
+          "Rod and Solid Sphere": {
+            "difficulty": "moderate"
+          },
+          "The Parallel-Axis Theorem": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Fixed-Axis Rotation": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Fixed-Axis Rotation": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Moment of Inertia and Rotational Kinetic Energy": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Calculating Helicopter Energies": {
+            "difficulty": "moderate"
+          },
+          "Energy in a Boomerang": {
+            "difficulty": "moderate"
+          },
+          "Moment of Inertia": {
+            "difficulty": "moderate"
+          },
+          "Moment of Inertia of a System of Particles": {
+            "difficulty": "moderate"
+          },
+          "Rotational Kinetic Energy": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Newton’s Second Law for Rotation": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Calculating the Effect of Mass Distribution on a Merry-Go-Round": {
+            "difficulty": "moderate"
+          },
+          "Newton’s Second Law for Rotation": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Relating Angular and Translational Quantities": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Angular vs. Linear Variables": {
+            "difficulty": "moderate"
+          },
+          "Linear Acceleration of a Centrifuge": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Rotation with Constant Angular Acceleration": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Angular Acceleration of a Propeller": {
+            "difficulty": "moderate"
+          },
+          "Calculating the Acceleration of a Fishing Reel": {
+            "difficulty": "moderate"
+          },
+          "Calculating the Duration When the Fishing Reel Slows Down and Stops": {
+            "difficulty": "moderate"
+          },
+          "Kinematics of Rotational Motion": {
+            "difficulty": "moderate"
+          },
+          "Rotation with Constant Angular Acceleration": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Rotational Variables": {
+        "difficulty": "moderate",
+        "subsections": {
+          "A Spinning Bicycle Wheel": {
+            "difficulty": "moderate"
+          },
+          "Angular Acceleration": {
+            "difficulty": "moderate"
+          },
+          "Angular Velocity": {
+            "difficulty": "moderate"
+          },
+          "Rotation of a Flywheel": {
+            "difficulty": "moderate"
+          },
+          "Wind Turbine": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Torque": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Calculating Torque": {
+            "difficulty": "moderate"
+          },
+          "Calculating Torque on a rigid body": {
+            "difficulty": "moderate"
+          },
+          "Defining Torque": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Work and Power for Rotational Motion": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Work for Rotational Motion": {
+            "difficulty": "moderate"
+          }
+        }
+      }
+    }
+  },
+  "Chapter 11: Angular Momentum": {
+    "difficulty": "moderate",
+    "sections": {
+      "Angular Momentum": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Angular Momentum": {
+            "difficulty": "moderate"
+          },
+          "Angular Momentum and Torque on a Meteor": {
+            "difficulty": "moderate"
+          },
+          "Angular Momentum of a Rigid Body": {
+            "difficulty": "moderate"
+          },
+          "Angular Momentum of a Robot Arm": {
+            "difficulty": "moderate"
+          },
+          "Angular Momentum of a Single Particle": {
+            "difficulty": "moderate"
+          },
+          "Angular Momentum of a System of Particles": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Conservation of Angular Momentum": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Conservation of Angular Momentum": {
+            "difficulty": "moderate"
+          },
+          "Conservation of Angular Momentum of a Collision": {
+            "difficulty": "moderate"
+          },
+          "Coupled Flywheels": {
+            "difficulty": "moderate"
+          },
+          "Dismount from a High Bar": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Precession of a Gyroscope": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Precession of a Gyroscope": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Rolling Motion": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Curiosity Rover": {
+            "difficulty": "moderate"
+          },
+          "Rolling Down an Inclined Plane": {
+            "difficulty": "moderate"
+          },
+          "Rolling Down an Inclined Plane with Slipping": {
+            "difficulty": "moderate"
+          },
+          "Rolling Motion without Slipping": {
+            "difficulty": "moderate"
+          }
+        }
+      }
+    }
+  },
+  "Chapter 12: Static Equilibrium and Elasticity": {
+    "difficulty": "moderate",
+    "sections": {
+      "Conditions for Static Equilibrium": {
+        "difficulty": "moderate",
+        "subsections": {
+          "A Breaking Tension": {
+            "difficulty": "moderate"
+          },
+          "Center of Gravity of a Car": {
+            "difficulty": "moderate"
+          },
+          "Conditions for Static Equilibrium": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Elasticity and Plasticity": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Elasticity and Plasticity": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Examples of Static Equilibrium": {
+        "difficulty": "moderate",
+        "subsections": {
+          "A Ladder Resting Against a Wall": {
+            "difficulty": "moderate"
+          },
+          "Examples of Static Equilibrium": {
+            "difficulty": "moderate"
+          },
+          "Forces in the Forearm": {
+            "difficulty": "moderate"
+          },
+          "Forces on Door Hinges": {
+            "difficulty": "moderate"
+          },
+          "The Torque Balance": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Static Equilibrium and Elasticity": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Static Equilibrium and Elasticity": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Stress, Strain, and Elastic Modulus": {
+        "difficulty": "moderate",
+        "subsections": {
+          "An Old Bookshelf": {
+            "difficulty": "moderate"
+          },
+          "Bulk Stress, Strain, and Modulus": {
+            "difficulty": "moderate"
+          },
+          "Compressive Stress in a Pillar": {
+            "difficulty": "moderate"
+          },
+          "Shear Stress, Strain, and Modulus": {
+            "difficulty": "moderate"
+          },
+          "Stress, Strain, and Elastic Modulus": {
+            "difficulty": "moderate"
+          },
+          "Stretching a Rod": {
+            "difficulty": "moderate"
+          },
+          "Tensile or Compressive Stress, Strain, and Young’s Modulus": {
+            "difficulty": "moderate"
+          }
+        }
+      }
+    }
+  },
+  "Chapter 13: Gravitation": {
+    "difficulty": "moderate",
+    "sections": {
+      "Einstein's Theory of Gravity": {
+        "difficulty": "moderate",
+        "subsections": {
+          "A Geometric Theory of Gravity": {
+            "difficulty": "moderate"
+          },
+          "A Revolution in Perspective": {
+            "difficulty": "moderate"
+          },
+          "Black Holes": {
+            "difficulty": "moderate"
+          },
+          "Calculating the Schwarzschild Radius": {
+            "difficulty": "moderate"
+          },
+          "The Principle of Equivalence": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Gravitation": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Gravitation": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Gravitation Near Earth's Surface": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Apparent Weight: Accounting for Earth’s Rotation": {
+            "difficulty": "moderate"
+          },
+          "Gravitation Near Earth's Surface": {
+            "difficulty": "moderate"
+          },
+          "Gravity Away from the Surface": {
+            "difficulty": "moderate"
+          },
+          "Masses of Earth and Moon": {
+            "difficulty": "moderate"
+          },
+          "Results Away from the Equator": {
+            "difficulty": "moderate"
+          },
+          "The Gravitational Field": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Gravitational Potential Energy and Total Energy": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Conservation of Energy": {
+            "difficulty": "moderate"
+          },
+          "Escape from Earth": {
+            "difficulty": "moderate"
+          },
+          "Gravitational Potential Energy beyond Earth": {
+            "difficulty": "moderate"
+          },
+          "How Far Can an Object Escape?": {
+            "difficulty": "moderate"
+          },
+          "Lifting a Payload": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Kepler's Laws of Planetary Motion": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Kepler’s First Law": {
+            "difficulty": "moderate"
+          },
+          "Kepler’s Second Law": {
+            "difficulty": "moderate"
+          },
+          "Orbit of Halley’s Comet": {
+            "difficulty": "moderate"
+          },
+          "Orbital Transfers": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Newton's Law of Universal Gravitation": {
+        "difficulty": "moderate",
+        "subsections": {
+          "A Collision in Orbit": {
+            "difficulty": "moderate"
+          },
+          "Attraction between Galaxies": {
+            "difficulty": "moderate"
+          },
+          "Newton’s Law of Universal Gravitation": {
+            "difficulty": "moderate"
+          },
+          "The Cavendish Experiment": {
+            "difficulty": "moderate"
+          },
+          "The History of Gravitation": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Satellite Orbits and Energy": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Circular Orbits": {
+            "difficulty": "moderate"
+          },
+          "Determining the Mass of Earth": {
+            "difficulty": "moderate"
+          },
+          "Energy Required to Orbit": {
+            "difficulty": "moderate"
+          },
+          "Energy in Circular Orbits": {
+            "difficulty": "moderate"
+          },
+          "Galactic Speed and Period": {
+            "difficulty": "moderate"
+          },
+          "The International Space Station": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Tidal Forces": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Comparing Tidal Forces": {
+            "difficulty": "moderate"
+          },
+          "Lunar Tides": {
+            "difficulty": "moderate"
+          },
+          "Other Tidal Effects": {
+            "difficulty": "moderate"
+          },
+          "The Magnitude of the Tides": {
+            "difficulty": "moderate"
+          }
+        }
+      }
+    }
+  },
+  "Chapter 14: Fluid Mechanics": {
+    "difficulty": "moderate",
+    "sections": {
+      "Archimedes’ Principle and Buoyancy": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Archimedes’ Principle": {
+            "difficulty": "moderate"
+          },
+          "Archimedes’ Principle and Buoyancy": {
+            "difficulty": "moderate"
+          },
+          "Density and Archimedes’ Principle": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Bernoulli’s Equation": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Analyzing Bernoulli’s Equation": {
+            "difficulty": "moderate"
+          },
+          "Applications of Bernoulli’s Principle": {
+            "difficulty": "moderate"
+          },
+          "Bernoulli’s Equation": {
+            "difficulty": "moderate"
+          },
+          "Energy Conservation and Bernoulli’s Equation": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Fluid Dynamics": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Calculating Fluid Speed through a Nozzle": {
+            "difficulty": "moderate"
+          },
+          "Characteristics of Flow": {
+            "difficulty": "moderate"
+          },
+          "Flow Rate and its Relation to Velocity": {
+            "difficulty": "moderate"
+          },
+          "Mass Conservation": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Fluid Mechanics": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Fluid Mechanics": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Fluids, Density, and Pressure": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Characteristics of Fluids": {
+            "difficulty": "moderate"
+          },
+          "What Force Must a Dam Withstand?": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Measuring Pressure": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Fluid Heights in an Open U-Tube": {
+            "difficulty": "moderate"
+          },
+          "Gauge Pressure vs. Absolute Pressure": {
+            "difficulty": "moderate"
+          },
+          "Measuring Pressure": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Pascal's Principle and Hydraulics": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Applications of Pascal’s Principle and Hydraulic Systems": {
+            "difficulty": "moderate"
+          },
+          "Calculating Force on Wheel Cylinders: Pascal Puts on the Brakes": {
+            "difficulty": "moderate"
+          },
+          "Pascal's Principle and Hydraulics": {
+            "difficulty": "moderate"
+          },
+          "Pascal’s Principle": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Viscosity and Turbulence": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Flow and Resistance as Causes of Pressure Drops": {
+            "difficulty": "moderate"
+          },
+          "Laminar Flow Confined to Tubes: Poiseuille’s Law": {
+            "difficulty": "moderate"
+          },
+          "Measuring Turbulence": {
+            "difficulty": "moderate"
+          },
+          "Using Flow Rate: Air Conditioning Systems": {
+            "difficulty": "moderate"
+          },
+          "Viscosity and Laminar Flow": {
+            "difficulty": "moderate"
+          },
+          "Viscosity and Turbulence": {
+            "difficulty": "moderate"
+          }
+        }
+      }
+    }
+  },
+  "Chapter 15: Oscillations": {
+    "difficulty": "moderate",
+    "sections": {
+      "Comparing Simple Harmonic Motion and Circular Motion": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Comparing Simple Harmonic Motion and Circular Motion": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Damped Oscillations": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Damped Oscillations": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Energy in Simple Harmonic Motion": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Energy and the Simple Harmonic Oscillator": {
+            "difficulty": "moderate"
+          },
+          "Energy in Simple Harmonic Motion": {
+            "difficulty": "moderate"
+          },
+          "Oscillations About an Equilibrium Position": {
+            "difficulty": "moderate"
+          },
+          "Velocity and Energy Conservation": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Forced Oscillations": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Forced Oscillations": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Oscillations": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Oscillations": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Pendulums": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Measuring Acceleration due to Gravity by the Period of a Pendulum": {
+            "difficulty": "moderate"
+          },
+          "Physical Pendulum": {
+            "difficulty": "moderate"
+          },
+          "Reducing the Swaying of a Skyscraper": {
+            "difficulty": "moderate"
+          },
+          "The Simple Pendulum": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Simple Harmonic Motion": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Characteristics of Simple Harmonic Motion": {
+            "difficulty": "moderate"
+          },
+          "Equations of SHM": {
+            "difficulty": "moderate"
+          },
+          "The Period and Frequency of a Mass on a Spring": {
+            "difficulty": "moderate"
+          },
+          "Vertical Motion and a Horizontal Spring": {
+            "difficulty": "moderate"
+          }
+        }
+      }
+    }
+  },
+  "Chapter 16: Waves": {
+    "difficulty": "moderate",
+    "sections": {
+      "Energy and Power of a Wave": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Energy in Waves": {
+            "difficulty": "moderate"
+          },
+          "Power Supplied by a String Vibrator": {
+            "difficulty": "moderate"
+          },
+          "Power in Waves": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Interference of Waves": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Interference of Waves": {
+            "difficulty": "moderate"
+          },
+          "Reflection and Transmission": {
+            "difficulty": "moderate"
+          },
+          "Superposition and Interference": {
+            "difficulty": "moderate"
+          },
+          "Superposition of Sinusoidal Waves that Differ by a Phase Shift": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Mathematics of Waves": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Characteristics of a Traveling Wave on a String": {
+            "difficulty": "moderate"
+          },
+          "Interference of Waves on a String": {
+            "difficulty": "moderate"
+          },
+          "Modeling a One-Dimensional Sinusoidal Wave using a Wave Function": {
+            "difficulty": "moderate"
+          },
+          "The Linear Wave Equation": {
+            "difficulty": "moderate"
+          },
+          "Velocity and Acceleration of the Medium": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Standing Waves and Resonance": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Standing Waves": {
+            "difficulty": "moderate"
+          },
+          "Standing Waves on a String": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Traveling Waves": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Characteristics of a Wave": {
+            "difficulty": "moderate"
+          },
+          "Mechanical Waves": {
+            "difficulty": "moderate"
+          },
+          "Transverse and Longitudinal Waves": {
+            "difficulty": "moderate"
+          },
+          "Types of Waves": {
+            "difficulty": "moderate"
+          },
+          "Wave on a String": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Wave Speed on a Stretched String": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Speed of Compression Waves in a Fluid": {
+            "difficulty": "moderate"
+          },
+          "The Wave Speed of a Guitar String": {
+            "difficulty": "moderate"
+          },
+          "Wave Speed on a Stretched String": {
+            "difficulty": "moderate"
+          },
+          "Wave Speed on a String under Tension": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Waves": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Waves": {
+            "difficulty": "moderate"
+          }
+        }
+      }
+    }
+  },
+  "Chapter 17: Sound": {
+    "difficulty": "moderate",
+    "sections": {
+      "Beats": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Beats": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Normal Modes of a Standing Sound Wave": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Interference of Sound Waves": {
+            "difficulty": "moderate"
+          },
+          "Resonance in a Tube Closed at one End": {
+            "difficulty": "moderate"
+          },
+          "Resonance in a Tube Open at Both Ends": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Shock Waves": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Shock Waves": {
+            "difficulty": "moderate"
+          },
+          "Shock Waves and Sonic Booms": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Sound": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Sound": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Sound Intensity": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Changing Intensity Levels of a Sound": {
+            "difficulty": "moderate"
+          },
+          "Hearing and Pitch": {
+            "difficulty": "moderate"
+          },
+          "Human Hearing and Sound Intensity Levels": {
+            "difficulty": "moderate"
+          },
+          "Measuring Loudness": {
+            "difficulty": "moderate"
+          },
+          "Sound Intensity": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Sound Waves": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Sound Waves": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Sources of Musical Sound": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Finding the Length of a Tube with a 128-Hz Fundamental": {
+            "difficulty": "moderate"
+          },
+          "Sources of Musical Sound": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Speed of Sound": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Calculating Wavelengths": {
+            "difficulty": "moderate"
+          },
+          "Derivation of the Speed of Sound in Air": {
+            "difficulty": "moderate"
+          },
+          "Speed of Sound": {
+            "difficulty": "moderate"
+          },
+          "Speed of Sound in Various Media": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "The Doppler Effect": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Calculating a Doppler Shift": {
+            "difficulty": "moderate"
+          },
+          "Derivation of the Observed Frequency due to the Doppler Shift": {
+            "difficulty": "moderate"
+          },
+          "The Doppler Effect": {
+            "difficulty": "moderate"
+          }
+        }
+      }
+    }
+  },
+  "Chapter 1: Units and Measurement": {
+    "difficulty": "moderate",
+    "sections": {
+      "Dimensional Analysis": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Checking Equations for Dimensional Consistency": {
+            "difficulty": "moderate"
+          },
+          "Dimensional Analysis": {
+            "difficulty": "moderate"
+          },
+          "Using Dimensions to Remember an Equation": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Estimates and Fermi Calculations": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Estimates and Fermi Calculations": {
+            "difficulty": "moderate"
+          },
+          "Mass of Earth’s Oceans": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Significant Figures": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Accuracy and Precision of a Measurement": {
+            "difficulty": "moderate"
+          },
+          "Accuracy, Precision, Uncertainty, and Discrepancy": {
+            "difficulty": "moderate"
+          },
+          "Calculating Percent Uncertainty: A Bag of Apples": {
+            "difficulty": "moderate"
+          },
+          "Precision of Measuring Tools and Significant Figures": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Solving Problems in Physics": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Solving Problems in Physics": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "The Scope and Scale of Physics": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Building Models": {
+            "difficulty": "moderate"
+          },
+          "The Scale of Physics": {
+            "difficulty": "moderate"
+          },
+          "The Scope of Physics": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Unit Conversion": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Converting Nonmetric Units to Metric": {
+            "difficulty": "moderate"
+          },
+          "Converting between Metric Units": {
+            "difficulty": "moderate"
+          },
+          "Unit Conversion": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Units and Measurement": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Units and Measurement": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Units and Standards": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Metric Prefixes": {
+            "difficulty": "moderate"
+          },
+          "SI Units: Base and Derived Units": {
+            "difficulty": "moderate"
+          },
+          "Units and Standards": {
+            "difficulty": "moderate"
+          },
+          "Units of Time, Length, and Mass: The Second, Meter, and Kilogram": {
+            "difficulty": "moderate"
+          },
+          "Using Metric Prefixes": {
+            "difficulty": "moderate"
+          }
+        }
+      }
+    }
+  },
+  "Chapter 2: Vectors": {
+    "difficulty": "moderate",
+    "sections": {
+      "Algebra of Vectors": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Analytical Computation of a Resultant": {
+            "difficulty": "moderate"
+          },
+          "Direction of Motion": {
+            "difficulty": "moderate"
+          },
+          "Displacement of a Jogger": {
+            "difficulty": "moderate"
+          },
+          "Displacement of a Skier": {
+            "difficulty": "moderate"
+          },
+          "The Tug-of-War Game": {
+            "difficulty": "moderate"
+          },
+          "The Unit Vector of Direction": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Coordinate Systems and Components of a Vector": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Components of Displacement Vectors": {
+            "difficulty": "moderate"
+          },
+          "Coordinate Systems and Components of a Vector": {
+            "difficulty": "moderate"
+          },
+          "Displacement of a Mouse Pointer": {
+            "difficulty": "moderate"
+          },
+          "Magnitude and Direction of the Displacement Vector": {
+            "difficulty": "moderate"
+          },
+          "Polar Coordinates": {
+            "difficulty": "moderate"
+          },
+          "Takeoff of a Drone": {
+            "difficulty": "moderate"
+          },
+          "Vectors in Three Dimensions": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Products of Vectors": {
+        "difficulty": "moderate",
+        "subsections": {
+          "A Particle in a Magnetic Field": {
+            "difficulty": "moderate"
+          },
+          "Angle between Two Forces": {
+            "difficulty": "moderate"
+          },
+          "Products of Vectors": {
+            "difficulty": "moderate"
+          },
+          "The Scalar Product": {
+            "difficulty": "moderate"
+          },
+          "The Torque of a Force": {
+            "difficulty": "moderate"
+          },
+          "The Vector Product of Two Vectors (the Cross Product)": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Scalars and Vectors": {
+        "difficulty": "moderate",
+        "subsections": {
+          "A Ladybug Walker": {
+            "difficulty": "moderate"
+          },
+          "Algebra of Vectors in One Dimension": {
+            "difficulty": "moderate"
+          },
+          "Algebra of Vectors in Two Dimensions": {
+            "difficulty": "moderate"
+          },
+          "Geometric Construction of the Resultant": {
+            "difficulty": "moderate"
+          },
+          "Scalars and Vectors": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Vectors": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Vectors": {
+            "difficulty": "moderate"
+          }
+        }
+      }
+    }
+  },
+  "Chapter 3: Motion Along a Straight Line": {
+    "difficulty": "moderate",
+    "sections": {
+      "Average and Instantaneous Acceleration": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Average Acceleration": {
+            "difficulty": "moderate"
+          },
+          "Average and Instantaneous Acceleration": {
+            "difficulty": "moderate"
+          },
+          "Calculating Average Acceleration: A Racehorse Leaves the Gate": {
+            "difficulty": "moderate"
+          },
+          "Calculating Instantaneous Acceleration": {
+            "difficulty": "moderate"
+          },
+          "Getting a Feel for Acceleration": {
+            "difficulty": "moderate"
+          },
+          "Instantaneous Acceleration": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Finding Velocity and Displacement from Acceleration": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Motion of a Motorboat": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Free Fall": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Free Fall": {
+            "difficulty": "moderate"
+          },
+          "Free Fall of a Ball": {
+            "difficulty": "moderate"
+          },
+          "One-Dimensional Motion Involving Gravity": {
+            "difficulty": "moderate"
+          },
+          "Rocket Booster": {
+            "difficulty": "moderate"
+          },
+          "Vertical Motion of a Baseball": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Instantaneous Velocity and Speed": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Finding Velocity from a Position-Versus-Time Graph": {
+            "difficulty": "moderate"
+          },
+          "Instantaneous Velocity": {
+            "difficulty": "moderate"
+          },
+          "Instantaneous Velocity Versus Speed": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Motion Along a Straight Line": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Motion Along a Straight Line": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Motion with Constant Acceleration": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Acceleration of a Spaceship": {
+            "difficulty": "moderate"
+          },
+          "Calculating Displacement of an Accelerating Object": {
+            "difficulty": "moderate"
+          },
+          "Calculating Final Velocity": {
+            "difficulty": "moderate"
+          },
+          "Calculating Time": {
+            "difficulty": "moderate"
+          },
+          "Cheetah Catching a Gazelle": {
+            "difficulty": "moderate"
+          },
+          "How Far Does a Car Go?": {
+            "difficulty": "moderate"
+          },
+          "Motion with Constant Acceleration": {
+            "difficulty": "moderate"
+          },
+          "Putting Equations Together": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Position, Displacement, and Average Velocity": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Delivering Flyers": {
+            "difficulty": "moderate"
+          },
+          "Position, Displacement, and Average Velocity": {
+            "difficulty": "moderate"
+          }
+        }
+      }
+    }
+  },
+  "Chapter 4: Motion in Two and Three Dimensions": {
+    "difficulty": "moderate",
+    "sections": {
+      "Acceleration Vector": {
+        "difficulty": "moderate",
+        "subsections": {
+          "A Skier": {
+            "difficulty": "moderate"
+          },
+          "Finding a Particle Acceleration": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Displacement and Velocity Vectors": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Displacement Vector": {
+            "difficulty": "moderate"
+          },
+          "Polar Orbiting Satellite": {
+            "difficulty": "moderate"
+          },
+          "The Independence of Perpendicular Motions": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Motion in Two and Three Dimensions": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Motion in Two and Three Dimensions": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Projectile Motion": {
+        "difficulty": "moderate",
+        "subsections": {
+          "A Fireworks Projectile Explodes High and Away": {
+            "difficulty": "moderate"
+          },
+          "Calculating Projectile Motion: Tennis Player": {
+            "difficulty": "moderate"
+          },
+          "Comparing Golf Shots": {
+            "difficulty": "moderate"
+          },
+          "Projectile Motion": {
+            "difficulty": "moderate"
+          },
+          "Time of Flight, Trajectory, and Range": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Relative Motion in One and Two Dimensions": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Flying a Plane in a Wind": {
+            "difficulty": "moderate"
+          },
+          "Motion of a Car Relative to a Truck": {
+            "difficulty": "moderate"
+          },
+          "Relative Motion in One Dimension": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Uniform and Nonuniform Circular Motion": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Centripetal Acceleration": {
+            "difficulty": "moderate"
+          },
+          "Creating an Acceleration of 1 g": {
+            "difficulty": "moderate"
+          },
+          "Equations of Motion for Uniform Circular Motion": {
+            "difficulty": "moderate"
+          },
+          "Nonuniform Circular Motion": {
+            "difficulty": "moderate"
+          },
+          "Total Acceleration during Circular Motion": {
+            "difficulty": "moderate"
+          }
+        }
+      }
+    }
+  },
+  "Chapter 5: Newton's Laws of Motion": {
+    "difficulty": "moderate",
+    "sections": {
+      "Common Forces": {
+        "difficulty": "moderate",
+        "subsections": {
+          "A Catalog of Forces: Normal, Tension, and Other Examples of Forces": {
+            "difficulty": "moderate"
+          },
+          "Real Forces and Inertial Frames": {
+            "difficulty": "moderate"
+          },
+          "Weight on an Incline": {
+            "difficulty": "moderate"
+          },
+          "What Is the Tension in a Tightrope?": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Drawing Free-Body Diagrams": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Block on the Table (Coupled Blocks)": {
+            "difficulty": "moderate"
+          },
+          "Drawing Free-Body Diagrams": {
+            "difficulty": "moderate"
+          },
+          "Two Blocks on an Inclined Plane": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Forces": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Development of the Force Concept": {
+            "difficulty": "moderate"
+          },
+          "Forces": {
+            "difficulty": "moderate"
+          },
+          "Vector Notation for Force": {
+            "difficulty": "moderate"
+          },
+          "Working Definition of Force": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Mass and Weight": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Weight and Gravitational Force": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Newton's First Law": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Inertial Reference Frames": {
+            "difficulty": "moderate"
+          },
+          "Newton's First Law": {
+            "difficulty": "moderate"
+          },
+          "Newton’s First Law and Equilibrium": {
+            "difficulty": "moderate"
+          },
+          "When Does Newton’s First Law Apply to Your Car?": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Newton's Laws of Motion": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Newton's Laws of Motion": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Newton's Second Law": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Force and Acceleration": {
+            "difficulty": "moderate"
+          },
+          "Newton’s Second Law and Momentum": {
+            "difficulty": "moderate"
+          },
+          "Several Forces on a Particle": {
+            "difficulty": "moderate"
+          },
+          "What Acceleration Can a Person Produce When Pushing a Lawn Mower?": {
+            "difficulty": "moderate"
+          },
+          "What Rocket Thrust Accelerates This Sled?": {
+            "difficulty": "moderate"
+          },
+          "Which Force Is Bigger?": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Newton’s Third Law": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Force on the Cart: Choosing a New System": {
+            "difficulty": "moderate"
+          },
+          "Getting Up to Speed: Choosing the Correct System": {
+            "difficulty": "moderate"
+          },
+          "Newton’s Third Law": {
+            "difficulty": "moderate"
+          }
+        }
+      }
+    }
+  },
+  "Chapter 6: Applications of Newton's Laws": {
+    "difficulty": "moderate",
+    "sections": {
+      "Applications of Newton's Laws": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Applications of Newton's Laws": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Centripetal Force": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Banked Curves": {
+            "difficulty": "moderate"
+          },
+          "Centripetal Force": {
+            "difficulty": "moderate"
+          },
+          "Inertial Forces and Noninertial (Accelerated) Frames: The Coriolis Force": {
+            "difficulty": "moderate"
+          },
+          "What Coefficient of Friction Do Cars Need on a Flat Curve?": {
+            "difficulty": "moderate"
+          },
+          "What Is the Ideal Speed to Take a Steeply Banked Tight Curve?": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Drag Force and Terminal Speed": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Drag Forces": {
+            "difficulty": "moderate"
+          },
+          "Effect of the Resistive Force on a Motorboat": {
+            "difficulty": "moderate"
+          },
+          "Terminal Velocity": {
+            "difficulty": "moderate"
+          },
+          "Terminal Velocity of a Skydiver": {
+            "difficulty": "moderate"
+          },
+          "The Calculus of Velocity-Dependent Frictional Forces": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Friction": {
+        "difficulty": "moderate",
+        "subsections": {
+          "A Crate on an Accelerating Truck": {
+            "difficulty": "moderate"
+          },
+          "Atomic-Scale Explanations of Friction": {
+            "difficulty": "moderate"
+          },
+          "Downhill Skier": {
+            "difficulty": "moderate"
+          },
+          "Sliding Blocks": {
+            "difficulty": "moderate"
+          },
+          "Static and Kinetic Friction": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Solving Problems with Newton’s Laws": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Atwood Machine": {
+            "difficulty": "moderate"
+          },
+          "Baggage Tractor": {
+            "difficulty": "moderate"
+          },
+          "Different Tensions at Different Angles": {
+            "difficulty": "moderate"
+          },
+          "Drag Force on a Barge": {
+            "difficulty": "moderate"
+          },
+          "Motion of a Projectile Fired Vertically": {
+            "difficulty": "moderate"
+          },
+          "Problem-Solving Strategies": {
+            "difficulty": "moderate"
+          },
+          "Two Attached Blocks": {
+            "difficulty": "moderate"
+          },
+          "What Does the Bathroom Scale Read in an Elevator?": {
+            "difficulty": "moderate"
+          },
+          "What Force Must a Soccer Player Exert to Reach Top Speed?": {
+            "difficulty": "moderate"
+          }
+        }
+      }
+    }
+  },
+  "Chapter 7: Work and Kinetic Energy": {
+    "difficulty": "moderate",
+    "sections": {
+      "Kinetic Energy": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Kinetic Energy": {
+            "difficulty": "moderate"
+          },
+          "Kinetic Energy Relative to Different Frames": {
+            "difficulty": "moderate"
+          },
+          "Kinetic Energy of an Object": {
+            "difficulty": "moderate"
+          },
+          "Special Names for Kinetic Energy": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Power": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Power": {
+            "difficulty": "moderate"
+          },
+          "Pull-Up Power": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Work": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Calculating the Work You Do to Push a Lawn Mower": {
+            "difficulty": "moderate"
+          },
+          "Moving a Couch": {
+            "difficulty": "moderate"
+          },
+          "Shelving a Book": {
+            "difficulty": "moderate"
+          },
+          "Work": {
+            "difficulty": "moderate"
+          },
+          "Work Done by Constant Forces and Contact Forces": {
+            "difficulty": "moderate"
+          },
+          "Work Done by a Spring Force": {
+            "difficulty": "moderate"
+          },
+          "Work Done by a Variable Force over a Curved Path": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Work and Kinetic Energy": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Work and Kinetic Energy": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Work-Energy Theorem": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Determining a Stopping Force": {
+            "difficulty": "moderate"
+          },
+          "Work-Energy Theorem": {
+            "difficulty": "moderate"
+          }
+        }
+      }
+    }
+  },
+  "Chapter 8: Potential Energy and Conservation of Energy": {
+    "difficulty": "moderate",
+    "sections": {
+      "Conservation of Energy": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Air Resistance on a Falling Object": {
+            "difficulty": "moderate"
+          },
+          "Conservation of Energy": {
+            "difficulty": "moderate"
+          },
+          "Constant Acceleration": {
+            "difficulty": "moderate"
+          },
+          "Simple Pendulum": {
+            "difficulty": "moderate"
+          },
+          "Systems with a Single Particle or Object": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Conservative and Non-Conservative Forces": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Conservative and Non-Conservative Forces": {
+            "difficulty": "moderate"
+          },
+          "Conservative or Not?": {
+            "difficulty": "moderate"
+          },
+          "Force due to a Quartic Potential Energy": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Potential Energy Diagrams and Stability": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Potential Energy Diagrams and Stability": {
+            "difficulty": "moderate"
+          },
+          "Quartic and Quadratic Potential Energy Diagram": {
+            "difficulty": "moderate"
+          },
+          "Sinusoidal Oscillations": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Potential Energy and Conservation of Energy": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Potential Energy and Conservation of Energy": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Potential Energy of a System": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Basic Properties of Potential Energy": {
+            "difficulty": "moderate"
+          },
+          "Gravitational Potential Energy of a Hiker": {
+            "difficulty": "moderate"
+          },
+          "Potential Energy Basics": {
+            "difficulty": "moderate"
+          },
+          "Potential Energy of a Vertical Mass-Spring System": {
+            "difficulty": "moderate"
+          },
+          "Spring Potential Energy": {
+            "difficulty": "moderate"
+          },
+          "Types of Potential Energy": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Sources of Energy": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Sources of Energy": {
+            "difficulty": "moderate"
+          }
+        }
+      }
+    }
+  },
+  "Chapter 9: Linear Momentum and Collisions": {
+    "difficulty": "moderate",
+    "sections": {
+      "Center of Mass": {
+        "difficulty": "moderate",
+        "subsections": {
+          "CM of a Uniform Thin Hoop": {
+            "difficulty": "moderate"
+          },
+          "Center of Mass": {
+            "difficulty": "moderate"
+          },
+          "Center of Mass and Conservation of Momentum": {
+            "difficulty": "moderate"
+          },
+          "Center of Mass of a Salt Crystal": {
+            "difficulty": "moderate"
+          },
+          "Center of Mass of the Earth-Moon System": {
+            "difficulty": "moderate"
+          },
+          "Fireworks Display": {
+            "difficulty": "moderate"
+          },
+          "Internal and External Forces": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Collisions in Multiple Dimensions": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Collisions in Multiple Dimensions": {
+            "difficulty": "moderate"
+          },
+          "Exploding Scuba Tank": {
+            "difficulty": "moderate"
+          },
+          "Traffic Collision": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Conservation of Linear Momentum": {
+        "difficulty": "moderate",
+        "subsections": {
+          "A Bouncing Superball": {
+            "difficulty": "moderate"
+          },
+          "Colliding Carts": {
+            "difficulty": "moderate"
+          },
+          "Conservation of Linear Momentum": {
+            "difficulty": "moderate"
+          },
+          "Ice Hockey 1": {
+            "difficulty": "moderate"
+          },
+          "Landing of Philae": {
+            "difficulty": "moderate"
+          },
+          "Requirements for Momentum Conservation": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Impulse and Collisions": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Calculating Force: Venus Williams’ Tennis Serve": {
+            "difficulty": "moderate"
+          },
+          "Effect of Impulse": {
+            "difficulty": "moderate"
+          },
+          "Impulse and Collisions": {
+            "difficulty": "moderate"
+          },
+          "Momentum and Force": {
+            "difficulty": "moderate"
+          },
+          "Moving the Enterprise": {
+            "difficulty": "moderate"
+          },
+          "The Arizona Meteor Crater": {
+            "difficulty": "moderate"
+          },
+          "The Benefits of Impulse": {
+            "difficulty": "moderate"
+          },
+          "The iPhone Drop": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Linear Momentum": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Linear Momentum": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Linear Momentum and Collisions": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Linear Momentum and Collisions": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Rocket Propulsion": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Physical Analysis": {
+            "difficulty": "moderate"
+          },
+          "Rocket Propulsion": {
+            "difficulty": "moderate"
+          },
+          "Rocket in a Gravitational Field": {
+            "difficulty": "moderate"
+          },
+          "Thrust on a Spacecraft": {
+            "difficulty": "moderate"
+          }
+        }
+      },
+      "Types of Collisions": {
+        "difficulty": "moderate",
+        "subsections": {
+          "Analyzing a Car Crash": {
+            "difficulty": "moderate"
+          },
+          "Ice Hockey 2": {
+            "difficulty": "moderate"
+          },
+          "Subatomic Collisions and Momentum": {
+            "difficulty": "moderate"
+          },
+          "Thor vs. Iron Man": {
+            "difficulty": "moderate"
+          },
+          "Types of Collisions": {
+            "difficulty": "moderate"
+          }
+        }
+      }
+    }
+  }
+}

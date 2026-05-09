@@ -59,3 +59,22 @@ domain:
 
   # Display-label rewrite tone (per L19 / L78).
   display_label_style: "concise student-friendly physics phrasing"
+
+# Topic-index (TOC-grounded topic menu) configuration.
+# Mirrors ot.yaml shape; junk_patterns are physics-specific (OpenStax
+# University Physics doesn't use the OT/A&P callout vocabulary).
+topic_index:
+  min_chunk_count: 1
+  limited_chunk_threshold: 2
+  junk_patterns:
+    - "INTERACTIVE LINK"
+    - "EVERYDAY CONNECTION"
+    - "INDEX"
+    - "PROBLEMS"
+    - "ADDITIONAL PROBLEMS"
+    - "CHALLENGE PROBLEMS"
+    - "CHAPTER REVIEW"
+    - "REVIEW QUESTIONS"
+    - "CONCEPTUAL QUESTIONS"
+  junk_suffixes:
+    - "..."

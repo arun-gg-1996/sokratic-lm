@@ -47,15 +47,21 @@ from conversation.llm_client import (  # noqa: E402
     resolve_model,
 )
 
-TOPIC_INDEX_PATH = REPO / "data" / "topic_index.json"
-CHUNKS_PATH = REPO / "data" / "processed" / "chunks_openstax_anatomy.jsonl"
-RAPTOR_PATH = REPO / "data" / "artifacts" / "raptor_subsection_summaries.jsonl"
+from config import cfg as _cfg  # noqa: E402
+
+TOPIC_INDEX_PATH = REPO / _cfg.domain_path("topic_index")
+CHUNKS_PATH = REPO / _cfg.domain_path("chunks")
+RAPTOR_PATH = REPO / _cfg.domain_path("raptor_subsection_summaries")
 
 SONNET_MODEL = "claude-sonnet-4-6"
 HAIKU_MODEL = "claude-haiku-4-5-20251001"
 
-# Display label conventions — concise, student-friendly, anatomical.
-DISPLAY_LABEL_STYLE = "concise student-friendly anatomical phrasing"
+# Display label conventions — pulled from the active domain config so anatomy
+# and physics each get domain-appropriate phrasing.
+DISPLAY_LABEL_STYLE = getattr(
+    _cfg.domain, "display_label_style",
+    "concise student-friendly phrasing",
+)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Loaders

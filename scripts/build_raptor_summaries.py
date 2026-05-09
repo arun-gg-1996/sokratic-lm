@@ -67,28 +67,26 @@ from rank_bm25 import BM25Okapi  # noqa: E402
 from config import cfg  # noqa: E402
 from ingestion.core.index import stem_tokenize  # noqa: E402
 
-CHUNKS_PATH = ROOT / "data/processed/chunks_openstax_anatomy.jsonl"
-BM25_PATH = ROOT / "data/indexes/bm25_chunks_openstax_anatomy.pkl"
+CHUNKS_PATH = ROOT / cfg.domain_path("chunks")
+BM25_PATH = ROOT / cfg.domain_path("bm25")
 EMBED_MODEL = "text-embedding-3-large"
 SUMMARY_MODEL = "claude-haiku-4-5-20251001"
-DOMAIN = "openstax_anatomy"
-COLLECTION = "sokratic_kb_chunks"
+DOMAIN = cfg.domain.retrieval_domain
+COLLECTION = cfg.domain.kb_collection
 EMBED_BATCH_SIZE = 100
 UPSERT_BATCH_SIZE = 100
 SEMAPHORE = 8       # parallel Anthropic calls
 MAX_INPUT_TOKENS = 80_000  # safety; chapters fit in Haiku's 200k context
 
 SUMMARY_PROMPT_SUBSECTION = """\
-You are summarizing a subsection of an undergraduate human anatomy and
-physiology textbook for a retrieval index. Produce a 4-6 sentence summary
-that:
+You are summarizing a subsection of an undergraduate {domain_descriptor}
+textbook for a retrieval index. Produce a 4-6 sentence summary that:
 
-  - Names the key anatomical structures, processes, or concepts the
-    subsection introduces.
+  - Names the key {domain_entity_label} the subsection introduces.
   - Lists the entities a student would search for to find this content
     (use the exact terminology the textbook uses, not paraphrases).
-  - Captures any relationships the textbook explicitly states ("X innervates
-    Y", "A causes B", "in P, structure Q connects to R").
+  - Captures any relationships the textbook explicitly states (e.g.
+    "X causes Y", "A connects to B", "in P, quantity Q depends on R").
   - Stays grounded — only summarize what the source states; do not infer
     or add outside knowledge.
 
@@ -105,11 +103,11 @@ SOURCE CHUNKS (concatenated):
 Write only the summary, no preamble."""
 
 SUMMARY_PROMPT_SECTION = """\
-You are summarizing a SECTION of an undergraduate human anatomy and
-physiology textbook for a retrieval index. Produce a 6-10 sentence
-summary that lists the topics covered in each subsection within the
-section, naming key structures and relationships. Use the textbook's
-exact terminology. Stay grounded in the source.
+You are summarizing a SECTION of an undergraduate {domain_descriptor}
+textbook for a retrieval index. Produce a 6-10 sentence summary that
+lists the topics covered in each subsection within the section, naming
+key {domain_entity_label} and relationships. Use the textbook's exact
+terminology. Stay grounded in the source.
 
 CHAPTER {chapter_num}: {chapter_title}
 SECTION: {section_title}
@@ -118,6 +116,24 @@ SOURCE (subsection summaries already produced for this section):
 {source}
 
 Write only the summary, no preamble."""
+
+# Per-domain noun phrasing for the summary prompt. The domain selector
+# (cfg.domain.short) routes to the right pair so anatomy keeps its
+# precise wording and physics gets quantity/concept-oriented phrasing.
+_DOMAIN_PROMPT_VARS: dict[str, dict[str, str]] = {
+    "anatomy": {
+        "domain_descriptor": "human anatomy and physiology",
+        "domain_entity_label": "anatomical structures, processes, or concepts",
+    },
+    "physics": {
+        "domain_descriptor": "university physics",
+        "domain_entity_label": "physical quantities, principles, or relationships",
+    },
+}
+
+def _domain_prompt_vars() -> dict[str, str]:
+    short = (getattr(cfg.domain, "short", "") or "").lower()
+    return _DOMAIN_PROMPT_VARS.get(short, _DOMAIN_PROMPT_VARS["anatomy"])
 
 def load_chunks(path: Path) -> list[dict]:
     out = []
@@ -192,6 +208,7 @@ async def build_subsection_summaries(
             chapter_num=ch, chapter_title=chapter_title,
             section_title=sec, subsection_title=sub or "(intro)",
             source=source_text,
+            **_domain_prompt_vars(),
         )
         tasks.append(summarize_one(sem, client, prompt,
                                    label=f"{ch}|{sec}|{sub}"))
@@ -258,6 +275,7 @@ async def build_section_summaries(
         prompt = SUMMARY_PROMPT_SECTION.format(
             chapter_num=ch, chapter_title=chapter_title,
             section_title=sec, source=source_text,
+            **_domain_prompt_vars(),
         )
         tasks.append(summarize_one(sem, client, prompt,
                                    label=f"{ch}|{sec}"))
@@ -368,38 +386,46 @@ async def main_async(args):
     sec_groups = group_by_section(chunks)
     print(f"  {len(sub_groups)} subsection groups, {len(sec_groups)} section groups")
 
-    qdrant = QdrantClient(host=cfg.memory.qdrant_host, port=cfg.memory.qdrant_port)
-    openai = OpenAI()
+    # qdrant + openai clients only constructed when we'll actually upsert.
+    # The summaries-only mode (e.g. brand-new domain prep) skips both so
+    # there's no requirement that the collection or the API key exist.
+    qdrant = None
+    openai = None
+    if not args.no_embed_upsert:
+        qdrant = QdrantClient(host=cfg.memory.qdrant_host, port=cfg.memory.qdrant_port)
+        openai = OpenAI()
 
     print(f"\n=== Building subsection summaries ({len(sub_groups)} groups) ===")
     sub_summaries = await build_subsection_summaries(sub_groups, limit=args.limit)
     # Save raw artifact for review
-    out = ROOT / "data/artifacts/raptor_subsection_summaries.jsonl"
+    out = ROOT / cfg.domain_path("raptor_subsection_summaries")
     out.parent.mkdir(parents=True, exist_ok=True)
     with open(out, "w") as f:
         for s in sub_summaries:
             f.write(json.dumps(s) + "\n")
     print(f"  saved → {out.relative_to(ROOT)}")
 
-    print("\n  Embedding + upserting subsection summaries to Qdrant...")
-    n = upsert_summaries(qdrant, openai, sub_summaries, "subsection_summary")
-    print(f"  upserted {n} subsection summaries to '{COLLECTION}'")
-    append_to_bm25(sub_summaries, "subsection_summary")
+    if not args.no_embed_upsert:
+        print("\n  Embedding + upserting subsection summaries to Qdrant...")
+        n = upsert_summaries(qdrant, openai, sub_summaries, "subsection_summary")
+        print(f"  upserted {n} subsection summaries to '{COLLECTION}'")
+        append_to_bm25(sub_summaries, "subsection_summary")
 
     if args.section_only or not args.skip_section:
         print(f"\n=== Building section summaries ({len(sec_groups)} groups) ===")
         sec_summaries = await build_section_summaries(
             sec_groups, sub_summaries, limit=args.limit
         )
-        out = ROOT / "data/artifacts/raptor_section_summaries.jsonl"
+        out = ROOT / cfg.domain_path("raptor_section_summaries")
         with open(out, "w") as f:
             for s in sec_summaries:
                 f.write(json.dumps(s) + "\n")
         print(f"  saved → {out.relative_to(ROOT)}")
-        print("\n  Embedding + upserting section summaries to Qdrant...")
-        n = upsert_summaries(qdrant, openai, sec_summaries, "section_summary")
-        print(f"  upserted {n} section summaries to '{COLLECTION}'")
-        append_to_bm25(sec_summaries, "section_summary")
+        if not args.no_embed_upsert:
+            print("\n  Embedding + upserting section summaries to Qdrant...")
+            n = upsert_summaries(qdrant, openai, sec_summaries, "section_summary")
+            print(f"  upserted {n} section summaries to '{COLLECTION}'")
+            append_to_bm25(sec_summaries, "section_summary")
 
     print("\nALL DONE.")
 
@@ -411,6 +437,12 @@ def main():
                     help="only build subsection summaries (skip section-level)")
     ap.add_argument("--section-only", action="store_true",
                     help="only section-level (skip subsection)")
+    ap.add_argument("--no-embed-upsert", action="store_true",
+                    help="write the JSONL artifacts but skip OpenAI embedding "
+                         "+ qdrant upsert + BM25 append. Use when prepping a "
+                         "fresh domain that doesn't yet have a qdrant "
+                         "collection or when you want to run the full "
+                         "pipeline later.")
     args = ap.parse_args()
     asyncio.run(main_async(args))
 

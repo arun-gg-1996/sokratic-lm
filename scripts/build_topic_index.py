@@ -31,9 +31,9 @@ sys.path.insert(0, str(ROOT))
 
 from config import cfg  # noqa: E402
 
-STRUCTURE_PATH = ROOT / getattr(cfg.paths, "textbook_structure", "data/textbook_structure.json")
+STRUCTURE_PATH = ROOT / cfg.domain_path("textbook_structure")
 CHUNKS_PATH = ROOT / cfg.domain_path("chunks")
-OUT_PATH = ROOT / "data" / "topic_index.json"
+OUT_PATH = ROOT / cfg.domain_path("topic_index")
 
 CHAPTER_PREFIX_RE = re.compile(r"^Chapter\s+\d+\s*:\s*", re.IGNORECASE)
 CHAPTER_NUM_RE = re.compile(r"^Chapter\s+(\d+)\s*:", re.IGNORECASE)

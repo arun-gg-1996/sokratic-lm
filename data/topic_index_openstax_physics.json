@@ -1,0 +1,3872 @@
+[
+  {
+    "chapter": "Angular Momentum",
+    "chapter_num": 11,
+    "section": "Angular Momentum",
+    "subsection": "Angular Momentum",
+    "difficulty": "moderate",
+    "chunk_count": 7,
+    "limited": false,
+    "path": "Chapter 11: Angular Momentum > Angular Momentum > Angular Momentum"
+  },
+  {
+    "chapter": "Angular Momentum",
+    "chapter_num": 11,
+    "section": "Angular Momentum",
+    "subsection": "Angular Momentum and Torque on a Meteor",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 11: Angular Momentum > Angular Momentum > Angular Momentum and Torque on a Meteor"
+  },
+  {
+    "chapter": "Angular Momentum",
+    "chapter_num": 11,
+    "section": "Angular Momentum",
+    "subsection": "Angular Momentum of a Rigid Body",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 11: Angular Momentum > Angular Momentum > Angular Momentum of a Rigid Body"
+  },
+  {
+    "chapter": "Angular Momentum",
+    "chapter_num": 11,
+    "section": "Angular Momentum",
+    "subsection": "Angular Momentum of a Robot Arm",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 11: Angular Momentum > Angular Momentum > Angular Momentum of a Robot Arm"
+  },
+  {
+    "chapter": "Angular Momentum",
+    "chapter_num": 11,
+    "section": "Angular Momentum",
+    "subsection": "Angular Momentum of a Single Particle",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 11: Angular Momentum > Angular Momentum > Angular Momentum of a Single Particle"
+  },
+  {
+    "chapter": "Angular Momentum",
+    "chapter_num": 11,
+    "section": "Angular Momentum",
+    "subsection": "Angular Momentum of a System of Particles",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 11: Angular Momentum > Angular Momentum > Angular Momentum of a System of Particles"
+  },
+  {
+    "chapter": "Angular Momentum",
+    "chapter_num": 11,
+    "section": "Conservation of Angular Momentum",
+    "subsection": "Conservation of Angular Momentum",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 11: Angular Momentum > Conservation of Angular Momentum > Conservation of Angular Momentum"
+  },
+  {
+    "chapter": "Angular Momentum",
+    "chapter_num": 11,
+    "section": "Conservation of Angular Momentum",
+    "subsection": "Conservation of Angular Momentum of a Collision",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 11: Angular Momentum > Conservation of Angular Momentum > Conservation of Angular Momentum of a Collision"
+  },
+  {
+    "chapter": "Angular Momentum",
+    "chapter_num": 11,
+    "section": "Conservation of Angular Momentum",
+    "subsection": "Coupled Flywheels",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 11: Angular Momentum > Conservation of Angular Momentum > Coupled Flywheels"
+  },
+  {
+    "chapter": "Angular Momentum",
+    "chapter_num": 11,
+    "section": "Conservation of Angular Momentum",
+    "subsection": "Dismount from a High Bar",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 11: Angular Momentum > Conservation of Angular Momentum > Dismount from a High Bar"
+  },
+  {
+    "chapter": "Angular Momentum",
+    "chapter_num": 11,
+    "section": "Precession of a Gyroscope",
+    "subsection": "Precession of a Gyroscope",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 11: Angular Momentum > Precession of a Gyroscope > Precession of a Gyroscope"
+  },
+  {
+    "chapter": "Angular Momentum",
+    "chapter_num": 11,
+    "section": "Rolling Motion",
+    "subsection": "Curiosity Rover",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 11: Angular Momentum > Rolling Motion > Curiosity Rover"
+  },
+  {
+    "chapter": "Angular Momentum",
+    "chapter_num": 11,
+    "section": "Rolling Motion",
+    "subsection": "Rolling Down an Inclined Plane",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 11: Angular Momentum > Rolling Motion > Rolling Down an Inclined Plane"
+  },
+  {
+    "chapter": "Angular Momentum",
+    "chapter_num": 11,
+    "section": "Rolling Motion",
+    "subsection": "Rolling Down an Inclined Plane with Slipping",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 11: Angular Momentum > Rolling Motion > Rolling Down an Inclined Plane with Slipping"
+  },
+  {
+    "chapter": "Angular Momentum",
+    "chapter_num": 11,
+    "section": "Rolling Motion",
+    "subsection": "Rolling Motion without Slipping",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 11: Angular Momentum > Rolling Motion > Rolling Motion without Slipping"
+  },
+  {
+    "chapter": "Applications of Newton's Laws",
+    "chapter_num": 6,
+    "section": "Applications of Newton's Laws",
+    "subsection": "Applications of Newton's Laws",
+    "difficulty": "moderate",
+    "chunk_count": 5,
+    "limited": false,
+    "path": "Chapter 6: Applications of Newton's Laws > Applications of Newton's Laws > Applications of Newton's Laws"
+  },
+  {
+    "chapter": "Applications of Newton's Laws",
+    "chapter_num": 6,
+    "section": "Centripetal Force",
+    "subsection": "Banked Curves",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 6: Applications of Newton's Laws > Centripetal Force > Banked Curves"
+  },
+  {
+    "chapter": "Applications of Newton's Laws",
+    "chapter_num": 6,
+    "section": "Centripetal Force",
+    "subsection": "Centripetal Force",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 6: Applications of Newton's Laws > Centripetal Force > Centripetal Force"
+  },
+  {
+    "chapter": "Applications of Newton's Laws",
+    "chapter_num": 6,
+    "section": "Centripetal Force",
+    "subsection": "Inertial Forces and Noninertial (Accelerated) Frames: The Coriolis Force",
+    "difficulty": "moderate",
+    "chunk_count": 26,
+    "limited": false,
+    "path": "Chapter 6: Applications of Newton's Laws > Centripetal Force > Inertial Forces and Noninertial (Accelerated) Frames: The Coriolis Force"
+  },
+  {
+    "chapter": "Applications of Newton's Laws",
+    "chapter_num": 6,
+    "section": "Centripetal Force",
+    "subsection": "What Coefficient of Friction Do Cars Need on a Flat Curve?",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 6: Applications of Newton's Laws > Centripetal Force > What Coefficient of Friction Do Cars Need on a Flat Curve?"
+  },
+  {
+    "chapter": "Applications of Newton's Laws",
+    "chapter_num": 6,
+    "section": "Centripetal Force",
+    "subsection": "What Is the Ideal Speed to Take a Steeply Banked Tight Curve?",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 6: Applications of Newton's Laws > Centripetal Force > What Is the Ideal Speed to Take a Steeply Banked Tight Curve?"
+  },
+  {
+    "chapter": "Applications of Newton's Laws",
+    "chapter_num": 6,
+    "section": "Drag Force and Terminal Speed",
+    "subsection": "Drag Forces",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 6: Applications of Newton's Laws > Drag Force and Terminal Speed > Drag Forces"
+  },
+  {
+    "chapter": "Applications of Newton's Laws",
+    "chapter_num": 6,
+    "section": "Drag Force and Terminal Speed",
+    "subsection": "Effect of the Resistive Force on a Motorboat",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 6: Applications of Newton's Laws > Drag Force and Terminal Speed > Effect of the Resistive Force on a Motorboat"
+  },
+  {
+    "chapter": "Applications of Newton's Laws",
+    "chapter_num": 6,
+    "section": "Drag Force and Terminal Speed",
+    "subsection": "Terminal Velocity",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 6: Applications of Newton's Laws > Drag Force and Terminal Speed > Terminal Velocity"
+  },
+  {
+    "chapter": "Applications of Newton's Laws",
+    "chapter_num": 6,
+    "section": "Drag Force and Terminal Speed",
+    "subsection": "Terminal Velocity of a Skydiver",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 6: Applications of Newton's Laws > Drag Force and Terminal Speed > Terminal Velocity of a Skydiver"
+  },
+  {
+    "chapter": "Applications of Newton's Laws",
+    "chapter_num": 6,
+    "section": "Drag Force and Terminal Speed",
+    "subsection": "The Calculus of Velocity-Dependent Frictional Forces",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 6: Applications of Newton's Laws > Drag Force and Terminal Speed > The Calculus of Velocity-Dependent Frictional Forces"
+  },
+  {
+    "chapter": "Applications of Newton's Laws",
+    "chapter_num": 6,
+    "section": "Friction",
+    "subsection": "A Crate on an Accelerating Truck",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 6: Applications of Newton's Laws > Friction > A Crate on an Accelerating Truck"
+  },
+  {
+    "chapter": "Applications of Newton's Laws",
+    "chapter_num": 6,
+    "section": "Friction",
+    "subsection": "Atomic-Scale Explanations of Friction",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 6: Applications of Newton's Laws > Friction > Atomic-Scale Explanations of Friction"
+  },
+  {
+    "chapter": "Applications of Newton's Laws",
+    "chapter_num": 6,
+    "section": "Friction",
+    "subsection": "Downhill Skier",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 6: Applications of Newton's Laws > Friction > Downhill Skier"
+  },
+  {
+    "chapter": "Applications of Newton's Laws",
+    "chapter_num": 6,
+    "section": "Friction",
+    "subsection": "Sliding Blocks",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 6: Applications of Newton's Laws > Friction > Sliding Blocks"
+  },
+  {
+    "chapter": "Applications of Newton's Laws",
+    "chapter_num": 6,
+    "section": "Friction",
+    "subsection": "Static and Kinetic Friction",
+    "difficulty": "moderate",
+    "chunk_count": 38,
+    "limited": false,
+    "path": "Chapter 6: Applications of Newton's Laws > Friction > Static and Kinetic Friction"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Calculating Moments of Inertia",
+    "subsection": "Moment of Inertia",
+    "difficulty": "moderate",
+    "chunk_count": 18,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Calculating Moments of Inertia > Moment of Inertia"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Calculating Moments of Inertia",
+    "subsection": "Rod and Solid Sphere",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Calculating Moments of Inertia > Rod and Solid Sphere"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Calculating Moments of Inertia",
+    "subsection": "The Parallel-Axis Theorem",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Calculating Moments of Inertia > The Parallel-Axis Theorem"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Fixed-Axis Rotation",
+    "subsection": "Fixed-Axis Rotation",
+    "difficulty": "moderate",
+    "chunk_count": 5,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Fixed-Axis Rotation > Fixed-Axis Rotation"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Moment of Inertia and Rotational Kinetic Energy",
+    "subsection": "Calculating Helicopter Energies",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Moment of Inertia and Rotational Kinetic Energy > Calculating Helicopter Energies"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Moment of Inertia and Rotational Kinetic Energy",
+    "subsection": "Energy in a Boomerang",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Moment of Inertia and Rotational Kinetic Energy > Energy in a Boomerang"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Moment of Inertia and Rotational Kinetic Energy",
+    "subsection": "Moment of Inertia",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Moment of Inertia and Rotational Kinetic Energy > Moment of Inertia"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Moment of Inertia and Rotational Kinetic Energy",
+    "subsection": "Moment of Inertia of a System of Particles",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Moment of Inertia and Rotational Kinetic Energy > Moment of Inertia of a System of Particles"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Moment of Inertia and Rotational Kinetic Energy",
+    "subsection": "Rotational Kinetic Energy",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Moment of Inertia and Rotational Kinetic Energy > Rotational Kinetic Energy"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Newton\u2019s Second Law for Rotation",
+    "subsection": "Calculating the Effect of Mass Distribution on a Merry-Go-Round",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Newton\u2019s Second Law for Rotation > Calculating the Effect of Mass Distribution on a Merry-Go-Round"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Newton\u2019s Second Law for Rotation",
+    "subsection": "Newton\u2019s Second Law for Rotation",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Newton\u2019s Second Law for Rotation > Newton\u2019s Second Law for Rotation"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Relating Angular and Translational Quantities",
+    "subsection": "Angular vs. Linear Variables",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Relating Angular and Translational Quantities > Angular vs. Linear Variables"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Relating Angular and Translational Quantities",
+    "subsection": "Linear Acceleration of a Centrifuge",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Relating Angular and Translational Quantities > Linear Acceleration of a Centrifuge"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Rotation with Constant Angular Acceleration",
+    "subsection": "Angular Acceleration of a Propeller",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Rotation with Constant Angular Acceleration > Angular Acceleration of a Propeller"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Rotation with Constant Angular Acceleration",
+    "subsection": "Calculating the Acceleration of a Fishing Reel",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Rotation with Constant Angular Acceleration > Calculating the Acceleration of a Fishing Reel"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Rotation with Constant Angular Acceleration",
+    "subsection": "Calculating the Duration When the Fishing Reel Slows Down and Stops",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Rotation with Constant Angular Acceleration > Calculating the Duration When the Fishing Reel Slows Down and Stops"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Rotation with Constant Angular Acceleration",
+    "subsection": "Kinematics of Rotational Motion",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Rotation with Constant Angular Acceleration > Kinematics of Rotational Motion"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Rotation with Constant Angular Acceleration",
+    "subsection": "Rotation with Constant Angular Acceleration",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 10: Fixed-Axis Rotation > Rotation with Constant Angular Acceleration > Rotation with Constant Angular Acceleration"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Rotational Variables",
+    "subsection": "A Spinning Bicycle Wheel",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Rotational Variables > A Spinning Bicycle Wheel"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Rotational Variables",
+    "subsection": "Angular Acceleration",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Rotational Variables > Angular Acceleration"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Rotational Variables",
+    "subsection": "Angular Velocity",
+    "difficulty": "moderate",
+    "chunk_count": 24,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Rotational Variables > Angular Velocity"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Rotational Variables",
+    "subsection": "Rotation of a Flywheel",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Rotational Variables > Rotation of a Flywheel"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Rotational Variables",
+    "subsection": "Wind Turbine",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Rotational Variables > Wind Turbine"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Torque",
+    "subsection": "Calculating Torque",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Torque > Calculating Torque"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Torque",
+    "subsection": "Calculating Torque on a rigid body",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Torque > Calculating Torque on a rigid body"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Torque",
+    "subsection": "Defining Torque",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Torque > Defining Torque"
+  },
+  {
+    "chapter": "Fixed-Axis Rotation",
+    "chapter_num": 10,
+    "section": "Work and Power for Rotational Motion",
+    "subsection": "Work for Rotational Motion",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 10: Fixed-Axis Rotation > Work and Power for Rotational Motion > Work for Rotational Motion"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Archimedes\u2019 Principle and Buoyancy",
+    "subsection": "Archimedes\u2019 Principle",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Archimedes\u2019 Principle and Buoyancy > Archimedes\u2019 Principle"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Archimedes\u2019 Principle and Buoyancy",
+    "subsection": "Archimedes\u2019 Principle and Buoyancy",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Archimedes\u2019 Principle and Buoyancy > Archimedes\u2019 Principle and Buoyancy"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Archimedes\u2019 Principle and Buoyancy",
+    "subsection": "Density and Archimedes\u2019 Principle",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Archimedes\u2019 Principle and Buoyancy > Density and Archimedes\u2019 Principle"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Bernoulli\u2019s Equation",
+    "subsection": "Analyzing Bernoulli\u2019s Equation",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Bernoulli\u2019s Equation > Analyzing Bernoulli\u2019s Equation"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Bernoulli\u2019s Equation",
+    "subsection": "Applications of Bernoulli\u2019s Principle",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Bernoulli\u2019s Equation > Applications of Bernoulli\u2019s Principle"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Bernoulli\u2019s Equation",
+    "subsection": "Bernoulli\u2019s Equation",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Bernoulli\u2019s Equation > Bernoulli\u2019s Equation"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Bernoulli\u2019s Equation",
+    "subsection": "Energy Conservation and Bernoulli\u2019s Equation",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Bernoulli\u2019s Equation > Energy Conservation and Bernoulli\u2019s Equation"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Fluid Dynamics",
+    "subsection": "Calculating Fluid Speed through a Nozzle",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Fluid Dynamics > Calculating Fluid Speed through a Nozzle"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Fluid Dynamics",
+    "subsection": "Characteristics of Flow",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Fluid Dynamics > Characteristics of Flow"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Fluid Dynamics",
+    "subsection": "Flow Rate and its Relation to Velocity",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Fluid Dynamics > Flow Rate and its Relation to Velocity"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Fluid Dynamics",
+    "subsection": "Mass Conservation",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Fluid Dynamics > Mass Conservation"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Fluid Mechanics",
+    "subsection": "Fluid Mechanics",
+    "difficulty": "moderate",
+    "chunk_count": 7,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Fluid Mechanics > Fluid Mechanics"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Fluids, Density, and Pressure",
+    "subsection": "Characteristics of Fluids",
+    "difficulty": "moderate",
+    "chunk_count": 34,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Fluids, Density, and Pressure > Characteristics of Fluids"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Fluids, Density, and Pressure",
+    "subsection": "What Force Must a Dam Withstand?",
+    "difficulty": "moderate",
+    "chunk_count": 24,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Fluids, Density, and Pressure > What Force Must a Dam Withstand?"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Measuring Pressure",
+    "subsection": "Fluid Heights in an Open U-Tube",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Measuring Pressure > Fluid Heights in an Open U-Tube"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Measuring Pressure",
+    "subsection": "Gauge Pressure vs. Absolute Pressure",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Measuring Pressure > Gauge Pressure vs. Absolute Pressure"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Measuring Pressure",
+    "subsection": "Measuring Pressure",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Measuring Pressure > Measuring Pressure"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Pascal's Principle and Hydraulics",
+    "subsection": "Applications of Pascal\u2019s Principle and Hydraulic Systems",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Pascal's Principle and Hydraulics > Applications of Pascal\u2019s Principle and Hydraulic Systems"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Pascal's Principle and Hydraulics",
+    "subsection": "Calculating Force on Wheel Cylinders: Pascal Puts on the Brakes",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Pascal's Principle and Hydraulics > Calculating Force on Wheel Cylinders: Pascal Puts on the Brakes"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Pascal's Principle and Hydraulics",
+    "subsection": "Pascal's Principle and Hydraulics",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Pascal's Principle and Hydraulics > Pascal's Principle and Hydraulics"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Pascal's Principle and Hydraulics",
+    "subsection": "Pascal\u2019s Principle",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Pascal's Principle and Hydraulics > Pascal\u2019s Principle"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Viscosity and Turbulence",
+    "subsection": "Flow and Resistance as Causes of Pressure Drops",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Viscosity and Turbulence > Flow and Resistance as Causes of Pressure Drops"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Viscosity and Turbulence",
+    "subsection": "Laminar Flow Confined to Tubes: Poiseuille\u2019s Law",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Viscosity and Turbulence > Laminar Flow Confined to Tubes: Poiseuille\u2019s Law"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Viscosity and Turbulence",
+    "subsection": "Measuring Turbulence",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Viscosity and Turbulence > Measuring Turbulence"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Viscosity and Turbulence",
+    "subsection": "Using Flow Rate: Air Conditioning Systems",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Viscosity and Turbulence > Using Flow Rate: Air Conditioning Systems"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Viscosity and Turbulence",
+    "subsection": "Viscosity and Laminar Flow",
+    "difficulty": "moderate",
+    "chunk_count": 20,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Viscosity and Turbulence > Viscosity and Laminar Flow"
+  },
+  {
+    "chapter": "Fluid Mechanics",
+    "chapter_num": 14,
+    "section": "Viscosity and Turbulence",
+    "subsection": "Viscosity and Turbulence",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 14: Fluid Mechanics > Viscosity and Turbulence > Viscosity and Turbulence"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Einstein's Theory of Gravity",
+    "subsection": "A Geometric Theory of Gravity",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Einstein's Theory of Gravity > A Geometric Theory of Gravity"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Einstein's Theory of Gravity",
+    "subsection": "A Revolution in Perspective",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Einstein's Theory of Gravity > A Revolution in Perspective"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Einstein's Theory of Gravity",
+    "subsection": "Black Holes",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Einstein's Theory of Gravity > Black Holes"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Einstein's Theory of Gravity",
+    "subsection": "Calculating the Schwarzschild Radius",
+    "difficulty": "moderate",
+    "chunk_count": 30,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Einstein's Theory of Gravity > Calculating the Schwarzschild Radius"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Einstein's Theory of Gravity",
+    "subsection": "The Principle of Equivalence",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Einstein's Theory of Gravity > The Principle of Equivalence"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Gravitation",
+    "subsection": "Gravitation",
+    "difficulty": "moderate",
+    "chunk_count": 3,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Gravitation > Gravitation"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Gravitation Near Earth's Surface",
+    "subsection": "Apparent Weight: Accounting for Earth\u2019s Rotation",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Gravitation Near Earth's Surface > Apparent Weight: Accounting for Earth\u2019s Rotation"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Gravitation Near Earth's Surface",
+    "subsection": "Gravitation Near Earth's Surface",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Gravitation Near Earth's Surface > Gravitation Near Earth's Surface"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Gravitation Near Earth's Surface",
+    "subsection": "Gravity Away from the Surface",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Gravitation Near Earth's Surface > Gravity Away from the Surface"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Gravitation Near Earth's Surface",
+    "subsection": "Masses of Earth and Moon",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Gravitation Near Earth's Surface > Masses of Earth and Moon"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Gravitation Near Earth's Surface",
+    "subsection": "Results Away from the Equator",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Gravitation Near Earth's Surface > Results Away from the Equator"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Gravitation Near Earth's Surface",
+    "subsection": "The Gravitational Field",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Gravitation Near Earth's Surface > The Gravitational Field"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Gravitational Potential Energy and Total Energy",
+    "subsection": "Conservation of Energy",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Gravitational Potential Energy and Total Energy > Conservation of Energy"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Gravitational Potential Energy and Total Energy",
+    "subsection": "Escape from Earth",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Gravitational Potential Energy and Total Energy > Escape from Earth"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Gravitational Potential Energy and Total Energy",
+    "subsection": "Gravitational Potential Energy beyond Earth",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Gravitational Potential Energy and Total Energy > Gravitational Potential Energy beyond Earth"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Gravitational Potential Energy and Total Energy",
+    "subsection": "How Far Can an Object Escape?",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Gravitational Potential Energy and Total Energy > How Far Can an Object Escape?"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Gravitational Potential Energy and Total Energy",
+    "subsection": "Lifting a Payload",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Gravitational Potential Energy and Total Energy > Lifting a Payload"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Kepler's Laws of Planetary Motion",
+    "subsection": "Kepler\u2019s First Law",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Kepler's Laws of Planetary Motion > Kepler\u2019s First Law"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Kepler's Laws of Planetary Motion",
+    "subsection": "Kepler\u2019s Second Law",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Kepler's Laws of Planetary Motion > Kepler\u2019s Second Law"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Kepler's Laws of Planetary Motion",
+    "subsection": "Orbit of Halley\u2019s Comet",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Kepler's Laws of Planetary Motion > Orbit of Halley\u2019s Comet"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Kepler's Laws of Planetary Motion",
+    "subsection": "Orbital Transfers",
+    "difficulty": "moderate",
+    "chunk_count": 18,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Kepler's Laws of Planetary Motion > Orbital Transfers"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Newton's Law of Universal Gravitation",
+    "subsection": "A Collision in Orbit",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Newton's Law of Universal Gravitation > A Collision in Orbit"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Newton's Law of Universal Gravitation",
+    "subsection": "Attraction between Galaxies",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Newton's Law of Universal Gravitation > Attraction between Galaxies"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Newton's Law of Universal Gravitation",
+    "subsection": "Newton\u2019s Law of Universal Gravitation",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Newton's Law of Universal Gravitation > Newton\u2019s Law of Universal Gravitation"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Newton's Law of Universal Gravitation",
+    "subsection": "The Cavendish Experiment",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Newton's Law of Universal Gravitation > The Cavendish Experiment"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Newton's Law of Universal Gravitation",
+    "subsection": "The History of Gravitation",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Newton's Law of Universal Gravitation > The History of Gravitation"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Satellite Orbits and Energy",
+    "subsection": "Circular Orbits",
+    "difficulty": "moderate",
+    "chunk_count": 18,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Satellite Orbits and Energy > Circular Orbits"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Satellite Orbits and Energy",
+    "subsection": "Determining the Mass of Earth",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Satellite Orbits and Energy > Determining the Mass of Earth"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Satellite Orbits and Energy",
+    "subsection": "Energy Required to Orbit",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Satellite Orbits and Energy > Energy Required to Orbit"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Satellite Orbits and Energy",
+    "subsection": "Energy in Circular Orbits",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Satellite Orbits and Energy > Energy in Circular Orbits"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Satellite Orbits and Energy",
+    "subsection": "Galactic Speed and Period",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Satellite Orbits and Energy > Galactic Speed and Period"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Satellite Orbits and Energy",
+    "subsection": "The International Space Station",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Satellite Orbits and Energy > The International Space Station"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Tidal Forces",
+    "subsection": "Comparing Tidal Forces",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Tidal Forces > Comparing Tidal Forces"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Tidal Forces",
+    "subsection": "Lunar Tides",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Tidal Forces > Lunar Tides"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Tidal Forces",
+    "subsection": "Other Tidal Effects",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Tidal Forces > Other Tidal Effects"
+  },
+  {
+    "chapter": "Gravitation",
+    "chapter_num": 13,
+    "section": "Tidal Forces",
+    "subsection": "The Magnitude of the Tides",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 13: Gravitation > Tidal Forces > The Magnitude of the Tides"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Center of Mass",
+    "subsection": "CM of a Uniform Thin Hoop",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Center of Mass > CM of a Uniform Thin Hoop"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Center of Mass",
+    "subsection": "Center of Mass",
+    "difficulty": "moderate",
+    "chunk_count": 22,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Center of Mass > Center of Mass"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Center of Mass",
+    "subsection": "Center of Mass and Conservation of Momentum",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Center of Mass > Center of Mass and Conservation of Momentum"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Center of Mass",
+    "subsection": "Center of Mass of a Salt Crystal",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Center of Mass > Center of Mass of a Salt Crystal"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Center of Mass",
+    "subsection": "Center of Mass of the Earth-Moon System",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Center of Mass > Center of Mass of the Earth-Moon System"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Center of Mass",
+    "subsection": "Fireworks Display",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Center of Mass > Fireworks Display"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Center of Mass",
+    "subsection": "Internal and External Forces",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Center of Mass > Internal and External Forces"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Collisions in Multiple Dimensions",
+    "subsection": "Collisions in Multiple Dimensions",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Collisions in Multiple Dimensions > Collisions in Multiple Dimensions"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Collisions in Multiple Dimensions",
+    "subsection": "Exploding Scuba Tank",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Collisions in Multiple Dimensions > Exploding Scuba Tank"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Collisions in Multiple Dimensions",
+    "subsection": "Traffic Collision",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Collisions in Multiple Dimensions > Traffic Collision"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Conservation of Linear Momentum",
+    "subsection": "A Bouncing Superball",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Conservation of Linear Momentum > A Bouncing Superball"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Conservation of Linear Momentum",
+    "subsection": "Colliding Carts",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Conservation of Linear Momentum > Colliding Carts"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Conservation of Linear Momentum",
+    "subsection": "Conservation of Linear Momentum",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Conservation of Linear Momentum > Conservation of Linear Momentum"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Conservation of Linear Momentum",
+    "subsection": "Ice Hockey 1",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Conservation of Linear Momentum > Ice Hockey 1"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Conservation of Linear Momentum",
+    "subsection": "Landing of Philae",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Conservation of Linear Momentum > Landing of Philae"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Conservation of Linear Momentum",
+    "subsection": "Requirements for Momentum Conservation",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Conservation of Linear Momentum > Requirements for Momentum Conservation"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Impulse and Collisions",
+    "subsection": "Calculating Force: Venus Williams\u2019 Tennis Serve",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Impulse and Collisions > Calculating Force: Venus Williams\u2019 Tennis Serve"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Impulse and Collisions",
+    "subsection": "Effect of Impulse",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Impulse and Collisions > Effect of Impulse"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Impulse and Collisions",
+    "subsection": "Impulse and Collisions",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Impulse and Collisions > Impulse and Collisions"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Impulse and Collisions",
+    "subsection": "Momentum and Force",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Impulse and Collisions > Momentum and Force"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Impulse and Collisions",
+    "subsection": "Moving the Enterprise",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Impulse and Collisions > Moving the Enterprise"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Impulse and Collisions",
+    "subsection": "The Arizona Meteor Crater",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Impulse and Collisions > The Arizona Meteor Crater"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Impulse and Collisions",
+    "subsection": "The Benefits of Impulse",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Impulse and Collisions > The Benefits of Impulse"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Impulse and Collisions",
+    "subsection": "The iPhone Drop",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Impulse and Collisions > The iPhone Drop"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Linear Momentum",
+    "subsection": "Linear Momentum",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 9: Linear Momentum and Collisions > Linear Momentum > Linear Momentum"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Linear Momentum and Collisions",
+    "subsection": "Linear Momentum and Collisions",
+    "difficulty": "moderate",
+    "chunk_count": 1,
+    "limited": true,
+    "path": "Chapter 9: Linear Momentum and Collisions > Linear Momentum and Collisions > Linear Momentum and Collisions"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Rocket Propulsion",
+    "subsection": "Physical Analysis",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Rocket Propulsion > Physical Analysis"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Rocket Propulsion",
+    "subsection": "Rocket Propulsion",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 9: Linear Momentum and Collisions > Rocket Propulsion > Rocket Propulsion"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Rocket Propulsion",
+    "subsection": "Rocket in a Gravitational Field",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Rocket Propulsion > Rocket in a Gravitational Field"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Rocket Propulsion",
+    "subsection": "Thrust on a Spacecraft",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Rocket Propulsion > Thrust on a Spacecraft"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Types of Collisions",
+    "subsection": "Analyzing a Car Crash",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Types of Collisions > Analyzing a Car Crash"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Types of Collisions",
+    "subsection": "Ice Hockey 2",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Types of Collisions > Ice Hockey 2"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Types of Collisions",
+    "subsection": "Subatomic Collisions and Momentum",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Types of Collisions > Subatomic Collisions and Momentum"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Types of Collisions",
+    "subsection": "Thor vs. Iron Man",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Types of Collisions > Thor vs. Iron Man"
+  },
+  {
+    "chapter": "Linear Momentum and Collisions",
+    "chapter_num": 9,
+    "section": "Types of Collisions",
+    "subsection": "Types of Collisions",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 9: Linear Momentum and Collisions > Types of Collisions > Types of Collisions"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Average and Instantaneous Acceleration",
+    "subsection": "Average Acceleration",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Average and Instantaneous Acceleration > Average Acceleration"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Average and Instantaneous Acceleration",
+    "subsection": "Average and Instantaneous Acceleration",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Average and Instantaneous Acceleration > Average and Instantaneous Acceleration"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Average and Instantaneous Acceleration",
+    "subsection": "Calculating Average Acceleration: A Racehorse Leaves the Gate",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Average and Instantaneous Acceleration > Calculating Average Acceleration: A Racehorse Leaves the Gate"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Average and Instantaneous Acceleration",
+    "subsection": "Calculating Instantaneous Acceleration",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Average and Instantaneous Acceleration > Calculating Instantaneous Acceleration"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Average and Instantaneous Acceleration",
+    "subsection": "Getting a Feel for Acceleration",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Average and Instantaneous Acceleration > Getting a Feel for Acceleration"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Average and Instantaneous Acceleration",
+    "subsection": "Instantaneous Acceleration",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Average and Instantaneous Acceleration > Instantaneous Acceleration"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Finding Velocity and Displacement from Acceleration",
+    "subsection": "Motion of a Motorboat",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Finding Velocity and Displacement from Acceleration > Motion of a Motorboat"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Free Fall",
+    "subsection": "Free Fall",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Free Fall > Free Fall"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Free Fall",
+    "subsection": "Free Fall of a Ball",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Free Fall > Free Fall of a Ball"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Free Fall",
+    "subsection": "One-Dimensional Motion Involving Gravity",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Free Fall > One-Dimensional Motion Involving Gravity"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Free Fall",
+    "subsection": "Rocket Booster",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Free Fall > Rocket Booster"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Free Fall",
+    "subsection": "Vertical Motion of a Baseball",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Free Fall > Vertical Motion of a Baseball"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Instantaneous Velocity and Speed",
+    "subsection": "Finding Velocity from a Position-Versus-Time Graph",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Instantaneous Velocity and Speed > Finding Velocity from a Position-Versus-Time Graph"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Instantaneous Velocity and Speed",
+    "subsection": "Instantaneous Velocity",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Instantaneous Velocity and Speed > Instantaneous Velocity"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Instantaneous Velocity and Speed",
+    "subsection": "Instantaneous Velocity Versus Speed",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Instantaneous Velocity and Speed > Instantaneous Velocity Versus Speed"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Motion Along a Straight Line",
+    "subsection": "Motion Along a Straight Line",
+    "difficulty": "moderate",
+    "chunk_count": 5,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Motion Along a Straight Line > Motion Along a Straight Line"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Motion with Constant Acceleration",
+    "subsection": "Acceleration of a Spaceship",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Motion with Constant Acceleration > Acceleration of a Spaceship"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Motion with Constant Acceleration",
+    "subsection": "Calculating Displacement of an Accelerating Object",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Motion with Constant Acceleration > Calculating Displacement of an Accelerating Object"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Motion with Constant Acceleration",
+    "subsection": "Calculating Final Velocity",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Motion with Constant Acceleration > Calculating Final Velocity"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Motion with Constant Acceleration",
+    "subsection": "Calculating Time",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Motion with Constant Acceleration > Calculating Time"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Motion with Constant Acceleration",
+    "subsection": "Cheetah Catching a Gazelle",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Motion with Constant Acceleration > Cheetah Catching a Gazelle"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Motion with Constant Acceleration",
+    "subsection": "How Far Does a Car Go?",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Motion with Constant Acceleration > How Far Does a Car Go?"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Motion with Constant Acceleration",
+    "subsection": "Motion with Constant Acceleration",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Motion with Constant Acceleration > Motion with Constant Acceleration"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Motion with Constant Acceleration",
+    "subsection": "Putting Equations Together",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Motion with Constant Acceleration > Putting Equations Together"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Position, Displacement, and Average Velocity",
+    "subsection": "Delivering Flyers",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Position, Displacement, and Average Velocity > Delivering Flyers"
+  },
+  {
+    "chapter": "Motion Along a Straight Line",
+    "chapter_num": 3,
+    "section": "Position, Displacement, and Average Velocity",
+    "subsection": "Position, Displacement, and Average Velocity",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 3: Motion Along a Straight Line > Position, Displacement, and Average Velocity > Position, Displacement, and Average Velocity"
+  },
+  {
+    "chapter": "Motion in Two and Three Dimensions",
+    "chapter_num": 4,
+    "section": "Acceleration Vector",
+    "subsection": "A Skier",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 4: Motion in Two and Three Dimensions > Acceleration Vector > A Skier"
+  },
+  {
+    "chapter": "Motion in Two and Three Dimensions",
+    "chapter_num": 4,
+    "section": "Acceleration Vector",
+    "subsection": "Finding a Particle Acceleration",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 4: Motion in Two and Three Dimensions > Acceleration Vector > Finding a Particle Acceleration"
+  },
+  {
+    "chapter": "Motion in Two and Three Dimensions",
+    "chapter_num": 4,
+    "section": "Displacement and Velocity Vectors",
+    "subsection": "Displacement Vector",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 4: Motion in Two and Three Dimensions > Displacement and Velocity Vectors > Displacement Vector"
+  },
+  {
+    "chapter": "Motion in Two and Three Dimensions",
+    "chapter_num": 4,
+    "section": "Displacement and Velocity Vectors",
+    "subsection": "Polar Orbiting Satellite",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 4: Motion in Two and Three Dimensions > Displacement and Velocity Vectors > Polar Orbiting Satellite"
+  },
+  {
+    "chapter": "Motion in Two and Three Dimensions",
+    "chapter_num": 4,
+    "section": "Displacement and Velocity Vectors",
+    "subsection": "The Independence of Perpendicular Motions",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 4: Motion in Two and Three Dimensions > Displacement and Velocity Vectors > The Independence of Perpendicular Motions"
+  },
+  {
+    "chapter": "Motion in Two and Three Dimensions",
+    "chapter_num": 4,
+    "section": "Motion in Two and Three Dimensions",
+    "subsection": "Motion in Two and Three Dimensions",
+    "difficulty": "moderate",
+    "chunk_count": 7,
+    "limited": false,
+    "path": "Chapter 4: Motion in Two and Three Dimensions > Motion in Two and Three Dimensions > Motion in Two and Three Dimensions"
+  },
+  {
+    "chapter": "Motion in Two and Three Dimensions",
+    "chapter_num": 4,
+    "section": "Projectile Motion",
+    "subsection": "A Fireworks Projectile Explodes High and Away",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 4: Motion in Two and Three Dimensions > Projectile Motion > A Fireworks Projectile Explodes High and Away"
+  },
+  {
+    "chapter": "Motion in Two and Three Dimensions",
+    "chapter_num": 4,
+    "section": "Projectile Motion",
+    "subsection": "Calculating Projectile Motion: Tennis Player",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 4: Motion in Two and Three Dimensions > Projectile Motion > Calculating Projectile Motion: Tennis Player"
+  },
+  {
+    "chapter": "Motion in Two and Three Dimensions",
+    "chapter_num": 4,
+    "section": "Projectile Motion",
+    "subsection": "Comparing Golf Shots",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 4: Motion in Two and Three Dimensions > Projectile Motion > Comparing Golf Shots"
+  },
+  {
+    "chapter": "Motion in Two and Three Dimensions",
+    "chapter_num": 4,
+    "section": "Projectile Motion",
+    "subsection": "Projectile Motion",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 4: Motion in Two and Three Dimensions > Projectile Motion > Projectile Motion"
+  },
+  {
+    "chapter": "Motion in Two and Three Dimensions",
+    "chapter_num": 4,
+    "section": "Projectile Motion",
+    "subsection": "Time of Flight, Trajectory, and Range",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 4: Motion in Two and Three Dimensions > Projectile Motion > Time of Flight, Trajectory, and Range"
+  },
+  {
+    "chapter": "Motion in Two and Three Dimensions",
+    "chapter_num": 4,
+    "section": "Relative Motion in One and Two Dimensions",
+    "subsection": "Flying a Plane in a Wind",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 4: Motion in Two and Three Dimensions > Relative Motion in One and Two Dimensions > Flying a Plane in a Wind"
+  },
+  {
+    "chapter": "Motion in Two and Three Dimensions",
+    "chapter_num": 4,
+    "section": "Relative Motion in One and Two Dimensions",
+    "subsection": "Motion of a Car Relative to a Truck",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 4: Motion in Two and Three Dimensions > Relative Motion in One and Two Dimensions > Motion of a Car Relative to a Truck"
+  },
+  {
+    "chapter": "Motion in Two and Three Dimensions",
+    "chapter_num": 4,
+    "section": "Relative Motion in One and Two Dimensions",
+    "subsection": "Relative Motion in One Dimension",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 4: Motion in Two and Three Dimensions > Relative Motion in One and Two Dimensions > Relative Motion in One Dimension"
+  },
+  {
+    "chapter": "Motion in Two and Three Dimensions",
+    "chapter_num": 4,
+    "section": "Uniform and Nonuniform Circular Motion",
+    "subsection": "Centripetal Acceleration",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 4: Motion in Two and Three Dimensions > Uniform and Nonuniform Circular Motion > Centripetal Acceleration"
+  },
+  {
+    "chapter": "Motion in Two and Three Dimensions",
+    "chapter_num": 4,
+    "section": "Uniform and Nonuniform Circular Motion",
+    "subsection": "Creating an Acceleration of 1 g",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 4: Motion in Two and Three Dimensions > Uniform and Nonuniform Circular Motion > Creating an Acceleration of 1 g"
+  },
+  {
+    "chapter": "Motion in Two and Three Dimensions",
+    "chapter_num": 4,
+    "section": "Uniform and Nonuniform Circular Motion",
+    "subsection": "Equations of Motion for Uniform Circular Motion",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 4: Motion in Two and Three Dimensions > Uniform and Nonuniform Circular Motion > Equations of Motion for Uniform Circular Motion"
+  },
+  {
+    "chapter": "Motion in Two and Three Dimensions",
+    "chapter_num": 4,
+    "section": "Uniform and Nonuniform Circular Motion",
+    "subsection": "Nonuniform Circular Motion",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 4: Motion in Two and Three Dimensions > Uniform and Nonuniform Circular Motion > Nonuniform Circular Motion"
+  },
+  {
+    "chapter": "Motion in Two and Three Dimensions",
+    "chapter_num": 4,
+    "section": "Uniform and Nonuniform Circular Motion",
+    "subsection": "Total Acceleration during Circular Motion",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 4: Motion in Two and Three Dimensions > Uniform and Nonuniform Circular Motion > Total Acceleration during Circular Motion"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Common Forces",
+    "subsection": "A Catalog of Forces: Normal, Tension, and Other Examples of Forces",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Common Forces > A Catalog of Forces: Normal, Tension, and Other Examples of Forces"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Common Forces",
+    "subsection": "Real Forces and Inertial Frames",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Common Forces > Real Forces and Inertial Frames"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Common Forces",
+    "subsection": "Weight on an Incline",
+    "difficulty": "moderate",
+    "chunk_count": 22,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Common Forces > Weight on an Incline"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Common Forces",
+    "subsection": "What Is the Tension in a Tightrope?",
+    "difficulty": "moderate",
+    "chunk_count": 22,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Common Forces > What Is the Tension in a Tightrope?"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Drawing Free-Body Diagrams",
+    "subsection": "Block on the Table (Coupled Blocks)",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Drawing Free-Body Diagrams > Block on the Table (Coupled Blocks)"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Drawing Free-Body Diagrams",
+    "subsection": "Drawing Free-Body Diagrams",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Drawing Free-Body Diagrams > Drawing Free-Body Diagrams"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Drawing Free-Body Diagrams",
+    "subsection": "Two Blocks on an Inclined Plane",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Drawing Free-Body Diagrams > Two Blocks on an Inclined Plane"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Forces",
+    "subsection": "Development of the Force Concept",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Forces > Development of the Force Concept"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Forces",
+    "subsection": "Forces",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Forces > Forces"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Forces",
+    "subsection": "Vector Notation for Force",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Forces > Vector Notation for Force"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Forces",
+    "subsection": "Working Definition of Force",
+    "difficulty": "moderate",
+    "chunk_count": 18,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Forces > Working Definition of Force"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Mass and Weight",
+    "subsection": "Weight and Gravitational Force",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Mass and Weight > Weight and Gravitational Force"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Newton's First Law",
+    "subsection": "Inertial Reference Frames",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Newton's First Law > Inertial Reference Frames"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Newton's First Law",
+    "subsection": "Newton's First Law",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Newton's First Law > Newton's First Law"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Newton's First Law",
+    "subsection": "Newton\u2019s First Law and Equilibrium",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Newton's First Law > Newton\u2019s First Law and Equilibrium"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Newton's First Law",
+    "subsection": "When Does Newton\u2019s First Law Apply to Your Car?",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Newton's First Law > When Does Newton\u2019s First Law Apply to Your Car?"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Newton's Laws of Motion",
+    "subsection": "Newton's Laws of Motion",
+    "difficulty": "moderate",
+    "chunk_count": 7,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Newton's Laws of Motion > Newton's Laws of Motion"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Newton's Second Law",
+    "subsection": "Force and Acceleration",
+    "difficulty": "moderate",
+    "chunk_count": 18,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Newton's Second Law > Force and Acceleration"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Newton's Second Law",
+    "subsection": "Newton\u2019s Second Law and Momentum",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Newton's Second Law > Newton\u2019s Second Law and Momentum"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Newton's Second Law",
+    "subsection": "Several Forces on a Particle",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Newton's Second Law > Several Forces on a Particle"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Newton's Second Law",
+    "subsection": "What Acceleration Can a Person Produce When Pushing a Lawn Mower?",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Newton's Second Law > What Acceleration Can a Person Produce When Pushing a Lawn Mower?"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Newton's Second Law",
+    "subsection": "What Rocket Thrust Accelerates This Sled?",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Newton's Second Law > What Rocket Thrust Accelerates This Sled?"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Newton's Second Law",
+    "subsection": "Which Force Is Bigger?",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Newton's Second Law > Which Force Is Bigger?"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Newton\u2019s Third Law",
+    "subsection": "Force on the Cart: Choosing a New System",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Newton\u2019s Third Law > Force on the Cart: Choosing a New System"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Newton\u2019s Third Law",
+    "subsection": "Getting Up to Speed: Choosing the Correct System",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Newton\u2019s Third Law > Getting Up to Speed: Choosing the Correct System"
+  },
+  {
+    "chapter": "Newton's Laws of Motion",
+    "chapter_num": 5,
+    "section": "Newton\u2019s Third Law",
+    "subsection": "Newton\u2019s Third Law",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 5: Newton's Laws of Motion > Newton\u2019s Third Law > Newton\u2019s Third Law"
+  },
+  {
+    "chapter": "Oscillations",
+    "chapter_num": 15,
+    "section": "Comparing Simple Harmonic Motion and Circular Motion",
+    "subsection": "Comparing Simple Harmonic Motion and Circular Motion",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 15: Oscillations > Comparing Simple Harmonic Motion and Circular Motion > Comparing Simple Harmonic Motion and Circular Motion"
+  },
+  {
+    "chapter": "Oscillations",
+    "chapter_num": 15,
+    "section": "Damped Oscillations",
+    "subsection": "Damped Oscillations",
+    "difficulty": "moderate",
+    "chunk_count": 20,
+    "limited": false,
+    "path": "Chapter 15: Oscillations > Damped Oscillations > Damped Oscillations"
+  },
+  {
+    "chapter": "Oscillations",
+    "chapter_num": 15,
+    "section": "Energy in Simple Harmonic Motion",
+    "subsection": "Energy and the Simple Harmonic Oscillator",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 15: Oscillations > Energy in Simple Harmonic Motion > Energy and the Simple Harmonic Oscillator"
+  },
+  {
+    "chapter": "Oscillations",
+    "chapter_num": 15,
+    "section": "Energy in Simple Harmonic Motion",
+    "subsection": "Energy in Simple Harmonic Motion",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 15: Oscillations > Energy in Simple Harmonic Motion > Energy in Simple Harmonic Motion"
+  },
+  {
+    "chapter": "Oscillations",
+    "chapter_num": 15,
+    "section": "Energy in Simple Harmonic Motion",
+    "subsection": "Oscillations About an Equilibrium Position",
+    "difficulty": "moderate",
+    "chunk_count": 18,
+    "limited": false,
+    "path": "Chapter 15: Oscillations > Energy in Simple Harmonic Motion > Oscillations About an Equilibrium Position"
+  },
+  {
+    "chapter": "Oscillations",
+    "chapter_num": 15,
+    "section": "Energy in Simple Harmonic Motion",
+    "subsection": "Velocity and Energy Conservation",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 15: Oscillations > Energy in Simple Harmonic Motion > Velocity and Energy Conservation"
+  },
+  {
+    "chapter": "Oscillations",
+    "chapter_num": 15,
+    "section": "Forced Oscillations",
+    "subsection": "Forced Oscillations",
+    "difficulty": "moderate",
+    "chunk_count": 20,
+    "limited": false,
+    "path": "Chapter 15: Oscillations > Forced Oscillations > Forced Oscillations"
+  },
+  {
+    "chapter": "Oscillations",
+    "chapter_num": 15,
+    "section": "Oscillations",
+    "subsection": "Oscillations",
+    "difficulty": "moderate",
+    "chunk_count": 5,
+    "limited": false,
+    "path": "Chapter 15: Oscillations > Oscillations > Oscillations"
+  },
+  {
+    "chapter": "Oscillations",
+    "chapter_num": 15,
+    "section": "Pendulums",
+    "subsection": "Measuring Acceleration due to Gravity by the Period of a Pendulum",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 15: Oscillations > Pendulums > Measuring Acceleration due to Gravity by the Period of a Pendulum"
+  },
+  {
+    "chapter": "Oscillations",
+    "chapter_num": 15,
+    "section": "Pendulums",
+    "subsection": "Physical Pendulum",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 15: Oscillations > Pendulums > Physical Pendulum"
+  },
+  {
+    "chapter": "Oscillations",
+    "chapter_num": 15,
+    "section": "Pendulums",
+    "subsection": "Reducing the Swaying of a Skyscraper",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 15: Oscillations > Pendulums > Reducing the Swaying of a Skyscraper"
+  },
+  {
+    "chapter": "Oscillations",
+    "chapter_num": 15,
+    "section": "Pendulums",
+    "subsection": "The Simple Pendulum",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 15: Oscillations > Pendulums > The Simple Pendulum"
+  },
+  {
+    "chapter": "Oscillations",
+    "chapter_num": 15,
+    "section": "Simple Harmonic Motion",
+    "subsection": "Characteristics of Simple Harmonic Motion",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 15: Oscillations > Simple Harmonic Motion > Characteristics of Simple Harmonic Motion"
+  },
+  {
+    "chapter": "Oscillations",
+    "chapter_num": 15,
+    "section": "Simple Harmonic Motion",
+    "subsection": "Equations of SHM",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 15: Oscillations > Simple Harmonic Motion > Equations of SHM"
+  },
+  {
+    "chapter": "Oscillations",
+    "chapter_num": 15,
+    "section": "Simple Harmonic Motion",
+    "subsection": "The Period and Frequency of a Mass on a Spring",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 15: Oscillations > Simple Harmonic Motion > The Period and Frequency of a Mass on a Spring"
+  },
+  {
+    "chapter": "Oscillations",
+    "chapter_num": 15,
+    "section": "Simple Harmonic Motion",
+    "subsection": "Vertical Motion and a Horizontal Spring",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 15: Oscillations > Simple Harmonic Motion > Vertical Motion and a Horizontal Spring"
+  },
+  {
+    "chapter": "Potential Energy and Conservation of Energy",
+    "chapter_num": 8,
+    "section": "Conservation of Energy",
+    "subsection": "Air Resistance on a Falling Object",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 8: Potential Energy and Conservation of Energy > Conservation of Energy > Air Resistance on a Falling Object"
+  },
+  {
+    "chapter": "Potential Energy and Conservation of Energy",
+    "chapter_num": 8,
+    "section": "Conservation of Energy",
+    "subsection": "Conservation of Energy",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 8: Potential Energy and Conservation of Energy > Conservation of Energy > Conservation of Energy"
+  },
+  {
+    "chapter": "Potential Energy and Conservation of Energy",
+    "chapter_num": 8,
+    "section": "Conservation of Energy",
+    "subsection": "Constant Acceleration",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 8: Potential Energy and Conservation of Energy > Conservation of Energy > Constant Acceleration"
+  },
+  {
+    "chapter": "Potential Energy and Conservation of Energy",
+    "chapter_num": 8,
+    "section": "Conservation of Energy",
+    "subsection": "Simple Pendulum",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 8: Potential Energy and Conservation of Energy > Conservation of Energy > Simple Pendulum"
+  },
+  {
+    "chapter": "Potential Energy and Conservation of Energy",
+    "chapter_num": 8,
+    "section": "Conservation of Energy",
+    "subsection": "Systems with a Single Particle or Object",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 8: Potential Energy and Conservation of Energy > Conservation of Energy > Systems with a Single Particle or Object"
+  },
+  {
+    "chapter": "Potential Energy and Conservation of Energy",
+    "chapter_num": 8,
+    "section": "Conservative and Non-Conservative Forces",
+    "subsection": "Conservative and Non-Conservative Forces",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 8: Potential Energy and Conservation of Energy > Conservative and Non-Conservative Forces > Conservative and Non-Conservative Forces"
+  },
+  {
+    "chapter": "Potential Energy and Conservation of Energy",
+    "chapter_num": 8,
+    "section": "Conservative and Non-Conservative Forces",
+    "subsection": "Conservative or Not?",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 8: Potential Energy and Conservation of Energy > Conservative and Non-Conservative Forces > Conservative or Not?"
+  },
+  {
+    "chapter": "Potential Energy and Conservation of Energy",
+    "chapter_num": 8,
+    "section": "Conservative and Non-Conservative Forces",
+    "subsection": "Force due to a Quartic Potential Energy",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 8: Potential Energy and Conservation of Energy > Conservative and Non-Conservative Forces > Force due to a Quartic Potential Energy"
+  },
+  {
+    "chapter": "Potential Energy and Conservation of Energy",
+    "chapter_num": 8,
+    "section": "Potential Energy Diagrams and Stability",
+    "subsection": "Potential Energy Diagrams and Stability",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 8: Potential Energy and Conservation of Energy > Potential Energy Diagrams and Stability > Potential Energy Diagrams and Stability"
+  },
+  {
+    "chapter": "Potential Energy and Conservation of Energy",
+    "chapter_num": 8,
+    "section": "Potential Energy Diagrams and Stability",
+    "subsection": "Quartic and Quadratic Potential Energy Diagram",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 8: Potential Energy and Conservation of Energy > Potential Energy Diagrams and Stability > Quartic and Quadratic Potential Energy Diagram"
+  },
+  {
+    "chapter": "Potential Energy and Conservation of Energy",
+    "chapter_num": 8,
+    "section": "Potential Energy Diagrams and Stability",
+    "subsection": "Sinusoidal Oscillations",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 8: Potential Energy and Conservation of Energy > Potential Energy Diagrams and Stability > Sinusoidal Oscillations"
+  },
+  {
+    "chapter": "Potential Energy and Conservation of Energy",
+    "chapter_num": 8,
+    "section": "Potential Energy and Conservation of Energy",
+    "subsection": "Potential Energy and Conservation of Energy",
+    "difficulty": "moderate",
+    "chunk_count": 1,
+    "limited": true,
+    "path": "Chapter 8: Potential Energy and Conservation of Energy > Potential Energy and Conservation of Energy > Potential Energy and Conservation of Energy"
+  },
+  {
+    "chapter": "Potential Energy and Conservation of Energy",
+    "chapter_num": 8,
+    "section": "Potential Energy of a System",
+    "subsection": "Basic Properties of Potential Energy",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 8: Potential Energy and Conservation of Energy > Potential Energy of a System > Basic Properties of Potential Energy"
+  },
+  {
+    "chapter": "Potential Energy and Conservation of Energy",
+    "chapter_num": 8,
+    "section": "Potential Energy of a System",
+    "subsection": "Gravitational Potential Energy of a Hiker",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 8: Potential Energy and Conservation of Energy > Potential Energy of a System > Gravitational Potential Energy of a Hiker"
+  },
+  {
+    "chapter": "Potential Energy and Conservation of Energy",
+    "chapter_num": 8,
+    "section": "Potential Energy of a System",
+    "subsection": "Potential Energy Basics",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 8: Potential Energy and Conservation of Energy > Potential Energy of a System > Potential Energy Basics"
+  },
+  {
+    "chapter": "Potential Energy and Conservation of Energy",
+    "chapter_num": 8,
+    "section": "Potential Energy of a System",
+    "subsection": "Potential Energy of a Vertical Mass-Spring System",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 8: Potential Energy and Conservation of Energy > Potential Energy of a System > Potential Energy of a Vertical Mass-Spring System"
+  },
+  {
+    "chapter": "Potential Energy and Conservation of Energy",
+    "chapter_num": 8,
+    "section": "Potential Energy of a System",
+    "subsection": "Spring Potential Energy",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 8: Potential Energy and Conservation of Energy > Potential Energy of a System > Spring Potential Energy"
+  },
+  {
+    "chapter": "Potential Energy and Conservation of Energy",
+    "chapter_num": 8,
+    "section": "Potential Energy of a System",
+    "subsection": "Types of Potential Energy",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 8: Potential Energy and Conservation of Energy > Potential Energy of a System > Types of Potential Energy"
+  },
+  {
+    "chapter": "Potential Energy and Conservation of Energy",
+    "chapter_num": 8,
+    "section": "Sources of Energy",
+    "subsection": "Sources of Energy",
+    "difficulty": "moderate",
+    "chunk_count": 34,
+    "limited": false,
+    "path": "Chapter 8: Potential Energy and Conservation of Energy > Sources of Energy > Sources of Energy"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "Beats",
+    "subsection": "Beats",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 17: Sound > Beats > Beats"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "Normal Modes of a Standing Sound Wave",
+    "subsection": "Interference of Sound Waves",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 17: Sound > Normal Modes of a Standing Sound Wave > Interference of Sound Waves"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "Normal Modes of a Standing Sound Wave",
+    "subsection": "Resonance in a Tube Closed at one End",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 17: Sound > Normal Modes of a Standing Sound Wave > Resonance in a Tube Closed at one End"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "Normal Modes of a Standing Sound Wave",
+    "subsection": "Resonance in a Tube Open at Both Ends",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 17: Sound > Normal Modes of a Standing Sound Wave > Resonance in a Tube Open at Both Ends"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "Shock Waves",
+    "subsection": "Shock Waves",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 17: Sound > Shock Waves > Shock Waves"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "Shock Waves",
+    "subsection": "Shock Waves and Sonic Booms",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 17: Sound > Shock Waves > Shock Waves and Sonic Booms"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "Sound",
+    "subsection": "Sound",
+    "difficulty": "moderate",
+    "chunk_count": 5,
+    "limited": false,
+    "path": "Chapter 17: Sound > Sound > Sound"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "Sound Intensity",
+    "subsection": "Changing Intensity Levels of a Sound",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 17: Sound > Sound Intensity > Changing Intensity Levels of a Sound"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "Sound Intensity",
+    "subsection": "Hearing and Pitch",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 17: Sound > Sound Intensity > Hearing and Pitch"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "Sound Intensity",
+    "subsection": "Human Hearing and Sound Intensity Levels",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 17: Sound > Sound Intensity > Human Hearing and Sound Intensity Levels"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "Sound Intensity",
+    "subsection": "Measuring Loudness",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 17: Sound > Sound Intensity > Measuring Loudness"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "Sound Intensity",
+    "subsection": "Sound Intensity",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 17: Sound > Sound Intensity > Sound Intensity"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "Sound Waves",
+    "subsection": "Sound Waves",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 17: Sound > Sound Waves > Sound Waves"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "Sources of Musical Sound",
+    "subsection": "Finding the Length of a Tube with a 128-Hz Fundamental",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 17: Sound > Sources of Musical Sound > Finding the Length of a Tube with a 128-Hz Fundamental"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "Sources of Musical Sound",
+    "subsection": "Sources of Musical Sound",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 17: Sound > Sources of Musical Sound > Sources of Musical Sound"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "Speed of Sound",
+    "subsection": "Calculating Wavelengths",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 17: Sound > Speed of Sound > Calculating Wavelengths"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "Speed of Sound",
+    "subsection": "Derivation of the Speed of Sound in Air",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 17: Sound > Speed of Sound > Derivation of the Speed of Sound in Air"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "Speed of Sound",
+    "subsection": "Speed of Sound",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 17: Sound > Speed of Sound > Speed of Sound"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "Speed of Sound",
+    "subsection": "Speed of Sound in Various Media",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 17: Sound > Speed of Sound > Speed of Sound in Various Media"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "The Doppler Effect",
+    "subsection": "Calculating a Doppler Shift",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 17: Sound > The Doppler Effect > Calculating a Doppler Shift"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "The Doppler Effect",
+    "subsection": "Derivation of the Observed Frequency due to the Doppler Shift",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 17: Sound > The Doppler Effect > Derivation of the Observed Frequency due to the Doppler Shift"
+  },
+  {
+    "chapter": "Sound",
+    "chapter_num": 17,
+    "section": "The Doppler Effect",
+    "subsection": "The Doppler Effect",
+    "difficulty": "moderate",
+    "chunk_count": 18,
+    "limited": false,
+    "path": "Chapter 17: Sound > The Doppler Effect > The Doppler Effect"
+  },
+  {
+    "chapter": "Static Equilibrium and Elasticity",
+    "chapter_num": 12,
+    "section": "Conditions for Static Equilibrium",
+    "subsection": "A Breaking Tension",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 12: Static Equilibrium and Elasticity > Conditions for Static Equilibrium > A Breaking Tension"
+  },
+  {
+    "chapter": "Static Equilibrium and Elasticity",
+    "chapter_num": 12,
+    "section": "Conditions for Static Equilibrium",
+    "subsection": "Center of Gravity of a Car",
+    "difficulty": "moderate",
+    "chunk_count": 18,
+    "limited": false,
+    "path": "Chapter 12: Static Equilibrium and Elasticity > Conditions for Static Equilibrium > Center of Gravity of a Car"
+  },
+  {
+    "chapter": "Static Equilibrium and Elasticity",
+    "chapter_num": 12,
+    "section": "Conditions for Static Equilibrium",
+    "subsection": "Conditions for Static Equilibrium",
+    "difficulty": "moderate",
+    "chunk_count": 28,
+    "limited": false,
+    "path": "Chapter 12: Static Equilibrium and Elasticity > Conditions for Static Equilibrium > Conditions for Static Equilibrium"
+  },
+  {
+    "chapter": "Static Equilibrium and Elasticity",
+    "chapter_num": 12,
+    "section": "Elasticity and Plasticity",
+    "subsection": "Elasticity and Plasticity",
+    "difficulty": "moderate",
+    "chunk_count": 22,
+    "limited": false,
+    "path": "Chapter 12: Static Equilibrium and Elasticity > Elasticity and Plasticity > Elasticity and Plasticity"
+  },
+  {
+    "chapter": "Static Equilibrium and Elasticity",
+    "chapter_num": 12,
+    "section": "Examples of Static Equilibrium",
+    "subsection": "A Ladder Resting Against a Wall",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 12: Static Equilibrium and Elasticity > Examples of Static Equilibrium > A Ladder Resting Against a Wall"
+  },
+  {
+    "chapter": "Static Equilibrium and Elasticity",
+    "chapter_num": 12,
+    "section": "Examples of Static Equilibrium",
+    "subsection": "Examples of Static Equilibrium",
+    "difficulty": "moderate",
+    "chunk_count": 20,
+    "limited": false,
+    "path": "Chapter 12: Static Equilibrium and Elasticity > Examples of Static Equilibrium > Examples of Static Equilibrium"
+  },
+  {
+    "chapter": "Static Equilibrium and Elasticity",
+    "chapter_num": 12,
+    "section": "Examples of Static Equilibrium",
+    "subsection": "Forces in the Forearm",
+    "difficulty": "moderate",
+    "chunk_count": 18,
+    "limited": false,
+    "path": "Chapter 12: Static Equilibrium and Elasticity > Examples of Static Equilibrium > Forces in the Forearm"
+  },
+  {
+    "chapter": "Static Equilibrium and Elasticity",
+    "chapter_num": 12,
+    "section": "Examples of Static Equilibrium",
+    "subsection": "Forces on Door Hinges",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 12: Static Equilibrium and Elasticity > Examples of Static Equilibrium > Forces on Door Hinges"
+  },
+  {
+    "chapter": "Static Equilibrium and Elasticity",
+    "chapter_num": 12,
+    "section": "Examples of Static Equilibrium",
+    "subsection": "The Torque Balance",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 12: Static Equilibrium and Elasticity > Examples of Static Equilibrium > The Torque Balance"
+  },
+  {
+    "chapter": "Static Equilibrium and Elasticity",
+    "chapter_num": 12,
+    "section": "Static Equilibrium and Elasticity",
+    "subsection": "Static Equilibrium and Elasticity",
+    "difficulty": "moderate",
+    "chunk_count": 5,
+    "limited": false,
+    "path": "Chapter 12: Static Equilibrium and Elasticity > Static Equilibrium and Elasticity > Static Equilibrium and Elasticity"
+  },
+  {
+    "chapter": "Static Equilibrium and Elasticity",
+    "chapter_num": 12,
+    "section": "Stress, Strain, and Elastic Modulus",
+    "subsection": "An Old Bookshelf",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 12: Static Equilibrium and Elasticity > Stress, Strain, and Elastic Modulus > An Old Bookshelf"
+  },
+  {
+    "chapter": "Static Equilibrium and Elasticity",
+    "chapter_num": 12,
+    "section": "Stress, Strain, and Elastic Modulus",
+    "subsection": "Bulk Stress, Strain, and Modulus",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 12: Static Equilibrium and Elasticity > Stress, Strain, and Elastic Modulus > Bulk Stress, Strain, and Modulus"
+  },
+  {
+    "chapter": "Static Equilibrium and Elasticity",
+    "chapter_num": 12,
+    "section": "Stress, Strain, and Elastic Modulus",
+    "subsection": "Compressive Stress in a Pillar",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 12: Static Equilibrium and Elasticity > Stress, Strain, and Elastic Modulus > Compressive Stress in a Pillar"
+  },
+  {
+    "chapter": "Static Equilibrium and Elasticity",
+    "chapter_num": 12,
+    "section": "Stress, Strain, and Elastic Modulus",
+    "subsection": "Shear Stress, Strain, and Modulus",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 12: Static Equilibrium and Elasticity > Stress, Strain, and Elastic Modulus > Shear Stress, Strain, and Modulus"
+  },
+  {
+    "chapter": "Static Equilibrium and Elasticity",
+    "chapter_num": 12,
+    "section": "Stress, Strain, and Elastic Modulus",
+    "subsection": "Stress, Strain, and Elastic Modulus",
+    "difficulty": "moderate",
+    "chunk_count": 18,
+    "limited": false,
+    "path": "Chapter 12: Static Equilibrium and Elasticity > Stress, Strain, and Elastic Modulus > Stress, Strain, and Elastic Modulus"
+  },
+  {
+    "chapter": "Static Equilibrium and Elasticity",
+    "chapter_num": 12,
+    "section": "Stress, Strain, and Elastic Modulus",
+    "subsection": "Stretching a Rod",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 12: Static Equilibrium and Elasticity > Stress, Strain, and Elastic Modulus > Stretching a Rod"
+  },
+  {
+    "chapter": "Static Equilibrium and Elasticity",
+    "chapter_num": 12,
+    "section": "Stress, Strain, and Elastic Modulus",
+    "subsection": "Tensile or Compressive Stress, Strain, and Young\u2019s Modulus",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 12: Static Equilibrium and Elasticity > Stress, Strain, and Elastic Modulus > Tensile or Compressive Stress, Strain, and Young\u2019s Modulus"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "Dimensional Analysis",
+    "subsection": "Checking Equations for Dimensional Consistency",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > Dimensional Analysis > Checking Equations for Dimensional Consistency"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "Dimensional Analysis",
+    "subsection": "Dimensional Analysis",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > Dimensional Analysis > Dimensional Analysis"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "Dimensional Analysis",
+    "subsection": "Using Dimensions to Remember an Equation",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > Dimensional Analysis > Using Dimensions to Remember an Equation"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "Estimates and Fermi Calculations",
+    "subsection": "Estimates and Fermi Calculations",
+    "difficulty": "moderate",
+    "chunk_count": 28,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > Estimates and Fermi Calculations > Estimates and Fermi Calculations"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "Estimates and Fermi Calculations",
+    "subsection": "Mass of Earth\u2019s Oceans",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > Estimates and Fermi Calculations > Mass of Earth\u2019s Oceans"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "Significant Figures",
+    "subsection": "Accuracy and Precision of a Measurement",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > Significant Figures > Accuracy and Precision of a Measurement"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "Significant Figures",
+    "subsection": "Accuracy, Precision, Uncertainty, and Discrepancy",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > Significant Figures > Accuracy, Precision, Uncertainty, and Discrepancy"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "Significant Figures",
+    "subsection": "Calculating Percent Uncertainty: A Bag of Apples",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > Significant Figures > Calculating Percent Uncertainty: A Bag of Apples"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "Significant Figures",
+    "subsection": "Precision of Measuring Tools and Significant Figures",
+    "difficulty": "moderate",
+    "chunk_count": 20,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > Significant Figures > Precision of Measuring Tools and Significant Figures"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "The Scope and Scale of Physics",
+    "subsection": "Building Models",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > The Scope and Scale of Physics > Building Models"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "The Scope and Scale of Physics",
+    "subsection": "The Scale of Physics",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > The Scope and Scale of Physics > The Scale of Physics"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "The Scope and Scale of Physics",
+    "subsection": "The Scope of Physics",
+    "difficulty": "moderate",
+    "chunk_count": 28,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > The Scope and Scale of Physics > The Scope of Physics"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "Unit Conversion",
+    "subsection": "Converting Nonmetric Units to Metric",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > Unit Conversion > Converting Nonmetric Units to Metric"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "Unit Conversion",
+    "subsection": "Converting between Metric Units",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > Unit Conversion > Converting between Metric Units"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "Unit Conversion",
+    "subsection": "Unit Conversion",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > Unit Conversion > Unit Conversion"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "Units and Measurement",
+    "subsection": "Units and Measurement",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > Units and Measurement > Units and Measurement"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "Units and Standards",
+    "subsection": "Metric Prefixes",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > Units and Standards > Metric Prefixes"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "Units and Standards",
+    "subsection": "SI Units: Base and Derived Units",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > Units and Standards > SI Units: Base and Derived Units"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "Units and Standards",
+    "subsection": "Units and Standards",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > Units and Standards > Units and Standards"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "Units and Standards",
+    "subsection": "Units of Time, Length, and Mass: The Second, Meter, and Kilogram",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > Units and Standards > Units of Time, Length, and Mass: The Second, Meter, and Kilogram"
+  },
+  {
+    "chapter": "Units and Measurement",
+    "chapter_num": 1,
+    "section": "Units and Standards",
+    "subsection": "Using Metric Prefixes",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 1: Units and Measurement > Units and Standards > Using Metric Prefixes"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Algebra of Vectors",
+    "subsection": "Analytical Computation of a Resultant",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Algebra of Vectors > Analytical Computation of a Resultant"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Algebra of Vectors",
+    "subsection": "Direction of Motion",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Algebra of Vectors > Direction of Motion"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Algebra of Vectors",
+    "subsection": "Displacement of a Jogger",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Algebra of Vectors > Displacement of a Jogger"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Algebra of Vectors",
+    "subsection": "Displacement of a Skier",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Algebra of Vectors > Displacement of a Skier"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Algebra of Vectors",
+    "subsection": "The Tug-of-War Game",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Algebra of Vectors > The Tug-of-War Game"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Algebra of Vectors",
+    "subsection": "The Unit Vector of Direction",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Algebra of Vectors > The Unit Vector of Direction"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Coordinate Systems and Components of a Vector",
+    "subsection": "Components of Displacement Vectors",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Coordinate Systems and Components of a Vector > Components of Displacement Vectors"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Coordinate Systems and Components of a Vector",
+    "subsection": "Coordinate Systems and Components of a Vector",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Coordinate Systems and Components of a Vector > Coordinate Systems and Components of a Vector"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Coordinate Systems and Components of a Vector",
+    "subsection": "Displacement of a Mouse Pointer",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Coordinate Systems and Components of a Vector > Displacement of a Mouse Pointer"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Coordinate Systems and Components of a Vector",
+    "subsection": "Magnitude and Direction of the Displacement Vector",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Coordinate Systems and Components of a Vector > Magnitude and Direction of the Displacement Vector"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Coordinate Systems and Components of a Vector",
+    "subsection": "Polar Coordinates",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Coordinate Systems and Components of a Vector > Polar Coordinates"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Coordinate Systems and Components of a Vector",
+    "subsection": "Takeoff of a Drone",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Coordinate Systems and Components of a Vector > Takeoff of a Drone"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Coordinate Systems and Components of a Vector",
+    "subsection": "Vectors in Three Dimensions",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Coordinate Systems and Components of a Vector > Vectors in Three Dimensions"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Products of Vectors",
+    "subsection": "A Particle in a Magnetic Field",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Products of Vectors > A Particle in a Magnetic Field"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Products of Vectors",
+    "subsection": "Angle between Two Forces",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Products of Vectors > Angle between Two Forces"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Products of Vectors",
+    "subsection": "Products of Vectors",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Products of Vectors > Products of Vectors"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Products of Vectors",
+    "subsection": "The Scalar Product",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Products of Vectors > The Scalar Product"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Products of Vectors",
+    "subsection": "The Torque of a Force",
+    "difficulty": "moderate",
+    "chunk_count": 26,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Products of Vectors > The Torque of a Force"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Products of Vectors",
+    "subsection": "The Vector Product of Two Vectors (the Cross Product)",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Products of Vectors > The Vector Product of Two Vectors (the Cross Product)"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Scalars and Vectors",
+    "subsection": "A Ladybug Walker",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Scalars and Vectors > A Ladybug Walker"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Scalars and Vectors",
+    "subsection": "Algebra of Vectors in One Dimension",
+    "difficulty": "moderate",
+    "chunk_count": 22,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Scalars and Vectors > Algebra of Vectors in One Dimension"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Scalars and Vectors",
+    "subsection": "Algebra of Vectors in Two Dimensions",
+    "difficulty": "moderate",
+    "chunk_count": 16,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Scalars and Vectors > Algebra of Vectors in Two Dimensions"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Scalars and Vectors",
+    "subsection": "Geometric Construction of the Resultant",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Scalars and Vectors > Geometric Construction of the Resultant"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Scalars and Vectors",
+    "subsection": "Scalars and Vectors",
+    "difficulty": "moderate",
+    "chunk_count": 26,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Scalars and Vectors > Scalars and Vectors"
+  },
+  {
+    "chapter": "Vectors",
+    "chapter_num": 2,
+    "section": "Vectors",
+    "subsection": "Vectors",
+    "difficulty": "moderate",
+    "chunk_count": 3,
+    "limited": false,
+    "path": "Chapter 2: Vectors > Vectors > Vectors"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Energy and Power of a Wave",
+    "subsection": "Energy in Waves",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 16: Waves > Energy and Power of a Wave > Energy in Waves"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Energy and Power of a Wave",
+    "subsection": "Power Supplied by a String Vibrator",
+    "difficulty": "moderate",
+    "chunk_count": 20,
+    "limited": false,
+    "path": "Chapter 16: Waves > Energy and Power of a Wave > Power Supplied by a String Vibrator"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Energy and Power of a Wave",
+    "subsection": "Power in Waves",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 16: Waves > Energy and Power of a Wave > Power in Waves"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Interference of Waves",
+    "subsection": "Interference of Waves",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 16: Waves > Interference of Waves > Interference of Waves"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Interference of Waves",
+    "subsection": "Reflection and Transmission",
+    "difficulty": "moderate",
+    "chunk_count": 18,
+    "limited": false,
+    "path": "Chapter 16: Waves > Interference of Waves > Reflection and Transmission"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Interference of Waves",
+    "subsection": "Superposition and Interference",
+    "difficulty": "moderate",
+    "chunk_count": 22,
+    "limited": false,
+    "path": "Chapter 16: Waves > Interference of Waves > Superposition and Interference"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Interference of Waves",
+    "subsection": "Superposition of Sinusoidal Waves that Differ by a Phase Shift",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 16: Waves > Interference of Waves > Superposition of Sinusoidal Waves that Differ by a Phase Shift"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Mathematics of Waves",
+    "subsection": "Characteristics of a Traveling Wave on a String",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 16: Waves > Mathematics of Waves > Characteristics of a Traveling Wave on a String"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Mathematics of Waves",
+    "subsection": "Interference of Waves on a String",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 16: Waves > Mathematics of Waves > Interference of Waves on a String"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Mathematics of Waves",
+    "subsection": "Modeling a One-Dimensional Sinusoidal Wave using a Wave Function",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 16: Waves > Mathematics of Waves > Modeling a One-Dimensional Sinusoidal Wave using a Wave Function"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Mathematics of Waves",
+    "subsection": "The Linear Wave Equation",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 16: Waves > Mathematics of Waves > The Linear Wave Equation"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Mathematics of Waves",
+    "subsection": "Velocity and Acceleration of the Medium",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 16: Waves > Mathematics of Waves > Velocity and Acceleration of the Medium"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Standing Waves and Resonance",
+    "subsection": "Standing Waves",
+    "difficulty": "moderate",
+    "chunk_count": 22,
+    "limited": false,
+    "path": "Chapter 16: Waves > Standing Waves and Resonance > Standing Waves"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Standing Waves and Resonance",
+    "subsection": "Standing Waves on a String",
+    "difficulty": "moderate",
+    "chunk_count": 26,
+    "limited": false,
+    "path": "Chapter 16: Waves > Standing Waves and Resonance > Standing Waves on a String"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Traveling Waves",
+    "subsection": "Characteristics of a Wave",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 16: Waves > Traveling Waves > Characteristics of a Wave"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Traveling Waves",
+    "subsection": "Mechanical Waves",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 16: Waves > Traveling Waves > Mechanical Waves"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Traveling Waves",
+    "subsection": "Transverse and Longitudinal Waves",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 16: Waves > Traveling Waves > Transverse and Longitudinal Waves"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Traveling Waves",
+    "subsection": "Types of Waves",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 16: Waves > Traveling Waves > Types of Waves"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Traveling Waves",
+    "subsection": "Wave on a String",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 16: Waves > Traveling Waves > Wave on a String"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Wave Speed on a Stretched String",
+    "subsection": "Speed of Compression Waves in a Fluid",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 16: Waves > Wave Speed on a Stretched String > Speed of Compression Waves in a Fluid"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Wave Speed on a Stretched String",
+    "subsection": "The Wave Speed of a Guitar String",
+    "difficulty": "moderate",
+    "chunk_count": 10,
+    "limited": false,
+    "path": "Chapter 16: Waves > Wave Speed on a Stretched String > The Wave Speed of a Guitar String"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Wave Speed on a Stretched String",
+    "subsection": "Wave Speed on a Stretched String",
+    "difficulty": "moderate",
+    "chunk_count": 2,
+    "limited": true,
+    "path": "Chapter 16: Waves > Wave Speed on a Stretched String > Wave Speed on a Stretched String"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Wave Speed on a Stretched String",
+    "subsection": "Wave Speed on a String under Tension",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 16: Waves > Wave Speed on a Stretched String > Wave Speed on a String under Tension"
+  },
+  {
+    "chapter": "Waves",
+    "chapter_num": 16,
+    "section": "Waves",
+    "subsection": "Waves",
+    "difficulty": "moderate",
+    "chunk_count": 3,
+    "limited": false,
+    "path": "Chapter 16: Waves > Waves > Waves"
+  },
+  {
+    "chapter": "Work and Kinetic Energy",
+    "chapter_num": 7,
+    "section": "Kinetic Energy",
+    "subsection": "Kinetic Energy",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 7: Work and Kinetic Energy > Kinetic Energy > Kinetic Energy"
+  },
+  {
+    "chapter": "Work and Kinetic Energy",
+    "chapter_num": 7,
+    "section": "Kinetic Energy",
+    "subsection": "Kinetic Energy Relative to Different Frames",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 7: Work and Kinetic Energy > Kinetic Energy > Kinetic Energy Relative to Different Frames"
+  },
+  {
+    "chapter": "Work and Kinetic Energy",
+    "chapter_num": 7,
+    "section": "Kinetic Energy",
+    "subsection": "Kinetic Energy of an Object",
+    "difficulty": "moderate",
+    "chunk_count": 14,
+    "limited": false,
+    "path": "Chapter 7: Work and Kinetic Energy > Kinetic Energy > Kinetic Energy of an Object"
+  },
+  {
+    "chapter": "Work and Kinetic Energy",
+    "chapter_num": 7,
+    "section": "Kinetic Energy",
+    "subsection": "Special Names for Kinetic Energy",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 7: Work and Kinetic Energy > Kinetic Energy > Special Names for Kinetic Energy"
+  },
+  {
+    "chapter": "Work and Kinetic Energy",
+    "chapter_num": 7,
+    "section": "Power",
+    "subsection": "Power",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 7: Work and Kinetic Energy > Power > Power"
+  },
+  {
+    "chapter": "Work and Kinetic Energy",
+    "chapter_num": 7,
+    "section": "Power",
+    "subsection": "Pull-Up Power",
+    "difficulty": "moderate",
+    "chunk_count": 4,
+    "limited": false,
+    "path": "Chapter 7: Work and Kinetic Energy > Power > Pull-Up Power"
+  },
+  {
+    "chapter": "Work and Kinetic Energy",
+    "chapter_num": 7,
+    "section": "Work",
+    "subsection": "Calculating the Work You Do to Push a Lawn Mower",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 7: Work and Kinetic Energy > Work > Calculating the Work You Do to Push a Lawn Mower"
+  },
+  {
+    "chapter": "Work and Kinetic Energy",
+    "chapter_num": 7,
+    "section": "Work",
+    "subsection": "Moving a Couch",
+    "difficulty": "moderate",
+    "chunk_count": 12,
+    "limited": false,
+    "path": "Chapter 7: Work and Kinetic Energy > Work > Moving a Couch"
+  },
+  {
+    "chapter": "Work and Kinetic Energy",
+    "chapter_num": 7,
+    "section": "Work",
+    "subsection": "Shelving a Book",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 7: Work and Kinetic Energy > Work > Shelving a Book"
+  },
+  {
+    "chapter": "Work and Kinetic Energy",
+    "chapter_num": 7,
+    "section": "Work",
+    "subsection": "Work",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 7: Work and Kinetic Energy > Work > Work"
+  },
+  {
+    "chapter": "Work and Kinetic Energy",
+    "chapter_num": 7,
+    "section": "Work",
+    "subsection": "Work Done by Constant Forces and Contact Forces",
+    "difficulty": "moderate",
+    "chunk_count": 6,
+    "limited": false,
+    "path": "Chapter 7: Work and Kinetic Energy > Work > Work Done by Constant Forces and Contact Forces"
+  },
+  {
+    "chapter": "Work and Kinetic Energy",
+    "chapter_num": 7,
+    "section": "Work",
+    "subsection": "Work Done by a Spring Force",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 7: Work and Kinetic Energy > Work > Work Done by a Spring Force"
+  },
+  {
+    "chapter": "Work and Kinetic Energy",
+    "chapter_num": 7,
+    "section": "Work",
+    "subsection": "Work Done by a Variable Force over a Curved Path",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 7: Work and Kinetic Energy > Work > Work Done by a Variable Force over a Curved Path"
+  },
+  {
+    "chapter": "Work and Kinetic Energy",
+    "chapter_num": 7,
+    "section": "Work and Kinetic Energy",
+    "subsection": "Work and Kinetic Energy",
+    "difficulty": "moderate",
+    "chunk_count": 3,
+    "limited": false,
+    "path": "Chapter 7: Work and Kinetic Energy > Work and Kinetic Energy > Work and Kinetic Energy"
+  },
+  {
+    "chapter": "Work and Kinetic Energy",
+    "chapter_num": 7,
+    "section": "Work-Energy Theorem",
+    "subsection": "Determining a Stopping Force",
+    "difficulty": "moderate",
+    "chunk_count": 8,
+    "limited": false,
+    "path": "Chapter 7: Work and Kinetic Energy > Work-Energy Theorem > Determining a Stopping Force"
+  },
+  {
+    "chapter": "Work and Kinetic Energy",
+    "chapter_num": 7,
+    "section": "Work-Energy Theorem",
+    "subsection": "Work-Energy Theorem",
+    "difficulty": "moderate",
+    "chunk_count": 26,
+    "limited": false,
+    "path": "Chapter 7: Work and Kinetic Energy > Work-Energy Theorem > Work-Energy Theorem"
+  }
+]
