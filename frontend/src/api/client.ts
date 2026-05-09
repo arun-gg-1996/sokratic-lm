@@ -10,12 +10,30 @@ import type {
   User,
 } from "../types";
 import { useUserStore } from "../stores/userStore";
+import { domainPathPrefix } from "../stores/domainStore";
 
 const DEFAULT_API_BASE =
   import.meta.env.DEV ? "http://localhost:8000" : window.location.origin;
 const API_BASE = (import.meta.env.VITE_API_BASE || DEFAULT_API_BASE).replace(/\/$/, "");
 
 export { API_BASE };
+
+/**
+ * Build a domain-routed API URL.
+ *
+ *   apiUrl("/api/session/start")        → physics: ${BASE}/physics/api/session/start
+ *                                        anatomy:  ${BASE}/api/session/start
+ *   apiUrl("/api/users", { unscoped })  → always:  ${BASE}/api/users  (auth + listing)
+ *
+ * `unscoped: true` is for endpoints that are domain-agnostic — login,
+ * listUsers — these always go to the default (anatomy) backend, which
+ * shares SOKRATIC_AUTH_USERS + SOKRATIC_AUTH_SECRET with the physics
+ * backend so the JWT it issues works for both.
+ */
+export function apiUrl(path: string, options: { unscoped?: boolean } = {}): string {
+  if (options.unscoped) return `${API_BASE}${path}`;
+  return `${API_BASE}${domainPathPrefix()}${path}`;
+}
 
 function authHeaders(extra: HeadersInit = {}): HeadersInit {
   const token = useUserStore.getState().authToken;
@@ -30,13 +48,15 @@ async function authFetch(input: RequestInfo | URL, init: RequestInit = {}) {
 }
 
 export async function listUsers(): Promise<User[]> {
-  const res = await fetch(`${API_BASE}/api/users`);
+  // Auth + listing endpoints are domain-agnostic — both backends share
+  // SOKRATIC_AUTH_USERS, so the default (anatomy) backend is fine.
+  const res = await fetch(apiUrl("/api/users", { unscoped: true }));
   if (!res.ok) throw new Error("Failed to fetch users");
   return res.json();
 }
 
 export async function loginUser(username: string, password: string): Promise<{ token: string; user: User }> {
-  const res = await fetch(`${API_BASE}/api/auth/login`, {
+  const res = await fetch(apiUrl("/api/auth/login", { unscoped: true }), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
@@ -70,7 +90,7 @@ export async function startSession(
   };
   if (prelockedTopic) body.prelocked_topic = prelockedTopic;
   if (imageContext) body.image_context = imageContext;
-  const res = await authFetch(`${API_BASE}/api/session/start`, {
+  const res = await authFetch(apiUrl("/api/session/start"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -104,7 +124,7 @@ export async function uploadVlmImage(
   const form = new FormData();
   form.append("thread_id", threadId);
   form.append("file", file);
-  const res = await authFetch(`${API_BASE}/api/vlm/upload`, {
+  const res = await authFetch(apiUrl("/api/vlm/upload"), {
     method: "POST",
     body: form,
   });
@@ -117,7 +137,7 @@ export async function uploadVlmImage(
 
 export async function getMemory(studentId: string): Promise<MemoryListResponse> {
   const res = await authFetch(
-    `${API_BASE}/api/memory/${encodeURIComponent(studentId)}`
+    apiUrl(`/api/memory/${encodeURIComponent(studentId)}`)
   );
   if (!res.ok) throw new Error("Failed to fetch memory");
   return res.json();
@@ -125,7 +145,7 @@ export async function getMemory(studentId: string): Promise<MemoryListResponse> 
 
 export async function forgetMemory(studentId: string): Promise<MemoryDeleteResponse> {
   const res = await authFetch(
-    `${API_BASE}/api/memory/${encodeURIComponent(studentId)}`,
+    apiUrl(`/api/memory/${encodeURIComponent(studentId)}`),
     { method: "DELETE" }
   );
   if (!res.ok) throw new Error("Failed to delete memory");
@@ -136,7 +156,7 @@ export async function getMastery(
   studentId: string
 ): Promise<MasteryDashboardResponse> {
   const res = await authFetch(
-    `${API_BASE}/api/mastery/${encodeURIComponent(studentId)}`
+    apiUrl(`/api/mastery/${encodeURIComponent(studentId)}`)
   );
   if (!res.ok) throw new Error("Failed to fetch mastery");
   return res.json();
@@ -148,7 +168,7 @@ export async function getMasteryTree(
   studentId: string
 ): Promise<MasteryTreeResponse> {
   const res = await authFetch(
-    `${API_BASE}/api/mastery/v2/${encodeURIComponent(studentId)}/tree`
+    apiUrl(`/api/mastery/v2/${encodeURIComponent(studentId)}/tree`)
   );
   if (!res.ok) throw new Error("Failed to fetch mastery tree");
   return res.json();
@@ -164,7 +184,7 @@ export async function getMasterySessions(
   if (opts.subsectionPath) params.set("subsection_path", opts.subsectionPath);
   const qs = params.toString() ? `?${params.toString()}` : "";
   const res = await authFetch(
-    `${API_BASE}/api/mastery/v2/${encodeURIComponent(studentId)}/sessions${qs}`
+    apiUrl(`/api/mastery/v2/${encodeURIComponent(studentId)}/sessions${qs}`)
   );
   if (!res.ok) throw new Error("Failed to fetch mastery sessions");
   return res.json();
@@ -186,7 +206,7 @@ export interface TranscriptResponse {
 }
 
 export async function getSessionTranscript(threadId: string): Promise<TranscriptResponse> {
-  const res = await authFetch(`${API_BASE}/api/sessions/${encodeURIComponent(threadId)}/transcript`);
+  const res = await authFetch(apiUrl(`/api/sessions/${encodeURIComponent(threadId)}/transcript`));
   if (!res.ok) throw new Error("Failed to fetch transcript");
   return res.json();
 }
@@ -203,7 +223,7 @@ export async function postAnalysisChat(
   message: string,
   history: { role: string; content: string }[] = []
 ): Promise<AnalysisChatResponse> {
-  const res = await authFetch(`${API_BASE}/api/sessions/${encodeURIComponent(threadId)}/analysis_chat`, {
+  const res = await authFetch(apiUrl(`/api/sessions/${encodeURIComponent(threadId)}/analysis_chat`), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message, history }),
@@ -220,7 +240,7 @@ export interface RegenerateResponse {
 }
 
 export async function regenerateTakeaways(threadId: string): Promise<RegenerateResponse> {
-  const res = await authFetch(`${API_BASE}/api/sessions/${encodeURIComponent(threadId)}/regenerate_takeaways`, {
+  const res = await authFetch(apiUrl(`/api/sessions/${encodeURIComponent(threadId)}/regenerate_takeaways`), {
     method: "POST",
   });
   if (!res.ok) throw new Error("Failed to regenerate takeaways");
@@ -247,7 +267,7 @@ export async function postSuggestReplies(
   profile: string = "S2",
 ): Promise<SuggestRepliesResponse> {
   const res = await authFetch(
-    `${API_BASE}/api/sessions/${encodeURIComponent(threadId)}/suggest_replies`,
+    apiUrl(`/api/sessions/${encodeURIComponent(threadId)}/suggest_replies`),
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -262,20 +282,20 @@ export async function getMasterySession(
   threadId: string
 ): Promise<MasterySessionRow> {
   const res = await authFetch(
-    `${API_BASE}/api/mastery/v2/session/${encodeURIComponent(threadId)}`
+    apiUrl(`/api/mastery/v2/session/${encodeURIComponent(threadId)}`)
   );
   if (!res.ok) throw new Error("Failed to fetch mastery session");
   return res.json();
 }
 
 export async function exportSession(threadId: string): Promise<Record<string, unknown>> {
-  const res = await authFetch(`${API_BASE}/api/session/${threadId}/export`);
+  const res = await authFetch(apiUrl(`/api/session/${threadId}/export`));
   if (!res.ok) throw new Error("Failed to export session");
   return res.json();
 }
 
 export async function getStudentOverview(studentId: string): Promise<StudentOverviewResponse> {
-  const res = await authFetch(`${API_BASE}/api/students/${studentId}/overview`);
+  const res = await authFetch(apiUrl(`/api/students/${studentId}/overview`));
   if (!res.ok) throw new Error("Failed to fetch overview");
   return res.json();
 }

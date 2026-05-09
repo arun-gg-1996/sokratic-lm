@@ -20,7 +20,20 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useSessionStore } from "../../stores/sessionStore";
 import { useUserStore } from "../../stores/userStore";
+import { useDomainStore, DOMAIN_LABELS } from "../../stores/domainStore";
 import { AccountPopover } from "../account/AccountPopover";
+
+function SidebarDomainPill() {
+  const domain = useDomainStore((s) => s.domain);
+  return (
+    <span
+      className="ml-auto text-xs font-mono uppercase tracking-wide text-muted bg-bg/60 border border-border px-2 py-0.5 rounded"
+      title={`Currently tutoring in ${DOMAIN_LABELS[domain]}. Switch via the profile menu (bottom-left).`}
+    >
+      {DOMAIN_LABELS[domain]}
+    </span>
+  );
+}
 
 type DebugRecord = Record<string, unknown> | null;
 
@@ -162,6 +175,7 @@ export function Sidebar() {
         <div className="flex items-center gap-3 px-2 pt-1">
           <img src="/sokratic_bot_icon.png" alt="Sokratic" className="h-8 w-8 rounded-md" />
           <div className="text-2xl font-semibold">Sokratic</div>
+          <SidebarDomainPill />
         </div>
 
         {/* L80.c — prominent phase badge.

@@ -6,6 +6,7 @@ import { useTheme } from "../../hooks/useTheme";
 import { isTTSAvailable } from "../../hooks/useTTS";
 import { useSessionStore } from "../../stores/sessionStore";
 import { useUserStore } from "../../stores/userStore";
+import { useDomainStore, DOMAIN_LABELS, type DomainId } from "../../stores/domainStore";
 import { MemoryDrawer } from "./MemoryDrawer";
 
 export function AccountPopover({ studentId }: { studentId: string | null }) {
@@ -23,6 +24,9 @@ export function AccountPopover({ studentId }: { studentId: string | null }) {
   const ttsEnabled = useUserStore((s) => s.ttsEnabled);
   const setTtsEnabled = useUserStore((s) => s.setTtsEnabled);
   const threadId = useSessionStore((s) => s.threadId);
+  const domain = useDomainStore((s) => s.domain);
+  const setDomain = useDomainStore((s) => s.setDomain);
+  const [pendingDomain, setPendingDomain] = useState<DomainId | null>(null);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -115,6 +119,22 @@ export function AccountPopover({ studentId }: { studentId: string | null }) {
           >
             Cross-session memory: {memoryEnabled ? "on" : "off"}
           </button>
+          <button
+            className="w-full rounded-lg border border-border px-3 py-2 text-left hover:border-accent flex items-center justify-between"
+            onClick={() => {
+              // Cycle between anatomy ↔ physics. Switching ends the
+              // current session and starts a fresh one against the
+              // other domain's backend (separate qdrant + SQLite).
+              const next: DomainId = domain === "ot" ? "physics" : "ot";
+              setPendingDomain(next);
+            }}
+            title="Pick the textbook subject for your tutoring sessions. Anatomy and physics each run on their own backend with their own corpus + mastery history."
+          >
+            <span>Subject</span>
+            <span className="text-accent font-mono text-xs">
+              {DOMAIN_LABELS[domain]} ▾
+            </span>
+          </button>
           {/* L79 — TTS toggle. Hidden when SpeechSynthesis isn't
               available (e.g. some Firefox builds). */}
           {isTTSAvailable() && (
@@ -154,6 +174,62 @@ export function AccountPopover({ studentId }: { studentId: string | null }) {
           open={memoryDrawerOpen}
           onClose={() => setMemoryDrawerOpen(false)}
         />
+      )}
+
+      {pendingDomain && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setPendingDomain(null)}
+        >
+          <div
+            className="rounded-card border border-border bg-panel max-w-md p-5 space-y-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-base font-semibold">
+              Switch to {DOMAIN_LABELS[pendingDomain]}?
+            </div>
+            <div className="text-sm text-muted">
+              This will end your current session (if any) and start a fresh
+              one against the {DOMAIN_LABELS[pendingDomain].toLowerCase()}{" "}
+              tutor. Your {DOMAIN_LABELS[domain].toLowerCase()} mastery and
+              past sessions stay intact and are still there if you switch
+              back later — each subject has its own progress history.
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                className="rounded-lg border border-border px-4 py-2 hover:border-muted"
+                onClick={() => setPendingDomain(null)}
+              >
+                Cancel
+              </button>
+              <button
+                className="rounded-lg bg-accent text-bg px-4 py-2 font-medium hover:opacity-90"
+                onClick={() => {
+                  // Reset the chat session before switching domains so
+                  // the bootstrap re-runs against the new backend. A
+                  // hard reload is the simplest way — clears WebSocket
+                  // connections, resets all useEffect-bound state, and
+                  // re-reads the new domain prefix from localStorage.
+                  setDomain(pendingDomain);
+                  setPendingDomain(null);
+                  setOpen(false);
+                  // Reset session bookkeeping in the same store the
+                  // chat view watches, then navigate to /chat which
+                  // triggers the bootstrap and a session_start
+                  // against the picked domain's backend.
+                  useSessionStore.getState().reset();
+                  navigate("/chat");
+                  // Hard reload so the WebSocket disconnects cleanly
+                  // and every domain-bound URL builder picks up the
+                  // new prefix from localStorage on first render.
+                  window.location.reload();
+                }}
+              >
+                Switch
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
