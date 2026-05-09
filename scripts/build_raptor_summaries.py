@@ -58,8 +58,10 @@ ROOT = Path(__file__).parent.parent
 load_dotenv(ROOT / ".env", override=True)
 sys.path.insert(0, str(ROOT))
 
-from anthropic import AsyncAnthropic  # noqa: E402
+from anthropic import AsyncAnthropic  # noqa: E402  # type-only; client built via factory
 from openai import OpenAI  # noqa: E402
+
+from conversation.llm_client import make_async_anthropic_client  # noqa: E402
 from qdrant_client import QdrantClient  # noqa: E402
 from qdrant_client.http.models import PointStruct  # noqa: E402
 from rank_bm25 import BM25Okapi  # noqa: E402
@@ -75,7 +77,7 @@ DOMAIN = cfg.domain.retrieval_domain
 COLLECTION = cfg.domain.kb_collection
 EMBED_BATCH_SIZE = 100
 UPSERT_BATCH_SIZE = 100
-SEMAPHORE = 8       # parallel Anthropic calls
+SEMAPHORE = 4       # parallel Anthropic calls (Bedrock throttles harder than direct)
 MAX_INPUT_TOKENS = 80_000  # safety; chapters fit in Haiku's 200k context
 
 SUMMARY_PROMPT_SUBSECTION = """\
@@ -162,22 +164,41 @@ async def summarize_one(
     prompt: str,
     label: str,
 ) -> tuple[str, str | None]:
+    """One Haiku call with retry-on-429 + exponential backoff. Bedrock's
+    cross-region inference profile throttles harder than direct Anthropic;
+    bare calls without retry get a 429 storm at SEMAPHORE >= 4."""
+    from conversation.llm_client import resolve_model
     async with sem:
-        try:
-            resp = await client.messages.create(
-                model=SUMMARY_MODEL,
-                max_tokens=420,
-                temperature=0.0,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            text = ""
-            for block in resp.content:
-                t = getattr(block, "text", "") or ""
-                if t:
-                    text += t
-            return label, text.strip()
-        except Exception as e:
-            return label, f"[ERROR: {type(e).__name__}: {e}]"
+        delay = 2.0
+        last_exc: Exception | None = None
+        for attempt in range(6):
+            try:
+                resp = await client.messages.create(
+                    model=resolve_model(SUMMARY_MODEL),
+                    max_tokens=420,
+                    temperature=0.0,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+                text = ""
+                for block in resp.content:
+                    t = getattr(block, "text", "") or ""
+                    if t:
+                        text += t
+                return label, text.strip()
+            except Exception as e:
+                last_exc = e
+                msg = str(e).lower()
+                is_rate_limit = (
+                    type(e).__name__ == "RateLimitError"
+                    or "429" in msg
+                    or "throttling" in msg
+                    or "too many requests" in msg
+                )
+                if not is_rate_limit or attempt == 5:
+                    break
+                await asyncio.sleep(delay)
+                delay *= 2
+        return label, f"[ERROR: {type(last_exc).__name__}: {last_exc}]"
 
 def truncate_tokens_approx(text: str, max_chars: int = 320_000) -> str:
     """Very rough — Haiku 4-5 has 200k context, ~4 chars/token. Cap at
@@ -196,7 +217,7 @@ async def build_subsection_summaries(
     items = list(groups.items())
     if limit:
         items = items[:limit]
-    client = AsyncAnthropic()
+    client = make_async_anthropic_client()
     sem = asyncio.Semaphore(SEMAPHORE)
     tasks = []
     metas = []
@@ -257,7 +278,7 @@ async def build_section_summaries(
     for s in subsection_summaries:
         subs_by_section[(s["chapter_num"], s["section_title"])].append(s)
 
-    client = AsyncAnthropic()
+    client = make_async_anthropic_client()
     sem = asyncio.Semaphore(SEMAPHORE)
     tasks = []
     metas = []

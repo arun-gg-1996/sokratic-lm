@@ -115,13 +115,32 @@ def topic_index_key(entry: dict) -> tuple:
 # ─────────────────────────────────────────────────────────────────────────────
 
 async def call_llm(client, model: str, prompt: str, max_tokens: int = 600) -> str:
-    resp = await client.messages.create(
-        model=resolve_model(model),
-        max_tokens=max_tokens,
-        temperature=0.0,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return resp.content[0].text.strip()
+    """LLM call with retry-on-429 + exponential backoff (Bedrock throttles harder)."""
+    delay = 2.0
+    last_exc: Exception | None = None
+    for attempt in range(6):
+        try:
+            resp = await client.messages.create(
+                model=resolve_model(model),
+                max_tokens=max_tokens,
+                temperature=0.0,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return resp.content[0].text.strip()
+        except Exception as e:
+            last_exc = e
+            msg = str(e).lower()
+            is_rate_limit = (
+                type(e).__name__ == "RateLimitError"
+                or "429" in msg
+                or "throttling" in msg
+                or "too many requests" in msg
+            )
+            if not is_rate_limit or attempt == 5:
+                break
+            await asyncio.sleep(delay)
+            delay *= 2
+    raise last_exc  # type: ignore[misc]
 
 def build_summary_prompt(chapter: str, section: str, subsection: str, chunk_texts: list[str]) -> str:
     joined = "\n\n".join(chunk_texts[:8])  # cap at 8 chunks (~8k chars) to keep prompt size sane
