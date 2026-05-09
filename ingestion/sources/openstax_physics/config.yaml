@@ -1,0 +1,24 @@
+# OpenStax University Physics V1 — source-specific configuration
+# Loaded by ingestion/core/pipeline.py:load_source() and exposed as
+# SourceModule.config to downstream stages. Currently a stub — base.yaml +
+# config/domains/physics.yaml drive runtime behavior.
+
+textbook_id: openstax_physics
+display_name: "OpenStax University Physics V1"
+pdf_path: data/raw/openStax_physics_v1.pdf
+domain: physics
+
+# Font-size heuristics — inherited verbatim from openstax_anatomy.parse,
+# which already accommodates physics per its own author note. Listed here
+# as documentation; not yet read by any consumer (parse.py's constants are
+# inlined). Move parsing here if physics ever needs to override.
+parse:
+  l1_heading_min_font: 12.5
+  l2_heading_min_font: 10.5
+  l2_heading_max_font: 11.2
+  body_min_font: 8.0
+
+# Back-matter / sidebar patterns — inherited from anatomy filters.py.
+filters:
+  back_matter_chapters: []
+  sidebar_markers: []

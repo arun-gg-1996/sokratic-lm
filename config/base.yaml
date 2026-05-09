@@ -180,17 +180,17 @@ simulation:
 
 paths:
   raw_ot_pdf: "data/raw/Anatomy_and_Physiology_2e_-_WEB_c9nD9QL.pdf"
-  raw_physics_pdf: "data/raw/college_physics_2e.pdf"
+  raw_physics_pdf: "data/raw/openStax_physics_v1.pdf"
   # ─── Per-domain artifact paths ───────────────────────────────────────────
   # Naming convention: {kind}_{retrieval_domain}. Code resolves these via
   # cfg.domain_path("chunks"), cfg.domain_path("propositions"), etc., where
   # retrieval_domain is set in domains/<domain_id>.yaml.
   chunks_openstax_anatomy: "data/processed/chunks_openstax_anatomy.jsonl"
-  chunks_physics: "data/processed/chunks_physics.jsonl"
+  chunks_openstax_physics: "data/processed/chunks_openstax_physics.jsonl"
   propositions_openstax_anatomy: "data/processed/propositions_openstax_anatomy.jsonl"
-  propositions_physics: "data/processed/propositions_physics.jsonl"
+  propositions_openstax_physics: "data/processed/propositions_openstax_physics.jsonl"
   bm25_openstax_anatomy: "data/indexes/bm25_chunks_openstax_anatomy.pkl"
-  bm25_physics: "data/indexes/bm25_physics.pkl"
+  bm25_openstax_physics: "data/indexes/bm25_chunks_openstax_physics.pkl"
 
   # Domain-agnostic shared paths.
   diagrams: "data/diagrams"
@@ -200,29 +200,31 @@ paths:
 
   # Topic index (per L9 + L19)
   topic_index_openstax_anatomy: "data/topic_index.json"
-  topic_index_physics: "data/topic_index_physics.json"
+  topic_index_openstax_physics: "data/topic_index_openstax_physics.json"
 
   # Textbook structure (per-domain — currently single shared file for ot;
   # physics will get its own when the corpus is built)
   textbook_structure_openstax_anatomy: "data/textbook_structure.json"
-  textbook_structure_physics: "data/textbook_structure_physics.json"
+  textbook_structure_openstax_physics: "data/textbook_structure_openstax_physics.json"
 
   # Raptor subsection summaries (per L38)
   raptor_subsection_summaries_openstax_anatomy: "data/artifacts/raptor_subsection_summaries.jsonl"
-  raptor_subsection_summaries_physics: "data/artifacts/raptor_subsection_summaries_physics.jsonl"
+  raptor_subsection_summaries_openstax_physics: "data/artifacts/raptor_subsection_summaries_openstax_physics.jsonl"
+  raptor_section_summaries_openstax_anatomy: "data/artifacts/raptor_section_summaries.jsonl"
+  raptor_section_summaries_openstax_physics: "data/artifacts/raptor_section_summaries_openstax_physics.jsonl"
 
   # Curated abbreviations (per L9)
   curated_abbrevs_openstax_anatomy: "data/curated_abbrevs_ot.json"
-  curated_abbrevs_physics: "data/curated_abbrevs_physics.json"
+  curated_abbrevs_openstax_physics: "data/curated_abbrevs_openstax_physics.json"
 
   # LLM-synthesized subsection audit log (per L76)
   llm_synthesized_subsections_dir: "data/artifacts/llm_synthesized_subsections"
   raw_sections_openstax_anatomy: "data/processed/raw_sections_openstax_anatomy.jsonl"
-  raw_sections_physics: "data/processed/raw_sections_physics.jsonl"
+  raw_sections_openstax_physics: "data/processed/raw_sections_openstax_physics.jsonl"
   raw_elements_openstax_anatomy: "data/processed/raw_elements_openstax_anatomy.jsonl"
-  raw_elements_physics: "data/processed/raw_elements_physics.jsonl"
+  raw_elements_openstax_physics: "data/processed/raw_elements_openstax_physics.jsonl"
   indexes_openstax_anatomy: "data/indexes"
-  indexes_physics: "data/indexes"
+  indexes_openstax_physics: "data/indexes"
 
 qdrant:
   vector_size: 3072

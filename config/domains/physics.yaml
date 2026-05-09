@@ -5,7 +5,10 @@ domain:
   kb_collection: "sokratic_physics_kb"
   memory_collection: "sokratic_physics_memory"
   mem0_namespace: "physics"
-  retrieval_domain: "physics"
+  # retrieval_domain matches the ingestion source name (ingestion/sources/openstax_physics)
+  # AND the artifact-path suffix in config/base.yaml (chunks_openstax_physics, etc.).
+  # Anatomy uses the same convention: retrieval_domain="openstax_anatomy".
+  retrieval_domain: "openstax_physics"
 
   # Used as concrete examples in prompts so the LLM understands the expected format
   example_topic_specific: "Newton's third law"
@@ -43,7 +46,7 @@ domain:
 
   # ─── L78 / L9 / L77 / L74 / L19 — per-domain config slots ────────────────
   # Curated abbreviation list (per L9). Physics seed list — extend as needed.
-  curated_abbrevs_path: "data/curated_abbrevs_physics.json"
+  curated_abbrevs_path: "data/curated_abbrevs_openstax_physics.json"
 
   # VLM (image upload) — DISABLED for physics (per user, 2026-05-02).
   # Frontend hides the upload button; backend rejects image upload requests.
