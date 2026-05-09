@@ -41,8 +41,8 @@ export function ImageUploadCard() {
       const result = await uploadVlmImage(placeholder, file);
       if (result.route_decision === "refuse" || result.confidence < 0.3) {
         setError(
-          "I couldn't recognize that image. Try a different anatomical " +
-          "image (a labeled diagram works best) or skip and type your topic.",
+          "I couldn't recognize that image. Try a different image " +
+          "(a labeled diagram works best) or skip and type your topic.",
         );
         setUploading(false);
         return;
@@ -75,9 +75,9 @@ export function ImageUploadCard() {
     <div className="rounded-card border border-dashed border-border bg-panel/60 px-4 py-4 space-y-2 fade-in">
       <div className="text-sm font-medium">📷 Start with an image</div>
       <div className="text-xs text-muted">
-        Upload an anatomical diagram or photo (PNG / JPG / WebP, ≤ 5 MB).
-        The tutor will identify what's visible and lock to the right
-        subsection automatically.
+        Upload a diagram or photo (PNG / JPG / WebP, ≤ 5 MB). The tutor
+        will identify what's visible and lock to the right subsection
+        automatically.
       </div>
       <input
         ref={inputRef}

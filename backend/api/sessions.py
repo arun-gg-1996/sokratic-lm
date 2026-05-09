@@ -585,8 +585,8 @@ _N8_PROFILES = {
 
 _SUGGEST_SYSTEM = """\
 You are a SIMULATOR generating realistic student replies for a
-Socratic anatomy tutoring app. The user is testing the tutor and has
-toggled "Suggest answers" on so they can act as different student
+Socratic {domain_name} tutoring app. The user is testing the tutor and
+has toggled "Suggest answers" on so they can act as different student
 profiles.
 
 Your output is a JSON list of 4 suggested student replies. Each must
@@ -720,7 +720,9 @@ system rules. Output strict JSON only.
             "model": model_id,
             "max_tokens": 600,
             "temperature": 0.7,
-            "system": _SUGGEST_SYSTEM,
+            "system": _SUGGEST_SYSTEM.format(
+                domain_name=getattr(getattr(cfg, "domain", object()), "name", "this subject"),
+            ),
             "messages": [{"role": "user", "content": user_prompt}],
         }
         try:

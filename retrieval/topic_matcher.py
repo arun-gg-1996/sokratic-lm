@@ -30,7 +30,10 @@ from config import cfg
 from retrieval.ontology import DomainOntologyAdapter, NoopAdapter
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_INDEX_PATH = ROOT / "data" / "topic_index.json"
+# Domain-aware default — anatomy gets data/topic_index.json (legacy unsuffixed
+# name kept for back-compat); physics gets data/topic_index_openstax_physics.json.
+# Resolved via cfg.domain_path() so SOKRATIC_DOMAIN flips the target.
+DEFAULT_INDEX_PATH = ROOT / cfg.domain_path("topic_index")
 
 @dataclass
 class TopicMatch:

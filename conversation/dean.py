@@ -1326,12 +1326,13 @@ class DeanAgent:
                         "wrapper": "dean.coverage_gate_freeform_fallback",
                         "result": f"refused {cgap_after}x; switching to freeform",
                     })
+                    _domain_name = getattr(getattr(cfg, "domain", object()), "name", "this subject")
                     fallback_msg = (
-                        "I'm having trouble finding a strong textbook anchor for the "
-                        "topics we've tried. Rather than keep cycling through cards, "
-                        "let's go freeform: in your own words, what specifically about "
-                        "anatomy do you want to work on right now? Be as concrete as "
-                        "you can (a structure, a process, a clinical scenario)."
+                        f"I'm having trouble finding a strong textbook anchor for the "
+                        f"topics we've tried. Rather than keep cycling through cards, "
+                        f"let's go freeform: in your own words, what specifically about "
+                        f"{_domain_name} do you want to work on right now? Be as concrete "
+                        f"as you can (a structure, a process, a clinical scenario)."
                     )
                     messages.append({"role": "tutor", "content": fallback_msg})
                     return {
@@ -3185,13 +3186,14 @@ LLM judge says the latest message is on-topic / venting / OOD.
                 "them stay in control."
             )
 
+        _domain_name = getattr(getattr(cfg, "domain", object()), "name", "this subject")
         if ot_n == 2:
             warnings.append(
-                "OFF-TOPIC WARNING: This is the student's SECOND consecutive "
-                "off-domain message. Briefly acknowledge their question is "
-                "outside our anatomy/textbook scope, and refocus them on "
+                f"OFF-TOPIC WARNING: This is the student's SECOND consecutive "
+                f"off-domain message. Briefly acknowledge their question is "
+                f"outside our {_domain_name}/textbook scope, and refocus them on "
                 f"the locked topic ('{state.get('topic_selection', 'the current topic')}'). "
-                "Don't engage with the off-domain content."
+                f"Don't engage with the off-domain content."
             )
         elif ot_n == 3:
             warnings.append(

@@ -814,7 +814,7 @@ prompts:
 
       Student: "umm so... like, what's that thing in the kidney that filters blood?"
       → intent=topic_query, normalized_topic="kidney filtration"  (vague but
-        clearly anatomy; extract the best topic phrase.)
+        clearly in {domain_short}; extract the best topic phrase.)
 
       Student: "ugh i'm so confused"
       → intent=distress, normalized_topic=""
@@ -857,12 +857,12 @@ prompts:
 
       Intent: distress
       Student: "i hate this"
-      → tutor_reply: "That's fair — anatomy can feel like a lot at first. Want to start
+      → tutor_reply: "That's fair — {domain_short} can feel like a lot at first. Want to start
                       with something specific that's been bugging you?"
 
       Intent: off_topic
       Student: "what's the weather like"
-      → tutor_reply: "Ha — not my department. Want to pick an anatomy topic to dig into?"
+      → tutor_reply: "Ha — not my department. Want to pick a {domain_short} topic to dig into?"
 
       Intent: ambiguous
       Student: "ok"

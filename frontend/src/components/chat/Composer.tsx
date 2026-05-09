@@ -241,8 +241,8 @@ export function Composer({ onSubmit, placeholder = "Reply..." }: ComposerProps) 
                     ? "bg-muted/20 text-muted/40 cursor-not-allowed"
                     : "bg-panel text-text border border-border hover:border-accent"
                 }`}
-                aria-label="Upload an anatomical image"
-                title={uploading ? "Analyzing image…" : "Upload an image (anatomical diagram or photo)"}
+                aria-label="Upload an image"
+                title={uploading ? "Analyzing image…" : "Upload an image (diagram or photo)"}
               >
                 {uploading ? (
                   <span className="inline-block h-3 w-3 rounded-full border-2 border-muted border-t-accent animate-spin" />

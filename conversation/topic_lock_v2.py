@@ -41,10 +41,12 @@ def _prelock_nudge_intro(base: str, prelock_count: int) -> str:
     if prelock_count < PRELOCK_WARN_AT:
         return base
     if prelock_count < PRELOCK_URGENT_AT:
+        from config import cfg as _cfg
+        _domain_short = getattr(getattr(_cfg, "domain", object()), "short", "subject")
         return (
             base
-            + " (We've been hunting for a topic for a few turns now — "
-            "give me a more specific anatomy concept and we'll lock in.)"
+            + f" (We've been hunting for a topic for a few turns now — "
+            f"give me a more specific {_domain_short} concept and we'll lock in.)"
         )
     return (
         base
@@ -380,11 +382,13 @@ def run_topic_lock_v2(
     )
         return _render_guided_pick(state, messages, retriever, latest_student, prelock_count)
 
+    from config import cfg as _cfg
+    _retrieval_domain = getattr(getattr(_cfg, "domain", object()), "retrieval_domain", "the corpus")
     fire_activity(
         "Resolving topic to the textbook",
         detail=(
-            "LLM mapping the student's natural-language topic request to a "
-            "specific subsection in the openstax_anatomy table of contents."
+            f"LLM mapping the student's natural-language topic request to a "
+            f"specific subsection in the {_retrieval_domain} table of contents."
         ),
     )
     rejected_for_resolver = list(state.get("rejected_topic_paths", []) or [])
@@ -514,13 +518,15 @@ def _lock_topic(
         via=source,
     )
 
+    from config import cfg as _cfg
+    _retrieval_domain_for_lock = getattr(getattr(_cfg, "domain", object()), "retrieval_domain", "the corpus")
     fire_activity(
         "Searching textbook for the topic",
         detail=(
-            "Running BM25 + Qdrant retrieval across the openstax_anatomy "
-            "knowledge base to pull the chunks under the chosen subsection. "
-            "These chunks become the grounding for both the anchor question "
-            "and every Teacher draft for the rest of the session."
+            f"Running BM25 + Qdrant retrieval across the {_retrieval_domain_for_lock} "
+            f"knowledge base to pull the chunks under the chosen subsection. "
+            f"These chunks become the grounding for both the anchor question "
+            f"and every Teacher draft for the rest of the session."
         ),
     )
     try:

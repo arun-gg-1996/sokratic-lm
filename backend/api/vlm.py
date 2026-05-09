@@ -113,9 +113,13 @@ async def upload_image(
         or getattr(_cfg.models, "vlm", None)
         or _cfg.models.dean
     )
+    # Fallback prompt is intentionally domain-agnostic. The real per-domain
+    # prompt lives in cfg.domain.vlm.prompt_template (anatomy asks for
+    # anatomical structures, etc.). Physics has vlm.enabled=false so this
+    # code path doesn't fire there.
     prompt = (
         getattr(vlm_cfg, "prompt_template", "") or
-        "Identify all anatomical structures visible in this image."
+        "Identify the structures or features visible in this image."
     )
 
     result = extract_image_context(
