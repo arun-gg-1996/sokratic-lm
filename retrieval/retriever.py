@@ -1120,15 +1120,21 @@ Three points where the proposition pipeline differs from chunk-level:
  unchanged.
 """
 
-    def __init__(self, *, collection: str = "sokratic_kb_chunks",
+    def __init__(self, *, collection: str | None = None,
                  bm25_path: str | None = None) -> None:
-        # Resolve BM25 path to an absolute path relative to the project root
-        # so the retriever works no matter what cwd the caller is in.
-        # Default lives at <project_root>/data/indexes/bm25_chunks_openstax_anatomy.pkl.
+        # Both collection and BM25 path now default to the active domain
+        # (cfg.domain.kb_collection, cfg.domain_path("bm25")) so a single
+        # ChunkRetriever() with SOKRATIC_DOMAIN=physics routes to physics
+        # qdrant + BM25, and SOKRATIC_DOMAIN=ot routes to anatomy. Was
+        # previously hardcoded to anatomy, which silently mis-routed
+        # physics queries to the anatomy collection.
+        if collection is None:
+            collection = getattr(getattr(cfg, "domain", object()),
+                                 "kb_collection", "sokratic_kb_chunks")
         if bm25_path is None:
             from pathlib import Path as _Path
             _root = _Path(__file__).resolve().parent.parent
-            bm25_path = str(_root / "data/indexes/bm25_chunks_openstax_anatomy.pkl")
+            bm25_path = str(_root / cfg.domain_path("bm25"))
         # Bypass Retriever.__init__ so we can swap collection + bm25 path
         # without touching cfg.memory.kb_collection / cfg.paths.
         from openai import OpenAI
