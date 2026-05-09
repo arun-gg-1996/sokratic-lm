@@ -435,8 +435,13 @@ async def extract_dual_task(
                 error="aborted by cost cap before API call",
             )
         try:
+            # resolve_model maps short model names ("claude-haiku-4-5") to
+            # their Bedrock cross-region inference profile IDs
+            # ("us.anthropic.claude-haiku-4-5-20251001-v1:0") when running
+            # against Bedrock; pass-through unchanged on direct Anthropic.
+            from conversation.llm_client import resolve_model
             resp = await client.messages.create(
-                model=model,
+                model=resolve_model(model),
                 max_tokens=max_output_tokens,
                 temperature=0,
                 system=cached_system,
@@ -532,7 +537,13 @@ async def run_dual_task_batch(
     if not chunks:
         return []
     if client is None:
-        client = AsyncAnthropic()
+        # Use the Bedrock-aware factory so SOKRATIC_USE_BEDROCK=1 in .env
+        # routes ingestion calls through AWS Bedrock rather than the direct
+        # Anthropic API. Direct API has a per-account credit balance that
+        # ran out mid-run on physics ingest; Bedrock bills against AWS so
+        # the pipeline doesn't hit a hard wall partway through.
+        from conversation.llm_client import make_async_anthropic_client
+        client = make_async_anthropic_client()
 
     sem = asyncio.Semaphore(concurrency)
     cached_system = build_cached_system(extra_system_suffix)
