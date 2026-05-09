@@ -43,7 +43,21 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 ROOT = Path(__file__).parent.parent
+
+# Selective env load: .env's secrets win, but shell-passed control flags
+# (SOKRATIC_DOMAIN, SOKRATIC_USE_BEDROCK) survive so a single command-line
+# invocation can steer this run away from the committed .env defaults
+# (.env has SOKRATIC_DOMAIN=ot for runtime; ingestion targets physics).
+import os as _os  # local alias to avoid colliding with main `import os` later
+_shell_overrides = {
+    k: _os.environ[k]
+    for k in ("SOKRATIC_DOMAIN", "SOKRATIC_USE_BEDROCK")
+    if _os.environ.get(k)
+}
 load_dotenv(ROOT / ".env", override=True)
+for k, v in _shell_overrides.items():
+    _os.environ[k] = v
+
 sys.path.insert(0, str(ROOT))
 
 from openai import OpenAI  # noqa: E402

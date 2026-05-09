@@ -35,6 +35,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import shutil
 import sys
 import time
@@ -44,11 +45,26 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from dotenv import load_dotenv
-# load .env WITHOUT override so SOKRATIC_DOMAIN from the shell wins. The
-# physics ingest needs SOKRATIC_DOMAIN=physics to flip cfg's path resolver,
-# and override=True would clobber the shell value if .env happened to set
-# an explicit domain.
-load_dotenv(ROOT / ".env", override=False)
+# Selective env load:
+#   - Use override=True so .env's ANTHROPIC_API_KEY / AWS_* / etc.
+#     replace any empty/stale values in the parent shell (the latter
+#     caused a silent 100%-error zero-cost run when the shell had
+#     ANTHROPIC_API_KEY="" from a deactivated venv).
+#   - But preserve the two control flags (SOKRATIC_DOMAIN,
+#     SOKRATIC_USE_BEDROCK) if the shell passed them — these are how
+#     a single command-line invocation steers the run away from the
+#     committed .env defaults (.env has SOKRATIC_USE_BEDROCK=1 and
+#     SOKRATIC_DOMAIN=ot for runtime; ingestion scripts often need
+#     SOKRATIC_DOMAIN=physics and may temporarily flip
+#     SOKRATIC_USE_BEDROCK=0 for direct-API spend).
+_shell_overrides = {
+    k: os.environ[k]
+    for k in ("SOKRATIC_DOMAIN", "SOKRATIC_USE_BEDROCK")
+    if os.environ.get(k)
+}
+load_dotenv(ROOT / ".env", override=True)
+for k, v in _shell_overrides.items():
+    os.environ[k] = v
 
 from config import cfg  # noqa: E402
 from conversation.llm_client import (  # noqa: E402
@@ -169,27 +185,98 @@ async def main() -> int:
             print(f"  sleeping {args.warmup_sleep}s for Bedrock cache to settle...")
             await asyncio.sleep(args.warmup_sleep)
 
-    print(f"\nre-running {len(failed_chunks)} chunks @ concurrency={args.concurrency}...")
+    # Process in mini-batches with INCREMENTAL writes after each batch.
+    # The previous "asyncio.gather over all 2014 tasks at once" approach
+    # died silently mid-run (likely a transient httpx/aiohttp connection
+    # error not surfaced cleanly by gather), losing all work because we
+    # only wrote at the end. Mini-batches give us:
+    #   - per-batch progress prints (eyes on the run)
+    #   - durable progress: a crash loses at most the in-flight batch
+    #   - smoother throttle: pauses between batches let Bedrock breathe
+    BATCH_SIZE = 50
+    chunks_by_id = {c["chunk_id"]: c for c in chunks}
+    all_new_props: list[dict] = []
+    all_results: list = []
+    print(f"\nre-running {len(failed_chunks)} chunks @ concurrency={args.concurrency}, batch_size={BATCH_SIZE}...")
     t0 = time.time()
-    tasks = [
-        extract_dual_task(
-            client, c, sem,
-            model=args.model, cached_system=cached_system,
-            usage_callback=record_with_cap,
-            abort_event=abort_event,
-        )
-        for c in failed_chunks
-    ]
-    results = await asyncio.gather(*tasks)
-    elapsed = time.time() - t0
+    n_total = len(failed_chunks)
+    for batch_start in range(0, n_total, BATCH_SIZE):
+        batch = failed_chunks[batch_start : batch_start + BATCH_SIZE]
+        batch_t0 = time.time()
+        tasks = [
+            extract_dual_task(
+                client, c, sem,
+                model=args.model, cached_system=cached_system,
+                usage_callback=record_with_cap,
+                abort_event=abort_event,
+            )
+            for c in batch
+        ]
+        try:
+            batch_results = await asyncio.gather(*tasks, return_exceptions=False)
+        except Exception as e:
+            print(f"  ! batch starting at {batch_start} raised {type(e).__name__}: {e}", flush=True)
+            print(f"  ! continuing with next batch", flush=True)
+            continue
+        all_results.extend(batch_results)
 
-    n_ok = sum(1 for r in results if r.error is None)
-    n_err = len(results) - n_ok
+        # Back-fill cleaned text + collect propositions for THIS batch
+        batch_new_props: list[dict] = []
+        for r in batch_results:
+            if r.error is not None:
+                continue
+            if r.chunk_id in chunks_by_id and r.cleaned_text:
+                chunks_by_id[r.chunk_id]["text"] = r.cleaned_text
+            parent = chunks_by_id.get(r.chunk_id, {})
+            for p in r.propositions:
+                p_full = dict(p)
+                for fld in (
+                    "chapter_num", "chapter_title", "section_num", "section_title",
+                    "subsection_title", "subsection_id", "page", "chunk_type",
+                    "sequence_index", "prev_chunk_id", "next_chunk_id",
+                    "subsection_chunk_count",
+                ):
+                    if fld in parent and fld not in p_full:
+                        p_full[fld] = parent[fld]
+                batch_new_props.append(p_full)
+        all_new_props.extend(batch_new_props)
+
+        # Persist after each batch — durable progress
+        merged_props = existing_props + all_new_props
+        with props_path.open("w") as f:
+            for p in merged_props:
+                f.write(json.dumps(p, ensure_ascii=False) + "\n")
+        with chunks_path.open("w") as f:
+            for c in chunks_by_id.values():
+                f.write(json.dumps(c, ensure_ascii=False) + "\n")
+
+        n_ok = sum(1 for r in batch_results if r.error is None)
+        n_err = len(batch_results) - n_ok
+        done = batch_start + len(batch)
+        pct = 100 * done / n_total
+        elapsed_total = time.time() - t0
+        rate = done / max(elapsed_total, 1)
+        eta_s = int((n_total - done) / max(rate, 0.01))
+        print(
+            f"  batch {batch_start:4d}-{done:4d} ({pct:5.1f}%)  "
+            f"ok={n_ok:2d} err={n_err:2d}  "
+            f"+{len(batch_new_props):3d} props  "
+            f"cost=${tracker.total_cost:.4f}  "
+            f"elapsed={int(elapsed_total)}s  ETA={eta_s}s",
+            flush=True,
+        )
+        if abort_event.is_set():
+            print(f"  ! cost cap hit; stopping after this batch", flush=True)
+            break
+
+    elapsed = time.time() - t0
+    n_ok = sum(1 for r in all_results if r.error is None)
+    n_err = len(all_results) - n_ok
     print(f"\nre-run done in {elapsed:.1f}s  ok={n_ok}  err={n_err}  cost=${tracker.total_cost:.4f}")
 
     # Sample errors
     err_buckets: dict[str, int] = {}
-    for r in results:
+    for r in all_results:
         if r.error:
             short = r.error.split(":")[0][:40]
             err_buckets[short] = err_buckets.get(short, 0) + 1
@@ -198,38 +285,8 @@ async def main() -> int:
         for k, v in sorted(err_buckets.items(), key=lambda kv: -kv[1])[:10]:
             print(f"  {v:5d}  {k}")
 
-    # Back-fill cleaned text into chunks; collect new propositions
-    chunks_by_id = {c["chunk_id"]: c for c in chunks}
-    new_props: list[dict] = []
-    for r in results:
-        if r.error is not None:
-            continue
-        if r.chunk_id in chunks_by_id and r.cleaned_text:
-            chunks_by_id[r.chunk_id]["text"] = r.cleaned_text
-        parent = chunks_by_id.get(r.chunk_id, {})
-        for p in r.propositions:
-            p_full = dict(p)
-            for fld in (
-                "chapter_num", "chapter_title", "section_num", "section_title",
-                "subsection_title", "subsection_id", "page", "chunk_type",
-                "sequence_index", "prev_chunk_id", "next_chunk_id",
-                "subsection_chunk_count",
-            ):
-                if fld in parent and fld not in p_full:
-                    p_full[fld] = parent[fld]
-            new_props.append(p_full)
-
-    # Write merged propositions: keep existing, append new
-    merged_props = existing_props + new_props
-    print(f"\nwriting {len(merged_props)} propositions ({len(existing_props)} kept + {len(new_props)} new)")
-    with props_path.open("w") as f:
-        for p in merged_props:
-            f.write(json.dumps(p, ensure_ascii=False) + "\n")
-
-    # Write chunks back
-    with chunks_path.open("w") as f:
-        for c in chunks_by_id.values():
-            f.write(json.dumps(c, ensure_ascii=False) + "\n")
+    print(f"final propositions: {len(existing_props) + len(all_new_props)} "
+          f"({len(existing_props)} kept + {len(all_new_props)} new)")
     print(f"chunks updated in place")
     return 0
 

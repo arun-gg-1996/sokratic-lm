@@ -55,7 +55,20 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 ROOT = Path(__file__).parent.parent
+
+# Selective env load: .env's secrets win (ANTHROPIC_API_KEY etc.), but
+# shell-passed control flags (SOKRATIC_DOMAIN, SOKRATIC_USE_BEDROCK)
+# survive so the operator can steer the run.
+import os as _os
+_shell_overrides = {
+    k: _os.environ[k]
+    for k in ("SOKRATIC_DOMAIN", "SOKRATIC_USE_BEDROCK")
+    if _os.environ.get(k)
+}
 load_dotenv(ROOT / ".env", override=True)
+for k, v in _shell_overrides.items():
+    _os.environ[k] = v
+
 sys.path.insert(0, str(ROOT))
 
 from anthropic import AsyncAnthropic  # noqa: E402  # type-only; client built via factory

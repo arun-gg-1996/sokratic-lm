@@ -32,7 +32,17 @@ sys.path.insert(0, str(REPO))
 
 from dotenv import load_dotenv  # noqa: E402
 
+# Selective env load: .env secrets win, shell control flags
+# (SOKRATIC_DOMAIN, SOKRATIC_USE_BEDROCK) survive for per-command steering.
+import os as _os  # noqa: E402
+_shell_overrides = {
+    k: _os.environ[k]
+    for k in ("SOKRATIC_DOMAIN", "SOKRATIC_USE_BEDROCK")
+    if _os.environ.get(k)
+}
 load_dotenv(REPO / ".env", override=True)
+for k, v in _shell_overrides.items():
+    _os.environ[k] = v
 
 from config import cfg as _cfg  # noqa: E402
 
