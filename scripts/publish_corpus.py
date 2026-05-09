@@ -49,17 +49,28 @@ DEFAULT_REPO_NAME = "sokratic-anatomy-corpus"
 # The propositions_openstax_anatomy.jsonl + bm25_openstax_anatomy.pkl pair
 # is also dropped: the runtime now targets the chunks collection.
 INCLUDE_FILES: list[str] = [
+    # ───── ANATOMY (openstax_anatomy) ─────
     "data/processed/chunks_openstax_anatomy.jsonl",
     "data/indexes/bm25_chunks_openstax_anatomy.pkl",
     "data/textbook_structure.json",
     "data/topic_index.json",
-    # Post-2026-05-08 SQL-backed memory: the curriculum / summaries / abbreviations
-    # live in SQLite now and are seeded from these artifacts on a fresh deploy.
-    # `bootstrap_corpus.py` pulls them, then `seed_curriculum.py` +
-    # `seed_summaries_and_abbreviations.py` populate `data/student_state/sokratic_*.sqlite3`.
     "data/artifacts/raptor_subsection_summaries.jsonl",
     "data/artifacts/raptor_section_summaries.jsonl",
     "data/artifacts/sokratic_seed_openstax_anatomy.sql",
+    "data/curated_abbrevs_ot.json",
+
+    # ───── PHYSICS (openstax_physics) ─────
+    # Mirror of the anatomy artifact set so a fresh deploy targeting physics
+    # gets everything chunks → BM25 → topic_index → RAPTOR summaries →
+    # textbook_structure → curated abbreviations from one HF pull.
+    "data/processed/chunks_openstax_physics.jsonl",
+    "data/processed/propositions_openstax_physics.jsonl",
+    "data/indexes/bm25_chunks_openstax_physics.pkl",
+    "data/textbook_structure_openstax_physics.json",
+    "data/topic_index_openstax_physics.json",
+    "data/artifacts/raptor_subsection_summaries_openstax_physics.jsonl",
+    "data/artifacts/raptor_section_summaries_openstax_physics.jsonl",
+    "data/curated_abbrevs_openstax_physics.json",
 ]
 
 # Optional — uploaded if present locally. The Qdrant snapshot saves teammates
@@ -71,6 +82,7 @@ INCLUDE_FILES: list[str] = [
 # "http://localhost:6333/collections/sokratic_kb_chunks/snapshots/$NAME"
 OPTIONAL_INCLUDE_FILES: list[str] = [
     "data/indexes/qdrant_sokratic_kb_chunks.snapshot",
+    "data/indexes/qdrant_sokratic_physics_kb.snapshot",
 ]
 
 # Never upload these — either copyrighted, secret, or easy to regenerate.

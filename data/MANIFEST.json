@@ -1,16 +1,16 @@
 {
-  "generated_at": "2026-05-08T21:50:29+00:00",
-  "git_commit": "969e006c94e47e7351b2f53f7a562aa2dda503cc",
+  "generated_at": "2026-05-09T04:16:54+00:00",
+  "git_commit": "067bdecba637d579139f94c1f0319e88cd1d025c",
   "files": [
     {
       "path": "data/processed/chunks_openstax_anatomy.jsonl",
-      "size": 11276297,
-      "sha256": "5ec279d91de8513ed44eef1bdb62fe1acae38e2841fff5ec016ca491efb7f4af"
+      "size": 11276300,
+      "sha256": "cf26a0ddfc69d939475dcf3cb808c0f20262c9125666760b72c6cf39400da6c6"
     },
     {
       "path": "data/indexes/bm25_chunks_openstax_anatomy.pkl",
-      "size": 17570044,
-      "sha256": "3d236a56dd2b0589b7cec2f976991d4338e6d20bc189f44033fa41daa58a1561"
+      "size": 15549815,
+      "sha256": "918087a4450da7383d950d0a147a5794f020c59c09c9afaa15a8f301e07fb96e"
     },
     {
       "path": "data/textbook_structure.json",
@@ -38,19 +38,69 @@
       "sha256": "deb3a41d6b1f91913937b642efb983e6b7f833b5ce35f74834316b17bffbf900"
     },
     {
+      "path": "data/curated_abbrevs_ot.json",
+      "size": 4695,
+      "sha256": "a0aed54a76c5bf01b7dbf30069ff65b727e07474800a2f6503d9d1fb96ff494d"
+    },
+    {
+      "path": "data/processed/chunks_openstax_physics.jsonl",
+      "size": 5572946,
+      "sha256": "0b37dfe437b87cce96a79f013fda2926247440384200d50fab33aa3791335960"
+    },
+    {
+      "path": "data/processed/propositions_openstax_physics.jsonl",
+      "size": 30531816,
+      "sha256": "5520f2fb7ab0c6154201f1c88c97de01cfccfff90a6d03e57ded6186f15557f7"
+    },
+    {
+      "path": "data/indexes/bm25_chunks_openstax_physics.pkl",
+      "size": 7416321,
+      "sha256": "41a98dbc2e9b00db3048619a03edcd14570f3b61a7b62773d606afc772a74f1b"
+    },
+    {
+      "path": "data/textbook_structure_openstax_physics.json",
+      "size": 52419,
+      "sha256": "4888ec7e20879762229c186aebeda173716e40236c5402da9e33dbc7ad1e4af0"
+    },
+    {
+      "path": "data/topic_index_openstax_physics.json",
+      "size": 156441,
+      "sha256": "2fbecf9e7d3babc58d0b9eb9f62c167898a0f2bf98471e084b15b005c4748338"
+    },
+    {
+      "path": "data/artifacts/raptor_subsection_summaries_openstax_physics.jsonl",
+      "size": 686201,
+      "sha256": "baa935d6837a3e0288e903cd6830cadbd3adcb042e2a6bd54abdadcc93b137d9"
+    },
+    {
+      "path": "data/artifacts/raptor_section_summaries_openstax_physics.jsonl",
+      "size": 219055,
+      "sha256": "6dc48f9994755f62f194c1ebf88009fab9367f13b6226f6cd322e88a3ec6f4a5"
+    },
+    {
+      "path": "data/curated_abbrevs_openstax_physics.json",
+      "size": 7056,
+      "sha256": "fa2196f6c4c432adf229be26a63f83780ed5279b9e292c7469b92ff25baa2936"
+    },
+    {
       "path": "data/indexes/qdrant_sokratic_kb_chunks.snapshot",
       "size": 146952704,
       "sha256": "41cdd2b615c56b3a393c5a9b75f6ffa1604fb3386f5b512c814592e91052cd75"
+    },
+    {
+      "path": "data/indexes/qdrant_sokratic_physics_kb.snapshot",
+      "size": 309691392,
+      "sha256": "74399ef9715333143ac668888a826d95b9d7e778f3855558e0655f18762e5cd6"
     }
   ],
   "files_on_disk": [
     {
       "path": "data/processed/chunks_openstax_anatomy.jsonl",
-      "size": 11276297
+      "size": 11276300
     },
     {
       "path": "data/indexes/bm25_chunks_openstax_anatomy.pkl",
-      "size": 17570044
+      "size": 15549815
     },
     {
       "path": "data/textbook_structure.json",
@@ -73,8 +123,48 @@
       "size": 827101
     },
     {
+      "path": "data/curated_abbrevs_ot.json",
+      "size": 4695
+    },
+    {
+      "path": "data/processed/chunks_openstax_physics.jsonl",
+      "size": 5572946
+    },
+    {
+      "path": "data/processed/propositions_openstax_physics.jsonl",
+      "size": 30531816
+    },
+    {
+      "path": "data/indexes/bm25_chunks_openstax_physics.pkl",
+      "size": 7416321
+    },
+    {
+      "path": "data/textbook_structure_openstax_physics.json",
+      "size": 52419
+    },
+    {
+      "path": "data/topic_index_openstax_physics.json",
+      "size": 156441
+    },
+    {
+      "path": "data/artifacts/raptor_subsection_summaries_openstax_physics.jsonl",
+      "size": 686201
+    },
+    {
+      "path": "data/artifacts/raptor_section_summaries_openstax_physics.jsonl",
+      "size": 219055
+    },
+    {
+      "path": "data/curated_abbrevs_openstax_physics.json",
+      "size": 7056
+    },
+    {
       "path": "data/indexes/qdrant_sokratic_kb_chunks.snapshot",
       "size": 146952704
+    },
+    {
+      "path": "data/indexes/qdrant_sokratic_physics_kb.snapshot",
+      "size": 309691392
     }
   ]
 }
