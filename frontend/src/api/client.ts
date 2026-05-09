@@ -19,18 +19,45 @@ const API_BASE = (import.meta.env.VITE_API_BASE || DEFAULT_API_BASE).replace(/\/
 export { API_BASE };
 
 /**
+ * Per-domain backend base URL — used only in DEV / direct-port mode.
+ *
+ * Dev runs without nginx, so the URL prefix trick (/physics/api/...)
+ * never reaches a separate backend — everything hits whatever uvicorn
+ * is on localhost:8000. To make local domain switching work, we point
+ * the frontend at a different port per domain.
+ *
+ * Override via VITE_PHYSICS_API_BASE / VITE_ANATOMY_API_BASE at build
+ * time. Defaults assume the local convention: anatomy → :8000,
+ * physics → :8001.
+ */
+const DEV_PHYSICS_BASE =
+  import.meta.env.VITE_PHYSICS_API_BASE || "http://localhost:8001";
+const DEV_ANATOMY_BASE =
+  import.meta.env.VITE_ANATOMY_API_BASE || "http://localhost:8000";
+
+/**
  * Build a domain-routed API URL.
  *
- *   apiUrl("/api/session/start")        → physics: ${BASE}/physics/api/session/start
- *                                        anatomy:  ${BASE}/api/session/start
- *   apiUrl("/api/users", { unscoped })  → always:  ${BASE}/api/users  (auth + listing)
+ * Production (nginx in front, served from window.location.origin):
+ *   physics → ${BASE}/physics/api/...   (nginx strips /physics, proxies to :8001)
+ *   anatomy → ${BASE}/api/...            (anatomy backend on :8000)
  *
- * `unscoped: true` is for endpoints that are domain-agnostic — login,
- * listUsers — these always go to the default (anatomy) backend, which
- * shares SOKRATIC_AUTH_USERS + SOKRATIC_AUTH_SECRET with the physics
- * backend so the JWT it issues works for both.
+ * Dev (no nginx, direct ports):
+ *   physics → http://localhost:8001/api/...
+ *   anatomy → http://localhost:8000/api/...
+ *
+ * { unscoped: true } — auth + listUsers — always hits the default
+ * (anatomy) backend; both backends share SOKRATIC_AUTH_SECRET so the
+ * JWT works for either.
  */
 export function apiUrl(path: string, options: { unscoped?: boolean } = {}): string {
+  // Dev: route by port (no nginx)
+  if (import.meta.env.DEV && !import.meta.env.VITE_API_BASE) {
+    if (options.unscoped) return `${DEV_ANATOMY_BASE}${path}`;
+    const base = domainPathPrefix() === "/physics" ? DEV_PHYSICS_BASE : DEV_ANATOMY_BASE;
+    return `${base}${path}`;
+  }
+  // Production: route by URL prefix (nginx strips it)
   if (options.unscoped) return `${API_BASE}${path}`;
   return `${API_BASE}${domainPathPrefix()}${path}`;
 }
