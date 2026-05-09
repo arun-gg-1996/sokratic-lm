@@ -57,8 +57,18 @@ def _domain_prompt_vars() -> dict:
         "domain_example_topic_specific": getattr(domain, "example_topic_specific", "a specific concept"),
         "domain_example_topic_broad": getattr(domain, "example_topic_broad", "a broad topic area"),
         "domain_example_question": getattr(domain, "example_question", "What is the key concept here?"),
+        "domain_example_answer": getattr(domain, "example_answer", "the key concept"),
+        "domain_example_answer_format": getattr(domain, "example_answer_format", "a short noun phrase"),
         "assessment_dimension": getattr(domain, "assessment_dimension", "real-world application"),
         "assessment_dimension_examples": getattr(domain, "assessment_dimension_examples", "examples, problems, or context"),
+        "domain_clinical_scenario_style": getattr(
+            domain, "clinical_scenario_style",
+            "a real-world scenario with a concrete decision question",
+        ),
+        "domain_display_label_style": getattr(
+            domain, "display_label_style",
+            "concise student-friendly phrasing",
+        ),
     }
 
 def _clamp01(value: float) -> float:
@@ -358,12 +368,17 @@ def _split_locked_answer(answer: str) -> list[str]:
     parts = [p.strip() for p in parts if p.strip()]
     return parts
 
-# Common short anatomy/biology nouns that frequently appear in legitimate
-# Socratic scaffolding ("the heart muscle...", "what nerve innervates...")
+# Common short generic nouns that frequently appear in legitimate
+# Socratic scaffolding ("the heart muscle...", "what force is acting...")
 # and would false-positive a single-word anchor leak check. When the
 # locked_answer is one of these, we don't block the teacher from
 # mentioning it — too high a false-positive rate.
-_COMMON_ANCHOR_FALSE_POSITIVES = frozenset({
+#
+# Per-domain. Anatomy: "muscle, nerve, bone, vessel...". Physics:
+# "force, energy, mass, vector...". Pulled from cfg.domain.anchor_false_positives
+# at first call; falls back to the anatomy list (which historically lived
+# inline here) when the active domain doesn't define its own.
+_ANATOMY_FALLBACK_FALSE_POSITIVES = frozenset({
     # Generic anatomy
     "muscle", "nerve", "bone", "artery", "vein", "vessel", "tissue",
     "organ", "cell", "wall", "layer", "cavity", "chamber", "fluid",
@@ -375,11 +390,27 @@ _COMMON_ANCHOR_FALSE_POSITIVES = frozenset({
     "medial", "lateral", "deep", "central", "peripheral",
 })
 
-# Curated short clinical / anatomical / biological abbreviations that are
-# `_is_distinctive_anchor` rejects them (e.g. "sa", "rca", "atp") because
-# they're too short — but they're real anchors that need leak-protection.
-# Lowercased; matched after the caller's lowercase normalization.
-_DISTINCTIVE_SHORT_ABBREVIATIONS = frozenset({
+
+def _common_anchor_false_positives() -> frozenset[str]:
+    """Pull the per-domain false-positive list from cfg, falling back to
+    the inline anatomy list (preserves legacy behavior for any domain
+    that doesn't override).
+    """
+    domain_list = getattr(getattr(cfg, "domain", object()),
+                          "anchor_false_positives", None)
+    if domain_list:
+        return frozenset(str(x).strip().lower() for x in domain_list if str(x).strip())
+    return _ANATOMY_FALLBACK_FALSE_POSITIVES
+
+
+# Curated short abbreviations distinctive enough to leak-block even
+# though `_is_distinctive_anchor` rejects them as too short
+# (e.g. "sa", "rca", "atp"). Lowercased; matched after caller normalization.
+#
+# Per-domain. Anatomy gets the cardiac/neuro/biochem set below; physics
+# gets quantity/instrument abbreviations (kg, m/s, hz, etc.) via
+# cfg.domain.distinctive_short_abbreviations.
+_ANATOMY_FALLBACK_DISTINCTIVE_ABBREVS = frozenset({
     # Cardiac
     "sa", "av", "rca", "lca", "lad", "rcx", "lcx", "pda", "ivc", "svc",
     # Neuro
@@ -397,6 +428,21 @@ _DISTINCTIVE_SHORT_ABBREVIATIONS = frozenset({
     # Other clinical
     "icu", "er", "or", "ot", "pt",
 })
+
+
+def _distinctive_short_abbreviations() -> frozenset[str]:
+    domain_list = getattr(getattr(cfg, "domain", object()),
+                          "distinctive_short_abbreviations", None)
+    if domain_list:
+        return frozenset(str(x).strip().lower() for x in domain_list if str(x).strip())
+    return _ANATOMY_FALLBACK_DISTINCTIVE_ABBREVS
+
+
+# Legacy module-level constants kept for back-compat with any callers
+# that import them directly. New callers should use the helper functions
+# above so per-domain overrides take effect at the live cfg state.
+_COMMON_ANCHOR_FALSE_POSITIVES = _ANATOMY_FALLBACK_FALSE_POSITIVES
+_DISTINCTIVE_SHORT_ABBREVIATIONS = _ANATOMY_FALLBACK_DISTINCTIVE_ABBREVS
 
 def _is_distinctive_anchor(token: str) -> bool:
     """True iff a single-word anchor is distinctive enough to safely
@@ -423,14 +469,18 @@ def _is_distinctive_anchor(token: str) -> bool:
         return True  # multi-word phrases are always distinctive enough
     word_raw = parts_raw[0]
     word = word_raw.lower()
-    # Standard ≥5-char path
-    if len(word) >= 5 and word not in _COMMON_ANCHOR_FALSE_POSITIVES:
+    # Standard ≥5-char path. Per-domain false-positive set picked up via
+    # _common_anchor_false_positives() so anatomy gets the muscle/nerve/
+    # vessel list and physics gets force/energy/momentum/etc.
+    if len(word) >= 5 and word not in _common_anchor_false_positives():
         return True
     # ALL-CAPS short abbreviation — preserve original case detection
     if 2 <= len(word_raw) <= 4 and word_raw.isupper():
         return True
-    # Curated short-abbreviation set (case-insensitive)
-    if word in _DISTINCTIVE_SHORT_ABBREVIATIONS:
+    # Curated short-abbreviation set (case-insensitive). Per-domain via
+    # _distinctive_short_abbreviations() — anatomy: SA/AV/ATP/etc.,
+    # physics: J/W/Pa/Hz/etc.
+    if word in _distinctive_short_abbreviations():
         return True
     return False
 

@@ -44,6 +44,132 @@ domain:
     - system
     - body
 
+  # ─── Anchor leak-detection word lists (per-domain) ──────────────────────
+  # Generic nouns that frequently appear in legitimate Socratic scaffolding
+  # ("the heart muscle...", "what nerve innervates..."). When the
+  # locked_answer is one of these, dean.py won't block the teacher from
+  # mentioning it — too high a false-positive rate. Source of truth for
+  # these used to live inline in dean.py; moved here for per-domain
+  # override.
+  anchor_false_positives:
+    # Generic anatomy
+    - muscle
+    - nerve
+    - bone
+    - artery
+    - vein
+    - vessel
+    - tissue
+    - organ
+    - cell
+    - wall
+    - layer
+    - cavity
+    - chamber
+    - fluid
+    - blood
+    - skin
+    - joint
+    - system
+    - region
+    - branch
+    - trunk
+    # Generic biology
+    - protein
+    - enzyme
+    - hormone
+    - molecule
+    - structure
+    - function
+    # Generic descriptors
+    - left
+    - right
+    - anterior
+    - posterior
+    - superior
+    - inferior
+    - medial
+    - lateral
+    - deep
+    - central
+    - peripheral
+
+  # Curated short abbreviations distinctive enough to leak-block even
+  # though the standard `_is_distinctive_anchor` rejects ≤4-char tokens.
+  # Anatomy gets cardiac/neuro/biochem/imaging/clinical sets.
+  distinctive_short_abbreviations:
+    # Cardiac
+    - sa
+    - av
+    - rca
+    - lca
+    - lad
+    - rcx
+    - lcx
+    - pda
+    - ivc
+    - svc
+    # Neuro
+    - cn
+    - cns
+    - pns
+    - rem
+    - csf
+    - bbb
+    # Biochem
+    - atp
+    - adp
+    - amp
+    - gtp
+    - gdp
+    - nad
+    - fad
+    - coa
+    - udp
+    - dna
+    - rna
+    - mrna
+    - trna
+    - rrna
+    - fc
+    - fab
+    - ig
+    - iga
+    - igg
+    - igm
+    - ige
+    - igd
+    # Lipids & blood
+    - ldl
+    - hdl
+    - vldl
+    - rbc
+    - wbc
+    - cbc
+    - hb
+    - abg
+    # Endocrine
+    - tsh
+    - fsh
+    - lh
+    - acth
+    - adh
+    - gh
+    - prl
+    # Imaging / instruments
+    - ekg
+    - ecg
+    - eeg
+    - mri
+    - ct
+    - pet
+    # Other clinical
+    - icu
+    - er
+    - or
+    - ot
+    - pt
+
   # Drives post-answer assessment framing
   assessment_dimension: "clinical application"
   assessment_dimension_examples: "exam findings, function, or intervention planning"

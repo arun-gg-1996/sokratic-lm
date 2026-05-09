@@ -40,6 +40,102 @@ domain:
     - optics
     - thermodynamics
 
+  # ─── Anchor leak-detection word lists (per-domain) ──────────────────────
+  # Physics counterpart of anatomy's anchor_false_positives. Generic
+  # quantity / concept nouns that recur in Socratic scaffolding without
+  # naming a specific answer ("the force on the block...", "what mass...").
+  # When locked_answer is one of these, dean.py won't block the teacher
+  # from saying it — too generic to count as a leak.
+  anchor_false_positives:
+    # Generic quantities
+    - force
+    - mass
+    - weight
+    - velocity
+    - speed
+    - acceleration
+    - momentum
+    - impulse
+    - energy
+    - work
+    - power
+    - pressure
+    - density
+    - volume
+    - distance
+    - displacement
+    - position
+    - time
+    - frequency
+    - wavelength
+    - amplitude
+    - period
+    - field
+    - charge
+    - current
+    - voltage
+    - resistance
+    - capacitance
+    - inductance
+    - flux
+    - vector
+    # Generic descriptors
+    - left
+    - right
+    - up
+    - down
+    - vertical
+    - horizontal
+    - parallel
+    - perpendicular
+    - linear
+    - angular
+    - net
+    - total
+    - external
+    - internal
+    - constant
+    - variable
+
+  # Physics short symbols / units distinctive enough to leak-block. The
+  # parallel of anatomy's "SA", "ATP" set — quantities a tutor could
+  # mention by symbol where naming would give the answer.
+  distinctive_short_abbreviations:
+    # Mechanics quantity symbols
+    - f
+    - m
+    - a
+    - v
+    - p
+    - ke
+    - pe
+    - w
+    - j
+    - n
+    # Rotational / angular
+    - i
+    - l
+    # Waves / oscillations
+    - hz
+    - shm
+    # Fluids / thermo
+    - pa
+    - rho
+    # Common physics acronyms
+    - fbd
+    - com
+    - cg
+    - si
+    # E&M
+    - emf
+    - ohm
+    - vac
+    - dc
+    # Modern / nuclear
+    - ev
+    - mev
+    - gev
+
   # Drives post-answer assessment framing
   assessment_dimension: "real-world application"
   assessment_dimension_examples: "problem-solving, physical phenomena, or engineering context"

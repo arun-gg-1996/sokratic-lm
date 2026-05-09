@@ -146,8 +146,18 @@ def _domain_prompt_vars() -> dict:
         "domain_example_topic_specific": getattr(domain, "example_topic_specific", "a specific concept"),
         "domain_example_topic_broad": getattr(domain, "example_topic_broad", "a broad topic area"),
         "domain_example_question": getattr(domain, "example_question", "What is the key concept here?"),
+        "domain_example_answer": getattr(domain, "example_answer", "the key concept"),
+        "domain_example_answer_format": getattr(domain, "example_answer_format", "a short noun phrase"),
         "assessment_dimension": getattr(domain, "assessment_dimension", "real-world application"),
         "assessment_dimension_examples": getattr(domain, "assessment_dimension_examples", "examples, problems, or context"),
+        "domain_clinical_scenario_style": getattr(
+            domain, "clinical_scenario_style",
+            "a real-world scenario with a concrete decision question",
+        ),
+        "domain_display_label_style": getattr(
+            domain, "display_label_style",
+            "concise student-friendly phrasing",
+        ),
     }
 
 def _apply_domain_vars(text: str) -> str:

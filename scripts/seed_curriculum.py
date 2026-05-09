@@ -33,12 +33,17 @@ from memory.sqlite_store import SQLiteStore
 
 
 def load_chapter_num_lookup() -> dict[str, int]:
-    """Build {chapter_title: chapter_num} from textbook_structure.json keys.
+    """Build {chapter_title: chapter_num} from textbook_structure JSON keys.
+
+    Path resolved via cfg.domain_path("textbook_structure") so anatomy reads
+    data/textbook_structure.json and physics reads
+    data/textbook_structure_openstax_physics.json.
 
     Example key: "Chapter 24: Metabolism and Nutrition"
         → {"Metabolism and Nutrition": 24}
     """
-    structure = json.loads((REPO / "data" / "textbook_structure.json").read_text())
+    from config import cfg as _cfg
+    structure = json.loads((REPO / _cfg.domain_path("textbook_structure")).read_text())
     out: dict[str, int] = {}
     for key in structure:
         m = re.match(r"^Chapter (\d+):\s*(.+)$", key)
@@ -51,7 +56,8 @@ def main() -> None:
     chapter_lookup = load_chapter_num_lookup()
     print(f"loaded chapter_num lookup: {len(chapter_lookup)} chapters")
 
-    topic_index = json.loads((REPO / "data" / "topic_index.json").read_text())
+    from config import cfg as _cfg
+    topic_index = json.loads((REPO / _cfg.domain_path("topic_index")).read_text())
     items = topic_index if isinstance(topic_index, list) else list(topic_index.values())
     print(f"topic_index entries: {len(items)}")
 

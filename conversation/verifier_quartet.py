@@ -27,8 +27,8 @@ from conversation.classifiers import (
     _cached_system_block,
 )
 
-_HINT_LEAK_SYSTEM = """\
-You are a teaching-quality reviewer for a Socratic anatomy tutor.
+_HINT_LEAK_SYSTEM_TEMPLATE = """\
+You are a teaching-quality reviewer for a Socratic {domain_name} tutor.
 Your sole task: judge whether a draft tutor response REVEALS the
 locked answer — either by naming it outright OR through indirect
 hints (letter / morphology / etymology / blank / multiple-choice /
@@ -93,10 +93,13 @@ FLAG (verdict="leak") if the draft does ANY of these:
 
 DO NOT flag (verdict="clean") for these legitimate Socratic moves:
 
-A. Naming a broader anatomical region or system that contains the
-   answer. Example: locked_answer="SA node", draft says
-   "What part of the conduction system initiates the heartbeat?" —
-   "conduction system" is broader context, not a letter/morphology hint.
+A. Naming a broader category, region, or system that contains the
+   answer. Example: locked_answer="SA node", draft says "What part of
+   the conduction system initiates the heartbeat?" — "conduction system"
+   is broader context, not a letter/morphology hint. The same pattern
+   works in physics: locked_answer="Newton's third law", draft says
+   "Which of Newton's laws describes paired forces?" — naming the
+   broader category is fine.
 
 B. Describing a property the student should derive the term FROM,
    without revealing the term:
@@ -141,6 +144,22 @@ The "evidence" field MUST be a verbatim substring of the draft. If you
 cannot quote a specific phrase, return verdict="clean" with empty
 evidence.
 """
+
+
+def _hint_leak_system() -> str:
+    """Render _HINT_LEAK_SYSTEM_TEMPLATE with the active domain's name.
+    Uses str.replace() instead of .format() so the literal `{` `}` in
+    the JSON output spec embedded in the prompt don't need to be escaped.
+    """
+    from config import cfg as _cfg
+    domain_name = getattr(getattr(_cfg, "domain", object()), "name", "this subject")
+    return _HINT_LEAK_SYSTEM_TEMPLATE.replace("{domain_name}", domain_name)
+
+
+# Back-compat module constant — anatomy-rendered for any caller that
+# imports the name directly. Fresh callers should use _hint_leak_system().
+_HINT_LEAK_SYSTEM = _HINT_LEAK_SYSTEM_TEMPLATE.replace("{domain_name}", "human anatomy")
+
 
 _HINT_LEAK_USER_TEMPLATE = """\
 LOCKED QUESTION (what the student is being asked to produce):
@@ -257,7 +276,7 @@ def _haiku_hint_leak_check_once(
         draft=draft,
     )
     try:
-        raw = _haiku_call(_cached_system_block(_HINT_LEAK_SYSTEM), user_text)
+        raw = _haiku_call(_cached_system_block(_hint_leak_system()), user_text)
     except Exception as e:
         return {
             "verdict": "clean", "leak_type": "", "evidence": "",

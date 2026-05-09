@@ -34,7 +34,8 @@ def backfill_subsection_summaries(store: SQLiteStore) -> tuple[int, int]:
 
     Returns (matched, skipped).
     """
-    p = REPO / "data" / "artifacts" / "raptor_subsection_summaries.jsonl"
+    from config import cfg as _cfg
+    p = REPO / _cfg.domain_path("raptor_subsection_summaries")
     if not p.exists():
         print(f"  ! missing {p.name} — skipping subsection summaries")
         return (0, 0)
@@ -83,7 +84,8 @@ def backfill_subsection_summaries(store: SQLiteStore) -> tuple[int, int]:
 
 def backfill_section_summaries(store: SQLiteStore) -> tuple[int, int]:
     """UPDATE sections.summary from raptor_section_summaries.jsonl."""
-    p = REPO / "data" / "artifacts" / "raptor_section_summaries.jsonl"
+    from config import cfg as _cfg
+    p = REPO / _cfg.domain_path("raptor_section_summaries")
     if not p.exists():
         print(f"  ! missing {p.name} — skipping section summaries")
         return (0, 0)
@@ -137,7 +139,8 @@ def backfill_abbreviations(store: SQLiteStore) -> int:
 
     INSERT OR IGNORE makes this idempotent.
     """
-    p = REPO / "data" / "curated_abbrevs_ot.json"
+    from config import cfg as _cfg
+    p = REPO / _cfg.domain_path("curated_abbrevs")
     if not p.exists():
         print(f"  ! missing {p.name} — skipping abbreviations")
         return 0
